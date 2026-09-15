@@ -71,7 +71,7 @@ const ACX=[];
 function regCtx(c){ACX.push(c);try{if(c.state==="suspended")c.resume();}catch(e){}return c;}
 setInterval(()=>{for(const c of ACX){try{if(c.state==="suspended")c.resume();}catch(e){}}},5000);
 let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
-    aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],
+    aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],iceOut=[],
     lastMsg=0, faceStream=null;
 
 function urlB64ToUint8Array(b64){
