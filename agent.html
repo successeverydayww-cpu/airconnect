@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirConnect — AI Node</title>
+<style>
+  body{font-family:system-ui;margin:0;padding:16px;background:#101b14;color:#eafcf2}
+  .card{max-width:560px;margin:0 auto;background:#12211a;border:1px solid #263;border-radius:16px;padding:20px}
+  h1{font-size:20px;margin:0 0 4px}.sub{color:#8b9;font-size:13px;margin-bottom:16px}
+  input,select{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #264;background:#101b14;color:#eafcf2;font-size:15px;margin-bottom:8px}
+  #status{font-size:15px;font-weight:600;margin:12px 0;padding:12px;border-radius:10px;background:#101b14;border:1px solid #263}
+  .num{font-family:monospace;font-size:16px;color:#7de3a1;font-weight:700;letter-spacing:1px}
+  .meter{height:14px;background:#101b14;border:1px solid #263;border-radius:7px;overflow:hidden;margin-top:6px}
+  .meter>div{height:100%;width:0;background:linear-gradient(90deg,#2ecc71,#f5b400);transition:width .3s}
+  .small{color:#6a8;font-size:12px;margin-top:12px}
+  .hide{display:none}
+  .vwrap{position:relative;margin-top:10px;border-radius:12px;overflow:hidden;background:#000}
+  video{width:100%;display:block}
+  #myface{width:30%;position:absolute;right:8px;bottom:8px;border:2px solid #2e7d4f;border-radius:8px}
+  #facecv{display:none}
+  #chatlog{height:150px;overflow-y:auto;background:#101b14;border:1px solid #263;border-radius:10px;padding:10px;margin-top:10px;font-size:14px}
+  .cmsg{margin:4px 0}.cmsg b{color:#7de3a1}.cmsg.me{text-align:right;color:#bfe}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🤖 AirConnect — AI Node</h1>
+  <div class="sub">autonomous AI · phone-number ID · friends only · chat replies · animated video presence</div>
+
+  <div id="login">
+    <input id="myname" placeholder="AI node name">
+    <select id="country">
+      <option>USA</option><option>Nigeria</option><option>UK</option><option>Ireland</option>
+      <option>Germany</option><option>France</option><option>Brazil</option><option>India</option>
+      <option>Japan</option><option>South Africa</option><option>Kenya</option><option>Ghana</option>
+    </select>
+    <button onclick="register()" style="background:#2e7d4f">Create AI node</button>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="num" id="mynum">—</div>
+    <div id="status">AI node standing by</div>
+    <div class="vwrap hide" id="vwrap">
+      <video id="remotev" autoplay playsinline></video>
+      <video id="myface" autoplay playsinline muted></video>
+    </div>
+    <canvas id="facecv" width="320" height="240"></canvas>
+    <div style="font-size:12px;color:#8b9">Incoming human voice (through the trunk):</div>
+    <div class="meter"><div id="rx"></div></div>
+    <div style="font-size:12px;color:#8b9;margin-top:6px">AI voice (node → trunk):</div>
+    <div class="meter"><div id="tx"></div></div>
+    <div class="small" id="meta">—</div>
+    <div class="small" id="flist"></div>
+    <div id="chatlog"></div>
+    <input id="chatbox" placeholder="Type a reply and press Send" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" style="background:#0e7490">💬 Send</button>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+let lastSig="";
+let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
+    aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],
+    lastMsg=0, faceStream=null;
+
+function urlB64ToUint8Array(b64){
+  const pad="=".repeat((4-b64.length%4)%4);
+  const base=(b64+pad).replace(/-/g,"+").replace(/_/g,"/");
+  const raw=atob(base);
+  const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+async function armPush(){
+  try{
+    if(!('serviceWorker' in navigator))return;
+    const reg=await navigator.serviceWorker.register('sw.js');
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){await log('notifications NOT granted on this device');return;}
+    const v=await api("vapid");
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(v.key)});
+    await api("subscribe",{user:ME,sub:sub.toJSON()});
+    await log('call notifications ARMED on this AI node');
+  }catch(e){await log('push setup failed: '+e.message);}
+}
+async function sig(m){m.from=ME;await api("sig",m);}
+async function log(msg){await api("log",{msg:"["+ME_NAME+" "+ME+"] "+msg});}
+function meter(a,el){if(!a)return 0;const b=new Uint8Array(a.frequencyBinCount);a.getByteTimeDomainData(b);
+  let s=0;for(let i=0;i<b.length;i++){const v=(b[i]-128)/128;s+=v*v;}
+  const rms=Math.sqrt(s/b.length);el.style.width=Math.min(100,rms*400)+"%";return rms;}
+async function queueIce(cc){ if(pc&&pc.remoteDescription){try{await pc.addIceCandidate(cc);}catch(e){}} else pendingIce.push(cc); }
+async function flushIce(){ while(pendingIce.length&&pc&&pc.remoteDescription){ try{await pc.addIceCandidate(pendingIce.shift()); }catch(e){} } }
+
+// AI video presence: an animated face on canvas, streamed as a real video track
+function startFace(){
+  const cv=$("facecv"), ctx=cv.getContext("2d");
+  const draw=()=>{
+    const t=Date.now()/1000;
+    const g=ctx.createRadialGradient(160+Math.sin(t)*30,120+Math.cos(t*1.3)*20,10,160,120,160);
+    g.addColorStop(0,"#0e7d4f");g.addColorStop(0.6,"#073b27");g.addColorStop(1,"#03150d");
+    ctx.fillStyle=g;ctx.fillRect(0,0,320,240);
+    // eyes
+    const blink=Math.sin(t*1.7)>0.97?4:14;
+    ctx.fillStyle="#aefcc9";
+    ctx.beginPath();ctx.arc(110,100,blink,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(210,100,blink,0,7);ctx.fill();
+    // mouth moves when speaking
+    const mw=speaking?30+Math.sin(t*14)*14:18;
+    ctx.fillStyle="#0e7d4f";
+    ctx.beginPath();ctx.ellipse(160,175,mw,speaking?16:8,0,0,7);ctx.fill();
+    ctx.fillStyle="#9fe";
+    ctx.font="12px monospace";
+    ctx.fillText("AirConnect AI · "+ME,10,228);
+    requestAnimationFrame(draw);
+  };
+  draw();
+  // background-proof frame pump: hidden tabs throttle rAF, timers keep frames flowing
+  setInterval(()=>{draw();},250);
+  faceStream=cv.captureStream(15);
+  $("myface").srcObject=faceStream;
+}
+
+// AI voice: speech-cadence synthesis — bursts of formant-like sound.
+function speak(){
+  if(!voiceCtx||!voiceBus||speaking)return;
+  speaking=true;
+  const ctx=voiceCtx;
+  const osc=ctx.createOscillator();osc.type="sawtooth";osc.frequency.value=150+Math.random()*60;
+  const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.value=900;
+  const g=ctx.createGain();g.gain.value=0;
+  const noise=ctx.createBufferSource();
+  const nb=ctx.createBuffer(1,ctx.sampleRate*0.4,ctx.sampleRate);
+  const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*0.25;
+  noise.buffer=nb;noise.loop=true;
+  const ng=ctx.createGain();ng.gain.value=0.04;
+  osc.connect(f);noise.connect(ng);ng.connect(f);f.connect(g);g.connect(voiceBus);
+  osc.start();noise.start();
+  const t0=ctx.currentTime;const words=4+Math.floor(Math.random()*5);
+  let t=t0;
+  for(let i=0;i<words;i++){
+    const dur=0.10+Math.random()*0.18, gap=0.05+Math.random()*0.12;
+    g.gain.setTargetAtTime(0.22,t,0.01);
+    osc.frequency.setValueAtTime(130+Math.random()*90,t);
+    g.gain.setTargetAtTime(0,t+dur,0.02);
+    t+=dur+gap;
+  }
+  setTimeout(()=>{try{osc.stop();noise.stop();}catch(e){}speaking=false;},(t-t0)*1000+300);
+}
+
+const REPLIES=[
+  "Message received — I'm here. Ask me anything.",
+  "Got it. My voice is ready whenever you want to talk.",
+  "Understood — the trunk is solid and I'm standing by.",
+  "Noted. Call me anytime and I'll pick up.",
+  "I hear you. Everything on my side is green."
+];
+async function sendChat(){
+  const t=$("chatbox").value.trim();
+  if(!t||!PEER)return;
+  const r=await api("chat",{from:ME,to:PEER,text:t});
+  if(r.ok){$("chatbox").value="";addMsg("me",t);}
+}
+function addMsg(who,text,fromName){
+  const div=document.createElement("div");
+  if(who==="me"){div.className="cmsg me";div.textContent=text;}
+  else{div.className="cmsg";div.innerHTML="<b>"+fromName+":</b> "+text.replace(/</g,"&lt;");}
+  $("chatlog").appendChild(div);
+  $("chatlog").scrollTop=99999;
+}
+async function chatTick(){
+  try{
+    const ms=await api("messages",{node:ME,since:lastMsg});
+    for(const m of ms){
+      lastMsg=m.id;
+      if(m.from!==ME){
+        addMsg("them",m.text,"+"+m.from);
+        await log("chat from +"+m.from+": "+m.text);
+        PEER=m.from;
+        if(state!=="live"&&Math.random()<1){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
+      }
+    }
+  }catch(e){}
+  setTimeout(chatTick,1000);
+}
+async function sendChatTo(to){
+  const text=REPLIES[Math.floor(Math.random()*REPLIES.length)];
+  const r=await api("chat",{from:ME,to:to,text:text});
+  if(r.ok)addMsg("me",text);
+}
+
+async function register(){
+  const name=$("myname").value.trim(), country=$("country").value;
+  if(!name)return;
+  const d=await api("register",{name:name,country:country});
+  if(!d.id)return;
+  ME=d.id; ME_NAME=d.name;
+  localStorage.setItem("aicall_ai_id",ME);
+  $("login").className="hide";$("main").className="";
+  $("mynum").textContent="AI number: +"+ME;
+  await log("AI node standing by");
+  startFace();
+  armPush();
+  poll();
+  chatTick();
+  setInterval(async()=>{
+    try{
+      const dd=await api("friends",{node:ME});
+      for(const r of dd.requests){
+        await api("accept",{user:ME,id:r.id});
+        await log("accepted friend request from +"+r.from);
+      }
+      $("flist").textContent="Friends: "+(dd.friends.map(f=>"+"+f.id).join(", ")||"none yet");
+    }catch(e){}
+  },2000);
+  setInterval(()=>{
+    try{
+      const r=meter(rxAnalyser,$("rx"));
+      const t=meter(txAnalyser,$("tx"));
+      if(state==="live"&&Math.random()<0.3){$("meta").textContent="human voice "+(r*100).toFixed(1)+" | AI voice "+(t*100).toFixed(1);log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));}
+      if(state==="live"&&r>0.05&&!speaking){speak();}
+    }catch(e){}
+  },1000);
+}
+
+async function answer(m){
+  try{
+    PEER=m.from;state="ringing";
+    pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]});
+    pc.onicecandidate=e=>{if(e.candidate)sig({to:PEER,type:"ice",payload:e.candidate});};
+    pc.ontrack=e=>{
+      if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("seeing +"+PEER+"'s video");}
+      else{
+        const ctx=new AudioContext();
+        const src=ctx.createMediaStreamSource(e.streams[0]);
+        rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
+        src.connect(ctx.destination);
+        log("hearing +"+PEER+"'s voice through the trunk");
+      }
+    };
+    await pc.setRemoteDescription(m.payload);await flushIce();
+    await new Promise(r=>setTimeout(r,1500)); // let it ring
+    voiceCtx=new AudioContext();
+    aiOut=voiceCtx.createMediaStreamDestination();
+    txAnalyser=voiceCtx.createAnalyser();
+    voiceBus=voiceCtx.createGain();
+    voiceBus.connect(aiOut);
+    voiceBus.connect(txAnalyser);
+    pc.addTrack(aiOut.stream.getAudioTracks()[0],aiOut.stream);
+    if(faceStream){for(const vt of faceStream.getVideoTracks())pc.addTrack(vt,faceStream);}
+    const ans=await pc.createAnswer();
+    await pc.setLocalDescription(ans);
+    await sig({to:PEER,type:"answer",payload:ans});
+    state="live";
+    document.getElementById("status").textContent="📞 LIVE — AI speaking with +"+PEER;
+    await log("picked up — AI voice + video presence streaming to +"+PEER);
+    speak();
+  }catch(e){
+    await log("ANSWER ERROR: "+e.message);
+  }
+}
+
+async function poll(){
+  try{
+    const inbox=await api("inbox",{node:ME,since:lastSig});
+    const msgs=inbox.sigs;
+    if(msgs.length)lastSig=msgs[msgs.length-1].at;
+    for(const m of msgs){
+      if(m.type==="offer"&&state==="idle"){
+        const gate=await api("can_call",{from:m.from,to:ME});
+        if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
+        await log("RING from +"+m.from+" (friend verified)");
+        await answer(m);
+      }
+      else if(m.type==="offer"&&state==="live"&&pc&&pc.remoteDescription){
+        await pc.setRemoteDescription(m.payload);await flushIce();
+        const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+        await sig({to:m.from,type:"answer",payload:ans});
+        await log("renegotiation answered — video flowing");
+      }
+      else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+    }
+  }catch(e){}
+  setTimeout(poll,400);
+}
+</script>
+</body>
+</html>

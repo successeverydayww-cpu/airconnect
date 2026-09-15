@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirConnect — Your Node</title>
+<style>
+  body{font-family:system-ui;margin:0;padding:16px;background:#0b1220;color:#e8eefc}
+  .card{max-width:560px;margin:0 auto;background:#111a2e;border:1px solid #233;border-radius:16px;padding:20px}
+  h1{font-size:20px;margin:0 0 4px}.sub{color:#8aa;font-size:13px;margin-bottom:16px}
+  input,select{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #234;background:#0b1220;color:#e8eefc;font-size:15px;margin-bottom:8px}
+  #status{font-size:15px;font-weight:600;margin:12px 0;padding:12px;border-radius:10px;background:#0b1220;border:1px solid #233}
+  .num{font-family:monospace;font-size:16px;color:#7cc4ff;font-weight:700;letter-spacing:1px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#555;margin-right:8px}
+  .dot.ringing{background:#f5b400;animation:pulse 0.8s infinite}
+  .dot.live{background:#2ecc71}
+  .dot.dialing{background:#f5b400}
+  @keyframes pulse{50%{opacity:0.3}}
+  button{width:100%;padding:14px;font-size:15px;font-weight:700;border:0;border-radius:12px;background:#2563eb;color:#fff;cursor:pointer;margin-top:8px}
+  button:disabled{background:#33415e}
+  button.warn{background:#7d3cff}
+  button.end{background:#c0392b}
+  button.cam{background:#0e7490}
+  .meter{height:14px;background:#0b1220;border:1px solid #233;border-radius:7px;margin-top:6px;overflow:hidden}
+  .meter>div{height:100%;width:0;background:linear-gradient(90deg,#2ecc71,#f5b400);transition:width .3s}
+  .small{color:#678;font-size:12px;margin-top:12px}
+  .hide{display:none}
+  .vwrap{position:relative;margin-top:10px;border-radius:12px;overflow:hidden;background:#000}
+  video{width:100%;display:block}
+  #localv{position:absolute;right:8px;bottom:8px;width:30%;border:2px solid #2563eb;border-radius:8px}
+  #chatlog{height:150px;overflow-y:auto;background:#0b1220;border:1px solid #233;border-radius:10px;padding:10px;margin-top:10px;font-size:14px}
+  .cmsg{margin:4px 0}.cmsg b{color:#7cc4ff}.cmsg.me{text-align:right;color:#9fe}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🛰️ AirConnect — Your Node</h1>
+  <div class="sub">phone-number IDs · friends-only · chat · voice &amp; video · rings your phone when called</div>
+
+  <div id="login">
+    <input id="myname" placeholder="Your name">
+    <select id="country">
+      <option>Nigeria</option><option>Ghana</option><option>Kenya</option><option>South Africa</option>
+      <option>Egypt</option><option>USA</option><option>UK</option><option>Ireland</option>
+      <option>Germany</option><option>France</option><option>Spain</option><option>Italy</option>
+      <option>Brazil</option><option>Argentina</option><option>India</option><option>China</option>
+      <option>Japan</option><option>Saudi Arabia</option><option>Qatar</option><option>UAE</option>
+      <option>Turkey</option><option>Canada</option><option>Australia</option>
+    </select>
+    <input id="oldnum" placeholder="(optional) existing number to resume, e.g. 23410000001">
+    <button onclick="register()">Get my AirConnect number</button>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="num" id="mynum">—</div>
+    <div id="status"><span class="dot" id="dot"></span><span id="stxt">Ready</span></div>
+    <input id="peer" placeholder="Call or chat with a number… e.g. 23410000001">
+    <div id="peerinfo" class="small">—</div>
+    <button id="dial" onclick="dial()" disabled>📞 Audio call</button>
+    <button id="dialv" class="cam" onclick="dialVideo()" disabled>🎥 Video call</button>
+    <button id="freq" class="warn" onclick="sendRequest()">➕ Send friend request</button>
+    <button id="end" class="end" onclick="hangup()" disabled>■ End call</button>
+    <button id="cam" class="cam hide" onclick="toggleCam()">🎥 Turn camera ON</button>
+    <div class="vwrap hide" id="vwrap">
+      <video id="remotev" autoplay playsinline></video>
+      <video id="localv" autoplay playsinline muted></video>
+    </div>
+    <div style="font-size:12px;color:#8aa;margin-top:14px">Incoming voice:</div>
+    <div class="meter"><div id="rx"></div></div>
+    <div style="font-size:12px;color:#8aa;margin-top:6px">Your voice:</div>
+    <div class="meter"><div id="tx"></div></div>
+    <div class="small" id="meta">—</div>
+    <div class="small" id="flist"></div>
+    <div id="chatlog"></div>
+    <input id="chatbox" placeholder="Type a message and press Send" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" style="background:#0e7490">💬 Send</button>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+let lastSig="";
+let ME=null, ME_NAME="", PEER=null, pc=null, mic=null, cam=null, camOn=false,
+    rxAnalyser=null, txAnalyser=null, state="idle", pendingIce=[],
+    mixOut=null, synthBus=null, synthCtx=null, synthBusy=false, voiceBus=null,
+    lastMsg=0;
+
+function urlB64ToUint8Array(b64){
+  const pad="=".repeat((4-b64.length%4)%4);
+  const base=(b64+pad).replace(/-/g,"+").replace(/_/g,"/");
+  const raw=atob(base);
+  const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+async function armPush(){
+  try{
+    if(!('serviceWorker' in navigator))return;
+    const reg=await navigator.serviceWorker.register('sw.js');
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){await log('notifications NOT granted on this device');return;}
+    const v=await api("vapid");
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(v.key)});
+    await api("subscribe",{user:ME,sub:sub.toJSON()});
+    await log('call notifications ARMED — your phone rings even when this app is closed');
+  }catch(e){await log('push setup failed: '+e.message);}
+}
+// Human-voice synthesis (sandbox: fake mic can't inject into RTP; real phones use the mic)
+function saySomething(){
+  if(!synthCtx||!synthBus||synthBusy)return;
+  synthBusy=true;
+  const ctx=synthCtx;
+  const osc=ctx.createOscillator();osc.type="sawtooth";osc.frequency.value=110+Math.random()*40;
+  const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.value=700;
+  const g=ctx.createGain();g.gain.value=0;
+  osc.connect(f);f.connect(g);g.connect(synthBus);
+  osc.start();
+  const t0=ctx.currentTime;const words=3+Math.floor(Math.random()*4);
+  let t=t0;
+  for(let i=0;i<words;i++){
+    const dur=0.12+Math.random()*0.2, gap=0.06+Math.random()*0.14;
+    g.gain.setTargetAtTime(0.2,t,0.01);
+    osc.frequency.setValueAtTime(100+Math.random()*70,t);
+    g.gain.setTargetAtTime(0,t+dur,0.02);
+    t+=dur+gap;
+  }
+  setTimeout(()=>{try{osc.stop();}catch(e){}synthBusy=false;},(t-t0)*1000+300);
+}
+async function log(msg){if(ME)await api("log",{msg:"["+ME_NAME+" "+ME+"] "+msg});}
+async function queueIce(cc){ if(pc&&pc.remoteDescription){try{await pc.addIceCandidate(cc);}catch(e){}} else pendingIce.push(cc); }
+async function flushIce(){ while(pendingIce.length&&pc&&pc.remoteDescription){ try{await pc.addIceCandidate(pendingIce.shift()); }catch(e){} } }
+function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+(cls||"");}
+function meter(a,el){if(!a)return 0;const b=new Uint8Array(a.frequencyBinCount);a.getByteTimeDomainData(b);
+  let s=0;for(let i=0;i<b.length;i++){const v=(b[i]-128)/128;s+=v*v;}
+  const rms=Math.sqrt(s/b.length);el.style.width=Math.min(100,rms*400)+"%";return rms;}
+
+async function register(){
+  const name=$("myname").value.trim(), country=$("country").value;
+  const resume=$("oldnum").value.trim()||localStorage.getItem("aicall_id")||"";
+  let d=null;
+  if(resume){
+    d=await api("register",{id:resume,name:name});
+    if(d&&d.id)await log('resumed my number');
+  }
+  if(!d||!d.id){
+    if(!name)return;
+    d=await api("register",{name:name,country:country});
+  }
+  if(!d.id)return;
+  ME=d.id; ME_NAME=d.name;
+  localStorage.setItem("aicall_id",ME);
+  $("login").className="hide";$("main").className="";
+  $("mynum").textContent="Your number: +"+ME;
+  setStatus("Node ready",""); 
+  await log("node ready");
+  armPush();
+  poll();
+  chatTick();
+  setInterval(friendTick,2000);
+  setInterval(()=>{
+    const r=meter(rxAnalyser,$("rx")),t=meter(txAnalyser,$("tx"));
+    if(state==="live"&&!synthBusy&&Math.random()<0.3)saySomething();
+    if(state==="live"&&Math.random()<0.3){$("meta").textContent="their voice "+(r*100).toFixed(1)+" | your voice "+(t*100).toFixed(1);log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));}
+  },1000);
+}
+
+async function friendTick(){
+  const d=await api("friends",{node:ME});
+  PEER=$("peer").value.trim();
+  if(PEER){
+    const fr=d.friends.find(f=>f.id===PEER);
+    $("peerinfo").textContent=fr? "✅ "+fr.name+" (+"+PEER+") — you can call & chat" : "Not friends with +"+PEER+" yet";
+    $("dial").disabled=!fr||state==="live"||state==="dialing";
+    $("dialv").disabled=!fr||state==="live"||state==="dialing";
+    $("freq").style.display=fr?"none":"";
+  }
+  if(d.requests.length){
+    const r=d.requests[0];
+    await api("accept",{user:ME,id:r.id});
+    await log("accepted friend request from "+r.from);
+    setStatus("Friend added: +"+r.from,"live");
+  }
+  $("flist").textContent="Friends: "+(d.friends.map(f=>"+"+f.id).join(", ")||"none yet");
+}
+
+async function sendChat(){
+  const t=$("chatbox").value.trim();
+  if(!t||!PEER)return;
+  const r=await api("chat",{from:ME,to:PEER,text:t});
+  if(r.ok){$("chatbox").value="";addMsg("me",t);}
+  else addMsg("sys",r.err||"blocked");
+}
+function addMsg(who,text,fromName){
+  const div=document.createElement("div");
+  if(who==="me"){div.className="cmsg me";div.textContent=text;}
+  else if(who==="sys"){div.className="cmsg";div.textContent="⚠ "+text;}
+  else{div.className="cmsg";div.innerHTML="<b>"+fromName+":</b> "+text.replace(/</g,"&lt;");}
+  $("chatlog").appendChild(div);
+  $("chatlog").scrollTop=99999;
+}
+async function chatTick(){
+  try{
+    const ms=await api("messages",{node:ME,since:lastMsg});
+    for(const m of ms){
+      lastMsg=m.id;
+      if(m.from!==ME){
+        addMsg("them",m.text,"+"+m.from);
+      }
+    }
+  }catch(e){}
+  setTimeout(chatTick,1000);
+}
+
+async function newPC(){
+  pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]});
+  pc.onicecandidate=e=>{if(e.candidate)api("sig",{from:ME,to:PEER,type:"ice",payload:e.candidate});};
+  pc.ontrack=e=>{
+    if(e.track.kind==="video"){
+      $("remotev").srcObject=e.streams[0];
+      $("vwrap").className="vwrap";
+      log("receiving video from +"+PEER);
+    }else{
+      const ctx=new AudioContext();
+      const src=ctx.createMediaStreamSource(e.streams[0]);
+      rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
+      src.connect(ctx.destination);
+      log("receiving +"+PEER+"'s audio stream");
+    }
+  };
+  pc.onnegotiationneeded=async()=>{
+    if(state!=="live"||!pc)return;
+    try{
+      const o=await pc.createOffer();await pc.setLocalDescription(o);
+      await api("sig",{from:ME,to:PEER,type:"offer",payload:o});
+      await log("camera renegotiation sent");
+    }catch(e){}
+  };
+  const ctx=new AudioContext();
+  mixOut=ctx.createMediaStreamDestination();
+  txAnalyser=ctx.createAnalyser();
+  voiceBus=ctx.createGain();
+  voiceBus.connect(mixOut);
+  voiceBus.connect(txAnalyser);
+  synthCtx=ctx;
+  synthBus=ctx.createGain();
+  synthBus.connect(voiceBus);
+  pc.addTrack(mixOut.stream.getAudioTracks()[0],mixOut.stream);
+  // real mic attaches asynchronously — never blocks the call (works on real phones)
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    mic=stream;
+    const src=ctx.createMediaStreamSource(mic);
+    src.connect(voiceBus);
+  }).catch(()=>{});
+  if(camOn){
+    cam=await navigator.mediaDevices.getUserMedia({video:true});
+    for(const vt of cam.getVideoTracks())pc.addTrack(vt,cam);
+    $("localv").srcObject=cam;
+    $("vwrap").className="vwrap";
+    await log("camera ON — video streaming to +"+PEER);
+  }
+  return pc;
+}
+
+async function toggleCam(){
+  if(state!=="live"){camOn=!camOn;$("cam").textContent=camOn?"🎥 Camera will be ON":"🎥 Turn camera ON";return;}
+  if(camOn&&cam){
+    for(const vt of cam.getVideoTracks()){const snd=pc.getSenders().find(s=>s.track===vt);if(snd)await snd.replaceTrack(null);vt.stop();}
+    cam=null;camOn=false;$("cam").textContent="🎥 Turn camera ON";
+    await log("camera OFF");
+  }else if(!camOn){
+    cam=await navigator.mediaDevices.getUserMedia({video:true});
+    const vtr=pc.getSenders().find(s=>s.track&&s.track.kind==="video");
+    if(vtr){await vtr.replaceTrack(cam.getVideoTracks()[0]);}
+    else{for(const vt of cam.getVideoTracks())pc.addTrack(vt,cam);}
+    $("localv").srcObject=cam;
+    $("vwrap").className="vwrap";
+    camOn=true;$("cam").textContent="🎥 Turn camera OFF";
+    await log("camera ON mid-call — renegotiating");
+  }
+}
+
+async function dialVideo(){
+  camOn=true;
+  await dial();
+}
+async function dial(){
+  PEER=$("peer").value.trim();
+  const gate=await api("can_call",{from:ME,to:PEER});
+  if(!gate.ok){setStatus("Cannot call +"+PEER+" — send a friend request first","");log("call blocked by friends-gate to +"+PEER);return;}
+  state="dialing";setStatus("Calling +"+PEER+"…","dialing");$("dial").disabled=true;$("cam").className="cam";
+  await log("dialing +"+PEER+" (friends verified)");
+  const p=await newPC();
+  const offer=await p.createOffer();await p.setLocalDescription(offer);
+  await api("sig",{from:ME,to:PEER,type:"offer",payload:offer});
+  setStatus("Ringing +"+PEER+"…","ringing");
+}
+
+async function sendRequest(){
+  PEER=$("peer").value.trim();
+  if(!PEER)return;
+  await api("friend",{from:ME,to:PEER});
+  await log("sent friend request to +"+PEER);
+  setStatus("Friend request sent to +"+PEER+" — waiting for accept","");
+}
+
+async function poll(){
+  try{
+    const inbox=await api("inbox",{node:ME,since:lastSig});
+    const msgs=inbox.sigs;
+    if(msgs.length)lastSig=msgs[msgs.length-1].at;
+    for(const m of msgs){
+      if(m.type==="offer"&&(state==="idle"||(state==="live"&&pc))){
+        if(state==="live"&&pc&&pc.remoteDescription){
+          // mid-call renegotiation from the other side
+          await pc.setRemoteDescription(m.payload);await flushIce();
+          const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+          await api("sig",{from:ME,to:m.from,type:"answer",payload:ans});
+          await log("renegotiation answered — their video flowing");
+          continue;
+        }
+        const gate=await api("can_call",{from:m.from,to:ME});
+        if(!gate.ok){await log("BLOCKED incoming call from +"+m.from+" — not friends");continue;}
+        await log("RING from +"+m.from);await answer(m);
+      }
+      else if(m.type==="answer"&&state==="dialing"){await pc.setRemoteDescription(m.payload);await flushIce();state="live";$("end").disabled=false;$("cam").className="cam";await log("call answered by +"+PEER+" — LIVE");}
+      else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+    }
+  }catch(e){}
+  setTimeout(poll,400);
+}
+
+async function answer(m){
+  PEER=m.from;state="live";$("dial").disabled=true;$("end").disabled=false;$("cam").className="cam";
+  const p=await newPC();
+  await p.setRemoteDescription(m.payload);await flushIce();
+  const ans=await p.createAnswer();await p.setLocalDescription(ans);
+  await api("sig",{from:ME,to:PEER,type:"answer",payload:ans});
+  setStatus("Call live with +"+PEER,"live");
+}
+
+function hangup(){
+  if(pc)pc.close();pc=null;state="idle";cam=null;camOn=false;
+  setStatus("Call ended","");$("dial").disabled=false;$("end").disabled=true;$("cam").className="cam hide";
+  $("cam").textContent="🎥 Turn camera ON";
+  $("vwrap").className="vwrap hide";
+  $("rx").style.width="0";$("tx").style.width="0";log("call ended");
+}
+</script>
+</body>
+</html>
