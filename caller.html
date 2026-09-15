@@ -595,15 +595,30 @@ async function declineCall(){
 }
 async function answer(m){
   if(MODE==="offline"){MODE="online";localStorage.setItem("aicall_mode","online");refreshModeBtn();setOffline(false);}
-  PEER=m.from;state="live";showCall("Connected");
+  PEER=m.from;state="live";showCall("Connecting…");
   setStatus("LIVE with +"+PEER,"live");
-  const p=await newPC();
-  await p.setRemoteDescription(m.payload);await flushIce();
-  const ans=await p.createAnswer();await p.setLocalDescription(ans);
-  await api("sig",{from:ME,to:PEER,type:"answer",payload:ans});
-  callStart=Date.now();
-  $("callStat").textContent="00:00";
-  await log("picked up — LIVE with +"+PEER);
+  try{
+    const p=await newPC();
+    await p.setRemoteDescription(m.payload);await flushIce();
+    const ans=await p.createAnswer();await p.setLocalDescription(ans);
+    let sent=false;
+    for(let att=0;att<2&&!sent;att++){
+      const r=await api("sig",{from:ME,to:PEER,type:"answer",payload:ans});
+      sent=!!(r&&r.ok);
+    }
+    if(!sent)throw new Error("answer signal not delivered (retry failed)");
+    callStart=Date.now();
+    $("callStat").textContent="00:00";
+    $("callStat").textContent="00:00";$("callStat").previousSibling&&0;
+    showCall("Connected");
+    await log("picked up — LIVE with +"+PEER);
+  }catch(e){
+    await log("PICKUP FAILED: "+(e&&e.message?e.message:String(e)).slice(0,150));
+    toast("Pickup failed — see log");
+    try{await api("sig",{from:ME,to:PEER,type:"bye",payload:{}});}catch(err){}
+    callCleanup();
+    state="idle";
+  }
 }
 function toggleMute(){
   muted=!muted;

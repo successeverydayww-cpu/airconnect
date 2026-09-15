@@ -394,7 +394,7 @@ async function dialOut(num){
         document.getElementById("status").textContent="No answer — call cancelled";
         await log("outbound call to +"+PEER+" unanswered — cancelled");
       }
-    },45000);
+    },75000);
   }catch(e){
     await log("DIAL ERROR: "+e.message);
     if(pc){try{pc.close();}catch(err){}pc=null;}
