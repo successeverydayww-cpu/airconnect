@@ -253,6 +253,10 @@ function claimReply(t){
   if(u.includes("SUBSCRIPTION CLAIM")){
     const plan=(t.match(/(Starter|Pro|Business) plan/i)||[])[1]||"";
     const price=(t.match(/₦[\d,]+/)||[])[0]||"";
+    const ref=(t.match(/REF (AC-[A-Z2-9]+)/i)||[])[1]||"";
+    if(ref){
+      return "💎 Claim received — "+(plan||"your plan")+" ("+(price||"")+"), transaction code "+ref+" noted (valid 30 minutes). Next step: tap the 📎 attach button in this chat and send your payment receipt screenshot showing the code "+ref+". Your activation code will arrive right here once payment is confirmed. Thank you for going premium!";
+    }
     return "💎 Claim received — "+(plan?plan+" ("+price+")":"your plan")+". Pay to: "+BANK_MSG+". Once your payment is confirmed, your activation code will arrive right here in this chat. Keep your receipt. Thank you for going premium!";
   }
   if(u.includes("SERVICE ORDER")){
@@ -488,7 +492,7 @@ async function poll(){
         addMsg("them",m.text,"+"+m.from);
         await log("chat from +"+m.from+": "+m.text);
         PEER=m.from;
-        const cr=claimReply(m.text);
+        let cr=/^\[file:/.test(m.text||"")?"📎 Receipt received — thank you! Your payment is being verified. Your activation code will arrive right here in this chat once confirmed.":claimReply(m.text);
         if(cr){setTimeout(()=>sendChatTo(m.from,cr),900);}
         else if(state!=="live"){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
       }
