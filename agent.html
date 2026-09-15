@@ -242,10 +242,27 @@ function addMsg(who,text,fromName){
   $("chatlog").appendChild(div);
   $("chatlog").scrollTop=99999;
 }
-async function sendChatTo(to){
-  const text=REPLIES[Math.floor(Math.random()*REPLIES.length)];
+async function sendChatTo(to,forced){
+  const text=forced||REPLIES[Math.floor(Math.random()*REPLIES.length)];
   const r=await api("chat",{from:ME,to:to,text:text});
   if(r.ok)addMsg("me",text);
+}
+const BANK_MSG="BANK: Rubies MFB | ACCOUNT NAME: Success Friday | ACCOUNT NUMBER: 8881724009";
+function claimReply(t){
+  const u=t.toUpperCase();
+  if(u.includes("SUBSCRIPTION CLAIM")){
+    const plan=(t.match(/(Starter|Pro|Business) plan/i)||[])[1]||"";
+    const price=(t.match(/₦[\d,]+/)||[])[0]||"";
+    return "💎 Claim received — "+(plan?plan+" ("+price+")":"your plan")+". Pay to: "+BANK_MSG+". Once your payment is confirmed, your activation code will arrive right here in this chat. Keep your receipt. Thank you for going premium!";
+  }
+  if(u.includes("SERVICE ORDER")){
+    const svc=(t.match(/\| ([^|]+?) \(/)||[])[1]||"your service";
+    return "🎬 Order received — "+svc+". I will confirm your details and walk you through delivery right here. Keep your receipt — payment goes to: "+BANK_MSG+".";
+  }
+  if(u.includes("ACTIVATED")){return "🎉 Premium active! If you ever need help, call me or message me right here — I answer 24/7.";}
+  if(/^\s*PAY\b/.test(u)||u.includes("PAYMENT DETAILS")||u.includes("HOW DO I PAY")){return "To subscribe or order: "+BANK_MSG+" — then tap Subscribe in the ⭐ Premium tab and confirm, or reply here with PAID + your plan. Your activation code arrives in this chat.";}
+  if(u.includes(" PAID")){return "👏 Payment noted! Verification takes a moment — your activation code will arrive right here once confirmed. Thank you!";}
+  return null;
 }
 
 async function afterRegister(){
@@ -471,7 +488,9 @@ async function poll(){
         addMsg("them",m.text,"+"+m.from);
         await log("chat from +"+m.from+": "+m.text);
         PEER=m.from;
-        if(state!=="live"){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
+        const cr=claimReply(m.text);
+        if(cr){setTimeout(()=>sendChatTo(m.from,cr),900);}
+        else if(state!=="live"){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
       }
     }
     WIN_FRIENDS=d.friends||[];WIN_NAMES=d.names||{};
