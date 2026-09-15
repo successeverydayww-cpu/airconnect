@@ -17,8 +17,9 @@ const RTC_CFG={iceServers:[
   {urls:"turn:openrelay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
 ]};
 const ME=new URL(location).searchParams.get("num")||localStorage.getItem("guard_num")||"";
-let lastSig="",lastMsg="",pc=null,pendingIce=[],state="idle",curCaller=null;
+let lastSig="",lastMsg="",pc=null,pendingIce=[],state="idle",curCaller=null,pickTimer=null;
 const OFFERS={}; // caller -> {at, n}
+const seenIds={}; // sig ids already processed
 function log(m){const d=$("log");d.textContent+="["+new Date().toISOString().slice(11,19)+"] "+m+"\n";d.scrollTop=99999;
   fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"log",msg:"GUARD "+ME.slice(-4)+": "+m})}).catch(()=>{});}
 function $(id){return document.getElementById(id);}
@@ -101,7 +102,8 @@ setInterval(async()=>{if(!iceOut.length||!pc||state!=="live")return;const batch=
   try{await api("sig",{from:ME,to:curCaller,type:"ice-batch",payload:batch});}catch(e){iceOut=iceOut.concat(batch);}},700);
 async function queueIce(c){pendingIce.push(c);}
 async function flushIce(){while(pendingIce.length&&pc){try{await pc.addIceCandidate(pendingIce.shift());}catch(e){pendingIce.shift();}}}
-function cleanup(){try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingIce=[];iceOut=[];curCaller=null;}
+function cleanup(){try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingIce=[];iceOut=[];curCaller=null;if(pickTimer){clearTimeout(pickTimer);pickTimer=null;}}
+function pruneSeen(){const ks=Object.keys(seenIds);if(ks.length>300)for(const k of ks.slice(0,150))delete seenIds[k];}
 
 /* poll */
 async function poll(){
@@ -112,20 +114,27 @@ async function poll(){
     if(msgs.length)lastSig=msgs[msgs.length-1].id;
     for(const m of msgs){
       if(m.type==="offer"){
+        try{m.payload=typeof m.payload==="string"?JSON.parse(m.payload):m.payload;}catch(e){continue;}
         m.payload=await unzipDesc(m.payload);
+        if(m.payload&&typeof m.payload==="string"){try{m.payload=JSON.parse(m.payload);}catch(e){}}
+        if(!m.payload||!m.payload.type){log("offer unparsable — skip");continue;}
         const now=Date.now();
+        if(seenIds[m.id]){continue;}
+        seenIds[m.id]=1;
         const rec=OFFERS[m.from];
         const freshRec=rec&&now-rec.at<10*60*1000;
         if(!freshRec){
           OFFERS[m.from]={at:now,n:1};
           log("1st offer from +"+m.from+" — letting the human pick");
         }else{
-          OFFERS[m.from]={at:now,n:rec.n+1};
-          if(state!=="live"&&!pc){
+          OFFERS[m.from]={at:now,n:(rec.n||1)+1};
+          if(state!=="live"&&!pc&&!pickTimer){
             log("2nd offer from +"+m.from+" — AI picks in 12s");
-            setTimeout(async()=>{
+            const offer=m;
+            pickTimer=setTimeout(async()=>{
+              pickTimer=null;
               if(state!=="live"&&!pc){
-                try{await answer(m);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
+                try{await answer(offer);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
               }
             },12000);
           }
@@ -140,6 +149,7 @@ async function poll(){
       log("accepted friend request from +"+r.from);
     }
     lastMsg=(d.msgs||[]).length?(d.msgs[d.msgs.length-1].id):lastMsg;
+    pruneSeen();
     $("st").textContent="guarding +"+ME+" — watching for 2nd unanswered calls";
   }catch(e){log("poll err: "+(e&&e.message||e));}
   setTimeout(poll,state==="live"?1500:6000);
