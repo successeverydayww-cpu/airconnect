@@ -478,11 +478,22 @@ async function newPC(){
   pc.ontrack=e=>{
     if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("receiving video");}
     else{
-      const ctx=regCtx(new AudioContext());
-      const src=ctx.createMediaStreamSource(e.streams[0]);
-      rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
-      src.connect(ctx.destination);
-      log("receiving +"+PEER+"'s audio");
+      // Play via a real <audio> element -> routes to loudspeaker on Android/iOS.
+      // (Raw AudioContext.destination silently routes to the earpiece on many phones.)
+      let ael=$("remotea");
+      if(!ael){ael=document.createElement("audio");ael.id="remotea";ael.autoplay=true;ael.playsInline=true;ael.setAttribute("playsinline","");document.body.appendChild(ael);}
+      ael.srcObject=e.streams[0];
+      ael.volume=1.0;
+      try{if(ael.setSinkId)ael.setSinkId("");}catch(err){}
+      const playIt=()=>ael.play().catch(()=>{setTimeout(playIt,300);});
+      playIt();
+      // Keep an analyser tap (metering only) — NOT connected to destination, so no double playback.
+      try{
+        const ctx=regCtx(new AudioContext());
+        const src=ctx.createMediaStreamSource(e.streams[0]);
+        rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
+      }catch(err){}
+      log("receiving +"+PEER+"'s audio (speaker output)");
     }
   };
   pc.onnegotiationneeded=async()=>{
