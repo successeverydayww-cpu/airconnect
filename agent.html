@@ -62,6 +62,7 @@ const $=id=>document.getElementById(id);
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="";
+let pollFails=0, chatFails=0;
 let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
     aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],
     lastMsg=0, faceStream=null;
@@ -174,7 +175,7 @@ async function chatTick(){
   try{
     const ms=await api("messages",{node:ME,since:lastMsg});
     for(const m of ms){
-      lastMsg=m.id;
+      lastMsg=m.id;chatFails=0;
       if(m.from!==ME){
         addMsg("them",m.text,"+"+m.from);
         await log("chat from +"+m.from+": "+m.text);
@@ -182,8 +183,8 @@ async function chatTick(){
         if(state!=="live"&&Math.random()<1){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
       }
     }
-  }catch(e){}
-  setTimeout(chatTick,1000);
+  }catch(e){chatFails=Math.min(chatFails+1,6);}
+  setTimeout(chatTick,chatFails?Math.min(2000*chatFails,10000):2000);
 }
 async function sendChatTo(to){
   const text=REPLIES[Math.floor(Math.random()*REPLIES.length)];
@@ -214,7 +215,7 @@ async function register(){
       }
       $("flist").textContent="Friends: "+(dd.friends.map(f=>"+"+f.id).join(", ")||"none yet");
     }catch(e){}
-  },2000);
+  },5000);
   setInterval(()=>{
     try{
       const r=meter(rxAnalyser,$("rx"));
@@ -266,7 +267,7 @@ async function poll(){
   try{
     const inbox=await api("inbox",{node:ME,since:lastSig});
     const msgs=inbox.sigs;
-    if(msgs.length)lastSig=msgs[msgs.length-1].at;
+    if(msgs.length)lastSig=msgs[msgs.length-1].at;pollFails=0;
     for(const m of msgs){
       if(m.type==="offer"&&state==="idle"){
         const gate=await api("can_call",{from:m.from,to:ME});
@@ -282,8 +283,8 @@ async function poll(){
       }
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
     }
-  }catch(e){}
-  setTimeout(poll,400);
+  }catch(e){pollFails=Math.min(pollFails+1,6);}
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):900);
 }
 </script>
 </body>

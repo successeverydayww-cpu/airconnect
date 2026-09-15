@@ -81,6 +81,7 @@ const $=id=>document.getElementById(id);
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="";
+let pollFails=0, chatFails=0;
 let ME=null, ME_NAME="", PEER=null, pc=null, mic=null, cam=null, camOn=false,
     rxAnalyser=null, txAnalyser=null, state="idle", pendingIce=[],
     mixOut=null, synthBus=null, synthCtx=null, synthBusy=false, voiceBus=null,
@@ -157,7 +158,7 @@ async function register(){
   armPush();
   poll();
   chatTick();
-  setInterval(friendTick,2000);
+  setInterval(friendTick,5000);
   setInterval(()=>{
     const r=meter(rxAnalyser,$("rx")),t=meter(txAnalyser,$("tx"));
     if(state==="live"&&!synthBusy&&Math.random()<0.3)saySomething();
@@ -203,13 +204,13 @@ async function chatTick(){
   try{
     const ms=await api("messages",{node:ME,since:lastMsg});
     for(const m of ms){
-      lastMsg=m.id;
+      lastMsg=m.id;chatFails=0;
       if(m.from!==ME){
         addMsg("them",m.text,"+"+m.from);
       }
     }
-  }catch(e){}
-  setTimeout(chatTick,1000);
+  }catch(e){chatFails=Math.min(chatFails+1,6);}
+  setTimeout(chatTick,chatFails?Math.min(2000*chatFails,10000):2000);
 }
 
 async function newPC(){
@@ -308,7 +309,7 @@ async function poll(){
   try{
     const inbox=await api("inbox",{node:ME,since:lastSig});
     const msgs=inbox.sigs;
-    if(msgs.length)lastSig=msgs[msgs.length-1].at;
+    if(msgs.length)lastSig=msgs[msgs.length-1].at;pollFails=0;
     for(const m of msgs){
       if(m.type==="offer"&&(state==="idle"||(state==="live"&&pc))){
         if(state==="live"&&pc&&pc.remoteDescription){
@@ -326,8 +327,8 @@ async function poll(){
       else if(m.type==="answer"&&state==="dialing"){await pc.setRemoteDescription(m.payload);await flushIce();state="live";$("end").disabled=false;$("cam").className="cam";await log("call answered by +"+PEER+" — LIVE");}
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
     }
-  }catch(e){}
-  setTimeout(poll,400);
+  }catch(e){pollFails=Math.min(pollFails+1,6);}
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):900);
 }
 
 async function answer(m){
