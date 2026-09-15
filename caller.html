@@ -313,13 +313,14 @@ function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+
 /* ---------------- register / login ---------------- */
 async function register(){
   const name=$("myname").value.trim(),country=$("country").value;
-  const resume=$("oldnum").value.trim()||localStorage.getItem("aicall_id")||"";
+  const resume=$("oldnum").value.trim()||readLoginSync()||"";
   let d=null;
   if(resume){d=await api("register",{id:resume,name:name});if(d&&d.id)await log('resumed my number');}
   if(!d||!d.id){if(!name){toast("Enter your name");return;}d=await api("register",{name:name,country:country});}
   if(!d.id){toast(d.err||"registration failed");return;}
   ME=d.id;ME_NAME=d.name;
-  localStorage.setItem("aicall_id",ME);
+  const savedOK=saveLogin(ME);
+  if(!savedOK)await log("WARNING: browser is blocking login storage — number may not be remembered");
   $("login").className="hide";$("app").className="";
   $("mynum").textContent="+ "+ME;
   restoreChats();
@@ -771,6 +772,24 @@ async function poll(){
 setInterval(tickReqs,4000);
 
 /* ---------------- share ---------------- */
+/* ---- Bulletproof login persistence: localStorage + sessionStorage + cookie + IndexedDB ---- */
+function readLoginCookie(){try{const m=document.cookie.match(/(?:^|;\s*)aicall_id=(\d+)/);return m?m[1]:"";}catch(e){return "";}}
+function readLoginSync(){
+  try{const x=localStorage.getItem("aicall_id");if(x)return x;}catch(e){}
+  try{const x=sessionStorage.getItem("aicall_id");if(x)return x;}catch(e){}
+  return readLoginCookie();
+}
+function idbSet(k,v){try{const r=indexedDB.open("aicall",1);r.onupgradeneeded=()=>{try{r.result.createObjectStore("kv");}catch(e){}};r.onsuccess=()=>{try{r.result.transaction("kv","readwrite").objectStore("kv").put(v,k);}catch(e){}};}catch(e){}}
+function idbGet(k){return new Promise(res=>{try{const r=indexedDB.open("aicall",1);r.onupgradeneeded=()=>{try{r.result.createObjectStore("kv");}catch(e){}};r.onsuccess=()=>{try{const q=r.result.transaction("kv","readonly").objectStore("kv").get(k);q.onsuccess=()=>res(q.result||"");q.onerror=()=>res("");}catch(e){res("");}};r.onerror=()=>res("");}catch(e){res("");}});}
+function saveLogin(num){
+  let saved=false;
+  try{localStorage.setItem("aicall_id",num);saved=localStorage.getItem("aicall_id")===num;}catch(e){}
+  try{sessionStorage.setItem("aicall_id",num);}catch(e){}
+  try{document.cookie="aicall_id="+num+"; max-age=31536000; path=/; SameSite=Lax";}catch(e){}
+  idbSet("me",num);
+  return saved;
+}
+
 /* ---- SDP compression (deflate-raw) to fit platform record limits ---- */
 async function zipDesc(desc){
   try{
@@ -808,7 +827,11 @@ function nativeShare(){
   if(navigator.share){navigator.share({title:'AirConnect',text:'Call me on AirConnect — free voice & video chat. My number: + '+(ME||''),url:link}).catch(()=>{});}
   else copyShare();
 }
-(function(){const id=localStorage.getItem('aicall_id');if(id){setTimeout(()=>{try{register();}catch(e){}},400);}})();
+(async function(){
+  let id=readLoginSync();
+  if(!id){id=await idbGet("me");}
+  if(id){setTimeout(()=>{try{register();}catch(e){}},400);}
+})();
 (function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('friends');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
 </script>
 </body>
