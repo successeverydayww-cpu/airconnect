@@ -490,12 +490,36 @@ function renderBubbles(){
       fetchFileBubble(m,d);
     }else{
       d.className="bub "+(m.who==="me"?"out":(m.who==="sys"?"sys":"in"));
-      d.textContent=m.who==="me"?m.text+" ✓":m.text;
+      renderTextBubble(d,m);
     }
     b.appendChild(d);
   }
   b.scrollTop=999999;
   persistChats();
+}
+function renderTextBubble(d,m){
+  const txt=m.text||"";
+  const urlM=txt.match(/https?:\/\/[^\s<>"']+/);
+  // delivery card: messages with a download link
+  if(urlM&&(m.who!=="me")&&/📦|⬇|download|DELIVERY/i.test(txt)){
+    d.innerHTML="";
+    const card=document.createElement("div");
+    card.style.cssText="background:#0b141a;border:1px solid #2a3942;border-radius:10px;padding:10px;min-width:180px";
+    const title=txt.split(/https?:\/\//)[0].replace(/[|•].*$/,"").trim()||"📦 Delivery for you";
+    const t=document.createElement("div");t.textContent=title;t.style.cssText="font-weight:600;margin-bottom:8px;font-size:13px";
+    card.appendChild(t);
+    const btn=document.createElement("button");btn.textContent="⬇ Download";btn.className="big blue";
+    btn.style.cssText="width:100%;background:#00a884;color:#fff";
+    btn.onclick=()=>window.open(urlM[0],"_blank");
+    card.appendChild(btn);
+    const hint=document.createElement("div");hint.textContent="Tap to download to your phone";hint.style.cssText="font-size:11px;color:#8696a0;margin-top:6px";
+    card.appendChild(hint);
+    d.appendChild(card);
+    return;
+  }
+  // normal text with clickable links
+  const esc2=esc(txt)+(m.who==="me"?" ✓":"");
+  d.innerHTML=esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#53bdeb;text-decoration:underline;word-break:break-all">'+u+"</a>");
 }
 async function fetchFileBubble(m,d){
   try{
@@ -536,7 +560,7 @@ async function fileChosen(fi){
       }
     }else{
       dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f);});
-      if(dataUrl.length>95000){toast("File too large (max ~70KB) — videos need the storage upgrade");chatBusy=false;return;}
+      if(dataUrl.length>95000){toast("File too large for direct chat — send it as a link instead");chatBusy=false;return;}
     }
     const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:dataUrl});
     if(r&&r.ok){
