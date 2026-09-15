@@ -250,7 +250,7 @@ const RTC_CFG={iceServers:[
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null;
-let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,mixCtx=null,
+let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,mixCtx=null,incomingAt=0,dialAt=0,
     rxAnalyser=null,txAnalyser=null,voiceBus=null,state="idle",pendingIce=[],iceOut=[],
     pendingOffer=null,callTimer=null,callStart=0,chatBusy=false;
 const ACX=[];
@@ -574,7 +574,7 @@ async function dial(p){
     PEER=p;
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
-  state="dialing";showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
+  state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
   startRing("dial");
   await log("dialing +"+PEER+" (friends verified)");
   const pr=await newPC();
@@ -683,6 +683,16 @@ function tick(){
   }
 }
 
+
+/* ---- Auto-end watchdog (directive: every call ends automatically on hangup) ---- */
+setInterval(()=>{
+  try{
+    const now=Date.now();
+    if(state==="incoming"&&incomingAt&&now-incomingAt>60000){log("auto-end: incoming ring timed out (missed call)");callCleanup();toast("Missed call");}
+    if(state==="live"&&!pc){log("auto-end: dead call link cleaned");callCleanup();toast("Call ended");}
+    if(state==="dialing"&&dialAt&&now-dialAt>75000){log("auto-end: no answer timeout");hangup(true);toast("No answer");}
+  }catch(e){}
+},5000);
 /* ---------------- friend requests ---------------- */
 async function sendRequest(){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
@@ -729,7 +739,7 @@ async function poll(){
         if(state==="idle"){
           const gate=await api("can_call",{from:m.from,to:ME});
           if(!gate.ok){await log("BLOCKED call from +"+m.from);continue;}
-          pendingOffer=m;state="incoming";
+          pendingOffer=m;state="incoming";incomingAt=Date.now();
           const n=(WIN_NAMES[m.from]||"Caller")+" · +"+m.from;
           $("incName").textContent=n;
           $("incAv").textContent=n.charAt(0).toUpperCase();
