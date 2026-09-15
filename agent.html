@@ -189,13 +189,7 @@ async function sendChatTo(to){
   if(r.ok)addMsg("me",text);
 }
 
-async function register(){
-  const name=$("myname").value.trim(), country=$("country").value;
-  if(!name)return;
-  const d=await api("register",{name:name,country:country});
-  if(!d.id)return;
-  ME=d.id; ME_NAME=d.name;
-  localStorage.setItem("aicall_ai_id",ME);
+async function afterRegister(){
   $("login").className="hide";$("main").className="";
   $("mynum").textContent="AI number: +"+ME;
   await log("AI node standing by");
@@ -208,6 +202,21 @@ async function register(){
       $("flist").textContent="Friends: "+(WIN_FRIENDS.map(f=>"+"+f.id).join(", ")||"none yet");
     }catch(e){}
   },5000);
+}
+async function register(){
+  const rid=localStorage.getItem("aicall_ai_id")||"";
+  if(rid){
+    const r=await api("register",{id:rid});
+    if(r&&r.ok){ME=r.id;ME_NAME=r.name;localStorage.setItem("aicall_ai_id",ME);await afterRegister();return;}
+    localStorage.removeItem("aicall_ai_id");
+  }
+  const name=$("myname").value.trim(), country=$("country").value;
+  if(!name)return;
+  const d=await api("register",{name:name,country:country});
+  if(!d.id)return;
+  ME=d.id; ME_NAME=d.name;
+  localStorage.setItem("aicall_ai_id",ME);
+  await afterRegister();
   setInterval(()=>{
     try{
       const r=meter(rxAnalyser,$("rx"));
