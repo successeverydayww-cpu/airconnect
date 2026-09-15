@@ -261,7 +261,7 @@ async function poll(){
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){document.getElementById("status").textContent="Account banned";return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2500);
+      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:4000);
       return;
     }
     const d=d0;
@@ -300,7 +300,7 @@ async function poll(){
     }
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2500);
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:4000);
 }
 </script>
 </body>
