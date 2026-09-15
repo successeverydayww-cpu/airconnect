@@ -174,7 +174,32 @@ footer a{color:#8696a0}
   <div class="bubbles" id="bubbles"></div>
   <div class="cinput">
     <button class="bk" style="background:none;border:0;color:#8696a0;font-size:20px;padding:4px 6px" onclick="pickFile()">📎</button>
-    <input type="file" id="fileinput" class="hide" accept="image/*,application/pdf,.doc,.docx,.txt,.zip,audio/*" onchange="fileChosen()">
+    <input type="file" id="fileinput" class="hide" accept="image/*,application/pdf,.doc,.docx,.txt,.zip,audio/*" onchange="fileChosen(this)">
+    <input type="file" id="caminput" class="hide" accept="image/*" capture="environment" onchange="fileChosen(this)">
+    <input type="file" id="galinput" class="hide" accept="image/*,video/*" onchange="fileChosen(this)">
+    <input type="file" id="docinput" class="hide" accept="application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,audio/*" onchange="fileChosen(this)">
+    <div id="attsheetbg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';"></div>
+    <div id="attsheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#1f2c34;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px 6px;text-align:center">
+        <div onclick="attPick('doc')" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:50%;background:#7f66ff;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
+          <div style="font-size:12px;color:#e9edef">Document</div>
+        </div>
+        <div onclick="attPick('cam')" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:50%;background:#e2445c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📷</div>
+          <div style="font-size:12px;color:#e9edef">Camera</div>
+        </div>
+        <div onclick="attPick('gal')" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:50%;background:#7e57ff;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🖼️</div>
+          <div style="font-size:12px;color:#e9edef">Gallery</div>
+        </div>
+        <div onclick="toast('Contact sharing — coming soon')" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:50%;background:#4a90e2;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>
+          <div style="font-size:12px;color:#e9edef">Contact</div>
+        </div>
+      </div>
+      <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#8696a0;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
+    </div>
     <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()">
     <button id="sendbtn" onclick="sendChat()">➤</button>
   </div>
@@ -399,12 +424,18 @@ async function fetchFileBubble(m,d){
     }else d.textContent="⚠ attachment unavailable";
   }catch(e){d.textContent="⚠ attachment unavailable";}
 }
-function pickFile(){$("fileinput").click();}
-async function fileChosen(){
-  const fi=$("fileinput"),f=fi.files&&fi.files[0];
+function pickFile(){const s=$("attsheet"),bg=$("attsheetbg");const show=s.className.indexOf("hide")>=0;s.className=show?"":"hide";bg.className=show?"":"hide";}
+function attPick(w){$("attsheet").className="hide";$("attsheetbg").className="hide";const map={cam:"caminput",gal:"galinput",doc:"docinput"};const el=$(map[w]);if(el)el.click();}
+async function fileChosen(fi){
+  fi=fi||$("fileinput");
+  const f=fi.files&&fi.files[0];
   fi.value="";
   if(!f||!CHAT_OPEN||chatBusy)return;
   chatBusy=true;
+  if(f.type&&f.type.startsWith("video/")&&f.size>90000){
+    toast("Video is too large for now — photos and documents send perfectly. Full video sharing comes with the storage upgrade.");
+    chatBusy=false;return;
+  }
   try{
     let dataUrl="";
     if(f.type&&f.type.startsWith("image/")){
