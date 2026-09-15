@@ -127,6 +127,49 @@ footer a{color:#8696a0}
     <div id="nocall" class="empty">Friends will appear here with one-tap call buttons.</div>
   </div>
 
+  <div id="view-premium" class="view hide">
+    <div class="card" id="planStatusCard">
+      <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
+      <div id="planStatus" style="font-size:14px;color:#e9edef">Free — human-to-human calls forever free.</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🤖 Premium AI Assistant</div>
+      <div style="font-size:13px;color:#8696a0;margin-bottom:8px">Premium AI answers your calls when you're busy, takes messages, transcribes missed calls, and even calls people on your behalf. Try it free right now — call the AI and talk.</div>
+      <button class="big blue" onclick="callNum('1100000001')">📞 Call Premium AI now</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">💎 Monthly plans</div>
+      <div style="border:1px solid #2a3942;border-radius:10px;padding:10px;margin-bottom:8px">
+        <div style="font-weight:600">Starter — ₦1,500/month</div>
+        <div style="font-size:12px;color:#8696a0">AI answers when busy · takes messages · transcribes missed calls · daily call summary</div>
+        <button class="big blue" style="margin-top:8px" onclick="startPay('Starter','1500')">Subscribe</button>
+      </div>
+      <div style="border:1px solid #2a3942;border-radius:10px;padding:10px;margin-bottom:8px">
+        <div style="font-weight:600">Pro — ₦3,500/month</div>
+        <div style="font-size:12px;color:#8696a0">Everything in Starter · AI calls on your behalf · video voicemail · call recording · 1 personalized AI film monthly</div>
+        <button class="big blue" style="margin-top:8px" onclick="startPay('Pro','3500')">Subscribe</button>
+      </div>
+      <div style="border:1px solid #2a3942;border-radius:10px;padding:10px;margin-bottom:4px">
+        <div style="font-weight:600">Business — ₦10,000/month</div>
+        <div style="font-size:12px;color:#8696a0">Verified business number · AI customer service 24/7 · call analytics</div>
+        <button class="big blue" style="margin-top:8px" onclick="startPay('Business','10000')">Subscribe</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🎬 One-off services (no subscription)</div>
+      <div style="font-size:13px;border-bottom:1px solid #2a3942;padding:8px 0">🎁 Personalized AI Film — birthday & celebration videos with your voice and photos · <b>₦2,000–₦5,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('AI Film','2000-5000')">Order</button></div>
+      <div style="font-size:13px;border-bottom:1px solid #2a3942;padding:8px 0">🎙️ Custom AI Voice — your own AI voice for calls & messages · <b>₦3,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('Custom AI Voice','3000')">Order</button></div>
+      <div style="font-size:13px;padding:8px 0">📝 Transcription Bundle — 10 call/audio transcriptions · <b>₦1,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('Transcription Bundle','1000')">Order</button></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🔑 Activate a plan</div>
+      <div style="font-size:12px;color:#8696a0;margin-bottom:8px">Already paid? Enter the activation code sent to you in chat.</div>
+      <input id="actcode" placeholder="e.g. Starter-9f2b1c7a" style="text-transform:lowercase">
+      <button class="big blue" onclick="activate()">Activate</button>
+    </div>
+    <footer><a href="privacy.html">Privacy Policy</a></footer>
+  </div>
+
   <div id="view-friends" class="view hide">
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
@@ -158,6 +201,7 @@ footer a{color:#8696a0}
     <button id="tab-chats" class="on" onclick="showTab('chats')"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
     <button id="tab-calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
     <button id="tab-friends" onclick="showTab('friends')"><span class="ico">👥</span>Friends</button>
+    <button id="tab-premium" onclick="showTab('premium')"><span class="ico">⭐</span>Premium</button>
   </nav>
 </div>
 
@@ -211,6 +255,7 @@ footer a{color:#8696a0}
     <div class="av" id="callAv">📞</div>
     <div class="cname" id="callName">—</div>
     <div class="cstat" id="callStat">calling…</div>
+    <div id="aiBanner" class="cstat hide" style="color:#e8c468;font-weight:600">⭐ Premium AI is answering — talk to it or leave a message</div>
   </div>
   <div class="vwrap hide" id="vwrap">
     <video id="remotev" autoplay playsinline></video>
@@ -356,8 +401,9 @@ window.addEventListener("popstate",()=>{
 });
 pushHist();
 function showTab(t){
-  for(const v of["chats","calls","friends"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
+  for(const v of["chats","calls","friends","premium"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
   if(t==="chats")UNREAD={},renderUnread();
+  if(t==="premium")renderPlan();
 }
 
 /* ---------------- chats ---------------- */
@@ -510,6 +556,75 @@ async function sendChat(){
   }
 }
 
+
+/* ---------------- premium (v13) ---------------- */
+const AI_NUM="1100000001";
+const ACT_SECRET="acX9-premium-v13";
+const PAY_DETAILS="Send the word PAY to Premium AI in chat to receive current payment details, or pay to the account shared there. Keep your payment receipt.";
+function planLS(){try{return JSON.parse(localStorage.getItem("ac_plan")||"null");}catch(e){return null;}}
+function savePlanLS(p){localStorage.setItem("ac_plan",JSON.stringify(p));}
+async function renderPlan(){
+  const p=planLS(),el=$("planStatus");
+  if(!el)return;
+  if(p&&p.exp&&new Date(p.exp)>new Date()){
+    el.innerHTML="⭐ <b>"+esc(p.plan)+"</b> — active until "+new Date(p.exp).toLocaleDateString()+". Thank you for supporting AirConnect ❤️";
+  }else if(p&&p.pending){
+    el.innerHTML="🕐 <b>"+esc(p.plan)+"</b> — claim sent, awaiting activation. Your code arrives in chat from Premium AI.";
+  }else{
+    el.innerHTML="Free — human-to-human calls forever free. Upgrade below to add the AI to your corner.";
+  }
+}
+function startPay(plan,price){
+  if(MODE==="offline"){toast("Switch Online in the 👥 tab first");return;}
+  if(!confirm("Subscribe to "+plan+" — ₦"+price+"/month?\n\n"+PAY_DETAILS)){return;}
+  sendClaim("SUBSCRIPTION CLAIM",plan+" plan, price ₦"+price, plan);
+}
+function orderService(svc,price){
+  if(MODE==="offline"){toast("Switch Online in the 👥 tab first");return;}
+  const d=prompt("Tell us briefly what you need (e.g. birthday film for Praise, 4 photos):");
+  if(d===null)return;
+  sendClaim("SERVICE ORDER",svc+" (₦"+price+") — "+d, null);
+}
+async function sendClaim(kind,detail,planName){
+  if(!(WIN_FRIENDS||[]).some(f=>f.id===AI_NUM)){
+    if(confirm("You need Premium AI as a friend first. Add it now? (it accepts instantly)")){
+      const r=await api("friend",{from:ME,to:AI_NUM});
+      toast(r&&r.ok?"Request sent — tap Claim again in a few seconds":"Could not send request");
+    }
+    return;
+  }
+  const r=await api("chat",{from:ME,to:AI_NUM,text:"💎 "+kind+" | "+detail+" | from "+(ME_NAME||"friend")+" ("+ME+")"});
+  if(r&&r.ok){
+    if(planName)savePlanLS({plan:planName,pending:true});
+    renderPlan();
+    toast("Claim sent! Activation code arrives in chat from Premium AI");
+  }else{toast("Could not send — check connection");}
+}
+async function sha8(s){
+  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,8);
+}
+async function activate(){
+  const code=($("actcode").value||"").trim();
+  if(!code){toast("Enter the code from chat");return;}
+  const p=planLS();const plan=p&&p.plan;
+  if(!plan){toast("Subscribe first — tap a plan's Subscribe button");}
+  const parts=code.split("-");const kind=parts[0];const h=parts[1]||"";
+  const days=kind==="Business"?30:kind==="Pro"?30:30;
+  const chk=await sha8(ACT_SECRET+"|"+ME+"|"+kind+"|"+days);
+  if(h===chk){
+    const exp=new Date(Date.now()+days*86400000).toISOString();
+    savePlanLS({plan:kind,exp:exp});
+    renderPlan();
+    toast("⭐ "+kind+" activated! Enjoy premium.");
+    try{await api("chat",{from:ME,to:AI_NUM,text:"✅ ACTIVATED "+kind+" until "+exp.slice(0,10)+" — "+ME});}catch(e){}
+  }else{toast("Invalid code — copy it again from chat");}
+}
+async function callNum(n){
+  if(!WIN_FRIENDS.some(f=>f.id===n)){toast("Add "+n+" as a friend first");return;}
+  await dial(n);
+}
+
 /* ---------------- calling ---------------- */
 async function newPC(){
   pc=new RTCPeerConnection(RTC_CFG);
@@ -585,6 +700,7 @@ async function dial(p){
 async function dialVideo(p){camOn=true;await dial(p);}
 function showCall(txt){
   pushHist();
+  $("aiBanner").className=PEER===AI_NUM?"cstat":"cstat hide";
   $("callName").textContent=(WIN_NAMES[PEER]||"+"+PEER);
   $("callAv").textContent=(WIN_NAMES[PEER]||"📞").charAt(0).toUpperCase();
   $("callStat").textContent=txt;
