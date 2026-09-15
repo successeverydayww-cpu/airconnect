@@ -560,7 +560,7 @@ async function sendChat(){
 /* ---------------- premium (v13) ---------------- */
 const AI_NUM="1100000001";
 const ACT_SECRET="acX9-premium-v13";
-const PAY_DETAILS="Send the word PAY to Premium AI in chat to receive current payment details, or pay to the account shared there. Keep your payment receipt.";
+const PAY_DETAILS="\n\nBANK: UBA (United Bank for Africa)\nACCOUNT NAME: SAMUEL UFOT AMOS\nACCOUNT NUMBER: 2317000597\n\nTransfer the exact amount, keep your payment receipt.";
 function planLS(){try{return JSON.parse(localStorage.getItem("ac_plan")||"null");}catch(e){return null;}}
 function savePlanLS(p){localStorage.setItem("ac_plan",JSON.stringify(p));}
 async function renderPlan(){
