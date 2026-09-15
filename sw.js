@@ -53,6 +53,17 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
+  // Pages: NETWORK-FIRST — pull-to-refresh always shows the newest version instantly
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(r => {
+        const cp = r.clone();
+        caches.open('airconnect-v3').then(c => c.put(e.request, cp)).catch(() => {});
+        return r;
+      }).catch(() => caches.match(e.request).then(m => m || caches.match('./caller.html')))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(m => {
       const net = fetch(e.request).then(r => {
