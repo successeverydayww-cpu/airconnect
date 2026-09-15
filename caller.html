@@ -280,6 +280,15 @@ async function register(){
   setInterval(tick,1000);
   renderLists();
 }
+/* ---- Android back button: close overlays, never dump to login ---- */
+function ovlOpen(id){const e=$(id);return e&&!e.classList.contains("hide");}
+function pushHist(){try{history.pushState({ac:1},"");}catch(e){}}
+window.addEventListener("popstate",()=>{
+  if(ovlOpen("incoming")){declineCall();pushHist();return;}
+  if(ovlOpen("callview")){pushHist();return;}          // stay on the call screen
+  if(ovlOpen("chatview")){closeChat();return;}         // back closes chat -> home
+});
+pushHist();
 function showTab(t){
   for(const v of["chats","calls","friends"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
   if(t==="chats")UNREAD={},renderUnread();
@@ -320,6 +329,7 @@ function renderUnread(){
 function esc(s){return String(s).replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function ago(ts){if(!ts)return"";const d=(Date.now()-new Date(ts))/1000;if(d<60)return"now";if(d<3600)return Math.floor(d/60)+"m";if(d<86400)return Math.floor(d/3600)+"h";return Math.floor(d/86400)+"d";}
 function openChat(p){
+  pushHist();
   CHAT_OPEN=p;UNREAD[p]=0;renderUnread();
   const n=(WIN_NAMES[p]||"+"+p);
   $("cvName").textContent=n;$("cvSub").textContent="+ "+p;
@@ -490,12 +500,14 @@ async function dial(p){
 }
 async function dialVideo(p){camOn=true;await dial(p);}
 function showCall(txt){
+  pushHist();
   $("callName").textContent=(WIN_NAMES[PEER]||"+"+PEER);
   $("callAv").textContent=(WIN_NAMES[PEER]||"📞").charAt(0).toUpperCase();
   $("callStat").textContent=txt;
   $("callview").className="ovl";
 }
 function acceptCall(){
+  pushHist();
   const m=pendingOffer;pendingOffer=null;
   $("incoming").className="ovl hide";
   if(!m)return;
