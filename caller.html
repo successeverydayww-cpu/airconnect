@@ -134,6 +134,11 @@ footer a{color:#8696a0}
       <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
     </div>
     <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
+      <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
+      <div id="modehint" style="font-size:12px;color:#8696a0;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
+    </div>
+    <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🔗 Share AirConnect</div>
       <input id="sharelink" readonly>
       <div style="display:flex;gap:8px">
@@ -267,6 +272,7 @@ async function register(){
   $("login").className="hide";$("app").className="";
   $("mynum").textContent="+ "+ME;
   restoreChats();
+  refreshModeBtn();
   refreshShare();
   await log("app ready");
   armPush();poll();
@@ -389,6 +395,15 @@ async function fileChosen(){
 }
 function persistChats(){try{for(const k in CHATS){if(CHATS[k].length>100)CHATS[k]=CHATS[k].slice(-100);}localStorage.setItem("aicall_chats",JSON.stringify(CHATS));}catch(e){}}
 function restoreChats(){try{const x=localStorage.getItem("aicall_chats");if(x)CHATS=JSON.parse(x)||{};}catch(e){}}
+let MODE=localStorage.getItem("aicall_mode")||"online";
+function refreshModeBtn(){const b=$("modeBtn");if(b){b.textContent=MODE==="online"?"🟢 Online":"⚪ Offline";b.className="big "+(MODE==="online"?"blue":"red");}}
+function toggleMode(){
+  MODE=MODE==="online"?"offline":"online";
+  localStorage.setItem("aicall_mode",MODE);
+  refreshModeBtn();
+  if(MODE==="offline"){toast("Offline mode — data paused, app runs from saved data");setOffline(true);}
+  else{toast("Back online — syncing now");setOffline(false);}
+}
 let OFFLINE=false;
 function setOffline(v){if(v!==OFFLINE){OFFLINE=v;$("offbanner").className=v?"":"hide";}}
 window.addEventListener("online",()=>setOffline(false));
@@ -396,7 +411,8 @@ window.addEventListener("offline",()=>setOffline(true));
 setOffline(!navigator.onLine);
 let chatSeq=0;
 async function sendChat(){
-  if(chatBusy)return;
+  if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+    if(chatBusy)return;
   const box=$("chatbox"),t=box.value.trim();
   if(!t||!CHAT_OPEN)return;
   chatBusy=true;$("sendbtn").disabled=true;
@@ -461,7 +477,8 @@ async function newPC(){
   return pc;
 }
 async function dial(p){
-  PEER=p;
+  if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+    PEER=p;
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
@@ -493,6 +510,7 @@ async function declineCall(){
   await log("declined call from +"+(m?m.from:"?"));
 }
 async function answer(m){
+  if(MODE==="offline"){MODE="online";localStorage.setItem("aicall_mode","online");refreshModeBtn();setOffline(false);}
   PEER=m.from;state="live";showCall("Connected");
   setStatus("LIVE with +"+PEER,"live");
   const p=await newPC();
@@ -549,7 +567,8 @@ function tick(){
 
 /* ---------------- friend requests ---------------- */
 async function sendRequest(){
-  const p=$("peer").value.trim();
+  if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+    const p=$("peer").value.trim();
   if(!p){toast("Enter a number");return;}
   const r=await api("friend",{from:ME,to:p});
   if(r&&r.ok){toast(r.note==="already friends"?"Already friends ✓":"Request sent ✓");await log("friend request to +"+p);}
@@ -567,6 +586,7 @@ async function tickReqs(){
 
 /* ---------------- poll ---------------- */
 async function poll(){
+  if(MODE==="offline"){setOffline(true);setTimeout(poll,5000);return;}
   try{
     const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
     if(d0&&(d0.err||d0.banned)){
