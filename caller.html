@@ -326,6 +326,19 @@ async function register(){
   refreshModeBtn();
   refreshShare();
   await log("app ready");
+  (async()=>{
+    try{
+      let mic="n/a",cam="n/a";
+      try{mic=(await navigator.permissions.query({name:'microphone'})).state;}catch(e){}
+      try{cam=(await navigator.permissions.query({name:'camera'})).state;}catch(e){}
+      let acst="n/a";
+      try{const ac=new (window.AudioContext||window.webkitAudioContext)();acst=ac.state;
+        try{await ac.resume();}catch(e){}
+        setTimeout(()=>{try{log("PERMCHECK2 audio-context="+ac.state);}catch(e){acst=ac.state;}try{ac.close();}catch(e){}},1500);
+      }catch(e){}
+      await log("PERMCHECK mic="+mic+" camera="+cam+" audio="+acst+" muted="+muted);
+    }catch(e){}
+  })();
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
   armPush();poll();
   setInterval(flushOutIce,700);
