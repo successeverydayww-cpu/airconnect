@@ -301,6 +301,7 @@ async function register(){
   refreshModeBtn();
   refreshShare();
   await log("app ready");
+  lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
   armPush();poll();
   setInterval(flushOutIce,700);
   setInterval(tick,1000);
