@@ -74,6 +74,12 @@ let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
     aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],iceOut=[],
     lastMsg=0, faceStream=null;
 
+function aiRelease(){
+  try{for(let i=ACX.length-1;i>=0;i--){try{ACX[i].close();}catch(e){}ACX.splice(i,1);}}catch(e){}
+  try{const ae=document.getElementById("remotea");if(ae){ae.pause();ae.srcObject=null;}}catch(e){}
+  try{if(faceStream){faceStream.getTracks().forEach(t=>t.stop());faceStream=null;}}catch(e){}
+}
+
 function urlB64ToUint8Array(b64){
   const pad="=".repeat((4-b64.length%4)%4);
   const base=(b64+pad).replace(/-/g,"+").replace(/_/g,"/");
@@ -394,7 +400,7 @@ async function dialOut(num){
     dialTO=setTimeout(async()=>{
       if(state==="ringing"&&pc){
         try{await sig({to:PEER,type:"bye",payload:{}});}catch(e){}
-        pc.close();pc=null;state="idle";
+        aiRelease();pc.close();pc=null;state="idle";
         document.getElementById("status").textContent="No answer — call cancelled";
         await log("outbound call to +"+PEER+" unanswered — cancelled");
       }
@@ -450,6 +456,7 @@ async function poll(){
         speak();
       }
       else if(m.type==="bye"&&(state==="live"||state==="ringing")){
+        aiRelease();
         if(pc)pc.close();pc=null;state="idle";
         document.getElementById("status").textContent="Call ended by +"+m.from;
         await log("call ended by +"+m.from);

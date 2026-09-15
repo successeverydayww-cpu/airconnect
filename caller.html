@@ -250,7 +250,7 @@ const RTC_CFG={iceServers:[
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null;
-let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,
+let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,mixCtx=null,
     rxAnalyser=null,txAnalyser=null,voiceBus=null,state="idle",pendingIce=[],iceOut=[],
     pendingOffer=null,callTimer=null,callStart=0,chatBusy=false;
 const ACX=[];
@@ -549,7 +549,7 @@ async function newPC(){
       await log("camera renegotiation sent");
     }catch(e){}
   };
-  const ctx=new AudioContext();
+  const ctx=new AudioContext();mixCtx=ctx;
   const mixOut=ctx.createMediaStreamDestination();
   txAnalyser=ctx.createAnalyser();
   voiceBus=ctx.createGain();
@@ -658,7 +658,11 @@ async function toggleCam(){
 }
 function callCleanup(){
   stopRing();
-  if(pc)pc.close();pc=null;state="idle";cam=null;camOn=false;muted=false;pendingOffer=null;
+  if(pc)pc.close();pc=null;state="idle";
+  if(mic){try{mic.getTracks().forEach(t=>t.stop());}catch(e){}mic=null;}
+  if(cam){try{cam.getTracks().forEach(t=>t.stop());}catch(e){}cam=null;}
+  if(mixCtx){try{mixCtx.close();}catch(e){}mixCtx=null;}
+  camOn=false;muted=false;pendingOffer=null;
   if(callTimer){clearInterval(callTimer);callTimer=null;}
   $("callview").className="ovl hide";$("incoming").className="ovl hide";
   $("vwrap").className="vwrap hide";
