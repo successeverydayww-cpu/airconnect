@@ -337,6 +337,10 @@ async function answer(m){
     speak();
   }catch(e){
     await log("ANSWER ERROR: "+e.message);
+    try{if(pc)pc.close();}catch(err){}
+    pc=null;state="idle";
+    try{await sig({to:m.from,type:"bye",payload:{}});}catch(err){}
+    document.getElementById("status").textContent="Call failed — standing by";
   }
 }
 
@@ -414,6 +418,14 @@ async function poll(){
     const msgs=d.sigs||[];
     if(msgs.length)lastSig=msgs[msgs.length-1].at;
     for(const m of msgs){
+      if(m.type==="offer"&&state!=="idle"){
+        const stale=!pc||!pc.remoteDescription||["failed","disconnected","closed"].includes(pc.connectionState);
+        if(stale){
+          try{if(pc)pc.close();}catch(err){}
+          pc=null;state="idle";
+          await log("self-heal: cleared stale "+(typeof pc==="undefined"?"":"call")+" state — accepting new call");
+        }
+      }
       if(m.type==="offer"&&state==="idle"){
         const gate=await api("can_call",{from:m.from,to:ME});
         if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
