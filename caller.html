@@ -684,6 +684,21 @@ function tick(){
 }
 
 
+
+/* ---- Background-tab media guard: if this tab goes hidden while not in a call, release mic/cam so it can never hold Android's mic hostage. ---- */
+let hiddenSince=0;
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    hiddenSince=Date.now();
+    setTimeout(()=>{
+      if(document.hidden&&hiddenSince&&(state==="idle")){
+        if(mic){try{mic.getTracks().forEach(t=>t.stop());}catch(e){}mic=null;}
+        if(cam){try{cam.getTracks().forEach(t=>t.stop());}catch(e){}cam=null;}
+        if(mixCtx){try{mixCtx.close();}catch(e){}mixCtx=null;}
+      }
+    },20000);
+  }else{hiddenSince=0;}
+});
 /* ---- Auto-end watchdog (directive: every call ends automatically on hangup) ---- */
 setInterval(()=>{
   try{
