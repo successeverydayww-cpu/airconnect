@@ -86,6 +86,9 @@ async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Con
 let lastSig="";
 let pollFails=0, chatFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={};
+const ACX=[];
+function regCtx(c){ACX.push(c);try{if(c.state==="suspended")c.resume();}catch(e){}return c;}
+setInterval(()=>{for(const c of ACX){try{if(c.state==="suspended")c.resume();}catch(e){}}},5000);
 let ME=null, ME_NAME="", PEER=null, pc=null, mic=null, cam=null, camOn=false,
     rxAnalyser=null, txAnalyser=null, state="idle", pendingIce=[],
     mixOut=null, synthBus=null, synthCtx=null, synthBusy=false, voiceBus=null,
@@ -222,7 +225,7 @@ async function newPC(){
       $("vwrap").className="vwrap";
       log("receiving video from +"+PEER);
     }else{
-      const ctx=new AudioContext();
+      const ctx=regCtx(new AudioContext());
       const src=ctx.createMediaStreamSource(e.streams[0]);
       rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
       src.connect(ctx.destination);
@@ -332,6 +335,7 @@ async function poll(){
         await log("RING from +"+m.from);await answer(m);
       }
       else if(m.type==="answer"&&state==="dialing"){await pc.setRemoteDescription(m.payload);await flushIce();state="live";$("end").disabled=false;$("cam").className="cam";await log("call answered by +"+PEER+" — LIVE");}
+      else if(m.type==="bye"&&(state==="live"||state==="dialing"||state==="ringing")){callCleanup();await log("call ended by +"+m.from);}
       else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
     }
@@ -352,12 +356,16 @@ async function answer(m){
   setStatus("Call live with +"+PEER,"live");
 }
 
-function hangup(){
+function callCleanup(){
   if(pc)pc.close();pc=null;state="idle";cam=null;camOn=false;
   setStatus("Call ended","");$("dial").disabled=false;$("end").disabled=true;$("cam").className="cam hide";
   $("cam").textContent="🎥 Turn camera ON";
   $("vwrap").className="vwrap hide";
-  $("rx").style.width="0";$("tx").style.width="0";log("call ended");
+  $("rx").style.width="0";$("tx").style.width="0";
+}
+function hangup(){
+  if(pc&&PEER){try{api("sig",{from:ME,to:PEER,type:"bye",payload:{}});}catch(e){}}
+  callCleanup();log("call ended");
 }
 </script>
 </body>

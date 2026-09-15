@@ -67,6 +67,9 @@ async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Con
 let lastSig="";
 let pollFails=0, chatFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={};
+const ACX=[];
+function regCtx(c){ACX.push(c);try{if(c.state==="suspended")c.resume();}catch(e){}return c;}
+setInterval(()=>{for(const c of ACX){try{if(c.state==="suspended")c.resume();}catch(e){}}},5000);
 let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
     aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],
     lastMsg=0, faceStream=null;
@@ -235,7 +238,7 @@ async function answer(m){
     pc.ontrack=e=>{
       if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("seeing +"+PEER+"'s video");}
       else{
-        const ctx=new AudioContext();
+        const ctx=regCtx(new AudioContext());
         const src=ctx.createMediaStreamSource(e.streams[0]);
         rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
         src.connect(ctx.destination);
@@ -244,7 +247,7 @@ async function answer(m){
     };
     await pc.setRemoteDescription(m.payload);await flushIce();
     await new Promise(r=>setTimeout(r,1500)); // let it ring
-    voiceCtx=new AudioContext();
+    voiceCtx=regCtx(new AudioContext());
     aiOut=voiceCtx.createMediaStreamDestination();
     txAnalyser=voiceCtx.createAnalyser();
     voiceBus=voiceCtx.createGain();
@@ -288,6 +291,11 @@ async function poll(){
         const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
         await sig({to:m.from,type:"answer",payload:ans});
         await log("renegotiation answered — video flowing");
+      }
+      else if(m.type==="bye"&&(state==="live"||state==="ringing")){
+        if(pc)pc.close();pc=null;state="idle";
+        document.getElementById("status").textContent="Call ended by +"+m.from;
+        await log("call ended by +"+m.from);
       }
       else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
