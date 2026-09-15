@@ -726,6 +726,7 @@ function nativeShare(){
   if(navigator.share){navigator.share({title:'AirConnect',text:'Call me on AirConnect — free voice & video chat. My number: + '+(ME||''),url:link}).catch(()=>{});}
   else copyShare();
 }
+(function(){const id=localStorage.getItem('aicall_id');if(id){setTimeout(()=>{try{register();}catch(e){}},400);}})();
 (function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('friends');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
 </script>
 </body>
