@@ -221,6 +221,14 @@ async function afterRegister(){
       $("flist").textContent="Friends: "+(WIN_FRIENDS.map(f=>"+"+f.id).join(", ")||"none yet");
     }catch(e){}
   },5000);
+  setInterval(()=>{
+    try{
+      const r=meter(rxAnalyser),t=meter(txAnalyser);
+      if(state==="live"&&Math.random()<0.15)log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));
+      if(state==="live"&&r>0.05&&!speaking)speak();
+    }catch(e){}
+  },1000);
+  setInterval(()=>{ if(state==="live"&&!speaking)speak(); },4000);
 }
 async function register(){
   const rid=localStorage.getItem("aicall_ai_id")||"";
