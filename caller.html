@@ -304,7 +304,14 @@ async function sendRequest(){
 
 async function poll(){
   try{
-    const d=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
+    const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
+    if(d0&&(d0.err||d0.banned)){
+      if(d0.banned){$("stxt").textContent="Account banned");return;}
+      pollFails=Math.min(pollFails+1,6);
+      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2500);
+      return;
+    }
+    const d=d0;
     const msgs=d.sigs||[];
     if(msgs.length)lastSig=msgs[msgs.length-1].at;
     for(const m of msgs){
@@ -330,7 +337,7 @@ async function poll(){
     WIN_FRIENDS=d.friends||[];WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2000);
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2500);
 }
 
 async function answer(m){
