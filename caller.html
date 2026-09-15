@@ -257,6 +257,32 @@ async function flushOutIce(){
 function meter(a,el){if(!a)return 0;const b=new Uint8Array(a.frequencyBinCount);a.getByteTimeDomainData(b);
   let s=0;for(let i=0;i<b.length;i++){const v=(b[i]-128)/128;s+=v*v;}
   const rms=Math.sqrt(s/b.length);el.style.width=Math.min(100,rms*400)+"%";return rms;}
+let ringInt=null,ringCtx=null;
+function stopRing(){
+  if(ringInt){clearInterval(ringInt);ringInt=null;}
+  try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}
+  if(ringCtx){try{ringCtx.close();}catch(e){}ringCtx=null;}
+}
+function startRing(kind){
+  stopRing();
+  const vib=kind==="in"?[600,400,600]:[400,250,400];
+  try{navigator.vibrate&&navigator.vibrate(vib);}catch(e){}
+  try{ringCtx=regCtx(new (window.AudioContext||window.webkitAudioContext)());}catch(e){}
+  const beep=()=>{
+    try{navigator.vibrate&&navigator.vibrate(vib);}catch(e){}
+    if(!ringCtx||ringCtx.state!=="running")return;
+    const t=ringCtx.currentTime;
+    const mk=(dt,freq)=>{
+      const o=ringCtx.createOscillator(),g=ringCtx.createGain();
+      o.frequency.value=freq;o.connect(g);g.connect(ringCtx.destination);
+      g.gain.setValueAtTime(0.11,t+dt);g.gain.setValueAtTime(0.11,t+dt+0.12);g.gain.linearRampToValueAtTime(0,t+dt+0.18);
+      o.start(t+dt);o.stop(t+dt+0.2);
+    };
+    if(kind==="in"){mk(0,780);mk(0.35,780);}else{mk(0,440);mk(0.5,440);}
+  };
+  beep();
+  ringInt=setInterval(beep,2000);
+}
 function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+(cls||"");}
 
 /* ---------------- register / login ---------------- */
@@ -492,6 +518,7 @@ async function dial(p){
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
+  startRing("dial");
   await log("dialing +"+PEER+" (friends verified)");
   const pr=await newPC();
   const offer=await pr.createOffer();await pr.setLocalDescription(offer);
@@ -508,6 +535,7 @@ function showCall(txt){
 }
 function acceptCall(){
   pushHist();
+  stopRing();
   const m=pendingOffer;pendingOffer=null;
   $("incoming").className="ovl hide";
   if(!m)return;
@@ -515,6 +543,7 @@ function acceptCall(){
   try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}
 }
 async function declineCall(){
+  stopRing();
   const m=pendingOffer;pendingOffer=null;
   $("incoming").className="ovl hide";
   if(m&&m.from){try{await api("sig",{from:ME,to:m.from,type:"bye",payload:{}});}catch(e){}}
@@ -556,6 +585,7 @@ async function toggleCam(){
   }catch(e){toast("Camera unavailable");}
 }
 function callCleanup(){
+  stopRing();
   if(pc)pc.close();pc=null;state="idle";cam=null;camOn=false;muted=false;pendingOffer=null;
   if(callTimer){clearInterval(callTimer);callTimer=null;}
   $("callview").className="ovl hide";$("incoming").className="ovl hide";
@@ -628,13 +658,13 @@ async function poll(){
           $("incAv").textContent=n.charAt(0).toUpperCase();
           $("incoming").className="ovl";
           setStatus("Incoming call","ringing");
-          try{navigator.vibrate&&navigator.vibrate([300,200,300]);}catch(e){}
+          startRing("in");
           await log("incoming call from +"+m.from);
         }
       }
       else if(m.type==="answer"&&state==="dialing"){
         await pc.setRemoteDescription(m.payload);await flushIce();
-        state="live";callStart=Date.now();$("callStat").textContent="00:00";
+        state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
         setStatus("LIVE","live");
         await log("call answered by +"+PEER+" — LIVE");
       }
