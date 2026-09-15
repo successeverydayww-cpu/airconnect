@@ -63,6 +63,7 @@ const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="";
 let pollFails=0, chatFails=0;
+let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={};
 let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
     aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],
     lastMsg=0, faceStream=null;
@@ -94,6 +95,14 @@ function meter(a,el){if(!a)return 0;const b=new Uint8Array(a.frequencyBinCount);
   const rms=Math.sqrt(s/b.length);el.style.width=Math.min(100,rms*400)+"%";return rms;}
 async function queueIce(cc){ if(pc&&pc.remoteDescription){try{await pc.addIceCandidate(cc);}catch(e){}} else pendingIce.push(cc); }
 async function flushIce(){ while(pendingIce.length&&pc&&pc.remoteDescription){ try{await pc.addIceCandidate(pendingIce.shift()); }catch(e){} } }
+
+function sendIce(c){iceOut.push(c);}
+async function flushOutIce(){
+  if(!iceOut.length||!PEER)return;
+  const batch=iceOut.splice(0,50);
+  try{ await api("sig",{from:ME,to:PEER,type:"ice-batch",payload:batch}); }
+  catch(e){ iceOut=batch.concat(iceOut); }
+}
 
 // AI video presence: an animated face on canvas, streamed as a real video track
 function startFace(){
@@ -171,21 +180,6 @@ function addMsg(who,text,fromName){
   $("chatlog").appendChild(div);
   $("chatlog").scrollTop=99999;
 }
-async function chatTick(){
-  try{
-    const ms=await api("messages",{node:ME,since:lastMsg});
-    for(const m of ms){
-      lastMsg=m.id;chatFails=0;
-      if(m.from!==ME){
-        addMsg("them",m.text,"+"+m.from);
-        await log("chat from +"+m.from+": "+m.text);
-        PEER=m.from;
-        if(state!=="live"&&Math.random()<1){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
-      }
-    }
-  }catch(e){chatFails=Math.min(chatFails+1,6);}
-  setTimeout(chatTick,chatFails?Math.min(2000*chatFails,10000):2000);
-}
 async function sendChatTo(to){
   const text=REPLIES[Math.floor(Math.random()*REPLIES.length)];
   const r=await api("chat",{from:ME,to:to,text:text});
@@ -205,22 +199,17 @@ async function register(){
   startFace();
   armPush();
   poll();
-  chatTick();
-  setInterval(async()=>{
+  setInterval(flushOutIce,700);
+  setInterval(()=>{
     try{
-      const dd=await api("friends",{node:ME});
-      for(const r of dd.requests){
-        await api("accept",{user:ME,id:r.id});
-        await log("accepted friend request from +"+r.from);
-      }
-      $("flist").textContent="Friends: "+(dd.friends.map(f=>"+"+f.id).join(", ")||"none yet");
+      $("flist").textContent="Friends: "+(WIN_FRIENDS.map(f=>"+"+f.id).join(", ")||"none yet");
     }catch(e){}
   },5000);
   setInterval(()=>{
     try{
       const r=meter(rxAnalyser,$("rx"));
       const t=meter(txAnalyser,$("tx"));
-      if(state==="live"&&Math.random()<0.3){$("meta").textContent="human voice "+(r*100).toFixed(1)+" | AI voice "+(t*100).toFixed(1);log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));}
+      if(state==="live"&&Math.random()<0.15){$("meta").textContent="human voice "+(r*100).toFixed(1)+" | AI voice "+(t*100).toFixed(1);log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));}
       if(state==="live"&&r>0.05&&!speaking){speak();}
     }catch(e){}
   },1000);
@@ -230,7 +219,7 @@ async function answer(m){
   try{
     PEER=m.from;state="ringing";
     pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]});
-    pc.onicecandidate=e=>{if(e.candidate)sig({to:PEER,type:"ice",payload:e.candidate});};
+    pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
     pc.ontrack=e=>{
       if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("seeing +"+PEER+"'s video");}
       else{
@@ -265,9 +254,9 @@ async function answer(m){
 
 async function poll(){
   try{
-    const inbox=await api("inbox",{node:ME,since:lastSig});
-    const msgs=inbox.sigs;
-    if(msgs.length)lastSig=msgs[msgs.length-1].at;pollFails=0;
+    const d=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
+    const msgs=d.sigs||[];
+    if(msgs.length)lastSig=msgs[msgs.length-1].at;
     for(const m of msgs){
       if(m.type==="offer"&&state==="idle"){
         const gate=await api("can_call",{from:m.from,to:ME});
@@ -281,10 +270,27 @@ async function poll(){
         await sig({to:m.from,type:"answer",payload:ans});
         await log("renegotiation answered — video flowing");
       }
+      else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
     }
+    const ms=d.messages||[];
+    for(const m of ms){
+      lastMsg=m.id;
+      if(m.from!==ME){
+        addMsg("them",m.text,"+"+m.from);
+        await log("chat from +"+m.from+": "+m.text);
+        PEER=m.from;
+        if(state!=="live"){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
+      }
+    }
+    WIN_FRIENDS=d.friends||[];WIN_NAMES=d.names||{};
+    for(const r of (d.requests||[])){
+      await api("accept",{user:ME,id:r.id});
+      await log("accepted friend request from +"+r.from);
+    }
+    pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):900);
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2000);
 }
 </script>
 </body>

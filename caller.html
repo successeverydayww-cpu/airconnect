@@ -82,6 +82,7 @@ const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="";
 let pollFails=0, chatFails=0;
+let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={};
 let ME=null, ME_NAME="", PEER=null, pc=null, mic=null, cam=null, camOn=false,
     rxAnalyser=null, txAnalyser=null, state="idle", pendingIce=[],
     mixOut=null, synthBus=null, synthCtx=null, synthBusy=false, voiceBus=null,
@@ -131,6 +132,14 @@ function saySomething(){
 async function log(msg){if(ME)await api("log",{msg:"["+ME_NAME+" "+ME+"] "+msg});}
 async function queueIce(cc){ if(pc&&pc.remoteDescription){try{await pc.addIceCandidate(cc);}catch(e){}} else pendingIce.push(cc); }
 async function flushIce(){ while(pendingIce.length&&pc&&pc.remoteDescription){ try{await pc.addIceCandidate(pendingIce.shift()); }catch(e){} } }
+
+function sendIce(c){iceOut.push(c);}
+async function flushOutIce(){
+  if(!iceOut.length||!PEER)return;
+  const batch=iceOut.splice(0,50);
+  try{ await api("sig",{from:ME,to:PEER,type:"ice-batch",payload:batch}); }
+  catch(e){ iceOut=batch.concat(iceOut); }
+}
 function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+(cls||"");}
 function meter(a,el){if(!a)return 0;const b=new Uint8Array(a.frequencyBinCount);a.getByteTimeDomainData(b);
   let s=0;for(let i=0;i<b.length;i++){const v=(b[i]-128)/128;s+=v*v;}
@@ -157,17 +166,17 @@ async function register(){
   await log("node ready");
   armPush();
   poll();
-  chatTick();
+  setInterval(flushOutIce,700);
   setInterval(friendTick,5000);
   setInterval(()=>{
     const r=meter(rxAnalyser,$("rx")),t=meter(txAnalyser,$("tx"));
     if(state==="live"&&!synthBusy&&Math.random()<0.3)saySomething();
-    if(state==="live"&&Math.random()<0.3){$("meta").textContent="their voice "+(r*100).toFixed(1)+" | your voice "+(t*100).toFixed(1);log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));}
+    if(state==="live"&&Math.random()<0.15){$("meta").textContent="their voice "+(r*100).toFixed(1)+" | your voice "+(t*100).toFixed(1);log("levels rx="+(r*100).toFixed(1)+" tx="+(t*100).toFixed(1));}
   },1000);
 }
 
 async function friendTick(){
-  const d=await api("friends",{node:ME});
+  const d={friends:WIN_FRIENDS,requests:WIN_REQS,names:WIN_NAMES};
   PEER=$("peer").value.trim();
   if(PEER){
     const fr=d.friends.find(f=>f.id===PEER);
@@ -200,22 +209,10 @@ function addMsg(who,text,fromName){
   $("chatlog").appendChild(div);
   $("chatlog").scrollTop=99999;
 }
-async function chatTick(){
-  try{
-    const ms=await api("messages",{node:ME,since:lastMsg});
-    for(const m of ms){
-      lastMsg=m.id;chatFails=0;
-      if(m.from!==ME){
-        addMsg("them",m.text,"+"+m.from);
-      }
-    }
-  }catch(e){chatFails=Math.min(chatFails+1,6);}
-  setTimeout(chatTick,chatFails?Math.min(2000*chatFails,10000):2000);
-}
 
 async function newPC(){
   pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]});
-  pc.onicecandidate=e=>{if(e.candidate)api("sig",{from:ME,to:PEER,type:"ice",payload:e.candidate});};
+  pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
   pc.ontrack=e=>{
     if(e.track.kind==="video"){
       $("remotev").srcObject=e.streams[0];
@@ -307,9 +304,9 @@ async function sendRequest(){
 
 async function poll(){
   try{
-    const inbox=await api("inbox",{node:ME,since:lastSig});
-    const msgs=inbox.sigs;
-    if(msgs.length)lastSig=msgs[msgs.length-1].at;pollFails=0;
+    const d=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
+    const msgs=d.sigs||[];
+    if(msgs.length)lastSig=msgs[msgs.length-1].at;
     for(const m of msgs){
       if(m.type==="offer"&&(state==="idle"||(state==="live"&&pc))){
         if(state==="live"&&pc&&pc.remoteDescription){
@@ -325,10 +322,15 @@ async function poll(){
         await log("RING from +"+m.from);await answer(m);
       }
       else if(m.type==="answer"&&state==="dialing"){await pc.setRemoteDescription(m.payload);await flushIce();state="live";$("end").disabled=false;$("cam").className="cam";await log("call answered by +"+PEER+" — LIVE");}
+      else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
     }
+    const ms=d.messages||[];
+    for(const m of ms){lastMsg=m.id;if(m.from!==ME)addMsg("them",m.text,"+"+m.from);}
+    WIN_FRIENDS=d.friends||[];WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
+    pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):900);
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?900:2000);
 }
 
 async function answer(m){
