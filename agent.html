@@ -217,7 +217,7 @@ async function register(){
   if(!name)return;
   const d=await api("register",{name:name,country:country});
   if(!d.id)return;
-  ME=d.id; ME_NAME=d.name;
+  ME=d.id; ME_NAME=d.name; refreshShare();
   localStorage.setItem("aicall_ai_id",ME);
   await afterRegister();
   setInterval(()=>{
@@ -319,7 +319,36 @@ async function poll(){
   }catch(e){pollFails=Math.min(pollFails+1,6);}
   setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?1500:8000);
 }
+
+/* ---------------- Share / invite link ---------------- */
+function buildShareLink(){ return 'https://successeverydayww-cpu.github.io/airconnect/caller.html' + (ME ? '?ref=' + ME : ''); }
+function refreshShare(){ const el=document.getElementById('sharelink'); if(el){ el.value=buildShareLink(); el.title='Your personal invite link'; } }
+function flashShare(msg){ const h=document.getElementById('sharehint'); if(!h)return; h.textContent=msg; setTimeout(()=>{h.textContent='Your invite link carries your number — friends who join can add you in one tap.';},2500); }
+function copyShare(){
+  const el=document.getElementById('sharelink'); el.value=buildShareLink();
+  el.focus(); el.select(); el.setSelectionRange(0,999);
+  let ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){}
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(el.value).then(()=>{}).catch(()=>{}); ok=true; }
+  flashShare(ok?'✅ Link copied — send it to anyone!':'Long-press the link to copy it');
+}
+function nativeShare(){
+  const link=buildShareLink();
+  if(navigator.share){ navigator.share({title:'AirConnect', text:'Call me on AirConnect — free voice & video chat. My number: +' + (ME||'') , url:link}).catch(()=>{}); }
+  else copyShare();
+}
+(function(){ const ref=(new URL(location)).searchParams.get('ref'); if(ref&&/^\d{9,12}$/.test(ref)){ setTimeout(()=>{ const p=document.getElementById('peer'); if(p){p.value=ref;} const h=document.getElementById('sharehint'); if(h){h.textContent='Invited by +' + ref + ' — their number is pre-filled. Register, then add them!';} },400); } })();
+
 </script>
+<div class="card" id="sharebox">
+  <div style="font-weight:600;margin-bottom:8px">🔗 Share AirConnect</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input id="sharelink" readonly style="flex:1;min-width:200px;padding:10px;border-radius:10px;border:1px solid #444;background:#1a1a2e;color:#eee;font-size:13px">
+    <button class="btn" onclick="copyShare()">📋 Copy link</button>
+    <button class="btn" id="sharebtn" onclick="nativeShare()">📤 Share</button>
+  </div>
+  <div id="sharehint" style="font-size:12px;opacity:.7;margin-top:6px">Your invite link carries your number — friends who join can add you in one tap.</div>
+</div>
 <footer style="text-align:center;padding:10px;font-size:12px;opacity:.6"><a href="privacy.html" style="color:inherit">Privacy Policy</a></footer>
 </body>
 </html>
