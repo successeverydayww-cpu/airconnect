@@ -296,6 +296,60 @@ async function answer(m){
   }
 }
 
+let dialTO=null;
+async function dialOut(num){
+  try{
+    if(state!=="idle"){await log("cannot dial — AI busy");return;}
+    const gate=await api("can_call",{from:ME,to:num});
+    if(!gate.ok){await log("cannot call +"+num+" — "+(gate.reason||"not friends"));return;}
+    PEER=num;
+    state="ringing";
+    document.getElementById("status").textContent="Calling +"+PEER+"…";
+    await log("AI placing outbound call to +"+PEER);
+    pc=new RTCPeerConnection(RTC_CFG);
+    pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
+    pc.ontrack=e=>{
+      if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("seeing +"+PEER+"'s video");}
+      else{
+        let ael=$("remotea");
+        if(!ael){ael=document.createElement("audio");ael.id="remotea";ael.autoplay=true;ael.playsInline=true;ael.setAttribute("playsinline","");document.body.appendChild(ael);}
+        ael.srcObject=e.streams[0];ael.volume=1.0;
+        const playIt=()=>ael.play().catch(()=>{setTimeout(playIt,300);});
+        playIt();
+        try{
+          const ctx=regCtx(new AudioContext());
+          const src=ctx.createMediaStreamSource(e.streams[0]);
+          rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
+        }catch(err){}
+        log("hearing +"+PEER+"'s voice through the trunk");
+      }
+    };
+    voiceCtx=regCtx(new AudioContext());
+    aiOut=voiceCtx.createMediaStreamDestination();
+    txAnalyser=voiceCtx.createAnalyser();
+    voiceBus=voiceCtx.createGain();
+    voiceBus.connect(aiOut);
+    voiceBus.connect(txAnalyser);
+    pc.addTrack(aiOut.stream.getAudioTracks()[0],aiOut.stream);
+    if(faceStream){for(const vt of faceStream.getVideoTracks())pc.addTrack(vt,faceStream);}
+    const off=await pc.createOffer();
+    await pc.setLocalDescription(off);
+    await sig({to:PEER,type:"offer",payload:off});
+    await log("ringing +"+PEER+" — waiting for pickup");
+    dialTO=setTimeout(async()=>{
+      if(state==="ringing"&&pc){
+        try{await sig({to:PEER,type:"bye"});}catch(e){}
+        pc.close();pc=null;state="idle";
+        document.getElementById("status").textContent="No answer — call cancelled";
+        await log("outbound call to +"+PEER+" unanswered — cancelled");
+      }
+    },45000);
+  }catch(e){
+    await log("DIAL ERROR: "+e.message);
+    if(pc){try{pc.close();}catch(err){}pc=null;}
+    state="idle";
+  }
+}
 async function poll(){
   try{
     const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
@@ -320,6 +374,15 @@ async function poll(){
         const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
         await sig({to:m.from,type:"answer",payload:ans});
         await log("renegotiation answered — video flowing");
+      }
+      else if(m.type==="answer"&&state==="ringing"&&pc&&!pc.remoteDescription){
+        if(m.from!==PEER){continue;}
+        if(dialTO){clearTimeout(dialTO);dialTO=null;}
+        await pc.setRemoteDescription(m.payload);await flushIce();
+        state="live";
+        document.getElementById("status").textContent="📞 LIVE — AI speaking with +"+PEER;
+        await log("outbound call picked up by +"+PEER+" — AI speaking");
+        speak();
       }
       else if(m.type==="bye"&&(state==="live"||state==="ringing")){
         if(pc)pc.close();pc=null;state="idle";
