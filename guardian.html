@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AirConnect Guardian</title>
+<style>body{background:#0a1014;color:#cfd8dc;font-family:system-ui,sans-serif;padding:14px;font-size:13px}
+#log{white-space:pre-wrap;background:#0b141a;border:1px solid #2a3942;border-radius:8px;padding:10px;margin-top:10px;max-height:80vh;overflow:auto}</style>
+</head><body>
+<div id="st">guardian booting…</div><div id="log"></div>
+<script>
+const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+const GREET="https://superagent-ccb075d2.base44.app/functions/airconnectGreet";
+const RTC_CFG={iceServers:[
+  {urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
+  {urls:"turn:openrelay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
+  {urls:"turn:openrelay.metered.ca:80?transport=tcp",username:"openrelayproject",credential:"openrelayproject"},
+  {urls:"turn:openrelay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
+  {urls:"turn:openrelay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
+]};
+const ME=new URL(location).searchParams.get("num")||localStorage.getItem("guard_num")||"";
+let lastSig="",lastMsg="",pc=null,pendingIce=[],state="idle",curCaller=null;
+const OFFERS={}; // caller -> {at, n}
+function log(m){const d=$("log");d.textContent+="["+new Date().toISOString().slice(11,19)+"] "+m+"\n";d.scrollTop=99999;
+  fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"log",msg:"GUARD "+ME.slice(-4)+": "+m})}).catch(()=>{});}
+function $(id){return document.getElementById(id);}
+async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+
+/* SDP compression */
+async function zipDesc(desc){try{
+  if(typeof CompressionStream==='undefined')return desc;
+  const cs=new CompressionStream('deflate-raw');
+  const buf=await new Response(new Blob([JSON.stringify(desc)]).stream().pipeThrough(cs)).arrayBuffer();
+  const u8=new Uint8Array(buf);let bin='';for(let i=0;i<u8.length;i++)bin+=String.fromCharCode(u8[i]);
+  return {z:1,d:btoa(bin)};
+}catch(e){return desc;}}
+async function unzipDesc(p){try{
+  if(!p||p.z!==1||!p.d)return p;
+  const ds=new DecompressionStream('deflate-raw');
+  const buf=await new Response(new Blob([Uint8Array.from(atob(p.d),c=>c.charCodeAt(0)).slice().buffer]).stream.pipeThrough(ds)).arrayBuffer();
+  return JSON.parse(new TextDecoder().decode(buf));
+}catch(e){return p;}}
+
+/* TTS via translate.google through allorigins; chunked to <=180 chars */
+let voiceCtx=null,voiceBus=null,speaking=false;
+function ensureAudio(){
+  if(voiceCtx)return true;
+  try{
+    voiceCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});
+    voiceBus=voiceCtx.createMediaStreamDestination();
+    return true;
+  }catch(e){log("audio ctx failed: "+e);return false;}
+}
+async function say(text){
+  if(!ensureAudio()||!voiceCtx)return;
+  while(speaking)await new Promise(r=>setTimeout(r,300));
+  speaking=true;
+  try{
+    const chunks=text.match(/[^.!?]+[.!?]?/g)||[text];
+    for(let ch of chunks){
+      ch=ch.trim().slice(0,180);if(!ch)continue;
+      let buf=null;
+      try{
+        const u="https://api.allorigins.win/raw?url="+encodeURIComponent("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q="+encodeURIComponent(ch));
+        const r=await fetch(u);if(!r.ok)throw 0;buf=await r.arrayBuffer();
+      }catch(e){continue;}
+      try{
+        const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
+        const src=voiceCtx.createBufferSource();src.buffer=decoded;
+        const g=voiceCtx.createGain();g.gain.value=1.0;
+        src.connect(g);g.connect(voiceBus);src.start();
+        await new Promise(res=>{src.onended=res;setTimeout(res,decoded.duration*1000+400);});
+      }catch(e){}
+    }
+  }finally{speaking=false;}
+}
+
+/* answer a call offer as the user's AI assistant */
+async function answer(m){
+  if(!ensureAudio())return;
+  state="live";curCaller=m.from;
+  log("answering 2nd call from +"+m.from);
+  pc=new RTCPeerConnection(RTC_CFG);
+  pc.onicecandidate=e=>{if(e.candidate)queueIceOut(e.candidate);};
+  pc.addTrack(voiceBus.stream.getAudioTracks()[0],voiceBus.stream);
+  await pc.setRemoteDescription(m.payload);await flushIce();
+  const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+  await api("sig",{from:ME,to:m.from,type:"answer",payload:await zipDesc(ans)});
+  pc.onconnectionstatechange=async()=>{
+    if(pc&&pc.connectionState==="connected"){
+      log("LIVE — speaking greeting");
+      let g="";try{const r=await fetch(GREET,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"get",num:ME})});const j=await r.json();g=j.text||"";}catch(e){}
+      if(!g)g="Hello! You have reached my AI assistant. I cannot take your call right now, but please leave a message and I will get back to you very soon. Thank you!";
+      await say(g);
+      await say("You can leave your message now.");
+    }
+    if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected"||pc.connectionState==="closed")){cleanup();}
+  };
+}
+let iceOut=[];
+async function queueIceOut(c){iceOut.push(c);}
+setInterval(async()=>{if(!iceOut.length||!pc||state!=="live")return;const batch=iceOut;iceOut=[];
+  try{await api("sig",{from:ME,to:curCaller,type:"ice-batch",payload:batch});}catch(e){iceOut=iceOut.concat(batch);}},700);
+async function queueIce(c){pendingIce.push(c);}
+async function flushIce(){while(pendingIce.length&&pc){try{await pc.addIceCandidate(pendingIce.shift());}catch(e){pendingIce.shift();}}}
+function cleanup(){try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingIce=[];iceOut=[];curCaller=null;}
+
+/* poll */
+async function poll(){
+  try{
+    const d=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
+    if(d.err){$("st").textContent="err: "+d.err;setTimeout(poll,5000);return;}
+    const msgs=d.sigs||[];
+    if(msgs.length)lastSig=msgs[msgs.length-1].id;
+    for(const m of msgs){
+      if(m.type==="offer"){
+        m.payload=await unzipDesc(m.payload);
+        const now=Date.now();
+        const rec=OFFERS[m.from];
+        const freshRec=rec&&now-rec.at<10*60*1000;
+        if(!freshRec){
+          OFFERS[m.from]={at:now,n:1};
+          log("1st offer from +"+m.from+" — letting the human pick");
+        }else{
+          OFFERS[m.from]={at:now,n:rec.n+1};
+          if(state!=="live"&&!pc){
+            log("2nd offer from +"+m.from+" — AI picks in 12s");
+            setTimeout(async()=>{
+              if(state!=="live"&&!pc){
+                try{await answer(m);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
+              }
+            },12000);
+          }
+        }
+      }
+      else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+      else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
+      else if(m.type==="bye"){if(state==="live"||pc){log("caller +"+m.from+" ended call");cleanup();}}
+    }
+    for(const r of (d.requests||[])){
+      await api("accept",{user:ME,id:r.id});
+      log("accepted friend request from +"+r.from);
+    }
+    lastMsg=(d.msgs||[]).length?(d.msgs[d.msgs.length-1].id):lastMsg;
+    $("st").textContent="guarding +"+ME+" — watching for 2nd unanswered calls";
+  }catch(e){log("poll err: "+(e&&e.message||e));}
+  setTimeout(poll,state==="live"?1500:6000);
+}
+/* boot */
+(async()=>{
+  if(!ME){$("st").textContent="no num param";return;}
+  const r=await api("register",{id:ME});
+  if(!r||!r.ok){$("st").textContent="register failed: "+(r&&r.err);return;}
+  log("guardian online for +"+ME+" ("+r.name+")");
+  lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
+  poll();
+})();
+</script>
+</body></html>

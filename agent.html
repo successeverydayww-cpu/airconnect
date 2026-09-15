@@ -248,7 +248,8 @@ async function sendChatTo(to,forced){
   if(r.ok)addMsg("me",text);
 }
 const BANK_MSG="BANK: Rubies MFB | ACCOUNT NAME: Success Friday | ACCOUNT NUMBER: 8881724009";
-function claimReply(t){
+function claimReply(t,sender){
+  let ME_SAVED=sender||"";
   const u=t.toUpperCase();
   if(u.includes("SUBSCRIPTION CLAIM")){
     const plan=(t.match(/(Starter|Pro|Business) plan/i)||[])[1]||"";
@@ -266,6 +267,12 @@ function claimReply(t){
   if(u.includes("ACTIVATED")){return "🎉 Premium active! If you ever need help, call me or message me right here — I answer 24/7.";}
   if(/^\s*PAY\b/.test(u)||u.includes("PAYMENT DETAILS")||u.includes("HOW DO I PAY")){return "To subscribe or order: "+BANK_MSG+" — then tap Subscribe in the ⭐ Premium tab and confirm, or reply here with PAID + your plan. Your activation code arrives in this chat.";}
   if(u.includes(" PAID")){return "👏 Payment noted! Verification takes a moment — your activation code will arrive right here once confirmed. Thank you!";}
+  if(/^\s*GREETING\s*:/i.test(t)){
+    const gt=t.replace(/^\s*GREETING\s*:/i,"").trim().slice(0,490);
+    if(gt.length<5)return "Almost! Type it like this: GREETING: (what your AI should say when it answers calls for you)";
+    fetch("https://superagent-ccb075d2.base44.app/functions/airconnectGreet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"set",num:sender||ME,text:gt})}).catch(()=>{});
+    return "🎙️ Greeting saved! When someone calls you and you can't pick, call them back once more — on the second ring your personal AI answers and says: \""+gt+"\". You can change it anytime by sending GREETING: followed by your new words.";
+  }
   return null;
 }
 
@@ -492,7 +499,7 @@ async function poll(){
         addMsg("them",m.text,"+"+m.from);
         await log("chat from +"+m.from+": "+m.text);
         PEER=m.from;
-        let cr=/^\[file:/.test(m.text||"")?"📎 Receipt received — thank you! Your payment is being verified. Your activation code will arrive right here in this chat once confirmed.":claimReply(m.text);
+        let cr=/^\[file:/.test(m.text||"")?"📎 Receipt received — thank you! Your payment is being verified. Your activation code will arrive right here in this chat once confirmed.":claimReply(m.text,m.from);
         if(cr){setTimeout(()=>sendChatTo(m.from,cr),900);}
         else if(state!=="live"){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
       }

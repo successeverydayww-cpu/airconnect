@@ -62,8 +62,23 @@ button.big.blue{background:#005c4b;color:#fff}
 #callview .top{padding:24px;text-align:center}
 #callview .cname{font-size:22px;font-weight:600;margin-top:14px}
 #callview .cstat{color:#8696a0;margin-top:6px;font-size:14px}
-.vwrap{margin:0 12px;border-radius:12px;overflow:hidden;background:#000;position:relative;max-height:44vh}
-.vwrap video{width:100%;display:block;max-height:44vh}
+.vwrap{margin:0;border-radius:0;overflow:hidden;background:#000;position:absolute;inset:0;z-index:1}
+.vwrap video{position:absolute;object-fit:cover;display:block;background:#000}
+/* ringing (outbound): own camera full screen, remote hidden */
+.vwrap.ring #localv{inset:0;width:100%;height:100%}
+.vwrap.ring #remotev{display:none}
+/* live: remote full screen, local small window top-right */
+.vwrap.live #remotev{inset:0;width:100%;height:100%}
+.vwrap.live #localv{top:66px;right:12px;width:27%;height:auto;max-height:32vh;border-radius:12px;border:2px solid rgba(255,255,255,.35);z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.vwrap.live.nocam #localv{display:none}
+/* swapped: local full screen, remote small window */
+.vwrap.swap #localv{inset:0;width:100%;height:100%}
+.vwrap.swap #remotev{top:66px;right:12px;width:27%;height:auto;max-height:32vh;border-radius:12px;border:2px solid rgba(255,255,255,.35);z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.vwrap.swap.nocam #remotev{display:none}
+#callview .top{position:absolute;top:0;left:0;right:0;z-index:10;background:linear-gradient(rgba(0,0,0,.55),transparent);margin:0;border-radius:0}
+#callview .cctl{position:absolute;bottom:26px;left:0;right:0;z-index:10}
+#callview .meters{position:absolute;bottom:110px;left:0;right:0;z-index:10;background:none}
+#callview .cstat{color:#cfd8dc}
 #localv{position:absolute;right:8px;bottom:8px;width:28%;border:2px solid #00a884;border-radius:8px}
 .cctl{position:fixed;bottom:0;left:0;right:0;padding:18px 10px 30px;display:flex;justify-content:center;gap:22px;background:linear-gradient(transparent,#0b141a 40%)}
 .cbtn{border:0;border-radius:50%;width:58px;height:58px;font-size:22px;cursor:pointer;color:#fff;background:#2a3942}
@@ -713,7 +728,7 @@ async function newPC(){
     }
   };
   pc.ontrack=e=>{
-    if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("receiving video");}
+    if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];setVLayout("live");log("receiving video");}
     else{
       // Play via a real <audio> element -> routes to loudspeaker on Android/iOS.
       // (Raw AudioContext.destination silently routes to the earpiece on many phones.)
@@ -761,12 +776,20 @@ async function newPC(){
   }
   return pc;
 }
+function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
+  const w=$("vwrap");
+  if(stage==="off"){w.className="vwrap hide";return;}
+  w.className="vwrap "+stage+(cam?"":" nocam");
+}
 async function dial(p){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
     PEER=p;
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
+  if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){}}
+  if(camOn&&!cam){try{cam=await navigator.mediaDevices.getUserMedia({video:true});}catch(e){cam=null;}}
+  if(cam){$("localv").srcObject=cam;setVLayout("ring");}
   startRing("dial");
   await log("dialing +"+PEER+" (friends verified)");
   const pr=await newPC();
@@ -775,6 +798,14 @@ async function dial(p){
   $("callStat").textContent="Ringing…";setStatus("Ringing +"+PEER,"ringing");
 }
 async function dialVideo(p){camOn=true;await dial(p);}
+document.addEventListener("click",e=>{
+  const w=$("vwrap");
+  if(!w||w.className.includes("hide"))return;
+  const cls=w.className;
+  if(e.target===$("localv")&&cls.includes("live")){setVLayout("swap");toast("Your video full screen");}
+  else if(e.target===$("localv")&&cls.includes("swap")){setVLayout("live");}
+  else if(e.target===$("remotev")&&cls.includes("swap")){setVLayout("live");toast("Their video full screen");}
+});
 function showCall(txt){
   pushHist();
   $("aiBanner").className=PEER===AI_NUM?"cstat":"cstat hide";
@@ -837,14 +868,14 @@ async function toggleCam(){
   try{
     if(camOn&&cam){
       for(const vt of cam.getVideoTracks()){const snd=pc.getSenders().find(s=>s.track===vt);if(snd)await snd.replaceTrack(null);vt.stop();}
-      cam=null;camOn=false;$("vwrap").className="vwrap hide";$("camBtn").textContent="🎥";
+      cam=null;camOn=false;setVLayout("off");$("camBtn").textContent="🎥";
       await log("camera OFF");
     }else{
       cam=await navigator.mediaDevices.getUserMedia({video:true});
       const vtr=pc.getSenders().find(s=>s.track&&s.track.kind==="video");
       if(vtr)await vtr.replaceTrack(cam.getVideoTracks()[0]);
       else for(const vt of cam.getVideoTracks())pc.addTrack(vt,cam);
-      $("localv").srcObject=cam;$("vwrap").className="vwrap";camOn=true;
+      $("localv").srcObject=cam;camOn=true;setVLayout(state==="live"&&$("remotev").srcObject?"live":"ring");
       await log("camera ON mid-call");
     }
   }catch(e){toast("Camera unavailable");}
@@ -858,7 +889,7 @@ function callCleanup(){
   camOn=false;muted=false;pendingOffer=null;
   if(callTimer){clearInterval(callTimer);callTimer=null;}
   $("callview").className="ovl hide";$("incoming").className="ovl hide";
-  $("vwrap").className="vwrap hide";
+  setVLayout("off");
   $("rx").style.width="0";$("tx").style.width="0";
   $("muteBtn").className="cbtn";$("muteBtn").textContent="🎙️";
   setStatus("Ready","");
