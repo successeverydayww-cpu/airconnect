@@ -508,12 +508,15 @@ function renderTextBubble(d,m){
     const title=txt.split(/https?:\/\//)[0].replace(/[|•].*$/,"").trim()||"📦 Delivery for you";
     const t=document.createElement("div");t.textContent=title;t.style.cssText="font-weight:600;margin-bottom:8px;font-size:13px";
     card.appendChild(t);
-    const btn=document.createElement("button");btn.textContent="⬇ Download";btn.className="big blue";
-    btn.style.cssText="width:100%;background:#00a884;color:#fff";
-    btn.onclick=()=>window.open(urlM[0],"_blank");
-    card.appendChild(btn);
-    const hint=document.createElement("div");hint.textContent="Tap to download to your phone";hint.style.cssText="font-size:11px;color:#8696a0;margin-top:6px";
+    const a=document.createElement("a");a.href=urlM[0];a.target="_blank";a.rel="noopener";
+    a.textContent="⬇ Download";a.className="big blue";
+    a.style.cssText="display:block;width:100%;background:#00a884;color:#fff;text-align:center;text-decoration:none;box-sizing:border-box";
+    card.appendChild(a);
+    const hint=document.createElement("div");hint.textContent="Tap Download — it opens in your browser and saves to your phone. If nothing opens, long-press to copy the link below.";
+    hint.style.cssText="font-size:11px;color:#8696a0;margin-top:6px";
     card.appendChild(hint);
+    const raw=document.createElement("div");raw.textContent=urlM[0];raw.style.cssText="font-size:10px;color:#66787f;word-break:break-all;margin-top:6px";
+    card.appendChild(raw);
     d.appendChild(card);
     return;
   }
