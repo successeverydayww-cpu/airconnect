@@ -730,7 +730,7 @@ async function poll(){
           const gate=await api("can_call",{from:m.from,to:ME});
           if(!gate.ok){await log("BLOCKED call from +"+m.from);continue;}
           pendingOffer=m;state="incoming";
-          const n=WIN_NAMES[m.from]||"+"+m.from;
+          const n=(WIN_NAMES[m.from]||"Caller")+" · +"+m.from;
           $("incName").textContent=n;
           $("incAv").textContent=n.charAt(0).toUpperCase();
           $("incoming").className="ovl";
