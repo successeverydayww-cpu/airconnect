@@ -212,6 +212,8 @@ async function afterRegister(){
   await log("AI node standing by");
   startFace();
   armPush();
+  lastSig=new Date().toISOString();
+  lastMsg=new Date().toISOString();
   poll();
   setInterval(flushOutIce,700);
   setInterval(()=>{
