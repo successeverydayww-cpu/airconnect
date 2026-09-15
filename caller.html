@@ -111,6 +111,7 @@ footer a{color:#8696a0}
 </div>
 
 <div id="app" class="hide">
+  <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
   <div class="hdr">
     <div>🛰️ AirConnect <span class="sub" id="mynum"></span></div>
     <div><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#e9edef">Ready</span></div>
@@ -160,9 +161,15 @@ footer a{color:#8696a0}
   <div class="ohdr">
     <button class="bk" onclick="closeChat()">‹</button>
     <div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div>
+    <div style="margin-left:auto;display:flex;gap:4px">
+      <button class="bk" onclick="if(CHAT_OPEN)dial(CHAT_OPEN)">📞</button>
+      <button class="bk" onclick="if(CHAT_OPEN)dialVideo(CHAT_OPEN)">🎥</button>
+    </div>
   </div>
   <div class="bubbles" id="bubbles"></div>
   <div class="cinput">
+    <button class="bk" style="background:none;border:0;color:#8696a0;font-size:20px;padding:4px 6px" onclick="pickFile()">📎</button>
+    <input type="file" id="fileinput" class="hide" accept="image/*,application/pdf,.doc,.docx,.txt,.zip,audio/*" onchange="fileChosen()">
     <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()">
     <button id="sendbtn" onclick="sendChat()">➤</button>
   </div>
@@ -259,6 +266,7 @@ async function register(){
   localStorage.setItem("aicall_id",ME);
   $("login").className="hide";$("app").className="";
   $("mynum").textContent="+ "+ME;
+  restoreChats();
   refreshShare();
   await log("app ready");
   armPush();poll();
@@ -276,16 +284,17 @@ function lastOf(p){const c=CHATS[p];return c&&c.length?c[c.length-1]:null;}
 function renderLists(){
   const fr=WIN_FRIENDS;
   const cl=$("chatlist");cl.innerHTML="";
-  const withChats=fr.filter(f=>CHATS[f.id]&&CHATS[f.id].length);
-  withChats.sort((a,b)=>{const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
-  for(const f of withChats){
+  const allFr=fr.slice();
+  allFr.sort((a,b)=>{const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
+  for(const f of allFr){
     const n=(WIN_NAMES[f.id]||"friend"),l=lastOf(f.id);
+    const prev=l?(l.img?"📷 Photo":(l.fileId?"📎 Attachment":esc(l.text).slice(0,40))):"Tap to message";
     const row=document.createElement("div");row.className="row";
-    row.innerHTML='<div class="av">'+n.charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+(l?esc(l.text).slice(0,40):"")+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
+    row.innerHTML='<div class="av">'+n.charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
     row.onclick=()=>openChat(f.id);
     cl.appendChild(row);
   }
-  $("nochat").className=withChats.length?"empty hide":"empty";
+  $("nochat").className=allFr.length?"empty hide":"empty";
   const ll=$("calllist");ll.innerHTML="";
   for(const f of fr){
     const n=(WIN_NAMES[f.id]||"friend");
@@ -295,7 +304,7 @@ function renderLists(){
   }
   $("nocall").className=fr.length?"empty hide":"empty";
   const fl=$("flist");
-  fl.innerHTML=fr.length?fr.map(f=>'✅ '+(WIN_NAMES[f.id]||"?")+' — + '+f.id).join("<br>"):'No friends yet — send a request above.';
+  fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
   renderUnread();
 }
 function renderUnread(){
@@ -318,12 +327,73 @@ function renderBubbles(){
   const list=CHATS[CHAT_OPEN]||[];
   for(const m of list){
     const d=document.createElement("div");
-    d.className="bub "+(m.who==="me"?"out":(m.who==="sys"?"sys":"in"));
-    d.textContent=m.who==="me"?m.text+" ✓":m.text;
+    if(m.img){
+      d.className="bub out";
+      const im=document.createElement("img");im.src=m.img;im.style.cssText="max-width:100%;border-radius:6px;display:block";
+      im.onclick=()=>window.open(m.img);
+      d.appendChild(im);
+    }else if(m.fileId){
+      d.className="bub in";d.textContent="📎 loading attachment…";
+      fetchFileBubble(m,d);
+    }else{
+      d.className="bub "+(m.who==="me"?"out":(m.who==="sys"?"sys":"in"));
+      d.textContent=m.who==="me"?m.text+" ✓":m.text;
+    }
     b.appendChild(d);
   }
   b.scrollTop=999999;
+  persistChats();
 }
+async function fetchFileBubble(m,d){
+  try{
+    const r=await api("fetchfile",{id:m.fileId,user:ME});
+    if(r&&r.text&&String(r.text).startsWith("data:image/")){
+      d.textContent="";const im=document.createElement("img");im.src=r.text;im.style.cssText="max-width:100%;border-radius:6px;display:block";
+      im.onclick=()=>window.open(r.text);d.appendChild(im);
+    }else if(r&&r.text){
+      d.textContent="";const a=document.createElement("a");a.href=r.text;a.download="attachment";a.textContent="⬇ Download attachment";a.style.color="#53bdeb";
+      d.appendChild(a);
+    }else d.textContent="⚠ attachment unavailable";
+  }catch(e){d.textContent="⚠ attachment unavailable";}
+}
+function pickFile(){$("fileinput").click();}
+async function fileChosen(){
+  const fi=$("fileinput"),f=fi.files&&fi.files[0];
+  fi.value="";
+  if(!f||!CHAT_OPEN||chatBusy)return;
+  chatBusy=true;
+  try{
+    let dataUrl="";
+    if(f.type&&f.type.startsWith("image/")){
+      const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(f);});
+      const cv=document.createElement("canvas");
+      cv.width=Math.max(1,img.width);cv.height=Math.max(1,img.height);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      dataUrl=cv.toDataURL("image/jpeg",0.62);
+      while(dataUrl.length>95000){
+        cv.width=Math.max(1,Math.round(cv.width*0.8));cv.height=Math.max(1,Math.round(cv.height*0.8));
+        cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+        dataUrl=cv.toDataURL("image/jpeg",0.5);
+      }
+    }else{
+      dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f);});
+      if(dataUrl.length>95000){toast("File too large (max ~70KB) — videos need the storage upgrade");chatBusy=false;return;}
+    }
+    const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:dataUrl});
+    if(r&&r.ok){
+      (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",img:dataUrl,ts:new Date().toISOString()});
+      renderBubbles();
+    }else toast("Send failed — "+((r&&r.err)||"check connection"));
+  }catch(e){toast("Could not read file");}
+  chatBusy=false;
+}
+function persistChats(){try{for(const k in CHATS){if(CHATS[k].length>100)CHATS[k]=CHATS[k].slice(-100);}localStorage.setItem("aicall_chats",JSON.stringify(CHATS));}catch(e){}}
+function restoreChats(){try{const x=localStorage.getItem("aicall_chats");if(x)CHATS=JSON.parse(x)||{};}catch(e){}}
+let OFFLINE=false;
+function setOffline(v){if(v!==OFFLINE){OFFLINE=v;$("offbanner").className=v?"":"hide";}}
+window.addEventListener("online",()=>setOffline(false));
+window.addEventListener("offline",()=>setOffline(true));
+setOffline(!navigator.onLine);
 let chatSeq=0;
 async function sendChat(){
   if(chatBusy)return;
@@ -502,7 +572,7 @@ async function poll(){
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){toast("Account banned");return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:8000);
+      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(CHAT_OPEN?1200:8000));
       return;
     }
     const d=d0;
@@ -546,18 +616,23 @@ async function poll(){
     let fresh=false;
     for(const m of ms){
       lastMsg=m.id;
-      const from=m.from===ME?m.to:m.from;
-      (CHATS[from]=CHATS[from]||[]).push({who:m.from===ME?"me":"them",text:m.text,ts:m.id});
+      if(m.from===ME)continue;
+      const from=m.from;
+      const fm=String(m.text||"").match(/^\[file:([a-z0-9]+)\]$/i);
+      if(fm)(CHATS[from]=CHATS[from]||[]).push({who:"them",fileId:fm[1],ts:m.id});
+      else (CHATS[from]=CHATS[from]||[]).push({who:"them",text:m.text,ts:m.id});
       if(CHAT_OPEN===from)renderBubbles();
-      else if(m.from!==ME){UNREAD[from]=(UNREAD[from]||0)+1;fresh=true;}
+      else {UNREAD[from]=(UNREAD[from]||0)+1;fresh=true;}
     }
+    persistChats();
+    setOffline(false);
     if(fresh){renderUnread();try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}}
     const prevFr=WIN_FRIENDS.length;
     WIN_FRIENDS=d.friends||[];WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
-  }catch(e){pollFails=Math.min(pollFails+1,6);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:8000);
+  }catch(e){pollFails=Math.min(pollFails+1,6);setOffline(true);}
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(CHAT_OPEN?1200:8000));
 }
 setInterval(tickReqs,4000);
 

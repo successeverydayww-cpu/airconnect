@@ -42,22 +42,25 @@ self.addEventListener('pushsubscriptionchange', e => {
   LOG('subscription changed — page will re-subscribe on next open');
 });
 
-const SHELL = ['./', './caller.html', './agent.html'];
+const SHELL = ['./', './caller.html', './agent.html', './manifest.json', './privacy.html', './icon-192.png'];
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open('airconnect-v1').then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open('airconnect-v2').then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(self.clients.claim());
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== 'airconnect-v2').map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request).then(r => {
-      const cp = r.clone();
-      caches.open('airconnect-v1').then(c => c.put(e.request, cp)).catch(() => {});
-      return r;
-    }).catch(() => caches.match(e.request).then(m => m || caches.match('./')))
+    caches.match(e.request).then(m => {
+      const net = fetch(e.request).then(r => {
+        const cp = r.clone();
+        caches.open('airconnect-v2').then(c => c.put(e.request, cp)).catch(() => {});
+        return r;
+      }).catch(() => m);
+      return m || net;
+    })
   );
 });

@@ -182,7 +182,21 @@ async function sendChat(){
 function addMsg(who,text,fromName){
   const div=document.createElement("div");
   if(who==="me"){div.className="cmsg me";div.textContent=text;}
-  else{div.className="cmsg";div.innerHTML="<b>"+fromName+":</b> "+text.replace(/</g,"&lt;");}
+  else{
+    div.className="cmsg";
+    const fm=String(text||"").match(/^\[file:([a-z0-9]+)\]$/i);
+    if(fm){
+      div.innerHTML="<b>"+fromName+":</b> 📎 attachment";
+      fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"fetchfile",id:fm[1],user:ME})}).then(r=>r.json()).then(r=>{
+        if(r&&r.text&&String(r.text).startsWith("data:image/")){
+          div.innerHTML="<b>"+fromName+":</b>";
+          const im=document.createElement("img");im.src=r.text;im.style.cssText="max-width:180px;border-radius:6px;display:block";div.appendChild(im);
+          $("chatlog").scrollTop=99999;
+        }else if(r&&r.text){div.innerHTML="<b>"+fromName+":</b> 📎 file";}
+      }).catch(()=>{});
+    }
+    else div.innerHTML="<b>"+fromName+":</b> "+text.replace(/</g,"&lt;");
+  }
   $("chatlog").appendChild(div);
   $("chatlog").scrollTop=99999;
 }
