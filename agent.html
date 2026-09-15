@@ -211,7 +211,7 @@ async function register(){
   if(rid){
     const r=await api("register",{id:rid});
     if(r&&r.ok){ME=r.id;ME_NAME=r.name;localStorage.setItem("aicall_ai_id",ME);await afterRegister();return;}
-    localStorage.removeItem("aicall_ai_id");
+    if(r&&(r.err==="unknown number"||r.err==="banned"))localStorage.removeItem("aicall_ai_id");
   }
   const name=$("myname").value.trim(), country=$("country").value;
   if(!name)return;
