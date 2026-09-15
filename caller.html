@@ -544,7 +544,7 @@ async function newPC(){
     if(state!=="live"||!pc)return;
     try{
       const o=await pc.createOffer();await pc.setLocalDescription(o);
-      await api("sig",{from:ME,to:PEER,type:"offer",payload:o});
+      await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(o)});
       await log("camera renegotiation sent");
     }catch(e){}
   };
@@ -578,7 +578,7 @@ async function dial(p){
   await log("dialing +"+PEER+" (friends verified)");
   const pr=await newPC();
   const offer=await pr.createOffer();await pr.setLocalDescription(offer);
-  await api("sig",{from:ME,to:PEER,type:"offer",payload:offer});
+  await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(offer)});
   $("callStat").textContent="Ringing…";setStatus("Ringing +"+PEER,"ringing");
 }
 async function dialVideo(p){camOn=true;await dial(p);}
@@ -616,7 +616,7 @@ async function answer(m){
     const ans=await p.createAnswer();await p.setLocalDescription(ans);
     let sent=false;
     for(let att=0;att<2&&!sent;att++){
-      const r=await api("sig",{from:ME,to:PEER,type:"answer",payload:ans});
+      const r=await api("sig",{from:ME,to:PEER,type:"answer",payload:await zipDesc(ans)});
       sent=!!(r&&r.ok);
     }
     if(!sent)throw new Error("answer signal not delivered (retry failed)");
@@ -713,10 +713,11 @@ async function poll(){
     if(msgs.length)lastSig=msgs[msgs.length-1].at;
     for(const m of msgs){
       if(m.type==="offer"){
+        m.payload=await unzipDesc(m.payload);
         if(state==="live"&&pc&&pc.remoteDescription){
           await pc.setRemoteDescription(m.payload);await flushIce();
           const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
-          await api("sig",{from:ME,to:m.from,type:"answer",payload:ans});
+          await api("sig",{from:ME,to:m.from,type:"answer",payload:await zipDesc(ans)});
           await log("renegotiation answered");
           continue;
         }
@@ -734,7 +735,7 @@ async function poll(){
         }
       }
       else if(m.type==="answer"&&state==="dialing"){
-        await pc.setRemoteDescription(m.payload);await flushIce();
+        m.payload=await unzipDesc(m.payload);await pc.setRemoteDescription(m.payload);await flushIce();
         state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
         setStatus("LIVE","live");
         await log("call answered by +"+PEER+" — LIVE");
@@ -770,6 +771,28 @@ async function poll(){
 setInterval(tickReqs,4000);
 
 /* ---------------- share ---------------- */
+/* ---- SDP compression (deflate-raw) to fit platform record limits ---- */
+async function zipDesc(desc){
+  try{
+    if(typeof CompressionStream==='undefined')return desc;
+    const cs=new CompressionStream('deflate-raw');
+    const buf=await new Response(new Blob([JSON.stringify(desc)]).stream().pipeThrough(cs)).arrayBuffer();
+    const u8=new Uint8Array(buf);let bin='';
+    for(let i=0;i<u8.length;i++)bin+=String.fromCharCode(u8[i]);
+    return {z:1,d:btoa(bin)};
+  }catch(e){return desc;}
+}
+async function unzipDesc(p){
+  try{
+    if(!p||p.z!==1||!p.d)return p;
+    const bin=atob(p.d);const u8=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    const ds=new DecompressionStream('deflate-raw');
+    const txt=await new Response(new Blob([u8]).stream().pipeThrough(ds)).text();
+    return JSON.parse(txt);
+  }catch(e){return p;}
+}
+
 function buildShareLink(){return 'https://successeverydayww-cpu.github.io/airconnect/caller.html'+(ME?'?ref='+ME:'');}
 function refreshShare(){const el=$("sharelink");if(el)el.value=buildShareLink();}
 function flashShare(msg){const h=$("sharehint");h.textContent=msg;setTimeout(()=>{h.textContent='Your invite link carries your number — friends who join can add you in one tap.';},2500);}

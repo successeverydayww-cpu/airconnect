@@ -330,7 +330,7 @@ async function answer(m){
     if(faceStream){for(const vt of faceStream.getVideoTracks())pc.addTrack(vt,faceStream);}
     const ans=await pc.createAnswer();
     await pc.setLocalDescription(ans);
-    await sig({to:PEER,type:"answer",payload:ans});
+    await sig({to:PEER,type:"answer",payload:await zipDesc(ans)});
     state="live";
     document.getElementById("status").textContent="📞 LIVE — AI speaking with +"+PEER;
     await log("picked up — AI voice + video presence streaming to +"+PEER);
@@ -389,7 +389,7 @@ async function dialOut(num){
     if(faceStream){for(const vt of faceStream.getVideoTracks())pc.addTrack(vt,faceStream);}
     const off=await pc.createOffer();
     await pc.setLocalDescription(off);
-    await sig({to:PEER,type:"offer",payload:off});
+    await sig({to:PEER,type:"offer",payload:await zipDesc(off)});
     await log("ringing +"+PEER+" — waiting for pickup");
     dialTO=setTimeout(async()=>{
       if(state==="ringing"&&pc){
@@ -426,6 +426,7 @@ async function poll(){
           await log("self-heal: cleared stale "+(typeof pc==="undefined"?"":"call")+" state — accepting new call");
         }
       }
+      if(m.type==="offer"){m.payload=await unzipDesc(m.payload);}
       if(m.type==="offer"&&state==="idle"){
         const gate=await api("can_call",{from:m.from,to:ME});
         if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
@@ -435,9 +436,10 @@ async function poll(){
       else if(m.type==="offer"&&state==="live"&&pc&&pc.remoteDescription){
         await pc.setRemoteDescription(m.payload);await flushIce();
         const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
-        await sig({to:m.from,type:"answer",payload:ans});
+        await sig({to:m.from,type:"answer",payload:await zipDesc(ans)});
         await log("renegotiation answered — video flowing");
       }
+      else if(m.type==="answer"){m.payload=await unzipDesc(m.payload);}
       else if(m.type==="answer"&&state==="ringing"&&pc&&!pc.remoteDescription){
         if(m.from!==PEER){continue;}
         if(dialTO){clearTimeout(dialTO);dialTO=null;}
@@ -473,6 +475,28 @@ async function poll(){
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);}
   setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?1500:8000);
+}
+
+/* ---- SDP compression (deflate-raw) to fit platform record limits ---- */
+async function zipDesc(desc){
+  try{
+    if(typeof CompressionStream==='undefined')return desc;
+    const cs=new CompressionStream('deflate-raw');
+    const buf=await new Response(new Blob([JSON.stringify(desc)]).stream().pipeThrough(cs)).arrayBuffer();
+    const u8=new Uint8Array(buf);let bin='';
+    for(let i=0;i<u8.length;i++)bin+=String.fromCharCode(u8[i]);
+    return {z:1,d:btoa(bin)};
+  }catch(e){return desc;}
+}
+async function unzipDesc(p){
+  try{
+    if(!p||p.z!==1||!p.d)return p;
+    const bin=atob(p.d);const u8=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    const ds=new DecompressionStream('deflate-raw');
+    const txt=await new Response(new Blob([u8]).stream().pipeThrough(ds)).text();
+    return JSON.parse(txt);
+  }catch(e){return p;}
 }
 
 /* ---------------- Share / invite link ---------------- */
