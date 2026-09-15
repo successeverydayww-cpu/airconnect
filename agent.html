@@ -151,14 +151,14 @@ function speak(){
   const nb=ctx.createBuffer(1,ctx.sampleRate*0.4,ctx.sampleRate);
   const nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*0.25;
   noise.buffer=nb;noise.loop=true;
-  const ng=ctx.createGain();ng.gain.value=0.04;
+  const ng=ctx.createGain();ng.gain.value=0.07;
   osc.connect(f);noise.connect(ng);ng.connect(f);f.connect(g);g.connect(voiceBus);
   osc.start();noise.start();
   const t0=ctx.currentTime;const words=4+Math.floor(Math.random()*5);
   let t=t0;
   for(let i=0;i<words;i++){
     const dur=0.10+Math.random()*0.18, gap=0.05+Math.random()*0.12;
-    g.gain.setTargetAtTime(0.22,t,0.01);
+    g.gain.setTargetAtTime(0.55,t,0.01);
     osc.frequency.setValueAtTime(130+Math.random()*90,t);
     g.gain.setTargetAtTime(0,t+dur,0.02);
     t+=dur+gap;
@@ -244,6 +244,7 @@ async function register(){
       if(state==="live"&&r>0.05&&!speaking){speak();}
     }catch(e){}
   },1000);
+  setInterval(()=>{ if(state==="live"&&!speaking)speak(); },4000);
 }
 
 async function answer(m){
