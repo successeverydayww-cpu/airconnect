@@ -345,7 +345,7 @@ async function dialOut(num){
     await log("ringing +"+PEER+" — waiting for pickup");
     dialTO=setTimeout(async()=>{
       if(state==="ringing"&&pc){
-        try{await sig({to:PEER,type:"bye"});}catch(e){}
+        try{await sig({to:PEER,type:"bye",payload:{}});}catch(e){}
         pc.close();pc=null;state="idle";
         document.getElementById("status").textContent="No answer — call cancelled";
         await log("outbound call to +"+PEER+" unanswered — cancelled");
