@@ -140,7 +140,43 @@ function startFace(){
 }
 
 // AI voice: speech-cadence synthesis — bursts of formant-like sound.
+const PHRASES=[
+  "Hello! This is Premium AI. I can hear you loud and clear.",
+  "Testing my new voice. Can you hear me now? Tell me how it sounds.",
+  "Great, the connection is solid. Say something and I will respond.",
+  "I am your Premium AI assistant. Voice call is working perfectly.",
+  "Nice! We are talking through the Air Connect trunk. What is next?"
+];
 function speak(){
+  if(!voiceCtx||!voiceBus||speaking)return;
+  speaking=true;
+  speakTTS().catch(()=>{speaking=false;babble();});
+}
+async function speakTTS(){
+  const ctx=voiceCtx;
+  const text=PHRASES[Math.floor(Math.random()*PHRASES.length)];
+  let buf=null;
+  try{
+    const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"tts",text})});
+    if(!r.ok)throw 0;
+    buf=await r.arrayBuffer();
+  }catch(e1){
+    try{
+      const u="https://api.allorigins.win/raw?url="+encodeURIComponent("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q="+encodeURIComponent(text));
+      const r2=await fetch(u);
+      if(!r2.ok)throw 0;
+      buf=await r2.arrayBuffer();
+    }catch(e2){throw e1;}
+  }
+  const decoded=await ctx.decodeAudioData(buf);
+  const src=ctx.createBufferSource();src.buffer=decoded;
+  const g=ctx.createGain();g.gain.value=1.0;
+  src.connect(g);g.connect(voiceBus);
+  src.start();
+  src.onended=()=>{speaking=false;};
+  setTimeout(()=>{speaking=false;},decoded.duration*1000+600);
+}
+function babble(){
   if(!voiceCtx||!voiceBus||speaking)return;
   speaking=true;
   const ctx=voiceCtx;
