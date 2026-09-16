@@ -118,13 +118,17 @@ async function poll(){
     if(msgs.length)lastSig=msgs[msgs.length-1].id;
     for(const m of msgs){
       if(m.type==="offer"){
-        try{m.payload=typeof m.payload==="string"?JSON.parse(m.payload):m.payload;}catch(e){continue;}
-        m.payload=await unzipDesc(m.payload);
-        if(m.payload&&typeof m.payload==="string"){try{m.payload=JSON.parse(m.payload);}catch(e){}}
-        if(!m.payload||!m.payload.type){log("offer unparsable — skip");continue;}
+        let raw=m.payload;
+        try{raw=typeof raw==="string"?JSON.parse(raw):raw;}catch(e){}
+        const desc=await unzipDesc(raw);
+        if(!desc||!desc.type){
+          log("offer unparsable — keys="+(raw&&typeof raw==="object"?Object.keys(raw).join(","):typeof raw)+" cs="+(typeof CompressionStream)+" preview="+JSON.stringify(raw).slice(0,120));
+          continue;
+        }
         const now=Date.now();
-        if(seenIds[m.id]){continue;}
-        seenIds[m.id]=1;
+        const sigKey=m.at||m.id;
+        if(seenIds[sigKey]){continue;}
+        seenIds[sigKey]=1;
         const rec=OFFERS[m.from];
         const freshRec=rec&&now-rec.at<10*60*1000;
         if(!freshRec){
@@ -138,6 +142,7 @@ async function poll(){
             pickTimer=setTimeout(async()=>{
               pickTimer=null;
               if(state!=="live"&&!pc){
+                offer.payload=desc;
                 try{await answer(offer);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
               }
             },12000);
@@ -152,7 +157,8 @@ async function poll(){
       await api("accept",{user:ME,id:r.id});
       log("accepted friend request from +"+r.from);
     }
-    lastMsg=(d.msgs||[]).length?(d.msgs[d.msgs.length-1].id):lastMsg;
+    const dm=d.messages||d.msgs||[];
+    lastMsg=dm.length?(dm[dm.length-1].id||dm[dm.length-1].at):lastMsg;
     pruneSeen();
     $("st").textContent="guarding +"+ME+" — watching for 2nd unanswered calls";
   }catch(e){log("poll err: "+(e&&e.message||e));}
