@@ -3,65 +3,65 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0B1220">
+<meta name="theme-color" content="#0C4A6E">
 <meta name="description" content="AirConnect — free voice & video calling and chat with phone-number IDs.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>AirConnect</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#0B1220;color:#E2E8F0;overflow-x:hidden}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#F8FAFC;color:#0F172A;overflow-x:hidden}
 .hide{display:none!important}
 /* header */
-.hdr{position:sticky;top:0;z-index:20;background:#13223A;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #182338}
-.hdr .sub{font-size:12px;color:#94A3B8;font-weight:400}
+.hdr{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.15)}
+.hdr .sub{font-size:12px;color:rgba(255,255,255,.8);font-weight:400}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#667781;margin-right:6px;vertical-align:1px}
 .dot.live{background:#22c55e}.dot.ringing{background:#ffb02e;animation:pulse .8s infinite}
 @keyframes pulse{50%{opacity:.25}}
 /* nav */
-nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#13223A;display:flex;border-top:1px solid #182338;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:0;color:#94A3B8;font-size:11px;padding:8px 0 6px;cursor:pointer;font-weight:600}
-nav button.on{color:#0EA5E9}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#0C4A6E;display:flex;border-top:1px solid rgba(255,255,255,.12);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:rgba(255,255,255,.62);font-size:11px;padding:8px 0 6px;cursor:pointer;font-weight:600}
+nav button.on{color:#fff}
 nav button .ico{display:block;font-size:20px;position:relative}
 .badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#0EA5E9;color:#0B1220;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
 /* lists */
 .view{padding-bottom:64px;min-height:100vh}
-.row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #182338}
-.row:active{background:#182338}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #E2E8F0}
+.row:active{background:#E2E8F0}
 .av{width:46px;height:46px;border-radius:50%;background:#0C4A6E;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#fff;flex-shrink:0}
 .rname{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rsub{font-size:13px;color:#94A3B8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rtime{font-size:11px;color:#94A3B8;margin-left:auto;flex-shrink:0}
-.empty{padding:40px 20px;text-align:center;color:#94A3B8;font-size:14px}
+.rsub{font-size:13px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtime{font-size:11px;color:#64748B;margin-left:auto;flex-shrink:0}
+.empty{padding:40px 20px;text-align:center;color:#64748B;font-size:14px}
 .callbtns{display:flex;gap:8px;margin-left:auto}
 .callbtns button{border:0;border-radius:50%;width:42px;height:42px;font-size:17px;cursor:pointer;flex-shrink:0}
 .cb1{background:#0C4A6E;color:#fff}.cb2{background:#0b3d4d;color:#fff}
 /* forms */
-.card{margin:12px;background:#13223A;border-radius:12px;padding:16px}
-input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #2A3B5C;background:#2A3B5C;color:#E2E8F0;font-size:15px;margin-bottom:10px;outline:none}
+.card{margin:12px;background:#FFFFFF;border:1px solid #0F172A;border-radius:12px;padding:16px}
+input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;font-size:15px;margin-bottom:10px;outline:none}
 button.big{width:100%;padding:14px;font-size:15px;font-weight:700;border:0;border-radius:12px;background:#0EA5E9;color:#0B1220;cursor:pointer;margin-top:4px}
 button.big:disabled{opacity:.5}
 button.big.red{background:#f15c6d}
 button.big.blue{background:#0C4A6E;color:#fff}
 /* chat overlay */
-.ovl{position:fixed;inset:0;z-index:30;background:#0B1220;display:flex;flex-direction:column}
-.ovl .ohdr{background:#13223A;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.ohdr .bk{background:none;border:0;color:#E2E8F0;font-size:22px;cursor:pointer;padding:4px 8px}
-.ohdr .nm{font-weight:600;font-size:16px}
-.ohdr .st{font-size:12px;color:#94A3B8}
+.ovl{position:fixed;inset:0;z-index:30;background:#F8FAFC;display:flex;flex-direction:column}
+.ovl .ohdr{background:linear-gradient(135deg,#0C4A6E,#0EA5E9);padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ohdr .bk{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
+.ohdr .nm{font-weight:600;font-size:16px;color:#fff}
+.ohdr .st{font-size:12px;color:rgba(255,255,255,.75)}
 .bubbles{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:6px}
 .bub{max-width:80%;padding:8px 11px;border-radius:10px;font-size:14.5px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
 .bub.out{align-self:flex-end;background:#0C4A6E;border-top-right-radius:2px}
-.bub.in{align-self:flex-start;background:#13223A;border-top-left-radius:2px}
+.bub.in{align-self:flex-start;background:#FFFFFF;border:1px solid #0F172A;border-top-left-radius:2px}
 .bub.sys{align-self:center;background:#1C2A45;color:#ffd27d;font-size:12.5px}
-.cinput{display:flex;gap:8px;padding:10px;background:#13223A;flex-shrink:0}
+.cinput{display:flex;gap:8px;padding:10px;background:#FFFFFF;border-top:1px solid #0F172A;flex-shrink:0}
 .cinput input{margin:0;flex:1}
 .cinput button{width:52px;border-radius:50%;border:0;background:#0EA5E9;font-size:19px;cursor:pointer;flex-shrink:0}
 .cinput button:disabled{opacity:.5}
 /* call + incoming overlays */
 #callview .top{padding:24px;text-align:center}
 #callview .cname{font-size:22px;font-weight:600;margin-top:14px}
-#callview .cstat{color:#94A3B8;margin-top:6px;font-size:14px}
+#callview .cstat{color:#64748B;margin-top:6px;font-size:14px}
 .vwrap{margin:0;border-radius:0;overflow:hidden;background:#000;position:absolute;inset:0;z-index:1}
 .vwrap video{position:absolute;object-fit:cover;display:block;background:#000}
 /* ringing (outbound): own camera full screen, remote hidden */
@@ -80,39 +80,39 @@ button.big.blue{background:#0C4A6E;color:#fff}
 #callview .meters{position:absolute;bottom:110px;left:0;right:0;z-index:10;background:none}
 #callview .cstat{color:#cfd8dc}
 #localv{position:absolute;right:8px;bottom:8px;width:28%;border:2px solid #0EA5E9;border-radius:8px}
-.cctl{position:fixed;bottom:0;left:0;right:0;padding:18px 10px 30px;display:flex;justify-content:center;gap:22px;background:linear-gradient(transparent,#0B1220 40%)}
-.cbtn{border:0;border-radius:50%;width:58px;height:58px;font-size:22px;cursor:pointer;color:#fff;background:#2A3B5C}
+.cctl{position:fixed;bottom:0;left:0;right:0;padding:18px 10px 30px;display:flex;justify-content:center;gap:22px;background:linear-gradient(transparent,#F8FAFC 40%)}
+.cbtn{border:0;border-radius:50%;width:58px;height:58px;font-size:22px;cursor:pointer;color:#fff;background:#CBD5E1}
 .cbtn.end{background:#ea0038}
 .cbtn.on{background:#0EA5E9}
-.meters{display:flex;gap:10px;justify-content:center;margin:8px 16px;font-size:11px;color:#94A3B8}
+.meters{display:flex;gap:10px;justify-content:center;margin:8px 16px;font-size:11px;color:#64748B}
 .meters .m{flex:1;max-width:160px}
-.meters .bar{height:4px;background:#1C2A45;border-radius:2px;overflow:hidden}
+.meters .bar{height:4px;background:#0F172A;border-radius:2px;overflow:hidden}
 .meters .bar>div{height:100%;width:0;background:#0EA5E9;transition:width .3s}
 #incoming{align-items:center;justify-content:center;text-align:center}
 #incoming .av{width:110px;height:110px;font-size:44px;margin:0 auto}
 #incoming .iname{font-size:26px;font-weight:600;margin-top:20px}
-#incoming .istat{color:#94A3B8;margin-top:8px}
+#incoming .istat{color:#64748B;margin-top:8px}
 .ictrl{position:fixed;bottom:60px;left:0;right:0;display:flex;justify-content:space-around}
 .ictrl button{border:0;border-radius:50%;width:64px;height:64px;font-size:26px;cursor:pointer}
 .ictrl .acc{background:#16a34a;color:#0B1220}
 .ictrl .dec{background:#ea0038;color:#fff}
 #fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#0EA5E9;color:#0B1220;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
 #fab:active{transform:scale(.93)}
-.sheet{position:absolute;left:0;right:0;bottom:0;background:#13223A;padding:16px;border-top:1px solid #2A3B5C;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
-.rchip{display:inline-flex;align-items:center;gap:3px;background:#182338;border:1px solid #2A3B5C;border-radius:10px;padding:2px 8px;font-size:12px;margin-top:4px;margin-right:4px}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
+.rchip{display:inline-flex;align-items:center;gap:3px;background:#E2E8F0;border:1px solid #CBD5E1;border-radius:10px;padding:2px 8px;font-size:12px;margin-top:4px;margin-right:4px}
 .rchip.mine{border-color:#0EA5E9}
-.qbox{border-left:3px solid #0EA5E9;background:#182338;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#94A3B8;overflow:hidden}
-#fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#182338;padding:16px;border-top:1px solid #2A3B5C;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1C2A45;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#E2E8F0;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.qbox{border-left:3px solid #0EA5E9;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
+#fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1C2A45;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#F8FAFC;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 /* chat themes / wallpapers */
-#wpg{position:absolute;inset:0;z-index:0;background:#0B1220;overflow:hidden}
+#wpg{position:absolute;inset:0;z-index:0;background:#F8FAFC;overflow:hidden}
 #chatview .ohdr,#chatview .cinput{position:relative;z-index:2}
 #chatview .bubbles{position:relative;z-index:1}
-.tsw{width:56px;height:56px;border-radius:50%;border:2px solid #2A3B5C;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#94A3B8}
+.tsw{width:56px;height:56px;border-radius:50%;border:2px solid #CBD5E1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#64748B}
 .tsw:active{transform:scale(.93)}
-#login{background:linear-gradient(170deg,#0C4A6E 0%,#0B1220 62%)}
-footer{display:block;text-align:center;padding:14px;font-size:12px;color:#94A3B8}
-footer a{color:#94A3B8}
+#login{background:linear-gradient(180deg,#E0F2FE 0%,#F8FAFC 45%)}
+footer{display:block;text-align:center;padding:14px;font-size:12px;color:#64748B}
+footer a{color:#64748B}
 #sharelink{font-size:12px}
 .stseg{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;max-width:44px}
 .stseg.done,.stseg.on{background:#fff}
@@ -125,7 +125,7 @@ footer a{color:#94A3B8}
   <div style="padding:30px 16px 10px;text-align:center">
     <div style="font-size:34px">🛰️</div>
     <h1 style="margin:8px 0 4px;font-size:24px">AirConnect</h1>
-    <div style="color:#94A3B8;font-size:14px">Free voice &amp; video calls and chat.<br>Phone-number IDs · friends-only · private.</div>
+    <div style="color:#64748B;font-size:14px">Free voice &amp; video calls and chat.<br>Phone-number IDs · friends-only · private.</div>
   </div>
   <div class="card">
     <input id="myname" placeholder="Your name">
@@ -139,7 +139,7 @@ footer a{color:#94A3B8}
     </select>
     <div style="display:flex;margin-bottom:2px">
       <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
-      <button id="tabEmail" onclick="setMethod('email')" style="flex:1;padding:9px;background:#182338;color:#94A3B8;border:1px solid #2A3B5C;border-left:0;border-radius:0 8px 8px 0;font-size:13px">📧 Email</button>
+      <button id="tabEmail" onclick="setMethod('email')" style="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px">📧 Email</button>
     </div>
     <input id="phone" placeholder="Your phone number, e.g. 0803 123 4567" inputmode="tel" autocomplete="tel">
     <input id="emailin" type="email" placeholder="your@email.com" autocomplete="email" style="display:none">
@@ -148,15 +148,15 @@ footer a{color:#94A3B8}
       <input id="otpcode" placeholder="6-digit code from SMS" inputmode="numeric" maxlength="6" style="text-align:center;font-size:20px;letter-spacing:6px">
       <button class="big" id="verifybtn" onclick="verifyOtp()">Verify &amp; create my account</button>
       <button class="big blue" id="resendbtn" onclick="startSignup()" style="margin-top:8px">Resend code</button>
-      <div id="otpnote" style="font-size:11.5px;color:#94A3B8;margin-top:6px;text-align:center"></div>
+      <div id="otpnote" style="font-size:11.5px;color:#64748B;margin-top:6px;text-align:center"></div>
     </div>
-    <div style="font-size:11.5px;color:#94A3B8;margin:10px 0;text-align:center">— or resume an existing number —</div>
+    <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
     <button class="big blue" onclick="register()">Resume my number</button>
-    <div style="font-size:11px;color:#64748B;margin-top:12px;text-align:center;line-height:1.5">
+    <div style="font-size:11px;color:#94A3B8;margin-top:12px;text-align:center;line-height:1.5">
       Verify by SMS or email code, so nobody can sign up as you.<br>Same email + code also logs you back in on any device.<br>
-      <a href="terms.html" target="_blank" style="color:#38BDF8">Terms &amp; Data Policy</a> ·
-      <a href="privacy.html" target="_blank" style="color:#38BDF8">Privacy</a>
+      <a href="terms.html" target="_blank" style="color:#2563EB">Terms &amp; Data Policy</a> ·
+      <a href="privacy.html" target="_blank" style="color:#2563EB">Privacy</a>
     </div>
   </div>
   <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -166,44 +166,44 @@ footer a{color:#94A3B8}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
   <div class="hdr">
     <div><span id="hdrTitle">🛰️ AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#E2E8F0">Ready</span></div>
+    <div><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span></div>
   </div>
 
   <div id="view-chats" class="view">
-    <div id="storystrip" style="display:flex;gap:12px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid #13223A"></div>
+    <div id="storystrip" style="display:flex;gap:12px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid #0F172A"></div>
     <input type="file" id="storyinput" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
     <input type="file" id="stCamIn" class="hide" accept="image/*" capture="environment" onchange="stPhotoChosen(this)">
     <input type="file" id="stPhotoIn" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
     <input type="file" id="stVidIn" class="hide" accept="video/*" onchange="stVideoChosen(this)">
     <div id="stTrim" class="ovl hide" style="z-index:60" onclick="if(event.target===this)stTrimCancel()">
-      <div style="position:absolute;left:0;right:0;bottom:0;background:#182338;padding:14px;border-top:1px solid #2A3B5C">
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:14px;border-top:1px solid #CBD5E1">
         <div style="font-weight:600;margin-bottom:8px">✂ Choose the 60 seconds to post</div>
         <video id="stTrimVid" playsinline controls style="width:100%;max-height:38vh;background:#000;border-radius:8px"></video>
         <div style="display:flex;gap:10px;align-items:center;margin-top:10px;font-size:13px">
-          <span id="stTrimStart" style="min-width:92px;color:#38BDF8">0:00 → 1:00</span>
+          <span id="stTrimStart" style="min-width:92px;color:#2563EB">0:00 → 1:00</span>
           <input type="range" id="stTrimSl" min="0" max="30" value="0" oninput="stTrimLabel()" style="flex:1">
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="big" style="flex:1;background:#2A3B5C" onclick="stTrimCancel()">Cancel</button>
+          <button class="big" style="flex:1;background:#CBD5E1" onclick="stTrimCancel()">Cancel</button>
           <button class="big blue" style="flex:1" onclick="stTrimPost()">✂ Post these 60s</button>
         </div>
       </div>
     </div>
     <div id="stVoice" class="ovl hide" style="z-index:60" onclick="if(event.target===this)stVoiceClose()">
-      <div style="position:absolute;left:0;right:0;bottom:0;background:#182338;padding:16px;border-top:1px solid #2A3B5C;text-align:center">
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;text-align:center">
         <div style="font-weight:600;margin-bottom:4px">🎙️ Voice status</div>
-        <div style="font-size:12px;color:#94A3B8;margin-bottom:10px">Hold the button and speak · max 30 seconds</div>
-        <div id="stVRec" class="hide" style="color:#38BDF8;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
+        <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold the button and speak · max 30 seconds</div>
+        <div id="stVRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="stVPrev" class="hide" style="margin:10px 0"></div>
         <button id="stVMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Hold to record</button>
         <div id="stVBtns" class="hide" style="display:flex;gap:8px;margin-top:10px">
-          <button class="big" style="flex:1;background:#2A3B5C" onclick="stVoiceDiscard()">Discard</button>
+          <button class="big" style="flex:1;background:#CBD5E1" onclick="stVoiceDiscard()">Discard</button>
           <button class="big blue" style="flex:1" onclick="stVoicePost()">✔ Post</button>
         </div>
-        <button class="big" style="width:100%;background:#2A3B5C;margin-top:8px" onclick="stVoiceClose()">Close</button>
+        <button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="stVoiceClose()">Close</button>
       </div>
     </div>
-    <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#13223A;border:1px solid #2A3B5C;color:#E2E8F0;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
+    <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
   </div>
@@ -214,21 +214,21 @@ footer a{color:#94A3B8}
         <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer;flex:0 0 60px" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else document.getElementById('stPhotoIn').click()">?</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600">My status</div>
-          <div style="font-size:12.5px;color:#94A3B8" id="stMySub">Tap a button to add a photo, video or voice status</div>
+          <div style="font-size:12.5px;color:#64748B" id="stMySub">Tap a button to add a photo, video or voice status</div>
           <div style="display:flex;gap:6px;margin-top:8px">
             <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stCamIn').click()">📸 Camera</button>
             <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stPhotoIn').click()">🖼️ Photo</button>
             <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stVidIn').click()">🎬 Video</button>
             <button class="big blue" style="flex:1;padding:9px 4px" onclick="stVoiceSheet()">🎙️ Voice</button>
           </div>
-          <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:8px;background:#2A3B5C" onclick="deleteMyStatus()">🗑 Delete my status</button>
+          <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:8px;background:#CBD5E1" onclick="deleteMyStatus()">🗑 Delete my status</button>
         </div>
       </div>
-      <div style="font-size:11.5px;color:#94A3B8;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:4px">👁 Recent updates</div>
-      <div id="stFriends" style="font-size:14px;color:#94A3B8">No friend statuses yet.</div>
+      <div id="stFriends" style="font-size:14px;color:#64748B">No friend statuses yet.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
@@ -249,47 +249,47 @@ footer a{color:#94A3B8}
       <div style="display:flex;gap:10px;align-items:center">
         <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
         <button class="big blue" style="flex:1" onclick="document.getElementById('picinput').click()">Upload photo</button>
-        <button class="big" style="flex:0 0 auto;background:#2A3B5C" onclick="removeMyPic()">🗑</button>
+        <button class="big" style="flex:0 0 auto;background:#CBD5E1" onclick="removeMyPic()">🗑</button>
         <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
       </div>
-      <div style="font-size:11.5px;color:#94A3B8;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
     </div>
     <div class="card" id="planStatusCard">
       <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
-      <div id="planStatus" style="font-size:14px;color:#E2E8F0">Free — human-to-human calls forever free.</div>
+      <div id="planStatus" style="font-size:14px;color:#0F172A">Free — human-to-human calls forever free.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🤖 Premium AI Assistant</div>
-      <div style="font-size:13px;color:#94A3B8;margin-bottom:8px">Premium AI answers your calls when you're busy, takes messages, transcribes missed calls, and even calls people on your behalf. Try it free right now — call the AI and talk.</div>
+      <div style="font-size:13px;color:#64748B;margin-bottom:8px">Premium AI answers your calls when you're busy, takes messages, transcribes missed calls, and even calls people on your behalf. Try it free right now — call the AI and talk.</div>
       <button class="big blue" onclick="callNum('1100000001')">📞 Call Premium AI now</button>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">💎 Monthly plans</div>
-      <div style="border:1px solid #2A3B5C;border-radius:10px;padding:10px;margin-bottom:8px">
+      <div style="border:1px solid #CBD5E1;border-radius:10px;padding:10px;margin-bottom:8px">
         <div style="font-weight:600">Starter — ₦1,500/month</div>
-        <div style="font-size:12px;color:#94A3B8">AI answers when busy · takes messages · transcribes missed calls · daily call summary</div>
+        <div style="font-size:12px;color:#64748B">AI answers when busy · takes messages · transcribes missed calls · daily call summary</div>
         <button class="big blue" style="margin-top:8px" onclick="startPay('Starter','1500')">Subscribe</button>
       </div>
-      <div style="border:1px solid #2A3B5C;border-radius:10px;padding:10px;margin-bottom:8px">
+      <div style="border:1px solid #CBD5E1;border-radius:10px;padding:10px;margin-bottom:8px">
         <div style="font-weight:600">Pro — ₦3,500/month</div>
-        <div style="font-size:12px;color:#94A3B8">Everything in Starter · AI calls on your behalf · video voicemail · call recording · 1 personalized AI film monthly</div>
+        <div style="font-size:12px;color:#64748B">Everything in Starter · AI calls on your behalf · video voicemail · call recording · 1 personalized AI film monthly</div>
         <button class="big blue" style="margin-top:8px" onclick="startPay('Pro','3500')">Subscribe</button>
       </div>
-      <div style="border:1px solid #2A3B5C;border-radius:10px;padding:10px;margin-bottom:4px">
+      <div style="border:1px solid #CBD5E1;border-radius:10px;padding:10px;margin-bottom:4px">
         <div style="font-weight:600">Business — ₦10,000/month</div>
-        <div style="font-size:12px;color:#94A3B8">Verified business number · AI customer service 24/7 · call analytics</div>
+        <div style="font-size:12px;color:#64748B">Verified business number · AI customer service 24/7 · call analytics</div>
         <button class="big blue" style="margin-top:8px" onclick="startPay('Business','10000')">Subscribe</button>
       </div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🎬 One-off services (no subscription)</div>
-      <div style="font-size:13px;border-bottom:1px solid #2A3B5C;padding:8px 0">🎁 Personalized AI Film — birthday & celebration videos with your voice and photos · <b>₦2,000–₦5,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('AI Film','2000-5000')">Order</button></div>
-      <div style="font-size:13px;border-bottom:1px solid #2A3B5C;padding:8px 0">🎙️ Custom AI Voice — your own AI voice for calls & messages · <b>₦3,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('Custom AI Voice','3000')">Order</button></div>
+      <div style="font-size:13px;border-bottom:1px solid #CBD5E1;padding:8px 0">🎁 Personalized AI Film — birthday & celebration videos with your voice and photos · <b>₦2,000–₦5,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('AI Film','2000-5000')">Order</button></div>
+      <div style="font-size:13px;border-bottom:1px solid #CBD5E1;padding:8px 0">🎙️ Custom AI Voice — your own AI voice for calls & messages · <b>₦3,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('Custom AI Voice','3000')">Order</button></div>
       <div style="font-size:13px;padding:8px 0">📝 Transcription Bundle — 10 call/audio transcriptions · <b>₦1,000</b> <button class="big blue" style="margin-top:6px" onclick="orderService('Transcription Bundle','1000')">Order</button></div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🔑 Activate a plan</div>
-      <div style="font-size:12px;color:#94A3B8;margin-bottom:8px">Already paid? Enter the activation code sent to you in chat.</div>
+      <div style="font-size:12px;color:#64748B;margin-bottom:8px">Already paid? Enter the activation code sent to you in chat.</div>
       <input id="actcode" placeholder="e.g. Starter-9f2b1c7a" style="text-transform:lowercase">
       <button class="big blue" onclick="activate()">Activate</button>
     </div>
@@ -297,8 +297,8 @@ footer a{color:#94A3B8}
       <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
       <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
       <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
-    <div style="font-size:11.5px;color:#94A3B8;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
-    <div id="modehint" style="font-size:12px;color:#94A3B8;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
+    <div style="font-size:11.5px;color:#64748B;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
+    <div id="modehint" style="font-size:12px;color:#64748B;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🔗 Share AirConnect</div>
@@ -307,57 +307,57 @@ footer a{color:#94A3B8}
         <button class="big blue" style="flex:1" onclick="copyShare()">📋 Copy link</button>
         <button class="big blue" style="flex:1" id="sharebtn" onclick="nativeShare()">📤 Share</button>
       </div>
-      <div id="sharehint" style="font-size:12px;color:#94A3B8;margin-top:8px">Your invite link carries your number — friends who join can add you in one tap.</div>
+      <div id="sharehint" style="font-size:12px;color:#64748B;margin-top:8px">Your invite link carries your number — friends who join can add you in one tap.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🔗 My QR code</div>
       <div id="myqr" style="background:#fff;padding:12px;border-radius:12px;width:max-content;margin:0 auto"></div>
       <div style="display:flex;gap:8px;margin-top:10px">
         <button class="big blue" style="flex:1" onclick="document.getElementById('qrinput').click()">📷 Scan a friend's QR</button>
-        <button class="big" style="flex:0 0 auto;background:#2A3B5C" onclick="copyShare()">📋 Copy link</button>
+        <button class="big" style="flex:0 0 auto;background:#CBD5E1" onclick="copyShare()">📋 Copy link</button>
       </div>
-      <div style="font-size:11.5px;color:#94A3B8;margin-top:6px">A friend scans your QR with their camera — instant friend request, no typing numbers.</div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px">A friend scans your QR with their camera — instant friend request, no typing numbers.</div>
       <input type="file" id="qrinput" class="hide" accept="image/*" capture="environment" onchange="qrChosen(this)">
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🗄️ Archived chats</div>
-      <div id="archlist" style="font-size:13px;color:#94A3B8">None archived.</div>
+      <div id="archlist" style="font-size:13px;color:#64748B">None archived.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
       <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button>
       <button class="big" style="background:#e2445c;margin-top:8px;width:100%" onclick="delAccount()">🗑 Delete my account</button>
-      <div style="font-size:11.5px;color:#94A3B8;margin-top:6px;line-height:1.5">Download gives you a JSON file of your profile, friends and full message history. Delete permanently erases your account — number, chats, statuses, photo — from our servers. This cannot be undone.</div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">Download gives you a JSON file of your profile, friends and full message history. Delete permanently erases your account — number, chats, statuses, photo — from our servers. This cannot be undone.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">👥 Your friends</div>
-      <div id="flist" style="font-size:14px;color:#94A3B8">loading…</div>
+      <div id="flist" style="font-size:14px;color:#64748B">loading…</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
 
 <!-- payment sheet (v14) -->
 <div id="payModal" class="ovl hide">
-  <div style="background:#182338;max-width:420px;margin:40px auto;border-radius:12px;padding:18px">
+  <div style="background:#E2E8F0;max-width:420px;margin:40px auto;border-radius:12px;padding:18px">
     <div style="font-weight:600;font-size:16px;margin-bottom:4px" id="payTitle">Subscribe</div>
-    <div style="font-size:13px;color:#94A3B8;margin-bottom:10px" id="paySub"></div>
-    <div style="background:#0B1220;border:1px solid #2A3B5C;border-radius:10px;padding:10px;margin-bottom:10px">
+    <div style="font-size:13px;color:#64748B;margin-bottom:10px" id="paySub"></div>
+    <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:10px;padding:10px;margin-bottom:10px">
       <div style="font-size:13px"><b>BANK:</b> Rubies MFB</div>
       <div style="font-size:13px"><b>ACCOUNT NAME:</b> Success Friday</div>
       <div style="font-size:13px"><b>ACCOUNT NUMBER:</b> <span id="payAcct">8881724009</span></div>
     </div>
-    <div style="background:#0B1220;border:1px dashed #e8c468;border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
+    <div style="background:#F8FAFC;border:1px dashed #e8c468;border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
       <div style="font-size:12px;color:#e8c468">YOUR TRANSACTION CODE — copy this, use it as the transfer reference:</div>
       <div id="payRef" style="font-size:22px;font-weight:700;letter-spacing:2px;margin:6px 0;color:#e8c468">AC-000000</div>
       <button class="big blue" style="width:100%" onclick="copyRef()">📋 Copy code + bank details</button>
     </div>
     <div style="text-align:center;margin-bottom:10px">
-      <span style="font-size:12px;color:#94A3B8">Pay before this runs out: </span>
+      <span style="font-size:12px;color:#64748B">Pay before this runs out: </span>
       <span id="payTimer" style="font-size:18px;font-weight:700;color:#0EA5E9">30:00</span>
     </div>
-    <div style="font-size:12px;color:#94A3B8;margin-bottom:10px">After paying, keep your receipt ready — you will send it as a screenshot to Premium AI in chat.</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:10px">After paying, keep your receipt ready — you will send it as a screenshot to Premium AI in chat.</div>
     <button class="big blue" style="width:100%" onclick="paidNow()">✅ I've Paid — Continue</button>
-    <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="cancelPay()">Cancel</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="cancelPay()">Cancel</button>
   </div>
 </div>
 
@@ -368,7 +368,7 @@ footer a{color:#94A3B8}
       <div style="font-weight:600;font-size:16px;margin-bottom:10px">＋ New chat</div>
       <input id="fabPeer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
       <button class="big blue" onclick="fabSend()">Send friend request</button>
-      <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="closeFab();openGc()">👥 New group</button>
+      <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeFab();openGc()">👥 New group</button>
       <div style="font-weight:600;font-size:13px;margin:14px 0 2px">Your friends</div>
       <div id="fabList"></div>
       <div style="height:10px"></div>
@@ -389,7 +389,7 @@ footer a{color:#94A3B8}
     <div id="msReacts" style="display:flex;gap:8px;justify-content:center;font-size:26px;padding:4px 0 10px"></div>
     <button class="big blue" id="msReply" style="width:100%" onclick="msReply()">↩ Reply</button>
     <button class="big" id="msDel" style="width:100%;margin-top:8px;background:#e2445c" onclick="msDel()">🗑 Delete for everyone</button>
-    <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="closeMs()">Cancel</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeMs()">Cancel</button>
     <div style="height:8px"></div>
   </div>
 </div>
@@ -398,9 +398,9 @@ footer a{color:#94A3B8}
   <div class="sheet">
     <div id="rsTitle" style="font-weight:600;margin-bottom:10px;text-align:center"></div>
     <button class="big blue" id="rsPin" style="width:100%" onclick="rsPin()">📌 Pin chat</button>
-    <button class="big" id="rsMute" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="rsMute()">🔕 Mute</button>
-    <button class="big" id="rsArch" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="rsArch()">🗄 Archive</button>
-    <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="closeRs()">Cancel</button>
+    <button class="big" id="rsMute" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="rsMute()">🔕 Mute</button>
+    <button class="big" id="rsArch" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="rsArch()">🗄 Archive</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeRs()">Cancel</button>
     <div style="height:8px"></div>
   </div>
 </div>
@@ -411,7 +411,7 @@ footer a{color:#94A3B8}
     <input id="gcName" placeholder="Group name, e.g. Family">
     <div id="gcList" style="margin-top:10px"></div>
     <button class="big blue" style="width:100%;margin-top:10px" onclick="createGroup()">👥 Create group</button>
-    <div style="font-size:11px;color:#94A3B8;margin-top:8px;line-height:1.5">Group chats work like Telegram cloud chats — everyone in the group can read them. Keep private things in 1-to-1 chats (those are end-to-end encrypted).</div>
+    <div style="font-size:11px;color:#64748B;margin-top:8px;line-height:1.5">Group chats work like Telegram cloud chats — everyone in the group can read them. Keep private things in 1-to-1 chats (those are end-to-end encrypted).</div>
   </div>
 </div>
 <!-- v12: group chat view -->
@@ -430,12 +430,12 @@ footer a{color:#94A3B8}
 </div>
 <!-- v12: onboarding -->
 <div id="ob" class="ovl hide">
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;gap:14px;background:linear-gradient(170deg,#0C4A6E 0%,#0B1220 62%)">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;gap:14px;background:linear-gradient(180deg,#E0F2FE 0%,#F8FAFC 45%)">
     <div id="obIco" style="font-size:54px">🛰️</div>
     <div id="obT" style="font-size:20px;font-weight:700"></div>
-    <div id="obS" style="font-size:14px;color:#94A3B8;line-height:1.6"></div>
+    <div id="obS" style="font-size:14px;color:#64748B;line-height:1.6"></div>
     <button class="big blue" style="width:100%" onclick="obNext()">Next</button>
-    <button style="background:none;border:0;color:#64748B;font-size:13px;padding:8px" onclick="obSkip()">Skip</button>
+    <button style="background:none;border:0;color:#94A3B8;font-size:13px;padding:8px" onclick="obSkip()">Skip</button>
   </div>
 </div>
 
@@ -462,7 +462,7 @@ footer a{color:#94A3B8}
   <div style="position:absolute;top:66px;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
     <img id="stImg" draggable="false" style="max-width:100%;max-height:100%;-webkit-user-drag:none" alt="">
     <video id="stVid" class="hide" playsinline onended="nextItem()" controlslist="nodownload" disablepictureinpicture style="max-width:100%;max-height:100%"></video>
-    <div id="stAudWrap" class="hide" style="text-align:center;color:#E2E8F0">
+    <div id="stAudWrap" class="hide" style="text-align:center;color:#0F172A">
       <div style="font-size:60px;margin-bottom:8px">🎙️</div>
       <div id="stAudName" style="font-weight:600">Voice note</div>
       <audio id="stAud" controls style="margin-top:14px;width:82%;max-width:340px" onended="nextItem()"></audio>
@@ -478,7 +478,7 @@ footer a{color:#94A3B8}
   <div id="wpg"></div>
   <div class="ohdr">
     <button class="bk" onclick="closeChat()">‹</button>
-    <div class="av" id="cvAv" style="cursor:pointer;flex:0 0 40px;width:40px;height:40px" onclick="if(CHAT_OPEN)viewPic(CHAT_OPEN)">—</div><div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div><button onclick="blockPeer()" title="Block contact" style="background:none;border:0;color:#94A3B8;font-size:15px;padding:4px 8px;cursor:pointer">🚫</button>
+    <div class="av" id="cvAv" style="cursor:pointer;flex:0 0 40px;width:40px;height:40px" onclick="if(CHAT_OPEN)viewPic(CHAT_OPEN)">—</div><div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div><button onclick="blockPeer()" title="Block contact" style="background:none;border:0;color:#64748B;font-size:15px;padding:4px 8px;cursor:pointer">🚫</button>
     <div style="margin-left:auto;display:flex;gap:4px">
       <button class="bk" onclick="if(CHAT_OPEN)dial(CHAT_OPEN)">📞</button>
       <button class="bk" onclick="if(CHAT_OPEN)dialVideo(CHAT_OPEN)">🎥</button>
@@ -488,68 +488,68 @@ footer a{color:#94A3B8}
   <div class="bubbles" id="bubbles"></div>
   <div id="chipsrow" style="display:none;gap:6px;padding:6px 10px 0;overflow-x:auto"></div>
   <div class="cinput">
-    <button class="bk" style="background:none;border:0;color:#94A3B8;font-size:20px;padding:4px 6px" onclick="pickFile()">📎</button>
+    <button class="bk" style="background:none;border:0;color:#64748B;font-size:20px;padding:4px 6px" onclick="pickFile()">📎</button>
     <input type="file" id="fileinput" class="hide" accept="image/*,application/pdf,.doc,.docx,.txt,.zip,audio/*" onchange="fileChosen(this)">
     <input type="file" id="caminput" class="hide" accept="image/*" capture="environment" onchange="fileChosen(this)">
     <input type="file" id="galinput" class="hide" accept="image/*,video/*" onchange="fileChosen(this)">
     <input type="file" id="docinput" class="hide" accept="application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,audio/*" onchange="fileChosen(this)">
     <input type="file" id="vidinput" class="hide" accept="video/*" onchange="attVideoChosen(this)">
     <div id="cvSheet" class="ovl hide" style="z-index:60" onclick="if(event.target===this)cvClose()">
-      <div style="position:absolute;left:0;right:0;bottom:0;background:#182338;padding:16px;border-top:1px solid #2A3B5C;text-align:center">
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;text-align:center">
         <div style="font-weight:600;margin-bottom:4px">🎙️ Voice note</div>
-        <div style="font-size:12px;color:#94A3B8;margin-bottom:10px">Hold and speak · max 60 seconds</div>
-        <div id="cvRec" class="hide" style="color:#38BDF8;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
+        <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold and speak · max 60 seconds</div>
+        <div id="cvRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="cvPrev" class="hide" style="margin:10px 0"></div>
         <button id="cvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Hold to record</button>
         <div id="cvBtns" class="hide" style="display:flex;gap:8px;margin-top:10px">
-          <button class="big" style="flex:1;background:#2A3B5C" onclick="cvDiscard()">Discard</button>
+          <button class="big" style="flex:1;background:#CBD5E1" onclick="cvDiscard()">Discard</button>
           <button class="big blue" style="flex:1" onclick="cvSend()">➤ Send</button>
         </div>
-        <button class="big" style="width:100%;background:#2A3B5C;margin-top:8px" onclick="cvClose()">Close</button>
+        <button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="cvClose()">Close</button>
       </div>
     </div>
     <div id="stkSheet" class="ovl hide" style="z-index:60" onclick="if(event.target===this)this.className='ovl hide'">
-      <div style="position:absolute;left:0;right:0;bottom:0;background:#182338;padding:16px;border-top:1px solid #2A3B5C">
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1">
         <div style="font-weight:600;margin-bottom:10px;text-align:center">😀 Stickers</div>
         <div id="stkGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;text-align:center"></div>
-        <button class="big" style="width:100%;background:#2A3B5C;margin-top:12px" onclick="$('stkSheet').className='ovl hide'">Close</button>
+        <button class="big" style="width:100%;background:#CBD5E1;margin-top:12px" onclick="$('stkSheet').className='ovl hide'">Close</button>
       </div>
     </div>
     <div id="attsheetbg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';"></div>
-    <div id="attsheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#1E2A3F;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
+    <div id="attsheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px 6px;text-align:center">
         <div onclick="attPick('doc')" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#7f66ff;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📄</div>
-          <div style="font-size:12px;color:#E2E8F0">Document</div>
+          <div style="font-size:12px;color:#0F172A">Document</div>
         </div>
         <div onclick="attPick('cam')" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#e2445c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📷</div>
-          <div style="font-size:12px;color:#E2E8F0">Camera</div>
+          <div style="font-size:12px;color:#0F172A">Camera</div>
         </div>
         <div onclick="attPick('gal')" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#7e57ff;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🖼️</div>
-          <div style="font-size:12px;color:#E2E8F0">Gallery</div>
+          <div style="font-size:12px;color:#0F172A">Gallery</div>
         </div>
         <div onclick="attVideoPick()" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#e2845c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div>
-          <div style="font-size:12px;color:#E2E8F0">Video</div>
+          <div style="font-size:12px;color:#0F172A">Video</div>
         </div>
         <div onclick="chatVoiceSheet()" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#4ad66d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
-          <div style="font-size:12px;color:#E2E8F0">Voice</div>
+          <div style="font-size:12px;color:#0F172A">Voice</div>
         </div>
         <div onclick="stickerSheet()" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#f2b53d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">😀</div>
-          <div style="font-size:12px;color:#E2E8F0">Stickers</div>
+          <div style="font-size:12px;color:#0F172A">Stickers</div>
         </div>
         <div onclick="toast('Contact sharing — coming soon')" style="cursor:pointer">
           <div style="width:52px;height:52px;border-radius:50%;background:#4a90e2;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>
-          <div style="font-size:12px;color:#E2E8F0">Contact</div>
+          <div style="font-size:12px;color:#0F172A">Contact</div>
         </div>
       </div>
-      <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#94A3B8;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
+      <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#64748B;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
     </div>
-    <div id="replychip" class="hide" style="background:#13223A;margin:0 10px;border-left:3px solid #0EA5E9;border-radius:8px;padding:8px 10px;font-size:12px;color:#94A3B8"></div>
+    <div id="replychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #0EA5E9;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
     <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()" oninput="typingPing()">
     <button id="sendbtn" onclick="sendChat()">➤</button>
   </div>
@@ -557,19 +557,19 @@ footer a{color:#94A3B8}
 
 <!-- chat theme / wallpaper sheet -->
 <div id="themesheetbg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="closeThemeSheet()"></div>
-<div id="themesheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#1E2A3F;z-index:60;padding:18px 20px 24px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
+<div id="themesheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:18px 20px 24px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
   <div style="font-weight:600;font-size:16px" id="themeTitle">Chat theme</div>
-  <div style="font-size:12px;color:#94A3B8;margin:2px 0 12px">Wallpaper for this chat — or for all your chats</div>
+  <div style="font-size:12px;color:#64748B;margin:2px 0 12px">Wallpaper for this chat — or for all your chats</div>
   <div id="themeswatches" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 8px;justify-items:center;margin-bottom:14px"></div>
   <div style="display:flex;gap:10px;margin-bottom:10px">
     <button class="big blue" style="flex:1;margin:0" onclick="$('themeimg').click()">🖼️ Photo wallpaper</button>
     <button class="big blue" style="flex:1;margin:0" onclick="$('thememov').click()">🎬 Video wallpaper</button>
   </div>
-  <div style="font-size:11.5px;color:#94A3B8;margin-bottom:10px">Video wallpapers play muted and loop automatically while you chat.</div>
-  <label style="display:flex;align-items:center;gap:8px;font-size:14px;padding:6px 0;color:#E2E8F0;cursor:pointer"><input type="checkbox" id="themeAll" style="width:18px;height:18px;padding:0;margin:0"> Apply to ALL my chats</label>
+  <div style="font-size:11.5px;color:#64748B;margin-bottom:10px">Video wallpapers play muted and loop automatically while you chat.</div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:14px;padding:6px 0;color:#0F172A;cursor:pointer"><input type="checkbox" id="themeAll" style="width:18px;height:18px;padding:0;margin:0"> Apply to ALL my chats</label>
   <div style="display:flex;gap:10px">
-    <button class="big" style="flex:1;margin:0;background:#2A3B5C;color:#E2E8F0" onclick="resetChatTheme()">Reset this chat</button>
-    <button class="big" style="flex:1;margin:0;background:#2A3B5C;color:#E2E8F0" onclick="closeThemeSheet()">Cancel</button>
+    <button class="big" style="flex:1;margin:0;background:#CBD5E1;color:#0F172A" onclick="resetChatTheme()">Reset this chat</button>
+    <button class="big" style="flex:1;margin:0;background:#CBD5E1;color:#0F172A" onclick="closeThemeSheet()">Cancel</button>
   </div>
 </div>
 <input type="file" id="themeimg" class="hide" accept="image/*" onchange="themeFileChosen(this,'image')">
@@ -602,7 +602,7 @@ footer a{color:#94A3B8}
   <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#0EA5E9;margin-bottom:18px;min-height:34px"></div>
   <input id="pininput" type="tel" inputmode="numeric" maxlength="6" style="width:160px;text-align:center;font-size:24px;letter-spacing:8px">
   <button class="big" onclick="pinTry()" style="margin-top:12px">Unlock</button>
-  <div style="font-size:11px;color:#64748B;margin-top:14px;line-height:1.5">Forgot PIN? Reinstalling the app removes the lock<br>and your local data. Your account is safe.</div>
+  <div style="font-size:11px;color:#94A3B8;margin-top:14px;line-height:1.5">Forgot PIN? Reinstalling the app removes the lock<br>and your local data. Your account is safe.</div>
 </div>
 
 <!-- PIN settings + lock wiring -->
@@ -784,8 +784,8 @@ let VERIFY_METHOD="phone",OTP_EMAIL="";
 function setMethod(m){
   VERIFY_METHOD=m;
   const p=$("phone"),e=$("emailin"),tp=$("tabPhone"),te=$("tabEmail");
-  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#182338;color:#94A3B8;border:1px solid #2A3B5C;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
-  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#182338;color:#94A3B8;border:1px solid #2A3B5C;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
+  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
+  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
 }
 async function startSignup(){
   const name=$("myname").value.trim();
@@ -945,7 +945,7 @@ function showTab(t){
 }
 function openFab(){
   const l=$("fabList");
-  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#94A3B8;font-size:13px">No friends yet — add one above.</div>';
+  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#64748B;font-size:13px">No friends yet — add one above.</div>';
   $("fabsheet").className="ovl";
 }
 function closeFab(){$("fabsheet").className="ovl hide";}
@@ -981,7 +981,7 @@ function renderLists(){
     cl.appendChild(row);
   }
   if(WIN_BLOCKS&&WIN_BLOCKS.length){
-    const hd=document.createElement("div");hd.textContent="Blocked";hd.style.cssText="color:#94A3B8;font-size:12px;padding:12px 14px 4px";
+    const hd=document.createElement("div");hd.textContent="Blocked";hd.style.cssText="color:#64748B;font-size:12px;padding:12px 14px 4px";
     cl.appendChild(hd);
     for(const p of WIN_BLOCKS){
       const row=document.createElement("div");row.className="row";
@@ -1140,12 +1140,12 @@ function refreshStories(){
 function storyCircle(pic,letter,ring,label,onclick){
   const d=document.createElement("div");d.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
   const c=document.createElement("div");
-  c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#0EA5E9":"#2A3B5C")+";padding:2px;margin:0 auto;box-sizing:border-box";
+  c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#0EA5E9":"#CBD5E1")+";padding:2px;margin:0 auto;box-sizing:border-box";
   const inner=document.createElement("div");
   if(pic){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
-  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#1E2A3F;color:#E2E8F0;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
+  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
   c.appendChild(inner);d.appendChild(c);
-  const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#94A3B8;margin-top:3px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+  const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#64748B;margin-top:3px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   d.appendChild(t);
   d.onclick=onclick;
   return d;
@@ -1254,7 +1254,7 @@ function renderStatusScreen(){
       const row=document.createElement("div");
       row.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer";
       const c=document.createElement("div");
-      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#0EA5E9":"#2A3B5C")+";padding:2px;flex:0 0 50px;box-sizing:border-box";
+      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#0EA5E9":"#CBD5E1")+";padding:2px;flex:0 0 50px;box-sizing:border-box";
       const inner=document.createElement("div");
       const _pk=String(g.items[0].pic);
       if(_pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
@@ -1262,7 +1262,7 @@ function renderStatusScreen(){
       else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
       c.appendChild(inner);row.appendChild(c);
       const t=document.createElement("div");
-      t.innerHTML='<div style="font-weight:600;color:#E2E8F0">'+esc(g.name)+'</div><div style="font-size:12px;color:#94A3B8">'+ago(last.at)+' · '+g.items.length+' update'+(g.items.length>1?'s':'')+'</div>';
+      t.innerHTML='<div style="font-weight:600;color:#0F172A">'+esc(g.name)+'</div><div style="font-size:12px;color:#64748B">'+ago(last.at)+' · '+g.items.length+' update'+(g.items.length>1?'s':'')+'</div>';
       row.appendChild(t);
       row.onclick=function(){openStatusViewer(g.num);};
       el.appendChild(row);
@@ -1484,7 +1484,7 @@ function renderChips(){
   for(const s of sugg.slice(0,3)){
     const b=document.createElement("button");
     b.textContent=s;
-    b.style.cssText="flex:0 0 auto;background:#1E2A3F;color:#E2E8F0;border:1px solid #2A3B5C;border-radius:16px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap";
+    b.style.cssText="flex:0 0 auto;background:#FFFFFF;color:#0F172A;border:1px solid #CBD5E1;border-radius:16px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap";
     b.onclick=()=>{$("chatbox").value=s;$("chatbox").focus();};
     row.appendChild(b);
   }
@@ -1505,7 +1505,7 @@ function openThemeSheet(){
   if(!CHAT_OPEN)return;
   $("themeTitle").textContent="Chat theme — "+(WIN_NAMES[CHAT_OPEN]||("+"+CHAT_OPEN));
   const g=$("themeswatches");g.innerHTML="";
-  const def=document.createElement("div");def.className="tsw";def.style.background="#182338";def.textContent="✕";def.title="Default (no wallpaper)";
+  const def=document.createElement("div");def.className="tsw";def.style.background="#E2E8F0";def.textContent="✕";def.title="Default (no wallpaper)";
   def.onclick=()=>chooseSwatch(-1);g.appendChild(def);
   THEME_SWATCHES.forEach((s,i)=>{const d=document.createElement("div");d.className="tsw";d.style.background=s;d.onclick=()=>chooseSwatch(i);g.appendChild(d);});
   $("themesheet").className="";$("themesheetbg").className="";
@@ -1537,11 +1537,11 @@ function themeFileChosen(input,kind){
   wpgPut(key,f).then(()=>{saveTheme({type:kind,key:key});}).catch(()=>toast("Storage full — try a smaller file"));
 }
 async function applyWallpaper(){
-  const w=$("wpg");w.innerHTML="";w.style.background="#0B1220";
+  const w=$("wpg");w.innerHTML="";w.style.background="#F8FAFC";
   const t=(CHAT_OPEN&&parseTheme("ac_theme_"+CHAT_OPEN))||parseTheme("ac_theme_global");
   if(!t)return;
   try{
-    if(t.type==="preset"){w.style.background=THEME_SWATCHES[t.id]||"#0B1220";return;}
+    if(t.type==="preset"){w.style.background=THEME_SWATCHES[t.id]||"#F8FAFC";return;}
     let url=THEME_URLS[t.key];
     if(!url){const blob=await wpgGet(t.key);if(!blob)return;url=URL.createObjectURL(blob);THEME_URLS[t.key]=url;}
     if(t.type==="image"){const im=document.createElement("img");im.src=url;im.style.cssText="position:absolute;inset:0;width:100%;height:100%;object-fit:cover";w.appendChild(im);}
@@ -1597,7 +1597,7 @@ function renderTextBubble(d,m){
   if(urlM&&(m.who!=="me")&&/📦|⬇|download|DELIVERY/i.test(txt)){
     d.innerHTML="";
     const card=document.createElement("div");
-    card.style.cssText="background:#0B1220;border:1px solid #2A3B5C;border-radius:10px;padding:10px;min-width:180px";
+    card.style.cssText="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:10px;padding:10px;min-width:180px";
     const title=txt.split(/https?:\/\//)[0].replace(/[|•].*$/,"").trim()||"📦 Delivery for you";
     const t=document.createElement("div");t.textContent=title;t.style.cssText="font-weight:600;margin-bottom:8px;font-size:13px";
     card.appendChild(t);
@@ -1606,9 +1606,9 @@ function renderTextBubble(d,m){
     a.style.cssText="display:block;width:100%;background:#0EA5E9;color:#fff;text-align:center;text-decoration:none;box-sizing:border-box";
     card.appendChild(a);
     const hint=document.createElement("div");hint.textContent="Tap Download — it opens in your browser and saves to your phone. If nothing opens, long-press to copy the link below.";
-    hint.style.cssText="font-size:11px;color:#94A3B8;margin-top:6px";
+    hint.style.cssText="font-size:11px;color:#64748B;margin-top:6px";
     card.appendChild(hint);
-    const raw=document.createElement("div");raw.textContent=urlM[0];raw.style.cssText="font-size:10px;color:#64748B;word-break:break-all;margin-top:6px";
+    const raw=document.createElement("div");raw.textContent=urlM[0];raw.style.cssText="font-size:10px;color:#94A3B8;word-break:break-all;margin-top:6px";
     card.appendChild(raw);
     d.appendChild(card);
     return;
@@ -1617,8 +1617,8 @@ function renderTextBubble(d,m){
   const rmQ=txt.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
   const quote=rmQ?rmQ[2].slice(0,90):null;
   const body=rmQ?rmQ[3]:txt;
-  const esc2=esc(body)+(m.who==="me"?(m.r?" <span style=\"color:#38BDF8\">✓✓</span>":" ✓"):"");
-  d.innerHTML=(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#38BDF8;text-decoration:underline;word-break:break-all">'+u+"</a>");
+  const esc2=esc(body)+(m.who==="me"?(m.r?" <span style=\"color:#2563EB\">✓✓</span>":" ✓"):"");
+  d.innerHTML=(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;text-decoration:underline;word-break:break-all">'+u+"</a>");
 }
 async function fetchFileBubble(m,d){
   try{
@@ -1636,7 +1636,7 @@ async function fetchFileBubble(m,d){
       d.textContent="";const vd=document.createElement("video");vd.src=r.text;vd.controls=true;vd.playsInline=true;vd.style.cssText="max-width:100%;max-height:300px;border-radius:6px;display:block";
       d.appendChild(vd);
     }else if(r&&r.text){
-      d.textContent="";const a=document.createElement("a");a.href=r.text;a.download="attachment";a.textContent="⬇ Download attachment";a.style.color="#38BDF8";
+      d.textContent="";const a=document.createElement("a");a.href=r.text;a.download="attachment";a.textContent="⬇ Download attachment";a.style.color="#2563EB";
       d.appendChild(a);
     }else d.textContent="⚠ attachment unavailable";
   }catch(e){d.textContent="⚠ attachment unavailable";}
@@ -2376,7 +2376,7 @@ function renderArchived(){
   if(!ARCHS.length){el.textContent="None archived.";return;}
   el.innerHTML="";
   for(const id of ARCHS){
-    const b=document.createElement("button");b.className="big";b.style.cssText="background:#2A3B5C;width:100%;margin-top:6px;text-align:left";
+    const b=document.createElement("button");b.className="big";b.style.cssText="background:#CBD5E1;width:100%;margin-top:6px;text-align:left";
     b.textContent=(WIN_NAMES[id]||("+"+id))+" — tap to unarchive";
     b.onclick=()=>{saveV12Arch(id);toast("Unarchived");};
     el.appendChild(b);
@@ -2451,7 +2451,7 @@ function clearReply(){REPLY_TO=null;const c=$("replychip");if(c)c.className="hid
 /* ----- groups ----- */
 function openGc(){
   const l=$("gcList");
-  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<label class="row" style="cursor:pointer"><input type="checkbox" value="'+f.id+'" style="width:20px;height:20px"> <div class="rname" style="margin-left:10px">'+esc(WIN_NAMES[f.id]||f.id)+"</div></label>").join(""):'<div style="color:#94A3B8;font-size:13px;padding:6px 0">No friends yet — add one in Settings first.</div>';
+  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<label class="row" style="cursor:pointer"><input type="checkbox" value="'+f.id+'" style="width:20px;height:20px"> <div class="rname" style="margin-left:10px">'+esc(WIN_NAMES[f.id]||f.id)+"</div></label>").join(""):'<div style="color:#64748B;font-size:13px;padding:6px 0">No friends yet — add one in Settings first.</div>';
   $("gcName").value="";
   $("gcsheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
@@ -2481,13 +2481,13 @@ function renderGBubbles(){
   const b=$("gbubbles");b.innerHTML="";
   const arr=GMS[GROUP_OPEN]||[];
   const head=document.createElement("div");
-  head.style.cssText="text-align:center;color:#64748B;font-size:11.5px;padding:6px 0";
+  head.style.cssText="text-align:center;color:#94A3B8;font-size:11.5px;padding:6px 0";
   head.textContent="Group chat · messages are visible to all members";
   b.appendChild(head);
   for(const m of arr){
     const d=document.createElement("div");
     d.className="bub "+(m.who==="me"?"out":"in");
-    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:#38BDF8;margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#38BDF8;word-break:break-all">'+u+"</a>");
+    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:#2563EB;margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;word-break:break-all">'+u+"</a>");
     b.appendChild(d);
   }
   b.scrollTop=999999;
@@ -2516,7 +2516,7 @@ async function leaveGroup(){
 function ensureQR(){
   const el=$("myqr");
   if(!el||el.childElementCount||typeof QRCode==="undefined"||!ME)return;
-  try{new QRCode(el,{text:location.origin+location.pathname.replace(/caller5?\.html.*$/,"caller5.html")+"?ref="+ME,width:150,height:150,colorDark:"#0B1220",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}catch(e){el.innerHTML="Use the invite link below";el.style.color="#0B1220";}
+  try{new QRCode(el,{text:location.origin+location.pathname.replace(/caller5?\.html.*$/,"caller5.html")+"?ref="+ME,width:150,height:150,colorDark:"#0B1220",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}catch(e){el.innerHTML="Use the invite link below";el.style.color="#64748B";}
 }
 function qrChosen(inp){
   const f=inp.files&&inp.files[0];if(!f)return;
