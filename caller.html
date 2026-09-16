@@ -125,8 +125,22 @@ footer a{color:#8696a0}
       <option>Japan</option><option>Saudi Arabia</option><option>Qatar</option><option>UAE</option>
       <option>Turkey</option><option>Canada</option><option>Australia</option>
     </select>
+    <input id="phone" placeholder="Your phone number, e.g. 0803 123 4567" inputmode="tel" autocomplete="tel">
+    <button class="big" id="sendcodebtn" onclick="startSignup()">Send my verification code 📲</button>
+    <div id="otprow" style="display:none">
+      <input id="otpcode" placeholder="6-digit code from SMS" inputmode="numeric" maxlength="6" style="text-align:center;font-size:20px;letter-spacing:6px">
+      <button class="big" id="verifybtn" onclick="verifyOtp()">Verify &amp; create my account</button>
+      <button class="big blue" id="resendbtn" onclick="startSignup()" style="margin-top:8px">Resend code</button>
+      <div id="otpnote" style="font-size:11.5px;color:#8696a0;margin-top:6px;text-align:center"></div>
+    </div>
+    <div style="font-size:11.5px;color:#8696a0;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
-    <button class="big" onclick="register()">Get my AirConnect number</button>
+    <button class="big blue" onclick="register()">Resume my number</button>
+    <div style="font-size:11px;color:#66787f;margin-top:12px;text-align:center;line-height:1.5">
+      Your phone number is verified by SMS code, so nobody can sign up as you.<br>
+      <a href="terms.html" target="_blank" style="color:#53bdeb">Terms &amp; Data Policy</a> ·
+      <a href="privacy.html" target="_blank" style="color:#53bdeb">Privacy</a>
+    </div>
   </div>
   <footer><a href="privacy.html">Privacy Policy</a></footer>
 </div>
@@ -225,7 +239,9 @@ footer a{color:#8696a0}
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
       <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
-      <div id="modehint" style="font-size:12px;color:#8696a0;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
+      <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
+    <div style="font-size:11.5px;color:#8696a0;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
+    <div id="modehint" style="font-size:12px;color:#8696a0;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🔗 Share AirConnect</div>
@@ -337,6 +353,17 @@ footer a{color:#8696a0}
   </div>
 </div>
 
+<!-- app PIN lock overlay -->
+<div id="lockview" class="ovl hide" style="z-index:80;align-items:center;justify-content:center;text-align:center">
+  <div style="font-size:40px">🔒</div>
+  <div style="font-size:18px;font-weight:600;margin:10px 0 16px">Enter your PIN</div>
+  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#00a884;margin-bottom:18px;min-height:34px"></div>
+  <input id="pininput" type="tel" inputmode="numeric" maxlength="6" style="width:160px;text-align:center;font-size:24px;letter-spacing:8px">
+  <button class="big" onclick="pinTry()" style="margin-top:12px">Unlock</button>
+  <div style="font-size:11px;color:#66787f;margin-top:14px;line-height:1.5">Forgot PIN? Reinstalling the app removes the lock<br>and your local data. Your account is safe.</div>
+</div>
+
+<!-- PIN settings + lock wiring -->
 <!-- incoming call overlay -->
 <div id="incoming" class="ovl hide">
   <div class="top" style="padding-top:80px">
@@ -424,6 +451,62 @@ function startRing(kind){
 function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+(cls||"");}
 
 /* ---------------- register / login ---------------- */
+const CC={Nigeria:'234',Ghana:'233',Kenya:'254','South Africa':'27',Egypt:'20',USA:'1',UK:'44',Ireland:'353',Germany:'49',France:'33',Spain:'34',Italy:'39',Brazil:'55',Argentina:'54',India:'91',China:'86',Japan:'81','Saudi Arabia':'966',Qatar:'974',UAE:'971',Turkey:'90',Canada:'1',Australia:'61'};
+let OTP_NUM="";
+function normPhone(){
+  const cc=CC[$("country").value]||"234";
+  let d=($("phone").value||"").replace(/[^0-9]/g,"");
+  if(!d)return null;
+  if(d[0]==="0")d=cc+d.replace(/^0+/,"");
+  else if(d.slice(0,cc.length)!==cc)d=cc+d;
+  if(d.length<10||d.length>15)return null;
+  return d;
+}
+async function startSignup(){
+  const name=$("myname").value.trim();
+  if(!name){toast("Enter your name first");$("myname").focus();return;}
+  const num=normPhone();
+  if(!num){toast("Enter a valid phone number");$("phone").focus();return;}
+  OTP_NUM=num;
+  const btn=$("sendcodebtn");btn.disabled=true;btn.textContent="Sending code…";
+  const d=await api("otp",{op:"send",num:num});
+  btn.disabled=false;btn.textContent="Resend code";
+  if(d&&d.need_key){
+    toast("SMS verification not live yet — preview mode");
+    $("otpnote").innerHTML="SMS verification goes live once the SMS gateway is connected.<br>For now tap below to get a preview number.";
+    $("verifybtn").style.display="none";$("resendbtn").style.display="none";
+    $("otprow").style.display="";
+    const pb=document.createElement("button");pb.className="big blue";pb.textContent="Continue with a preview number";pb.onclick=async()=>{await legacyRegister();};
+    $("otprow").appendChild(pb);pb.id="previewbtn";
+    return;
+  }
+  if(d&&d.ok){
+    $("otprow").style.display="";
+    $("verifybtn").style.display="";$("resendbtn").style.display="";
+    $("otpnote").textContent="We sent a 6-digit code to +"+num+". It expires in 10 minutes.";
+    toast("Code sent to + "+num);
+    $("otpcode").focus();
+    return;
+  }
+  toast((d&&d.err)||"Could not send code — try again");
+}
+async function legacyRegister(){
+  const name=$("myname").value.trim(),country=$("country").value;
+  if(!name){toast("Enter your name first");return;}
+  const d=await api("register",{name:name,country:country});
+  if(!d.id){toast(d.err||"registration failed");return;}
+  finishLogin(d);
+}
+async function verifyOtp(){
+  const code=($("otpcode").value||"").replace(/[^0-9]/g,"");
+  if(code.length!==6){toast("Enter the 6-digit code");return;}
+  const name=$("myname").value.trim(),country=$("country").value;
+  const d=await api("otp",{op:"verify",num:OTP_NUM,code:code});
+  if(!d||!d.verified){toast((d&&d.err)||"Wrong code — check and try again");return;}
+  const d2=await api("claim",{num:OTP_NUM,name:name,country:country});
+  if(!d2||!d2.id){toast((d2&&d2.err)||"Could not create account");return;}
+  finishLogin(d2);
+}
 async function register(){
   const name=$("myname").value.trim(),country=$("country").value;
   const resume=$("oldnum").value.trim()||readLoginSync()||"";
@@ -431,10 +514,14 @@ async function register(){
   if(resume){d=await api("register",{id:resume,name:name});if(d&&d.id)await log('resumed my number');}
   if(!d||!d.id){if(!name){toast("Enter your name");return;}d=await api("register",{name:name,country:country});}
   if(!d.id){toast(d.err||"registration failed");return;}
+  finishLogin(d);
+}
+async function finishLogin(d){
   ME=d.id;ME_NAME=d.name;
   const savedOK=saveLogin(ME);
   if(!savedOK)await log("WARNING: browser is blocking login storage — number may not be remembered");
   $("login").className="hide";$("app").className="";
+  maybeLock();
   $("mynum").textContent="+ "+ME;
   restoreChats();
   refreshModeBtn();
@@ -986,7 +1073,7 @@ function hangup(silent){
   if(!silent)toast("Call ended");
   log("call ended");
 }
-function tick(){
+async function tick(){
   if(state==="live"){
     meter(rxAnalyser,$("rx"));meter(txAnalyser,$("tx"));
     if(callTimer===null&&callStart)callTimer=setInterval(()=>{const s=Math.floor((Date.now()-callStart)/1000);$("callStat").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");},1000);
@@ -1010,12 +1097,12 @@ document.addEventListener("visibilitychange",()=>{
   }else{hiddenSince=0;}
 });
 /* ---- Auto-end watchdog (directive: every call ends automatically on hangup) ---- */
-setInterval(()=>{
+setInterval(async()=>{
   try{
     const now=Date.now();
     if(state==="incoming"&&incomingAt&&now-incomingAt>60000){log("auto-end: incoming ring timed out (missed call)");callCleanup();toast("Missed call");}
     if(state==="live"&&!pc){log("auto-end: dead call link cleaned");callCleanup();toast("Call ended");}
-    if(state==="dialing"&&dialAt&&now-dialAt>75000){log("auto-end: no answer timeout");hangup(true);toast("No answer");}
+    if(state==="dialing"&&dialAt&&now-dialAt>75000){log("auto-end: no answer timeout");try{await api("sig",{from:ME,to:peerNum,type:"noans",payload:"{ }"});}catch(e){}hangup(true);toast("No answer");}
   }catch(e){}
 },5000);
 /* ---------------- friend requests ---------------- */
@@ -1172,6 +1259,45 @@ function nativeShare(){
   if(id){setTimeout(()=>{try{register();}catch(e){}},400);}
 })();
 (function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('friends');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
+
+/* ---------- app PIN lock ---------- */
+async function pinHash(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return btoa(String.fromCharCode(...new Uint8Array(b)));}
+async function setPin(){
+  const p=prompt("Choose a 4-6 digit PIN:");
+  if(!p)return;
+  const p2=prompt("Confirm your PIN:");
+  if(p!==p2){toast("PINs did not match");return;}
+  if(!/^\d{4,6}$/.test(p)){toast("PIN must be 4-6 digits");return;}
+  localStorage.setItem("ac_pin",await pinHash("acpin:"+p));
+  toast("App lock enabled 🔒");
+  refreshPinBtn();
+}
+async function clearPin(){const p=prompt("Enter your current PIN to remove the lock:");if(!p)return;if(await pinHash("acpin:"+p)===localStorage.getItem("ac_pin")){localStorage.removeItem("ac_pin");toast("App lock removed");refreshPinBtn();}else toast("Wrong PIN");}
+function refreshPinBtn(){const b=$("pinBtn");if(!b)return;b.textContent=localStorage.getItem("ac_pin")?"Change PIN 🔒":"Set app PIN 🔒";}
+let pinBuf="",pinTries=0;
+async function pinTry(){
+  const v=($("pininput").value||"").replace(/[^0-9]/g,"");
+  if(!v)return;
+  if(await pinHash("acpin:"+v)===localStorage.getItem("ac_pin")){$("lockview").className="ovl hide";pinBuf="";pinTries=0;return;}
+  pinTries++;
+  if(pinTries>=5){$("pininput").disabled=true;toast("Too many attempts — wait 30s");setTimeout(()=>{pinTries=0;$("pininput").disabled=false;},30000);}
+  else toast("Wrong PIN ("+pinTries+"/5)");
+}
+function maybeLock(){
+  if(!localStorage.getItem("ac_pin"))return;
+  const lv=$("lockview");if(!lv)return;
+  lv.className="ovl";$("pininput").value="";$("pininput").focus();
+}
+/* ---------- crash/bug telemetry ---------- */
+let diagSent=0;
+window.addEventListener("error",e=>{
+  if(diagSent>=3)return;diagSent++;
+  try{log("[DIAG] "+String(e.message||"").slice(0,120)+" @"+String(e.filename||"").split("/").pop()+":"+e.lineno);}catch(x){}
+});
+window.addEventListener("unhandledrejection",e=>{
+  if(diagSent>=3)return;diagSent++;
+  try{log("[DIAG] promise: "+String((e.reason&&e.reason.message)||e.reason||"").slice(0,140));}catch(x){}
+});
 </script>
 </body>
 </html>

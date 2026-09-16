@@ -94,8 +94,10 @@ async function answer(m){
       log("LIVE — speaking greeting");
       let g="";try{const r=await fetch(GREET,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"get",num:ME})});const j=await r.json();g=j.text||"";}catch(e){}
       if(!g)g="Hello! You have reached my AI assistant. I cannot take your call right now, but please leave a message and I will get back to you very soon. Thank you!";
+      await say("Quick note: this call is being answered by an AI assistant.");
       await say(g);
       await say("You can leave your message now.");
+      try{await api("chat",{from:ME,to:curCaller,text:"🤖 Auto-disclosure: this call was answered by my AI assistant — you have been talking to an AI voice."});}catch(e){}
     }
     if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected"||pc.connectionState==="closed")){cleanup();}
   };
@@ -137,7 +139,7 @@ async function poll(){
         }else{
           OFFERS[m.from]={at:now,n:(rec.n||1)+1};
           if(state!=="live"&&!pc&&!pickTimer){
-            log("2nd offer from +"+m.from+" — AI picks in 12s");
+            log("2nd offer from +"+m.from+" — AI picks in 4s");
             const offer=m;
             pickTimer=setTimeout(async()=>{
               pickTimer=null;
@@ -145,13 +147,16 @@ async function poll(){
                 offer.payload=desc;
                 try{await answer(offer);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
               }
-            },12000);
+            },4000);
           }
         }
       }
       else if(m.type==="ice"&&pc){await queueIce(m.payload);}
       else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
       else if(m.type==="bye"){if(state==="live"||pc){log("caller +"+m.from+" ended call");cleanup();}}
+      else if(m.type==="noans"){
+        try{await api("chat",{from:ME,to:m.from,text:"📞 Sorry I missed your call. I'll call you back — if it's urgent, reply here and I'll get it instantly."});log("voicemail notice sent to +"+m.from);}catch(e){}
+      }
     }
     for(const r of (d.requests||[])){
       await api("accept",{user:ME,id:r.id});
