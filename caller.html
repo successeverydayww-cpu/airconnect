@@ -106,6 +106,8 @@ button.big.blue{background:#005c4b;color:#fff}
 footer{display:block;text-align:center;padding:14px;font-size:12px;color:#8696a0}
 footer a{color:#8696a0}
 #sharelink{font-size:12px}
+.stseg{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;max-width:44px}
+.stseg.done,.stseg.on{background:#fff}
 </style>
 </head>
 <body>
@@ -159,9 +161,36 @@ footer a{color:#8696a0}
 
   <div id="view-chats" class="view">
     <div id="storystrip" style="display:flex;gap:12px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid #202c33"></div>
-    <input type="file" id="storyinput" class="hide" accept="image/*" onchange="storyChosen(this)">
+    <input type="file" id="storyinput" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
+    <input type="file" id="stCamIn" class="hide" accept="image/*" capture="environment" onchange="stPhotoChosen(this)">
+    <input type="file" id="stPhotoIn" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
+    <input type="file" id="stVidIn" class="hide" accept="video/*" onchange="stVideoChosen(this)">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Add a friend in the 👥 tab, then call or message them.</div>
+  </div>
+
+  <div id="view-status" class="view hide">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer;flex:0 0 60px" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else document.getElementById('stPhotoIn').click()">?</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600">My status</div>
+          <div style="font-size:12.5px;color:#8696a0" id="stMySub">Tap a button to add a photo or video status</div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stCamIn').click()">📸 Camera</button>
+            <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stPhotoIn').click()">🖼️ Photo</button>
+            <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stVidIn').click()">🎬 Video</button>
+          </div>
+          <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:8px;background:#2a3942" onclick="deleteMyStatus()">🗑 Delete my status</button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#8696a0;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:4px">👁 Recent updates</div>
+      <div id="stFriends" style="font-size:14px;color:#8696a0">No friend statuses yet.</div>
+    </div>
+    <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
 
   <div id="view-calls" class="view hide">
@@ -246,8 +275,9 @@ footer a{color:#8696a0}
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🖼️ My profile photo</div>
       <div style="display:flex;gap:10px;align-items:center">
-        <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px">?</div>
+        <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
         <button class="big blue" style="flex:1" onclick="document.getElementById('picinput').click()">Upload photo</button>
+        <button class="big" style="flex:0 0 auto;background:#2a3942" onclick="removeMyPic()">🗑</button>
         <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
       </div>
       <div style="font-size:11.5px;color:#8696a0;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
@@ -277,6 +307,7 @@ footer a{color:#8696a0}
 
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
+    <button id="tab-status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
     <button id="tab-calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
     <button id="tab-friends" onclick="showTab('friends')"><span class="ico">👥</span>Friends</button>
     <button id="tab-premium" onclick="showTab('premium')"><span class="ico">⭐</span>Premium</button>
@@ -293,6 +324,23 @@ footer a{color:#8696a0}
     <img id="pvImg" draggable="false" style="max-width:96%;max-height:88%;border-radius:12px;-webkit-user-drag:none" alt="">
   </div>
   <div id="pvWm" style="position:fixed;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:12px;pointer-events:none"></div>
+</div>
+
+<!-- status viewer -->
+<div id="stview" class="ovl hide" oncontextmenu="return false" style="user-select:none;-webkit-user-select:none;background:#000">
+  <div id="stProg" style="display:flex;gap:4px;padding:10px 12px 2px"></div>
+  <div class="ohdr" style="background:transparent">
+    <button class="bk" onclick="closeStatusViewer()">‹</button>
+    <div style="flex:1;min-width:0"><div class="nm" id="stName" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div><div class="st" id="stTime">—</div></div>
+    <button class="bk" onclick="closeStatusViewer()">✕</button>
+  </div>
+  <div style="position:absolute;top:66px;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
+    <img id="stImg" draggable="false" style="max-width:100%;max-height:100%;-webkit-user-drag:none" alt="">
+    <video id="stVid" class="hide" playsinline onended="nextItem()" controlslist="nodownload" disablepictureinpicture style="max-width:100%;max-height:100%"></video>
+  </div>
+  <div onclick="prevItem()" style="position:absolute;left:0;top:66px;bottom:0;width:33%;z-index:5"></div>
+  <div onclick="nextItem()" style="position:absolute;right:0;top:66px;bottom:0;width:33%;z-index:5"></div>
+  <div id="stWm" style="position:fixed;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:12px;pointer-events:none"></div>
 </div>
 
 <!-- chat overlay -->
@@ -712,13 +760,14 @@ function pushHist(){try{history.pushState({ac:1},"");}catch(e){}}
 window.addEventListener("popstate",()=>{
   if(ovlOpen("incoming")){declineCall();pushHist();return;}
   if(ovlOpen("callview")){pushHist();return;}          // stay on the call screen
-  if(ovlOpen("picview")){closePicView();return;}
+  if(ovlOpen("stview")){closeStatusViewer();return;}if(ovlOpen("picview")){closePicView();return;}
   if(ovlOpen("chatview")){closeChat();return;}         // back closes chat -> home
 });
 pushHist();
 function showTab(t){
-  for(const v of["chats","calls","friends","premium"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
+  for(const v of["chats","status","calls","friends","premium"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
   if(t==="chats")UNREAD={},renderUnread();
+  if(t==="status"){refreshStories();renderStatusScreen();}
   if(t==="premium")renderPlan();
 }
 
@@ -851,22 +900,33 @@ function setChatHeaderPic(p){
   else{el.style.backgroundImage="";el.textContent=esc(String(WIN_NAMES[p]||"+").charAt(0).toUpperCase());}
   if(!PIC_FETCHED[p])fetchPic(p);
 }
+function readDataUrl(f){return new Promise(function(res,rej){const r=new FileReader();r.onload=function(){res(r.result);};r.onerror=function(){rej(new Error("read"));};r.readAsDataURL(f);});}
+async function removeMyPic(){
+  const r=await api("avatar",{node:ME,pic:""});
+  if(r&&r.ok){try{delete PIC_CACHE[ME];}catch(e){}PIC_FETCHED[ME]=1;savePics();refreshMyPic();renderLists();renderStatusScreen();toast("Photo removed");}
+  else toast((r&&r.err)||"Could not remove photo");
+}
 async function picChosen(fi){
   const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
+  toast("Reading photo…");
   try{
-    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(f);});
+    const dataUrl=await readDataUrl(f);
+    const img=await new Promise(function(res,rej){const i=new Image();i.onload=function(){res(i);};i.onerror=function(){rej(new Error("img"));};i.src=dataUrl;});
     const cv=document.createElement("canvas");
     let w=img.width,h=img.height;const mx=128;
+    if(!w||!h){w=128;h=128;}
     if(w>mx||h>mx){const s=mx/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
     cv.width=Math.max(1,w);cv.height=Math.max(1,h);
     cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
     let pic=cv.toDataURL("image/jpeg",0.72);
-    while(pic.length>44000&&cv.width>16){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    let guard=0;
+    while(pic.length>44000&&cv.width>16&&guard++<12){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    toast("Saving photo…");
     const r=await api("avatar",{node:ME,pic:pic});
-    if(r&&r.ok){PIC_CACHE[ME]=pic;savePics();refreshMyPic();renderLists();toast("Photo saved ✓");}
-    else toast((r&&r.err)||"Could not save photo");
-  }catch(e){toast("Could not read image");}
+    if(r&&r.ok){PIC_CACHE[ME]=pic;PIC_FETCHED[ME]=1;savePics();refreshMyPic();renderLists();renderStatusScreen();toast("Profile photo saved ✓");}
+    else toast((r&&r.err)||"Could not save photo — check connection");
+  }catch(e){toast("Could not read that image — try another photo");}
 }
 function viewPic(p){
   if(!p)return;
@@ -881,7 +941,7 @@ function closePicView(){try{$("picview").className="ovl hide";}catch(e){}}
 let STORIES=[],STORY_SEEN={};try{STORY_SEEN=JSON.parse(localStorage.getItem("ac_story_seen"))||{};}catch(e){}
 function refreshStories(){
   if(!ME)return;
-  api("stories",{node:ME}).then(d=>{if(d&&d.stories){STORIES=d.stories;renderStoryStrip();}}).catch(()=>{});
+  api("stories",{node:ME}).then(d=>{if(d&&d.stories){STORIES=d.stories;renderStoryStrip();const sv=document.getElementById("view-status");if(sv&&sv.className.indexOf("hide")<0)renderStatusScreen();}}).catch(()=>{});
 }
 function storyCircle(pic,letter,ring,label,onclick){
   const d=document.createElement("div");d.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
@@ -900,35 +960,207 @@ function renderStoryStrip(){
   const el=$("storystrip");if(!el)return;
   el.innerHTML="";
   const myStory=STORIES.find(s=>s.num===ME);
-  el.appendChild(storyCircle(myStory?myStory.pic:PIC_CACHE[ME],myStory?"✓":"+",!!(myStory&&!STORY_SEEN[myStory.id]),"My status",()=>{if(myStory)viewStoryById(myStory.id);else document.getElementById("storyinput").click();}));
+  el.appendChild(storyCircle(myStory?myStory.pic:PIC_CACHE[ME],myStory?"✓":"+",!!(myStory&&!STORY_SEEN[myStory.id]),"My status",()=>{if(myStory)openStatusViewer(ME);else document.getElementById("storyinput").click();}));
   for(const s of STORIES){
     if(s.num===ME)continue;
     el.appendChild(storyCircle(s.pic,String(s.name).charAt(0).toUpperCase(),!STORY_SEEN[s.id],String(s.name),()=>viewStoryById(s.id)));
   }
 }
-function viewStoryById(id){
-  const s=STORIES.find(x=>x.id===id);if(!s)return;
-  try{$("pvSub").textContent=(s.num===ME?"My status":s.name+" · status");$("pvWm").textContent="AirConnect · status · protected view · "+(ME_NAME||"");$("pvImg").style.filter="";}catch(e){}
-  $("pvImg").src=s.pic;$("picview").className="ovl";
-  STORY_SEEN[id]=1;try{localStorage.setItem("ac_story_seen",JSON.stringify(STORY_SEEN));}catch(e){}
-  renderStoryStrip();
+function viewStoryById(id){const s=STORIES.find(x=>x.id===id);if(s)openStatusViewer(s.num);}
+function storyGroups(){
+  const groups=[];
+  const mine=STORIES.filter(s=>s.num===ME);
+  if(mine.length)groups.push({num:ME,name:"My status",items:mine});
+  for(const s of STORIES){
+    if(s.num===ME)continue;
+    let g=groups.find(g=>g.num===s.num);
+    if(!g){g={num:s.num,name:s.name,items:[]};groups.push(g);}
+    g.items.push(s);
+  }
+  return groups;
 }
-async function storyChosen(fi){
+let STV={groups:[],gi:0,ii:0,timer:0};
+function openStatusViewer(num){
+  const groups=storyGroups();
+  let gi=-1;
+  for(let i=0;i<groups.length;i++){if(groups[i].num===num){gi=i;break;}}
+  if(gi<0)return;
+  STV={groups:groups,gi:gi,ii:0,timer:0};
+  showStItem();
+  try{$("stview").className="ovl";}catch(e){}
+}
+function showStItem(){
+  const g=STV.groups[STV.gi];if(!g)return;
+  const s=g.items[STV.ii];if(!s){nextGroup();return;}
+  try{STORY_SEEN[s.id]=1;localStorage.setItem("ac_story_seen",JSON.stringify(STORY_SEEN));}catch(e){}
+  try{
+    $("stName").textContent=(g.num===ME?"My status":g.name);
+    $("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length;
+    $("stWm").textContent="AirConnect · status · protected view · "+(ME_NAME||"");
+    $("stImg").style.filter="";$("stVid").style.filter="";
+    const pr=$("stProg");pr.innerHTML="";
+    g.items.forEach(function(it,i){const b=document.createElement("div");b.className="stseg"+(i<=STV.ii?" on":"");pr.appendChild(b);});
+  }catch(e){}
+  const isVid=String(s.pic).indexOf("data:video")===0;
+  clearTimeout(STV.timer);
+  if(isVid){
+    try{$("stImg").className="hide";$("stVid").className="";}catch(e){}
+    const v=$("stVid");v.src=s.pic;try{v.currentTime=0;v.play().catch(function(){});}catch(e){}
+  }else{
+    try{$("stVid").className="hide";$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();$("stImg").className="";}catch(e){}
+    $("stImg").src=s.pic;
+    STV.timer=setTimeout(function(){nextItem();},7000);
+  }
+  renderStoryStrip();
+  if($("view-status")&&$("view-status").className.indexOf("hide")<0)renderStatusScreen();
+}
+function nextItem(){
+  const g=STV.groups[STV.gi];if(!g){return;}
+  if(STV.ii<g.items.length-1){STV.ii++;showStItem();}
+  else nextGroup();
+}
+function nextGroup(){
+  if(STV.gi<STV.groups.length-1){STV.gi++;STV.ii=0;showStItem();}
+  else closeStatusViewer();
+}
+function prevItem(){
+  if(STV.ii>0){STV.ii--;showStItem();}
+  else if(STV.gi>0){STV.gi--;STV.ii=0;STV.ii=Math.max(0,STV.groups[STV.gi].items.length-1);showStItem();}
+}
+function closeStatusViewer(){
+  clearTimeout(STV.timer);
+  try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}
+  try{$("stview").className="ovl hide";}catch(e){}
+}
+function renderStatusScreen(){
+  if(!ME)return;
+  try{
+    const mine=STORIES.filter(s=>s.num===ME);
+    const av=$("stMyAv");if(!av)return;
+    const pic=PIC_CACHE[ME];
+    if(pic){av.textContent="";av.style.backgroundImage="url("+pic+")";av.style.backgroundSize="cover";av.style.backgroundPosition="center";}
+    else{av.style.backgroundImage="";av.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();}
+    $("stMySub").textContent=mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Tap a button to add a photo or video status";
+    $("stDelBtn").style.display=mine.length?"":"none";
+    const fr=storyGroups().filter(g=>g.num!==ME);
+    const el=$("stFriends");
+    if(!fr.length){el.innerHTML="No friend statuses yet — statuses from friends appear here for 24 hours.";return;}
+    el.innerHTML="";
+    for(const g of fr){
+      const last=g.items[g.items.length-1];
+      const unseen=g.items.some(s=>!STORY_SEEN[s.id]);
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer";
+      const c=document.createElement("div");
+      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#00a884":"#2a3942")+";padding:2px;flex:0 0 50px;box-sizing:border-box";
+      const inner=document.createElement("div");
+      if(String(g.items[0].pic).indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#005c4b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
+      else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
+      c.appendChild(inner);row.appendChild(c);
+      const t=document.createElement("div");
+      t.innerHTML='<div style="font-weight:600;color:#e9edef">'+esc(g.name)+'</div><div style="font-size:12px;color:#8696a0">'+ago(last.at)+' · '+g.items.length+' update'+(g.items.length>1?'s':'')+'</div>';
+      row.appendChild(t);
+      row.onclick=function(){openStatusViewer(g.num);};
+      el.appendChild(row);
+    }
+  }catch(e){}
+}
+async function deleteMyStatus(){
+  const mine=STORIES.filter(s=>s.num===ME);
+  for(const s of mine){try{await api("storydel",{node:ME,id:s.id});}catch(e){}}
+  toast("Status deleted");
+  STORIES=STORIES.filter(s=>s.num!==ME);
+  renderStoryStrip();renderStatusScreen();
+  refreshStories();
+}
+async function stPhotoChosen(fi){
   const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
+  toast("Reading photo…");
   try{
-    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(f);});
+    const dataUrl=await readDataUrl(f);
+    const img=await new Promise(function(res,rej){const i=new Image();i.onload=function(){res(i);};i.onerror=function(){rej(new Error("img"));};i.src=dataUrl;});
     const cv=document.createElement("canvas");
-    let w=img.width,h=img.height;const mx=720;
+    let w=img.width,h=img.height;
+    if(!w||!h){w=720;h=720;}
+    const mx=720;
     if(w>mx||h>mx){const s2=mx/Math.max(w,h);w=Math.round(w*s2);h=Math.round(h*s2);}
     cv.width=Math.max(1,w);cv.height=Math.max(1,h);
     cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
     let pic=cv.toDataURL("image/jpeg",0.7);
-    while(pic.length>44000&&cv.width>24){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    let guard=0;
+    while(pic.length>44000&&cv.width>24&&guard++<12){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    toast("Posting status…");
     const r=await api("story",{node:ME,pic:pic});
-    if(r&&r.ok){toast("Status posted ✓ — visible to friends for 24h");refreshStories();}
-    else toast((r&&r.err)||"Could not post status");
-  }catch(e){toast("Could not read image");}
+    if(r&&r.ok){toast("Status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();}
+    else toast((r&&r.err)||"Could not post status — check connection");
+  }catch(e){toast("Could not read that image — try another photo");}
+}
+async function stVideoChosen(fi){
+  const f=fi.files&&fi.files[0];fi.value="";
+  if(!f)return;
+  if(!window.MediaRecorder){toast("Video status needs Chrome — try the 🖼️ photo option");return;}
+  toast("Preparing video… (kept under 30s)");
+  try{
+    const dataUrl=await readDataUrl(f);
+    const v2=document.createElement("video");
+    v2.playsInline=true;
+    v2.src=dataUrl;
+    await new Promise(function(res,rej){v2.oncanplay=res;v2.onerror=rej;});
+    const dur=Math.min(v2.duration||10,30);
+    let w=v2.videoWidth||320,h=v2.videoHeight||240;
+    const mx=360;
+    if(w>mx){const s2=mx/w;w=mx;h=Math.round(h*s2);}
+    if(h>640){const s2=640/h;h=640;w=Math.round(w*s2);}
+    const cv=document.createElement("canvas");cv.width=Math.max(2,w);cv.height=Math.max(2,h);
+    const ctx=cv.getContext("2d");
+    const stream=cv.captureStream(20);
+    let audioOk=false;
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      const acx=new AC();
+      await acx.resume().catch(function(){});
+      const srcN=acx.createMediaElementSource(v2);
+      const dst=acx.createMediaStreamDestination();
+      const mute=acx.createGain();mute.gain.value=0;
+      srcN.connect(dst);srcN.connect(mute);mute.connect(acx.destination);
+      dst.stream.getAudioTracks().forEach(function(t){stream.addTrack(t);});
+      audioOk=true;
+    }catch(e){v2.muted=true;}
+    let played=false;
+    try{await v2.play();played=true;}catch(e){
+      audioOk=false;v2.muted=true;
+      try{await v2.play();played=true;}catch(e2){}
+    }
+    if(!played){toast("Could not play that video — try a different clip");return;}
+    const mimes=audioOk?["video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm","video/mp4"]:["video/webm;codecs=vp8","video/webm","video/mp4"];
+    let mime="";
+    for(const m of mimes){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
+    if(!mime){toast("This browser can\'t process video — try 🖼️ photo status");return;}
+    const chunks=[];
+    const mr=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:160000,audioBitsPerSecond:32000});
+    mr.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+    const stopped=new Promise(function(res){mr.onstop=res;});
+    mr.start(250);
+    const t0=Date.now();
+    await new Promise(function(res){
+      (function draw(){
+        if(v2.ended||Date.now()-t0>dur*1000){res();return;}
+        try{ctx.drawImage(v2,0,0,cv.width,cv.height);}catch(e){}
+        requestAnimationFrame(draw);
+      })();
+    });
+    mr.stop();
+    await stopped;
+    try{v2.pause();}catch(e){}
+    const blob=new Blob(chunks,{type:mime.split(";")[0]});
+    const b64=await new Promise(function(res){const r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(blob);});
+    if(b64.length>255000){toast("Video still too big — try a shorter clip (~15s)");return;}
+    toast("Posting video status…");
+    const r=await api("story",{node:ME,pic:b64});
+    if(r&&r.ok){toast("Video status posted ✓");refreshStories();renderStatusScreen();}
+    else toast((r&&r.err)||"Could not post video — try a shorter clip");
+  }catch(e){toast("Could not process that video — try a different file");}
 }
 setInterval(refreshStories,60000);
 
@@ -957,7 +1189,7 @@ function renderChips(){
     row.appendChild(b);
   }
 }
-window.addEventListener("blur",()=>{try{const pv=document.getElementById("picview");if(pv&&!pv.classList.contains("hide"))document.getElementById("pvImg").style.filter="blur(28px)";}catch(e){}});
+window.addEventListener("blur",()=>{try{const pv=document.getElementById("picview");if(pv&&!pv.classList.contains("hide"))document.getElementById("pvImg").style.filter="blur(28px)";const sv=document.getElementById("stview");if(sv&&!sv.classList.contains("hide")){document.getElementById("stImg").style.filter="blur(28px)";document.getElementById("stVid").style.filter="blur(28px)";}}catch(e){}});
 window.addEventListener("focus",()=>{try{document.getElementById("pvImg").style.filter="";}catch(e){}});
 function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
 
