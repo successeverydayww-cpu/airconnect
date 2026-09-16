@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirConnect — v14 Proposal: Sky Header · Light Canvas</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,sans-serif}
+body{margin:0;background:#E2E8F0;padding:18px 12px 40px;text-align:center}
+h1{font-size:17px;color:#0F172A;margin:4px 0 2px}
+.sub{font-size:12.5px;color:#64748B;margin-bottom:16px;line-height:1.5}
+.row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.phone{width:230px;border-radius:22px;overflow:hidden;box-shadow:0 10px 26px rgba(15,23,42,.18);background:#F8FAFC;text-align:left}
+.hdr{background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;padding:12px 12px 10px;font-weight:700;font-size:14px}
+.hdr .s{font-size:10.5px;font-weight:400;opacity:.8}
+.nav{display:flex;background:#0C4A6E;border-top:1px solid rgba(255,255,255,.12)}
+.nav div{flex:1;padding:7px 0;text-align:center;font-size:9.5px;color:rgba(255,255,255,.55)}
+.nav div.on{color:#fff;font-weight:700;border-top:2px solid #fff}
+.crow{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid #E2E8F0;background:#F8FAFC}
+.av{width:34px;height:34px;border-radius:50%;background:#13223A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex:0 0 34px}
+.nm{font-size:12.5px;color:#0F172A;font-weight:600}
+.pv{font-size:10.5px;color:#64748B}
+.badge{background:#0EA5E9;color:#fff;border-radius:10px;font-size:9.5px;padding:1px 6px;margin-left:auto}
+.t{font-size:9.5px;color:#64748B;margin-left:auto}
+.bubs{padding:10px;display:flex;flex-direction:column;gap:6px;min-height:150px}
+.bub{max-width:78%;padding:7px 10px;border-radius:10px;font-size:11.5px;line-height:1.45}
+.in{background:#FFFFFF;border:1px solid #E2E8F0;color:#0F172A;align-self:flex-start}
+.out{background:#0C4A6E;color:#fff;align-self:flex-end}
+.r{align-self:flex-start;font-size:14px;margin:3px 0 0 4px}
+.inb{display:flex;gap:6px;padding:7px 10px;background:#F8FAFC;border-top:1px solid #E2E8F0}
+.inb .f{flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:9px;padding:7px 9px;font-size:11px;color:#64748B}
+.inb .s{background:#0EA5E9;color:#fff;border-radius:9px;width:32px;display:flex;align-items:center;justify-content:center}
+.hero{background:linear-gradient(160deg,#0C4A6E 0%,#0EA5E9 78%);padding:22px 14px;color:#fff;text-align:center}
+.hero .ic{font-size:30px}
+.hero b{display:block;font-size:18px;margin-top:4px}
+.hero .x{font-size:10.5px;opacity:.85;line-height:1.5}
+.form{padding:14px;background:#F8FAFC}
+.fin{width:100%;border:1px solid #CBD5E1;background:#fff;border-radius:9px;padding:9px;font-size:12px;color:#64748B;margin-bottom:8px}
+.fbtn{width:100%;background:#0C4A6E;color:#fff;border:0;border-radius:9px;padding:10px;font-size:12.5px;font-weight:600}
+.cap{font-size:12.5px;color:#0F172A;font-weight:700;margin:14px 0 8px}
+.note{max-width:520px;margin:18px auto 0;background:#fff;border:1px solid #CBD5E1;border-radius:12px;padding:14px;text-align:left;font-size:12px;color:#334155;line-height:1.65}
+.note b{color:#0C4A6E}
+</style>
+</head>
+<body>
+<h1>AirConnect v14 Proposal — Sky Header · Light Canvas</h1>
+<div class="sub">Your chosen color owns the headers and action zones.<br>The white is ONLY the canvas behind the content — the WhatsApp/Telegram global-standard structure.</div>
+
+<div class="row">
+  <div class="phone">
+    <div class="hdr">🛰️ AirConnect<br><div class="s">Free calls &amp; chat worldwide</div></div>
+    <div class="crow"><div class="av">D</div><div><div class="nm">Daisy</div><div class="pv">Voice note 🎙</div></div><span class="badge">2</span></div>
+    <div class="crow"><div class="av">C</div><div><div class="nm">Chidi</div><div class="pv">You: see you at 4</div></div><span class="t">14:02</span></div>
+    <div class="crow"><div class="av">H</div><div><div class="nm">Hauwa</div><div class="pv">Group: call quality was clear!</div></div><span class="badge">1</span></div>
+    <div class="crow"><div class="av">＋</div><div><div class="nm">New group</div><div class="pv">Pick friends, name it</div></div></div>
+    <div style="height:44px"></div>
+    <div class="nav"><div class="on">Chats</div><div>Status</div><div>Calls</div><div>Settings</div></div>
+  </div>
+
+  <div class="phone">
+    <div class="hdr">‹ Daisy · 🎥 📞<br><div class="s">online</div></div>
+    <div class="bubs">
+      <div class="bub in">Did you see the new design? 👀</div>
+      <div class="bub out">Building it right now — white canvas, sky headers.</div>
+      <div class="r">❤️ 1</div>
+      <div class="bub in">Ooh that's clean 😍</div>
+    </div>
+    <div class="inb"><div class="f">Message</div><div class="s">➤</div></div>
+    <div class="nav"><div class="on">Chats</div><div>Status</div><div>Calls</div><div>Settings</div></div>
+  </div>
+
+  <div class="phone">
+    <div class="hero"><div class="ic">🛰️</div><b>AirConnect</b><div class="x">Free voice &amp; video calls and chat.<br>Phone-number IDs · friends-only · private.</div></div>
+    <div class="form">
+      <div class="fin">Your name</div>
+      <div class="fin">Nigeria 🇳🇬</div>
+      <div class="fin">📱 Phone (SMS) &nbsp;|&nbsp; 📧 Email</div>
+      <div class="fbtn">Register</div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+<b>The structure (what changed vs the flat white):</b><br><br>
+1. <b>Headers stay YOURS</b> — every top bar (AirConnect, chat headers, Status, Calls, Settings) keeps the deep-sky #0C4A6E with white text, exactly the color you chose.<br>
+2. <b>White is the canvas only</b> — behind chats, lists and settings sits the smart white #F8FAFC. Content breathes; the brand stays strong.<br>
+3. <b>Bottom nav is deep sky</b> — the whole app is "framed" top and bottom by your color, with a white canvas in the middle. That's precisely how WhatsApp (green), Telegram (blue) and Signal (blue) do their light themes — globally accepted.<br>
+4. <b>Bubbles</b> — incoming: white with a fine border · outgoing: deep sky with white text (your signature).<br>
+5. <b>Accents</b> — badges, FAB, links and rings in sky #0EA5E9; semantic colors untouched (accept-green, decline-red, online dot).<br><br>
+<b>Your current app remains the full dark AirConnect Sky design.</b> This page is only the proposal — say the word and I apply it everywhere.
+</div>
+</body>
+</html>
