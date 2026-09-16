@@ -387,6 +387,55 @@ const RTC_CFG={iceServers:[
   {urls:"turn:openrelay.metered.ca:443",username:"openrelayproject",credential:"openrelayproject"},
   {urls:"turn:openrelay.metered.ca:443?transport=tcp",username:"openrelayproject",credential:"openrelayproject"}
 ]};
+
+/* ---------- E2E chat encryption (ECDH P-256 + AES-GCM) ---------- */
+let E2E_KEYS=null,E2E_MAP={},E2E_PKS={};
+const b64e=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function e2eInit(){
+  try{
+    let ks=localStorage.getItem("ac_kp");
+    if(!ks){
+      const kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
+      ks=JSON.stringify({priv:await crypto.subtle.exportKey("jwk",kp.privateKey),pub:await crypto.subtle.exportKey("jwk",kp.publicKey)});
+      localStorage.setItem("ac_kp",ks);
+    }
+    E2E_KEYS=JSON.parse(ks);
+    if(ME)api("pubkey",{node:ME,pk:JSON.stringify(E2E_KEYS.pub)}).catch(()=>{});
+  }catch(e){}
+}
+async function e2eKey(peer,pk){
+  const kk=peer+"|"+pk;
+  if(E2E_MAP[kk])return E2E_MAP[kk];
+  const pub=await crypto.subtle.importKey("jwk",JSON.parse(pk),{name:"ECDH",namedCurve:"P-256"},false,[]);
+  const priv=await crypto.subtle.importKey("jwk",E2E_KEYS.priv,{name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
+  const bits=await crypto.subtle.deriveBits({name:"ECDH",public:pub},priv,256);
+  const key=await crypto.subtle.importKey("raw",bits,{name:"AES-GCM"},false,["encrypt","decrypt"]);
+  E2E_MAP[kk]=key;
+  return key;
+}
+async function e2eEnc(peer,text){
+  try{
+    const pk=E2E_PKS[peer];
+    if(!pk||!E2E_KEYS)return text;
+    const key=await e2eKey(peer,pk);
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(text));
+    return "e1:"+b64e(iv)+"."+b64e(ct);
+  }catch(e){return text;}
+}
+async function e2eDec(peer,text){
+  try{
+    const m=String(text||"").match(/^e1:([^.]+)\.([\s\S]+)$/);
+    if(!m)return text;
+    const pk=E2E_PKS[peer];
+    if(!pk)return "🔒 (encrypted)";
+    const key=await e2eKey(peer,pk);
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(b64d(m[1]))},key,b64d(m[2]));
+    return new TextDecoder().decode(pt);
+  }catch(e){return "🔒 (encrypted message)";}
+}
+
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null;
@@ -518,6 +567,7 @@ async function register(){
 }
 async function finishLogin(d){
   ME=d.id;ME_NAME=d.name;
+  e2eInit();
   const savedOK=saveLogin(ME);
   if(!savedOK)await log("WARNING: browser is blocking login storage — number may not be remembered");
   $("login").className="hide";$("app").className="";
@@ -784,7 +834,7 @@ async function sendChat(){
   const box=$("chatbox"),t=box.value.trim();
   if(!t||!CHAT_OPEN)return;
   chatBusy=true;$("sendbtn").disabled=true;
-  const r=await api("chat",{from:ME,to:CHAT_OPEN,text:t});
+  const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t)});
   chatBusy=false;$("sendbtn").disabled=false;
   if(r&&r.ok){
     box.value="";
@@ -1181,7 +1231,7 @@ async function poll(){
       const from=m.from;
       const fm=String(m.text||"").match(/^\[file:([a-z0-9]+)\]$/i);
       if(fm)(CHATS[from]=CHATS[from]||[]).push({who:"them",fileId:fm[1],ts:m.id});
-      else (CHATS[from]=CHATS[from]||[]).push({who:"them",text:m.text,ts:m.id});
+      else (CHATS[from]=CHATS[from]||[]).push({who:"them",text:await e2eDec(from,m.text),ts:m.id});
       if(CHAT_OPEN===from)renderBubbles();
       else {UNREAD[from]=(UNREAD[from]||0)+1;fresh=true;}
     }
@@ -1190,6 +1240,7 @@ async function poll(){
     if(fresh){renderUnread();try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}}
     const prevFr=WIN_FRIENDS.length;
     WIN_FRIENDS=d.friends||[];WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
+    if(d.pks)E2E_PKS=d.pks;
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);setOffline(true);}

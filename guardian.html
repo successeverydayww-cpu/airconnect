@@ -66,7 +66,7 @@ async function say(text){
       try{
         const u="https://api.allorigins.win/raw?url="+encodeURIComponent("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q="+encodeURIComponent(ch));
         const r=await fetch(u);if(!r.ok)throw 0;buf=await r.arrayBuffer();
-      }catch(e){continue;}
+      }catch(e){try{if(window.speechSynthesis){const u2=new SpeechSynthesisUtterance(ch);u2.rate=1;speechSynthesis.speak(u2);await new Promise(r2=>{u2.onend=r2;setTimeout(r2,6000);});}}catch(x){}continue;}
       try{
         const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
         const src=voiceCtx.createBufferSource();src.buffer=decoded;

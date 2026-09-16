@@ -63,6 +63,55 @@
 <script>
 const $=id=>document.getElementById(id);
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+
+/* ---------- E2E chat encryption (ECDH P-256 + AES-GCM) ---------- */
+let E2E_KEYS=null,E2E_MAP={},E2E_PKS={};
+const b64e=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function e2eInit(){
+  try{
+    let ks=localStorage.getItem("ac_kp");
+    if(!ks){
+      const kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
+      ks=JSON.stringify({priv:await crypto.subtle.exportKey("jwk",kp.privateKey),pub:await crypto.subtle.exportKey("jwk",kp.publicKey)});
+      localStorage.setItem("ac_kp",ks);
+    }
+    E2E_KEYS=JSON.parse(ks);
+    if(ME)api("pubkey",{node:ME,pk:JSON.stringify(E2E_KEYS.pub)}).catch(()=>{});
+  }catch(e){}
+}
+async function e2eKey(peer,pk){
+  const kk=peer+"|"+pk;
+  if(E2E_MAP[kk])return E2E_MAP[kk];
+  const pub=await crypto.subtle.importKey("jwk",JSON.parse(pk),{name:"ECDH",namedCurve:"P-256"},false,[]);
+  const priv=await crypto.subtle.importKey("jwk",E2E_KEYS.priv,{name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
+  const bits=await crypto.subtle.deriveBits({name:"ECDH",public:pub},priv,256);
+  const key=await crypto.subtle.importKey("raw",bits,{name:"AES-GCM"},false,["encrypt","decrypt"]);
+  E2E_MAP[kk]=key;
+  return key;
+}
+async function e2eEnc(peer,text){
+  try{
+    const pk=E2E_PKS[peer];
+    if(!pk||!E2E_KEYS)return text;
+    const key=await e2eKey(peer,pk);
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(text));
+    return "e1:"+b64e(iv)+"."+b64e(ct);
+  }catch(e){return text;}
+}
+async function e2eDec(peer,text){
+  try{
+    const m=String(text||"").match(/^e1:([^.]+)\.([\s\S]+)$/);
+    if(!m)return text;
+    const pk=E2E_PKS[peer];
+    if(!pk)return "🔒 (encrypted)";
+    const key=await e2eKey(peer,pk);
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(b64d(m[1]))},key,b64d(m[2]));
+    return new TextDecoder().decode(pt);
+  }catch(e){return "🔒 (encrypted message)";}
+}
+
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="";
 let pollFails=0, chatFails=0;
@@ -244,7 +293,7 @@ function addMsg(who,text,fromName){
 }
 async function sendChatTo(to,forced){
   const text=forced||REPLIES[Math.floor(Math.random()*REPLIES.length)];
-  const r=await api("chat",{from:ME,to:to,text:text});
+  const r=await api("chat",{from:ME,to:to,text:await e2eEnc(to,text)});
   if(r.ok)addMsg("me",text);
 }
 const BANK_MSG="BANK: Rubies MFB | ACCOUNT NAME: Success Friday | ACCOUNT NUMBER: 8881724009";
@@ -305,6 +354,7 @@ async function register(){
   if(rid){
     const r=await api("register",{id:rid});
     if(r&&r.ok){ME=r.id;ME_NAME=r.name;localStorage.setItem("aicall_ai_id",ME);await afterRegister();return;}
+  e2eInit();
     if(r&&(r.err==="unknown number"||r.err==="banned"))localStorage.removeItem("aicall_ai_id");
   }
   const name=$("myname").value.trim(), country=$("country").value;
@@ -312,6 +362,7 @@ async function register(){
   const d=await api("register",{name:name,country:country});
   if(!d.id)return;
   ME=d.id; ME_NAME=d.name; refreshShare();
+  e2eInit();
   localStorage.setItem("aicall_ai_id",ME);
   await afterRegister();
   setInterval(()=>{
@@ -496,15 +547,17 @@ async function poll(){
     for(const m of ms){
       lastMsg=m.id;
       if(m.from!==ME){
-        addMsg("them",m.text,"+"+m.from);
+        const decText=await e2eDec(m.from,m.text);
+        addMsg("them",decText,"+"+m.from);
         await log("chat from +"+m.from+": "+m.text);
         PEER=m.from;
-        let cr=/^\[file:/.test(m.text||"")?"📎 Receipt received — thank you! Your payment is being verified. Your activation code will arrive right here in this chat once confirmed.":claimReply(m.text,m.from);
+        let cr=/^\[file:/.test(decText||"")?"📎 Receipt received — thank you! Your payment is being verified. Your activation code will arrive right here in this chat once confirmed.":claimReply(decText,m.from);
         if(cr){setTimeout(()=>sendChatTo(m.from,cr),900);}
         else if(state!=="live"){setTimeout(()=>sendChatTo(m.from),1200+Math.random()*1500);}
       }
     }
     WIN_FRIENDS=d.friends||[];WIN_NAMES=d.names||{};
+      if(d.pks)E2E_PKS=d.pks;
     for(const r of (d.requests||[])){
       await api("accept",{user:ME,id:r.id});
       await log("accepted friend request from +"+r.from);
