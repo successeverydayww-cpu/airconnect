@@ -167,7 +167,7 @@ async function poll(){
     pruneSeen();
     $("st").textContent="guarding +"+ME+" — watching for 2nd unanswered calls";
   }catch(e){log("poll err: "+(e&&e.message||e));}
-  setTimeout(poll,state==="live"?1500:6000);
+  let gFails=0;setTimeout(poll,state==="live"?1500:5000);
 }
 /* boot */
 (async()=>{

@@ -112,7 +112,7 @@ async function e2eDec(peer,text){
   }catch(e){return "🔒 (encrypted message)";}
 }
 
-async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});if(!r.ok){pollFails=Math.min((pollFails||0)+3,7);throw new Error("wall "+r.status);}return r.json();}
 let lastSig="";
 let pollFails=0, chatFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={};
@@ -404,7 +404,7 @@ async function answer(m){
       }
     };
     await pc.setRemoteDescription(m.payload);await flushIce();
-    await new Promise(r=>setTimeout(r,1500)); // let it ring
+    await new Promise(r=>setTimeout(r,350)); // brief ring then instant pickup
     voiceCtx=regCtx(new AudioContext());
     aiOut=voiceCtx.createMediaStreamDestination();
     txAnalyser=voiceCtx.createAnalyser();
@@ -496,7 +496,7 @@ async function poll(){
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){document.getElementById("status").textContent="Account banned";return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing")?1500:8000);
+      setTimeout(poll,pollFails?Math.min(3000*pollFails,20000):(state==="live"||state==="dialing")?1500:5000);
       return;
     }
     const d=d0;
