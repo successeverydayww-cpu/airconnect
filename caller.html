@@ -96,6 +96,9 @@ button.big.blue{background:#005c4b;color:#fff}
 .ictrl button{border:0;border-radius:50%;width:64px;height:64px;font-size:26px;cursor:pointer}
 .ictrl .acc{background:#00a884;color:#0b141a}
 .ictrl .dec{background:#ea0038;color:#fff}
+#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#00a884;color:#0b141a;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
+#fab:active{transform:scale(.93)}
+#fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#111b21;padding:16px;border-top:1px solid #2a3942;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1c2930;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#e9edef;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 /* chat themes / wallpapers */
 #wpg{position:absolute;inset:0;z-index:0;background:#0b141a;overflow:hidden}
@@ -155,7 +158,7 @@ footer a{color:#8696a0}
 <div id="app" class="hide">
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
   <div class="hdr">
-    <div>🛰️ AirConnect <span class="sub" id="mynum"></span></div>
+    <div><span id="hdrTitle">🛰️ AirConnect</span> <span class="sub" id="mynum"></span></div>
     <div><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#e9edef">Ready</span></div>
   </div>
 
@@ -194,7 +197,7 @@ footer a{color:#8696a0}
       </div>
     </div>
     <div id="chatlist"></div>
-    <div id="nochat" class="empty">No chats yet.<br>Add a friend in the 👥 tab, then call or message them.</div>
+    <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
   </div>
 
   <div id="view-status" class="view hide">
@@ -227,7 +230,22 @@ footer a{color:#8696a0}
     <div id="nocall" class="empty">Friends will appear here with one-tap call buttons.</div>
   </div>
 
-  <div id="view-premium" class="view hide">
+  <div id="view-settings" class="view hide">
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
+      <input id="peer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
+      <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🖼️ My profile photo</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
+        <button class="big blue" style="flex:1" onclick="document.getElementById('picinput').click()">Upload photo</button>
+        <button class="big" style="flex:0 0 auto;background:#2a3942" onclick="removeMyPic()">🗑</button>
+        <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
+      </div>
+      <div style="font-size:11.5px;color:#8696a0;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
+    </div>
     <div class="card" id="planStatusCard">
       <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
       <div id="planStatus" style="font-size:14px;color:#e9edef">Free — human-to-human calls forever free.</div>
@@ -267,6 +285,26 @@ footer a{color:#8696a0}
       <input id="actcode" placeholder="e.g. Starter-9f2b1c7a" style="text-transform:lowercase">
       <button class="big blue" onclick="activate()">Activate</button>
     </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
+      <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
+      <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
+    <div style="font-size:11.5px;color:#8696a0;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
+    <div id="modehint" style="font-size:12px;color:#8696a0;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🔗 Share AirConnect</div>
+      <input id="sharelink" readonly>
+      <div style="display:flex;gap:8px">
+        <button class="big blue" style="flex:1" onclick="copyShare()">📋 Copy link</button>
+        <button class="big blue" style="flex:1" id="sharebtn" onclick="nativeShare()">📤 Share</button>
+      </div>
+      <div id="sharehint" style="font-size:12px;color:#8696a0;margin-top:8px">Your invite link carries your number — friends who join can add you in one tap.</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">👥 Your friends</div>
+      <div id="flist" style="font-size:14px;color:#8696a0">loading…</div>
+    </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
 
@@ -295,51 +333,24 @@ footer a{color:#8696a0}
   </div>
 </div>
 
-  <div id="view-friends" class="view hide">
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
-      <input id="peer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
-      <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
+  
+  <div id="fab" onclick="openFab()">＋</div>
+  <div id="fabsheet" class="ovl hide" onclick="if(event.target===this)closeFab()">
+    <div class="sheet">
+      <div style="font-weight:600;font-size:16px;margin-bottom:10px">＋ New chat</div>
+      <input id="fabPeer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
+      <button class="big blue" onclick="fabSend()">Send friend request</button>
+      <div style="font-weight:600;font-size:13px;margin:14px 0 2px">Your friends</div>
+      <div id="fabList"></div>
+      <div style="height:10px"></div>
     </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">🖼️ My profile photo</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
-        <button class="big blue" style="flex:1" onclick="document.getElementById('picinput').click()">Upload photo</button>
-        <button class="big" style="flex:0 0 auto;background:#2a3942" onclick="removeMyPic()">🗑</button>
-        <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
-      </div>
-      <div style="font-size:11.5px;color:#8696a0;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
-    </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
-      <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
-      <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
-    <div style="font-size:11.5px;color:#8696a0;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
-    <div id="modehint" style="font-size:12px;color:#8696a0;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
-    </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">🔗 Share AirConnect</div>
-      <input id="sharelink" readonly>
-      <div style="display:flex;gap:8px">
-        <button class="big blue" style="flex:1" onclick="copyShare()">📋 Copy link</button>
-        <button class="big blue" style="flex:1" id="sharebtn" onclick="nativeShare()">📤 Share</button>
-      </div>
-      <div id="sharehint" style="font-size:12px;color:#8696a0;margin-top:8px">Your invite link carries your number — friends who join can add you in one tap.</div>
-    </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">👥 Your friends</div>
-      <div id="flist" style="font-size:14px;color:#8696a0">loading…</div>
-    </div>
-    <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
 
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
     <button id="tab-status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
     <button id="tab-calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
-    <button id="tab-friends" onclick="showTab('friends')"><span class="ico">👥</span>Friends</button>
-    <button id="tab-premium" onclick="showTab('premium')"><span class="ico">⭐</span>Premium</button>
+    <button id="tab-settings" onclick="showTab('settings')"><span class="ico">⚙️</span>Settings</button>
   </nav>
 </div>
 
@@ -830,14 +841,24 @@ window.addEventListener("popstate",()=>{
   if(ovlOpen("callview")){pushHist();return;}          // stay on the call screen
   if(ovlOpen("stview")){closeStatusViewer();return;}if(ovlOpen("picview")){closePicView();return;}
   if(ovlOpen("chatview")){closeChat();return;}         // back closes chat -> home
+  if(ovlOpen("fabsheet")){closeFab();return;}
 });
 pushHist();
 function showTab(t){
-  for(const v of["chats","status","calls","friends","premium"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
+  for(const v of["chats","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
+  const TITLES={chats:"🛰️ AirConnect",status:"Status",calls:"Calls",settings:"Settings"};
+  $("hdrTitle").textContent=TITLES[t]||"AirConnect";
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="status"){refreshStories();renderStatusScreen();}
-  if(t==="premium")renderPlan();
+  if(t==="settings")renderPlan();
 }
+function openFab(){
+  const l=$("fabList");
+  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#8696a0;font-size:13px">No friends yet — add one above.</div>';
+  $("fabsheet").className="ovl";
+}
+function closeFab(){$("fabsheet").className="ovl hide";}
+function fabSend(){const v=$("fabPeer").value.trim();if(!v){toast("Type a number first");return;}$("peer").value=v;sendRequest();closeFab();}
 
 /* ---------------- chats ---------------- */
 function lastOf(p){const c=CHATS[p];return c&&c.length?c[c.length-1]:null;}
@@ -2206,7 +2227,7 @@ function nativeShare(){
   if(!id){id=await idbGet("me");}
   if(id){setTimeout(()=>{try{register();}catch(e){}},400);}
 })();
-(function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('friends');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
+(function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('settings');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
 
 /* ---------- app PIN lock ---------- */
 async function pinHash(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));return btoa(String.fromCharCode(...new Uint8Array(b)));}
