@@ -1214,10 +1214,10 @@ async function stVideoPost(dataUrl,start,dur){
   await new Promise(function(res,rej){v2.oncanplay=res;v2.onerror=rej;});
   try{v2.currentTime=start||0;await new Promise(function(res){v2.onseeked=res;setTimeout(res,2000);});}catch(e){}
   let attempt=0,b64="";
-  const cfgs=[{w:360,br:150000},{w:288,br:100000},{w:220,br:60000}];
+  const cfgs=[{w:360,br:90000},{w:288,br:60000},{w:220,br:40000}];
   while(attempt<3){
     b64=await stVideoRec(v2,Math.min(dur,60),cfgs[attempt].w,cfgs[attempt].br);
-    if(b64&&b64.length<=1150000)break;
+    if(b64&&b64.length<=590000)break;
     b64="";attempt++;
   }
   try{v2.pause();}catch(e){}
@@ -1600,10 +1600,10 @@ async function attVideoChosen(fi){
     const dur=Math.min(v2.duration||10,60);
     toast("Compressing video…");
     let attempt=0,b64="";
-    const cfgs=[{w:360,br:150000},{w:288,br:100000},{w:220,br:60000}];
+    const cfgs=[{w:288,br:30000},{w:220,br:20000},{w:180,br:12000}];
     while(attempt<3){
       b64=await stVideoRec(v2,dur,cfgs[attempt].w,cfgs[attempt].br);
-      if(b64&&b64.length<=850000)break;
+      if(b64&&b64.length<=165000)break;
       b64="";attempt++;
     }
     try{v2.pause();}catch(e){}
@@ -1636,7 +1636,7 @@ async function cvDown(e){
   let mime="";
   for(const m of mimes){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e2){}}
   if(!mime){toast("This browser can't record voice — try Chrome");cvClose();return;}
-  try{CVR=new MediaRecorder(CVR_STREAM,{mimeType:mime,audioBitsPerSecond:24000});}catch(e2){CVR=new MediaRecorder(CVR_STREAM);}
+  try{CVR=new MediaRecorder(CVR_STREAM,{mimeType:mime,audioBitsPerSecond:14000});}catch(e2){CVR=new MediaRecorder(CVR_STREAM);}
   CVR.ondataavailable=function(e2){if(e2.data&&e2.data.size)CVR_CH.push(e2.data);};
   CVR.onstop=function(){
     try{CVR_STREAM.getTracks().forEach(function(t){t.stop();});}catch(e2){}
