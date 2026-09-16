@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirConnect — Global Standard Design Proposal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+body{background:#0d1117;color:#e6edf3;padding:16px 12px 60px;max-width:520px;margin:0 auto}
+h1{font-size:20px;margin:14px 0 4px}
+h2{font-size:16px;margin:26px 0 10px;color:#9fb0c3}
+.sub{color:#8b949e;font-size:13px;margin-bottom:10px}
+.themes{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
+.themes button{flex:1;min-width:100px;padding:11px 6px;border:2px solid #30363d;border-radius:12px;background:#161b22;color:#e6edf3;font-size:12px;font-weight:600;cursor:pointer}
+.themes button.on{border-color:#58a6ff;background:#1c2a3a}
+.themes button .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.pill{font-size:11px;background:#1f2630;color:#8b949e;border-radius:20px;padding:6px 10px;display:inline-block;margin:4px 4px 0 0}
+.phone{width:290px;margin:16px auto;border-radius:34px;border:10px solid #1b2129;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5);height:560px;display:flex;flex-direction:column;position:relative}
+.scr{display:none;flex-direction:column;height:100%;background:var(--bg)}
+.scr.on{display:flex}
+.top{background:var(--primary);color:#fff;padding:14px 14px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.top .ava{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.top .ttl{flex:1;font-weight:600;font-size:15px}
+.top .ico{font-size:15px;opacity:.9}
+.body{flex:1;overflow-y:auto;background:var(--surface)}
+.tabs{display:flex;background:var(--primary);flex-shrink:0}
+.tabs div{flex:1;text-align:center;color:rgba(255,255,255,.65);font-size:10.5px;font-weight:600;padding:8px 0 9px;border-bottom:3px solid transparent}
+.tabs div.on{color:#fff;border-bottom-color:var(--accent)}
+.row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.row .rava{width:42px;height:42px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px}
+.row .c1{flex:1;min-width:0}
+.row .nm{font-weight:600;font-size:13px;color:var(--tx)}
+.row .pv{font-size:11.5px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.row .c2{text-align:right;flex-shrink:0}
+.row .tm{font-size:10px;color:var(--tx2)}
+.badge{background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;display:inline-block;margin-top:4px}
+.fab{position:absolute;bottom:66px;right:14px;width:52px;height:52px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.status-strip{display:flex;gap:14px;padding:12px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.st{flex-shrink:0;text-align:center;width:56px}
+.st .ring{width:52px;height:52px;border-radius:50%;padding:3px;border:2.5px solid var(--accent);margin:0 auto}
+.st .ring.seen{border-color:var(--tx3)}
+.st .ring>div{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;font-weight:700}
+.st .lbl{font-size:9.5px;color:var(--tx2);margin-top:4px}
+.chat{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--chatbg)}
+.bub{max-width:78%;padding:8px 11px;border-radius:12px;font-size:12.5px;line-height:1.45;position:relative}
+.bub.out{align-self:flex-end;background:var(--out);border-bottom-right-radius:4px}
+.bub.in{align-self:flex-start;background:var(--in);color:var(--tx);border-bottom-left-radius:4px}
+.bub .bt{display:block;font-size:8.5px;opacity:.65;text-align:right;margin-top:3px}
+.inbar{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--bar);flex-shrink:0}
+.inbar .fld{flex:1;background:var(--surface);border-radius:20px;padding:9px 13px;font-size:12px;color:var(--tx2)}
+.mic{width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.login{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--primary),var(--accent));padding:24px;text-align:center}
+.login .logo{width:74px;height:74px;border-radius:22px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:14px}
+.login h3{color:#fff;font-size:19px;margin-bottom:6px}
+.login p{color:rgba(255,255,255,.75);font-size:11.5px;margin-bottom:22px;line-height:1.5}
+.cnt{display:flex;gap:6px;background:#fff;border-radius:10px;padding:9px 12px;width:100%;margin-bottom:10px}
+.cnt .ph{color:#333;font-size:13px;font-weight:600}
+.cnt .fl{flex:1;color:#999;font-size:13px}
+.btnw{width:100%;background:#fff;color:var(--primary);border:none;border-radius:10px;padding:12px;font-size:13.5px;font-weight:700}
+.note{width:100%;margin-top:14px;color:rgba(255,255,255,.65);font-size:10px;line-height:1.5}
+.kv{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.kv span{font-size:10.5px;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:5px 8px}
+.kv b{color:#58a6ff}
+.fbox{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:14px;margin:10px 0}
+.fbox h3{font-size:13.5px;margin-bottom:8px;color:#e6edf3}
+.fbox p,.fbox li{font-size:12.5px;color:#9fb0c3;line-height:1.65}
+.fbox ol{padding-left:18px}
+.fbox b{color:#e6edf3}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}
+td{padding:6px 6px;border-bottom:1px solid #21262d;color:#9fb0c3}
+td:first-child{color:#e6edf3;white-space:nowrap}
+</style>
+</head>
+<body>
+<h1>AirConnect Design Proposal</h1>
+<div class="sub">Global-standard structure + 3 palettes. Tap a theme above the phone, then tap the screen buttons below it.</div>
+
+<div class="themes" id="themes"></div>
+
+<div class="phone">
+  <div class="scr on" id="s-login">
+    <div class="login">
+      <div class="logo">✈️</div>
+      <h3>AirConnect</h3>
+      <p>Free calls &amp; chat worldwide.<br>Enter your number to begin.</p>
+      <div class="cnt"><span class="ph">🇳🇬 +234</span><span class="fl">Phone number or email</span></div>
+      <button class="btnw">Continue</button>
+      <div class="note">By continuing you agree to our Terms &amp; Data Policy.<br>Signup in under 30 seconds.</div>
+    </div>
+  </div>
+  <div class="scr" id="s-chats">
+    <div class="top"><div class="ava">S</div><div class="ttl">AirConnect</div><span class="ico">📷</span><span class="ico">⋮</span></div>
+    <div class="tabs"><div class="on">Chats</div><div>Status</div><div>Calls</div><div>Settings</div></div>
+    <div class="body">
+      <div class="row"><div class="rava" style="background:#8b5cf6">D</div><div class="c1"><div class="nm">Daisy ✅</div><div class="pv">You: see you at 6!</div></div><div class="c2"><div class="tm">17:44</div><div class="badge">2</div></div></div>
+      <div class="row"><div class="rava" style="background:#f59e0b">G</div><div class="c1"><div class="nm">Guardian</div><div class="pv">Missed call · auto-answered</div></div><div class="c2"><div class="tm">16:02</div></div></div>
+      <div class="row"><div class="rava" style="background:#10b981">C</div><div class="c1"><div class="nm">Chidi</div><div class="pv">typing…</div></div><div class="c2"><div class="tm">15:58</div></div></div>
+      <div class="row"><div class="rava" style="background:#ef4444">H</div><div class="c1"><div class="nm">Hauwa</div><div class="pv">Voice note</div></div><div class="c2"><div class="tm">14:20</div><div class="badge">1</div></div></div>
+      <div class="row"><div class="rava" style="background:#3b82f6">P</div><div class="c1"><div class="nm">Premium AI ✨</div><div class="pv">How can I help you today?</div></div><div class="c2"><div class="tm">12:31</div></div></div>
+    </div>
+    <div class="fab">✉️</div>
+  </div>
+  <div class="scr" id="s-status">
+    <div class="top"><div class="ttl">Status</div><span class="ico">📷</span><span class="ico">⋮</span></div>
+    <div class="tabs"><div>Chats</div><div class="on">Status</div><div>Calls</div><div>Settings</div></div>
+    <div class="body">
+      <div class="row"><div class="rava" style="background:var(--accent)">＋</div><div class="c1"><div class="nm">My status</div><div class="pv">Tap to add status update</div></div></div>
+      <div class="status-strip">
+        <div class="st"><div class="ring"><div style="background:#8b5cf6">D</div></div><div class="lbl">Daisy</div></div>
+        <div class="st"><div class="ring seen"><div style="background:#f59e0b">G</div></div><div class="lbl">Guardian</div></div>
+        <div class="st"><div class="ring"><div style="background:#10b981">C</div></div><div class="lbl">Chidi</div></div>
+        <div class="st"><div class="ring seen"><div style="background:#ef4444">H</div></div><div class="lbl">Hauwa</div></div>
+      </div>
+    </div>
+    <div class="fab">📷</div>
+  </div>
+  <div class="scr" id="s-chat">
+    <div class="top"><span class="ico">‹</span><div class="ava" style="background:#8b5cf6">D</div><div class="ttl">Daisy<br><span style="font-size:9.5px;font-weight:400;opacity:.8">online</span></div><span class="ico">📹</span><span class="ico">📞</span></div>
+    <div class="chat">
+      <div class="bub in">Good evening! Did you see the new update?<span class="bt">17:40</span></div>
+      <div class="bub out">Yes! Video status works now 🎉<span class="bt">17:41 ✓✓</span></div>
+      <div class="bub in">Let me test the call quality tonight<span class="bt">17:42</span></div>
+      <div class="bub out">Perfect. I'll answer if I miss it — Guardian has me 😄<span class="bt">17:44 ✓✓</span></div>
+      <div class="bub out">🎙️ 0:14<span class="bt">17:44 ✓✓</span></div>
+    </div>
+    <div class="inbar"><span>😊</span><span class="fld">Message</span><span>📎</span><div class="mic">🎙️</div></div>
+  </div>
+  <div class="scr" id="s-calls">
+    <div class="top"><div class="ttl">Calls</div><span class="ico">⋮</span></div>
+    <div class="tabs"><div>Chats</div><div>Status</div><div class="on">Calls</div><div>Settings</div></div>
+    <div class="body">
+      <div class="row"><div class="rava" style="background:#10b981">↗</div><div class="c1"><div class="nm">Chidi</div><div class="pv">Outgoing · video · 12 min</div></div><div class="c2"><div class="tm">15:30</div></div></div>
+      <div class="row"><div class="rava" style="background:#ef4444">↘</div><div class="c1"><div class="nm">Hauwa</div><div class="pv">Missed · Guardian answered</div></div><div class="c2"><div class="tm">14:02</div></div></div>
+      <div class="row"><div class="rava" style="background:#8b5cf6">↘</div><div class="c1"><div class="nm">Daisy</div><div class="pv">Incoming · audio · 4 min</div></div><div class="c2"><div class="tm">11:15</div></div></div>
+    </div>
+    <div class="fab">📞</div>
+  </div>
+</div>
+<div class="themes" style="margin-top:14px">
+  <button class="sbtn" data-s="login">Login</button>
+  <button class="sbtn on" data-s="chats">Chats</button>
+  <button class="sbtn" data-s="status">Status</button>
+  <button class="sbtn" data-s="chat">Chat</button>
+  <button class="sbtn" data-s="calls">Calls</button>
+</div>
+
+<h2>🎨 Palette A — WhatsApp Heritage (recommended)</h2>
+<div class="pill">Closest to WhatsApp · instantly familiar · the trusted "green tick" feel</div>
+<div class="kv"><span><b>#075E54</b> header</span><span><b>#25D366</b> accent/FAB/rings</span><span><b>#FFFFFF</b> background</span><span><b>#F0F2F5</b> dividers</span><span><b>#EFE7DE</b> chat wallpaper</span><span><b>#D9FDD3</b> outgoing bubble</span><span><b>#111B21</b> dark-mode bg</span></div>
+
+<h2>🎨 Palette B — Signal Professional Blue</h2>
+<div class="pill">The global "security &amp; privacy" color · mature, enterprise feel</div>
+<div class="kv"><span><b>#3A76F0</b> accent</span><span><b>#FFFFFF</b> background</span><span><b>#E9EDF2</b> surfaces</span><span><b>#2C6BED</b> outgoing bubble</span><span><b>#17212B</b> dark-mode bg</span><span><b>#1E2A35</b> dark bubble</span></div>
+
+<h2>🎨 Palette C — AirConnect Sky (own brand)</h2>
+<div class="pill">Ownable identity · aviation theme · modern gradient</div>
+<div class="kv"><span><b>#0EA5E9</b> primary sky</span><span><b>#2563EB</b> gradient partner</span><span><b>#F8FAFC</b> background</span><span><b>#E2E8F0</b> surfaces</span><span><b>#0B1220</b> dark-mode bg</span><span><b>#13223A</b> dark bubble</span></div>
+
+<h2>📐 Structure — the global standard arrangement</h2>
+<div class="fbox">
+<h3>1. Entry flow (login)</h3>
+<ol>
+<li><b>Logo splash</b> — 1 second, brand mark only (like WhatsApp/Telegram)</li>
+<li><b>One-screen signup:</b> big logo, one input (+country auto-detected), one button "Continue". No menus, no choice overload</li>
+<li><b>OTP</b> → straight into Chats, logged in forever</li>
+<li>Name + optional photo on first run — skippable, never blocks entry</li>
+</ol>
+</div>
+<div class="fbox">
+<h3>2. Main app — 4 bottom tabs</h3>
+<ol>
+<li><b>Chats</b> = home. Avatar, name, last message, time, unread badge. New-chat FAB bottom right</li>
+<li><b>Status</b> — circle strip, green rings unseen / gray seen, camera FAB</li>
+<li><b>Calls</b> — history with in/out/missed icons, dialpad FAB</li>
+<li><b>Settings</b> — profile row on top, then account/privacy/notifications/dark-mode</li>
+</ol>
+<p><b>Rule:</b> navigation lives in ONE place (bottom tabs), create-actions float (FAB), profile hides in Settings. Our app already matches ~70% — remaining: Chats as default home, consistent top headers, tab order.</p>
+</div>
+<div class="fbox">
+<h3>3. The 60-30-10 color rule</h3>
+<p><b>60%</b> neutral background (white / charcoal #111B21) · <b>30%</b> surface tones (rows, bubbles, input bar) · <b>10%</b> ONE brand accent everywhere (FAB, rings, badges, buttons). Global apps never use a different color per feature — one accent, consistently.</p>
+</div>
+<div class="fbox">
+<h3>4. Typography &amp; spacing</h3>
+<p>System font · 13px body, 11px previews, 10px timestamps · 12px padding · 12px bubble radius · 16px FAB radius. These exact numbers are why WhatsApp feels "instantly known".</p>
+</div>
+<div class="fbox">
+<h3>5. Per-feature color assignments</h3>
+<table>
+<tr><td>Login</td><td>White card over brand gradient</td></tr>
+<tr><td>Chats list</td><td>White bg, light dividers, accent unread badges</td></tr>
+<tr><td>Chat</td><td>Outgoing = accent tone, incoming = neutral, ✓✓ in accent</td></tr>
+<tr><td>Status</td><td>Rings accent green; seen = muted gray</td></tr>
+<tr><td>Calls</td><td>Green = connected, red = missed, blue = incoming</td></tr>
+<tr><td>Guardian/AI rows</td><td>✨ badge — the global standard for AI labeling</td></tr>
+<tr><td>All buttons</td><td>ONE accent color, always</td></tr>
+</table>
+</div>
+
+<script>
+const PALETTES={
+ A:{n:"A · WhatsApp",d:"#25D366",v:{"--primary":"#075E54","--accent":"#25D366","--bg":"#FFFFFF","--surface":"#FFFFFF","--line":"#F0F2F5","--chatbg":"#EFE7DE","--out":"#D9FDD3","--outtx":"#111","--in":"#FFFFFF","--tx":"#111B21","--tx2":"#667781","--tx3":"#A0AEC0","--bar":"#F0F2F5"}},
+ B:{n:"B · Signal Blue",d:"#3A76F0",v:{"--primary":"#1C4E80","--accent":"#3A76F0","--bg":"#FFFFFF","--surface":"#FFFFFF","--line":"#E9EDF2","--chatbg":"#FFFFFF","--out":"#2C6BED","--outtx":"#fff","--in":"#E9EDF2","--tx":"#17212B","--tx2":"#6B7A8D","--tx3":"#A0AEC0","--bar":"#F0F2F5"}},
+ C:{n:"C · AirConnect Sky",d:"#0EA5E9",v:{"--primary":"#0C4A6E","--accent":"#0EA5E9","--bg":"#F8FAFC","--surface":"#FFFFFF","--line":"#E2E8F0","--chatbg":"#F8FAFC","--out":"#0EA5E9","--outtx":"#fff","--in":"#FFFFFF","--tx":"#0B1220","--tx2":"#64748B","--tx3":"#A0AEC0","--bar":"#FFFFFF"}}
+};
+let cur="A";
+const phone=document.querySelector(".phone");
+function apply(){
+ const p=PALETTES[cur];
+ for(const[k,val]of Object.entries(p.v))phone.style.setProperty(k,val);
+ document.querySelectorAll(".bub.out").forEach(b=>b.style.color=p.v["--outtx"]);
+ document.querySelectorAll("#themes button").forEach(b=>b.classList.toggle("on",b.dataset.p===cur));
+}
+const tw=document.getElementById("themes");
+for(const[k,p]of Object.entries(PALETTES)){
+ const b=document.createElement("button");b.dataset.p=k;
+ b.innerHTML='<span class="dot" style="background:'+p.d+'"></span>'+p.n;
+ b.onclick=()=>{cur=k;apply()};tw.appendChild(b);
+}
+document.querySelectorAll(".sbtn").forEach(b=>{
+ b.onclick=()=>{
+  document.querySelectorAll(".sbtn").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+  document.querySelectorAll(".scr").forEach(s=>s.classList.remove("on"));
+  document.getElementById("s-"+b.dataset.s).classList.add("on");
+ };
+});
+apply();
+</script>
+</body>
+</html>
