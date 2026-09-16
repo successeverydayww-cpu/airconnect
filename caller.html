@@ -97,6 +97,12 @@ button.big.blue{background:#005c4b;color:#fff}
 .ictrl .acc{background:#00a884;color:#0b141a}
 .ictrl .dec{background:#ea0038;color:#fff}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1c2930;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#e9edef;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+/* chat themes / wallpapers */
+#wpg{position:absolute;inset:0;z-index:0;background:#0b141a;overflow:hidden}
+#chatview .ohdr,#chatview .cinput{position:relative;z-index:2}
+#chatview .bubbles{position:relative;z-index:1}
+.tsw{width:56px;height:56px;border-radius:50%;border:2px solid #2a3942;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#8696a0}
+.tsw:active{transform:scale(.93)}
 footer{display:block;text-align:center;padding:14px;font-size:12px;color:#8696a0}
 footer a{color:#8696a0}
 #sharelink{font-size:12px}
@@ -247,12 +253,14 @@ footer a{color:#8696a0}
 
 <!-- chat overlay -->
 <div id="chatview" class="ovl hide">
+  <div id="wpg"></div>
   <div class="ohdr">
     <button class="bk" onclick="closeChat()">‹</button>
     <div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div>
     <div style="margin-left:auto;display:flex;gap:4px">
       <button class="bk" onclick="if(CHAT_OPEN)dial(CHAT_OPEN)">📞</button>
       <button class="bk" onclick="if(CHAT_OPEN)dialVideo(CHAT_OPEN)">🎥</button>
+      <button class="bk" onclick="openThemeSheet()">🎨</button>
     </div>
   </div>
   <div class="bubbles" id="bubbles"></div>
@@ -288,6 +296,26 @@ footer a{color:#8696a0}
     <button id="sendbtn" onclick="sendChat()">➤</button>
   </div>
 </div>
+
+<!-- chat theme / wallpaper sheet -->
+<div id="themesheetbg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="closeThemeSheet()"></div>
+<div id="themesheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#1f2c34;z-index:60;padding:18px 20px 24px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
+  <div style="font-weight:600;font-size:16px" id="themeTitle">Chat theme</div>
+  <div style="font-size:12px;color:#8696a0;margin:2px 0 12px">Wallpaper for this chat — or for all your chats</div>
+  <div id="themeswatches" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 8px;justify-items:center;margin-bottom:14px"></div>
+  <div style="display:flex;gap:10px;margin-bottom:10px">
+    <button class="big blue" style="flex:1;margin:0" onclick="$('themeimg').click()">🖼️ Photo wallpaper</button>
+    <button class="big blue" style="flex:1;margin:0" onclick="$('thememov').click()">🎬 Video wallpaper</button>
+  </div>
+  <div style="font-size:11.5px;color:#8696a0;margin-bottom:10px">Video wallpapers play muted and loop automatically while you chat.</div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:14px;padding:6px 0;color:#e9edef;cursor:pointer"><input type="checkbox" id="themeAll" style="width:18px;height:18px;padding:0;margin:0"> Apply to ALL my chats</label>
+  <div style="display:flex;gap:10px">
+    <button class="big" style="flex:1;margin:0;background:#2a3942;color:#e9edef" onclick="resetChatTheme()">Reset this chat</button>
+    <button class="big" style="flex:1;margin:0;background:#2a3942;color:#e9edef" onclick="closeThemeSheet()">Cancel</button>
+  </div>
+</div>
+<input type="file" id="themeimg" class="hide" accept="image/*" onchange="themeFileChosen(this,'image')">
+<input type="file" id="thememov" class="hide" accept="video/*" onchange="themeFileChosen(this,'video')">
 
 <!-- active call overlay -->
 <div id="callview" class="ovl hide">
@@ -486,10 +514,68 @@ function openChat(p){
   const n=(WIN_NAMES[p]||"+"+p);
   $("cvName").textContent=n;$("cvSub").textContent="+ "+p;
   $("chatview").className="ovl";
+  applyWallpaper();
   renderBubbles();
   try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}
 }
-function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";renderLists();}
+function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
+
+/* ---------- chat themes & wallpapers (WhatsApp-style) ---------- */
+const THEME_SWATCHES=["linear-gradient(135deg,#0f766e,#134e4a)","linear-gradient(135deg,#1e3a8a,#0c2461)","linear-gradient(135deg,#7c1d6f,#441054)","linear-gradient(135deg,#b45309,#71320a)","linear-gradient(135deg,#065f46,#022c22)","linear-gradient(135deg,#9f1239,#4c0519)","linear-gradient(135deg,#334155,#0f172a)","linear-gradient(135deg,#c2410c,#7c2d12)"];
+let THEME_URLS={};
+function themeDB(){return new Promise((res,rej)=>{const r=indexedDB.open("air_themes",1);r.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains("media"))e.target.result.createObjectStore("media")};r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error)})}
+function wpgPut(key,blob){return themeDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(["media"],"readwrite");tx.objectStore("media").put(blob,key);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)}))}
+function wpgGet(key){return themeDB().then(db=>new Promise((res,rej)=>{const q=db.transaction(["media"]).objectStore("media").get(key);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}))}
+function parseTheme(k){try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){return null}}
+function clearAllChatThemes(){const kill=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("ac_theme_")===0&&k!=="ac_theme_global")kill.push(k)}kill.forEach(k=>localStorage.removeItem(k))}
+function openThemeSheet(){
+  if(!CHAT_OPEN)return;
+  $("themeTitle").textContent="Chat theme — "+(WIN_NAMES[CHAT_OPEN]||("+"+CHAT_OPEN));
+  const g=$("themeswatches");g.innerHTML="";
+  const def=document.createElement("div");def.className="tsw";def.style.background="#111b21";def.textContent="✕";def.title="Default (no wallpaper)";
+  def.onclick=()=>chooseSwatch(-1);g.appendChild(def);
+  THEME_SWATCHES.forEach((s,i)=>{const d=document.createElement("div");d.className="tsw";d.style.background=s;d.onclick=()=>chooseSwatch(i);g.appendChild(d);});
+  $("themesheet").className="";$("themesheetbg").className="";
+}
+function closeThemeSheet(){$("themesheet").className="hide";$("themesheetbg").className="hide";}
+function saveTheme(t){
+  const all=$("themeAll").checked;
+  if(all){localStorage.setItem("ac_theme_global",JSON.stringify(t));clearAllChatThemes();}
+  else if(CHAT_OPEN){localStorage.setItem("ac_theme_"+CHAT_OPEN,JSON.stringify(t));}
+  applyWallpaper();closeThemeSheet();toast(t===null?"Theme reset ✓":"Theme applied ✓");
+}
+function chooseSwatch(i){
+  if(i<0){ // Default
+    const all=$("themeAll").checked;
+    if(all){localStorage.removeItem("ac_theme_global");clearAllChatThemes();}
+    else if(CHAT_OPEN)localStorage.removeItem("ac_theme_"+CHAT_OPEN);
+    applyWallpaper();closeThemeSheet();toast("Back to default ✓");return;
+  }
+  saveTheme({type:"preset",id:i});
+}
+function resetChatTheme(){if(CHAT_OPEN)localStorage.removeItem("ac_theme_"+CHAT_OPEN);applyWallpaper();closeThemeSheet();toast("Chat theme reset ✓");}
+function themeFileChosen(input,kind){
+  const f=input.files&&input.files[0];input.value="";
+  if(!f)return;
+  if(kind==="video"&&f.size>25*1024*1024)toast("Big video — wallpaper may be slow on old phones");
+  if(f.size>60*1024*1024){toast("Too large (max 60MB) — pick a smaller file");return;}
+  toast("Saving wallpaper…");
+  const key="t"+Date.now()+Math.random().toString(36).slice(2,8);
+  wpgPut(key,f).then(()=>{saveTheme({type:kind,key:key});}).catch(()=>toast("Storage full — try a smaller file"));
+}
+async function applyWallpaper(){
+  const w=$("wpg");w.innerHTML="";w.style.background="#0b141a";
+  const t=(CHAT_OPEN&&parseTheme("ac_theme_"+CHAT_OPEN))||parseTheme("ac_theme_global");
+  if(!t)return;
+  try{
+    if(t.type==="preset"){w.style.background=THEME_SWATCHES[t.id]||"#0b141a";return;}
+    let url=THEME_URLS[t.key];
+    if(!url){const blob=await wpgGet(t.key);if(!blob)return;url=URL.createObjectURL(blob);THEME_URLS[t.key]=url;}
+    if(t.type==="image"){const im=document.createElement("img");im.src=url;im.style.cssText="position:absolute;inset:0;width:100%;height:100%;object-fit:cover";w.appendChild(im);}
+    else{const v=document.createElement("video");v.src=url;v.muted=true;v.loop=true;v.autoplay=true;v.setAttribute("playsinline","");v.setAttribute("muted","");v.style.cssText="position:absolute;inset:0;width:100%;height:100%;object-fit:cover";v.play().catch(()=>{});w.appendChild(v);}
+  }catch(e){}
+}
+
 function renderBubbles(){
   const b=$("bubbles");b.innerHTML="";
   const list=CHATS[CHAT_OPEN]||[];
