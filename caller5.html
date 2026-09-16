@@ -2350,6 +2350,7 @@ function nativeShare(){
 }
 /* ==================== v12: recall · replies · reactions · search · pin/mute/archive · groups · QR · onboarding · PWA ==================== */
 var SEARCH="",REPLY_TO=null,GROUP_OPEN=null;
+function memColor(n){const P=["#2563EB","#7C3AED","#DB2777","#DC2626","#16A34A","#D97706","#0F766E","#B45309"];let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%P.length;return P[h];}
 var PINS=JSON.parse(localStorage.getItem("ac_pins")||"[]");
 var MUTED=JSON.parse(localStorage.getItem("ac_mutes")||"[]");
 var ARCHS=JSON.parse(localStorage.getItem("ac_archs")||"[]");
@@ -2470,12 +2471,71 @@ async function createGroup(){
 function openGroup(gid){
   const g=GROUPS.find(x=>x.id===gid);if(!g)return;
   GROUP_OPEN=gid;GUNREAD[gid]=0;renderLists();
-  $("gvName").textContent=g.name;
+  $("gvName").textContent=g.name;$("gvName").style.cursor="pointer";$("gvName").onclick=openGInfo;$("gvSub").style.cursor="pointer";$("gvSub").onclick=openGInfo;
   $("gvSub").textContent=g.members.length+" members · not end-to-end encrypted";
   renderGBubbles();
   $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeGroup(){GROUP_OPEN=null;$("gview").className="ovl hide";renderLists();}
+async function openGInfo(){
+  if(!GROUP_OPEN)return;
+  const r=await api("ginfo",{node:ME,g:GROUP_OPEN});
+  if(!r||!r.ok){toast((r&&r.err)||"Could not load group");return;}
+  let el=$("ginfosheet");if(el)el.remove();
+  el=document.createElement("div");el.id="ginfosheet";
+  el.style.cssText="position:fixed;inset:0;z-index:70;background:#F8FAFC;display:flex;flex-direction:column;";
+  const me=(r.members.find(m=>m.id===ME)||{});
+  const iAmAdmin=!!me.admin,iAmCreator=ME===r.by;
+  let rows="";
+  for(const m of r.members){
+    rows+='<div style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #E2E8F0">'+
+    '<div style="width:34px;height:34px;border-radius:50%;background:'+memColor(m.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 34px">'+esc((m.name||"?").charAt(0).toUpperCase())+'</div>'+
+    '<div style="flex:1"><div style="font-weight:600;font-size:13.5px;color:#0F172A">'+esc(m.name||("+"+m.id))+'</div>'+
+    '<div style="font-size:11px;color:#64748B">+'+esc(m.id)+(m.creator?" · Group creator":(m.admin?" · Admin":""))+'</div></div>'+
+    ((iAmAdmin&&!m.creator&&m.id!==ME)?'<button onclick="gkick2(\'\'+m.id+\'\')" style="border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:5px 10px;font-size:12px">Remove</button>':"")+
+    ((iAmCreator&&m.id!==ME)?'<button onclick="gadmin2(\'\'+m.id+\'\',\'\'+(!m.admin)+\'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#2563EB;border-radius:8px;padding:5px 10px;font-size:12px">'+(m.admin?"Demote":"Make admin")+"</button>":"")+
+    "</div>";
+  }
+  const inG=new Set(r.members.map(m=>m.id));
+  const cand=FRIENDS.filter(f=>!inG.has(f.id));
+  let addRow="";
+  if(iAmAdmin&&cand.length){
+    let opts="";for(const f of cand)opts+='<option value="'+f.id+'">'+esc(f.name||("+"+f.id))+"</option>";
+    addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#0EA5E9;color:#0B1220">Add</button></div>';
+  }
+  el.innerHTML=
+    '<div class="ohdr"><button class="bk" onclick="document.getElementById(\'ginfosheet\').remove()">‹</button><div class="nm" style="flex:1">Group info</div><div style="width:30px"></div></div>'+
+    '<div style="overflow:auto;padding:16px">'+
+    '<div style="text-align:center;padding:6px 0 14px"><div style="font-size:44px">👥</div>'+
+    '<div style="font-weight:700;font-size:18px;color:#0F172A">'+esc(r.name)+'</div>'+
+    '<div style="font-size:12px;color:#64748B">'+r.members.length+' members · not end-to-end encrypted</div></div>'+
+    (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#0EA5E9;color:#0B1220">Save</button></div>':"")+
+    addRow+
+    '<div style="margin-top:8px">'+rows+'</div>'+
+    '<button onclick="ginfoLeave()" class="big" style="background:#DC2626;color:#fff;margin-top:16px">Leave group 👋</button>'+
+    "</div>";
+  document.body.appendChild(el);
+}
+async function gadd2(){
+  const sel=$("giAdd");if(!sel||!sel.value)return;
+  const r=await api("gadd",{by:ME,g:GROUP_OPEN,members:[sel.value]});
+  if(r&&r.ok){toast("Added ✓");openGInfo();}else toast((r&&r.err)||"Could not add");
+}
+async function gkick2(node){
+  if(!confirm("Remove this member from the group?"))return;
+  const r=await api("gkick",{by:ME,g:GROUP_OPEN,node});
+  if(r&&r.ok){toast("Removed");openGInfo();}else toast((r&&r.err)||"Could not remove");
+}
+async function gadmin2(node,make){
+  const r=await api("gadmin",{by:ME,g:GROUP_OPEN,node,make:make===true||make==="true"});
+  if(r&&r.ok){toast(make==="true"||make===true?"Promoted ✓":"Demoted");openGInfo();}else toast((r&&r.err)||"Failed");
+}
+async function grename2(){
+  const v=$("giRename").value.trim();if(!v)return;
+  const r=await api("grename",{by:ME,g:GROUP_OPEN,name:v});
+  if(r&&r.ok){const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(g){g.name=v;$("gvName").textContent=v;}toast("Renamed ✓");$("ginfosheet").remove();}else toast((r&&r.err)||"Could not rename");
+}
+async function ginfoLeave(){const el=$("ginfosheet");if(el)el.remove();leaveGroup();}
 function renderGBubbles(){
   const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(!g)return;
   const b=$("gbubbles");b.innerHTML="";
@@ -2487,7 +2547,7 @@ function renderGBubbles(){
   for(const m of arr){
     const d=document.createElement("div");
     d.className="bub "+(m.who==="me"?"out":"in");
-    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:#2563EB;margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;word-break:break-all">'+u+"</a>");
+    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:'+memColor(m.from)+';margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;word-break:break-all">'+u+"</a>");
     b.appendChild(d);
   }
   b.scrollTop=999999;
