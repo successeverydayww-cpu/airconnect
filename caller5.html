@@ -1174,6 +1174,23 @@ async function stPhotoChosen(fi){
     else toast((r&&r.err)||"Could not post status — check connection");
   }catch(e){toast("Could not read that image — try another photo");}
 }
+/* Part upload for large status media (video/voice). The server stores 15K
+   chunks and accepts up to 4 chunks per request, so we send 60K slices in
+   sequence, then finalize. Photos are small enough for one request. */
+async function postStoryParts(pic){
+  const sid="story:"+ME+":"+Date.now();
+  const CH=15000,total=Math.ceil(pic.length/CH);
+  const PART=60000,n=Math.ceil(pic.length/PART);
+  for(let i=0;i<n;i++){
+    toast("Uploading "+(i+1)+"/"+n+"…");
+    const d=await api("story_part",{node:ME,sid:sid,ci:i*4,data:pic.slice(i*PART,(i+1)*PART)});
+    if(!d||!d.ok){await api("story_abort",{node:ME,sid:sid});toast((d&&d.err)||"Upload failed — check connection");return null;}
+  }
+  const f=await api("story_done",{node:ME,sid:sid,count:total});
+  if(f&&f.ok)return {ok:true,id:sid};
+  if(f&&f.err)toast(f.err);
+  return null;
+}
 let STV_DATA=null,STV_DUR=0,SVR=null,SVR_CH=[],SVR_B64=null,SVR_T0=0,SVR_TIMER=null,SVR_STREAM=null;
 function fmtT(s){s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 async function stVideoChosen(fi){
@@ -1223,7 +1240,7 @@ async function stVideoPost(dataUrl,start,dur){
   try{v2.pause();}catch(e){}
   if(!b64){toast("Could not compress the video — try the 🖼️ photo option");return;}
   toast("Posting video status…");
-  const r=await api("story",{node:ME,pic:b64});
+  const r=await postStoryParts(b64);
   if(r&&r.ok){toast("Video status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();}
   else toast((r&&r.err)||"Could not post video — try again");
 }
@@ -1332,7 +1349,7 @@ async function stVoicePost(){
   if(!SVR_B64)return;
   const b64=SVR_B64;stVoiceDiscard();
   toast("Posting voice status…");
-  const r=await api("story",{node:ME,pic:b64});
+  const r=await postStoryParts(b64);
   if(r&&r.ok){toast("Voice status posted ✓ — friends see it for 24h");stVoiceClose();refreshStories();renderStatusScreen();}
   else toast((r&&r.err)||"Could not post voice note");
 }
