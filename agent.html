@@ -548,6 +548,7 @@ async function poll(){
       lastMsg=m.id;
       if(m.from!==ME){
         const decText=await e2eDec(m.from,m.text);
+        if(/^\s*rr:/.test(String(m.text||"")))continue;
         addMsg("them",decText,"+"+m.from);
         await log("chat from +"+m.from+": "+m.text);
         PEER=m.from;

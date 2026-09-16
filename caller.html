@@ -242,6 +242,15 @@ footer a{color:#8696a0}
       <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
     </div>
     <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🖼️ My profile photo</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px">?</div>
+        <button class="big blue" style="flex:1" onclick="document.getElementById('picinput').click()">Upload photo</button>
+        <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
+      </div>
+      <div style="font-size:11.5px;color:#8696a0;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
+    </div>
+    <div class="card">
       <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
       <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
       <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
@@ -272,12 +281,24 @@ footer a{color:#8696a0}
   </nav>
 </div>
 
+<!-- profile photo viewer -->
+<div id="picview" class="ovl hide" oncontextmenu="return false" style="user-select:none;-webkit-user-select:none">
+  <div class="ohdr">
+    <button class="bk" onclick="closePicView()">‹</button>
+    <div><div class="nm">Profile photo</div><div class="st" id="pvSub">—</div></div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:center;height:calc(100% - 60px)">
+    <img id="pvImg" draggable="false" style="max-width:96%;max-height:88%;border-radius:12px;-webkit-user-drag:none" alt="">
+  </div>
+  <div id="pvWm" style="position:fixed;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:12px;pointer-events:none"></div>
+</div>
+
 <!-- chat overlay -->
 <div id="chatview" class="ovl hide">
   <div id="wpg"></div>
   <div class="ohdr">
     <button class="bk" onclick="closeChat()">‹</button>
-    <div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div>
+    <div class="av" id="cvAv" style="cursor:pointer;flex:0 0 40px;width:40px;height:40px" onclick="if(CHAT_OPEN)viewPic(CHAT_OPEN)">—</div><div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div><button onclick="blockPeer()" title="Block contact" style="background:none;border:0;color:#8696a0;font-size:15px;padding:4px 8px;cursor:pointer">🚫</button>
     <div style="margin-left:auto;display:flex;gap:4px">
       <button class="bk" onclick="if(CHAT_OPEN)dial(CHAT_OPEN)">📞</button>
       <button class="bk" onclick="if(CHAT_OPEN)dialVideo(CHAT_OPEN)">🎥</button>
@@ -313,7 +334,7 @@ footer a{color:#8696a0}
       </div>
       <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#8696a0;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
     </div>
-    <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()">
+    <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()" oninput="typingPing()">
     <button id="sendbtn" onclick="sendChat()">➤</button>
   </div>
 </div>
@@ -400,10 +421,23 @@ const b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function e2eInit(){
   try{
     let ks=localStorage.getItem("ac_kp");
-    if(!ks){
+    const ROT=7*24*3600*1000;
+    const mk=async()=>{
       const kp=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
-      ks=JSON.stringify({priv:await crypto.subtle.exportKey("jwk",kp.privateKey),pub:await crypto.subtle.exportKey("jwk",kp.publicKey)});
-      localStorage.setItem("ac_kp",ks);
+      return JSON.stringify({priv:await crypto.subtle.exportKey("jwk",kp.privateKey),pub:await crypto.subtle.exportKey("jwk",kp.publicKey)});
+    };
+    if(!ks){
+      ks=await mk();
+      localStorage.setItem("ac_kp",ks);localStorage.setItem("ac_kp_ts",String(Date.now()));
+    }else{
+      const ts=parseInt(localStorage.getItem("ac_kp_ts")||"0");
+      if(ts&&Date.now()-ts>ROT){
+        let hist=[];try{hist=JSON.parse(localStorage.getItem("ac_kp_hist")||"[]");}catch(e){}
+        hist.unshift(JSON.parse(ks).priv);hist=hist.slice(0,3);
+        localStorage.setItem("ac_kp_hist",JSON.stringify(hist));
+        ks=await mk();
+        localStorage.setItem("ac_kp",ks);localStorage.setItem("ac_kp_ts",String(Date.now()));
+      }
     }
     E2E_KEYS=JSON.parse(ks);
     if(ME)api("pubkey",{node:ME,pk:JSON.stringify(E2E_KEYS.pub)}).catch(()=>{});
@@ -435,15 +469,29 @@ async function e2eDec(peer,text){
     if(!m)return text;
     const pk=E2E_PKS[peer];
     if(!pk)return "🔒 (encrypted)";
-    const key=await e2eKey(peer,pk);
-    const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(b64d(m[1]))},key,b64d(m[2]));
-    return new TextDecoder().decode(pt);
+    let hist=[];try{hist=JSON.parse(localStorage.getItem("ac_kp_hist")||"[]");}catch(e){}
+    const privs=[E2E_KEYS?E2E_KEYS.priv:null].concat(hist).filter(Boolean);
+    const pubJwk=JSON.parse(pk);
+    for(const priv of privs){
+      try{
+        const pub=await crypto.subtle.importKey("jwk",pubJwk,{name:"ECDH",namedCurve:"P-256"},false,[]);
+        const pr=await crypto.subtle.importKey("jwk",priv,{name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
+        const bits=await crypto.subtle.deriveBits({name:"ECDH",public:pub},pr,256);
+        const key=await crypto.subtle.importKey("raw",bits,{name:"AES-GCM"},false,["decrypt"]);
+        const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:new Uint8Array(b64d(m[1]))},key,b64d(m[2]));
+        return new TextDecoder().decode(pt);
+      }catch(e){}
+    }
+    return "🔒 (encrypted message)";
   }catch(e){return "🔒 (encrypted message)";}
 }
 
 async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="",lastMsg=0,pollFails=0;
-let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null;
+let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null,WIN_BLOCKS=[];
+let PIC_CACHE={};try{PIC_CACHE=JSON.parse(localStorage.getItem("aicall_pics"))||{};}catch(e){}
+let PIC_FETCHED={};
+let CALL_ROLE="",ICE_RESTART_AT=0,TYPING_UNTIL=0,TYPE_AT=0,RR_AT=0,chatHistBusy={};
 let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,mixCtx=null,incomingAt=0,dialAt=0,
     rxAnalyser=null,txAnalyser=null,voiceBus=null,state="idle",pendingIce=[],iceOut=[],
     pendingOffer=null,callTimer=null,callStart=0,chatBusy=false;
@@ -622,6 +670,10 @@ async function register(){
 async function finishLogin(d){
   ME=d.id;ME_NAME=d.name;
   e2eInit();
+  api("friends",{node:ME}).then(fr=>{if(fr&&fr.blocks)WIN_BLOCKS=fr.blocks||[];}).catch(()=>{});
+  refreshMyPic();
+  for(const f of WIN_FRIENDS)if(!PIC_CACHE[f.id]&&!PIC_FETCHED[f.id])fetchPic(f.id);
+  setInterval(()=>{if(CHAT_OPEN&&TYPING_UNTIL&&Date.now()>TYPING_UNTIL){TYPING_UNTIL=0;try{$("cvSub").textContent="AirConnect · + "+CHAT_OPEN;}catch(e){}}},1200);
   const savedOK=saveLogin(ME);
   if(!savedOK)await log("WARNING: browser is blocking login storage — number may not be remembered");
   $("login").className="hide";$("app").className="";
@@ -656,6 +708,7 @@ function pushHist(){try{history.pushState({ac:1},"");}catch(e){}}
 window.addEventListener("popstate",()=>{
   if(ovlOpen("incoming")){declineCall();pushHist();return;}
   if(ovlOpen("callview")){pushHist();return;}          // stay on the call screen
+  if(ovlOpen("picview")){closePicView();return;}
   if(ovlOpen("chatview")){closeChat();return;}         // back closes chat -> home
 });
 pushHist();
@@ -676,11 +729,21 @@ function renderLists(){
     const n=(WIN_NAMES[f.id]||"friend"),l=lastOf(f.id);
     const prev=l?(l.img?"📷 Photo":(l.fileId?"📎 Attachment":esc(l.text).slice(0,40))):"Tap to message";
     const row=document.createElement("div");row.className="row";
-    row.innerHTML='<div class="av">'+n.charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
+    row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
     row.onclick=()=>openChat(f.id);
     cl.appendChild(row);
   }
-  $("nochat").className=allFr.length?"empty hide":"empty";
+  if(WIN_BLOCKS&&WIN_BLOCKS.length){
+    const hd=document.createElement("div");hd.textContent="Blocked";hd.style.cssText="color:#8696a0;font-size:12px;padding:12px 14px 4px";
+    cl.appendChild(hd);
+    for(const p of WIN_BLOCKS){
+      const row=document.createElement("div");row.className="row";
+      row.innerHTML='<div class="av">🚫</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[p]||("+"+p))+'</div><div class="rsub">Tap to unblock</div></div>';
+      row.onclick=()=>unblockPeer(p);
+      cl.appendChild(row);
+    }
+  }
+  $("nochat").className=(allFr.length||WIN_BLOCKS.length)?"empty hide":"empty";
   const ll=$("calllist");ll.innerHTML="";
   for(const f of fr){
     const n=(WIN_NAMES[f.id]||"friend");
@@ -703,12 +766,114 @@ function openChat(p){
   pushHist();
   CHAT_OPEN=p;UNREAD[p]=0;renderUnread();
   const n=(WIN_NAMES[p]||"+"+p);
-  $("cvName").textContent=n;$("cvSub").textContent="+ "+p;
+  $("cvName").textContent=n;$("cvSub").textContent="AirConnect · + "+p;
+  setChatHeaderPic(p);
   $("chatview").className="ovl";
   applyWallpaper();
   renderBubbles();
+  loadHistory(p);
   try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}
 }
+function normTs(s){s=String(s);const m=s.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{1,6})/);if(!m)return s;const f=(m[2]+"00").slice(0,3);return m[1]+"."+f+"Z";}
+async function loadHistory(p){
+  if(chatHistBusy[p])return;chatHistBusy[p]=true;
+  try{
+    const h=await api("history",{node:ME,peer:p});
+    if(h&&Array.isArray(h)&&h.length){
+      const cur=CHATS[p]||(CHATS[p]=[]);
+      let added=0;
+      for(const m of h){
+        const txt=String(m.text||"");
+        if(txt.startsWith("rr:"))continue;
+        const nid=normTs(m.id);
+        const who=(m.from===ME)?"me":"them";
+        if(cur.some(b=>b.who===who&&b.ts&&Math.abs(new Date(normTs(b.ts))-new Date(nid))<8000))continue;
+        const fm=txt.match(/^\[file:([a-z0-9]+)\]$/i);
+        if(fm)cur.push({who,fileId:fm[1],ts:nid});
+        else cur.push({who,text:await e2eDec(p,txt),ts:nid});
+        added++;
+      }
+      if(added){cur.sort((a,b)=>(a.ts<b.ts?-1:1));if(CHAT_OPEN===p)renderBubbles();}
+    }
+  }catch(e){}finally{chatHistBusy[p]=false;}
+}
+function typingPing(){
+  if(!CHAT_OPEN||MODE==="offline")return;
+  if(Date.now()-TYPE_AT<3000)return;
+  TYPE_AT=Date.now();
+  api("sig",{from:ME,to:CHAT_OPEN,type:"typing",payload:{}}).catch(()=>{});
+}
+async function blockPeer(){
+  if(!CHAT_OPEN)return;
+  if(!confirm("Block this contact? They will not be able to call or message you."))return;
+  const p=CHAT_OPEN;
+  const r=await api("block",{user:ME,who:p});
+  if(r&&r.ok){
+    WIN_BLOCKS=Array.from(new Set((WIN_BLOCKS||[]).concat([p])));
+    WIN_FRIENDS=WIN_FRIENDS.filter(f=>f.id!==p);
+    closeChat();renderLists();toast("Contact blocked ✓");
+  }else toast((r&&r.err)||"Could not block");
+}
+async function unblockPeer(p){
+  const r=await api("block",{user:ME,who:p,undo:true});
+  if(r&&r.ok){WIN_BLOCKS=(WIN_BLOCKS||[]).filter(x=>x!==p);renderLists();toast("Unblocked ✓");}
+  else toast((r&&r.err)||"Could not unblock");
+}
+
+/* ---------------- profile photos ---------------- */
+function savePics(){try{localStorage.setItem("aicall_pics",JSON.stringify(PIC_CACHE));}catch(e){}}
+function avatarHTML(num,name){
+  const pic=PIC_CACHE[num];
+  if(pic)return '<div class="av" style="background-image:url(\''+pic+'\');background-size:cover;background-position:center"></div>';
+  return '<div class="av">'+esc(String(name||"+").charAt(0).toUpperCase())+'</div>';
+}
+function refreshMyPic(){
+  const el=$("myPic");if(!el)return;
+  const pic=PIC_CACHE[ME];
+  if(pic){el.textContent="";el.style.backgroundImage="url("+pic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";}
+  else{el.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();el.style.backgroundImage="";}
+}
+function fetchPic(p){
+  PIC_FETCHED[p]=1;
+  api("pic",{node:p}).then(r=>{
+    if(r&&r.pic){PIC_CACHE[p]=r.pic;savePics();if(CHAT_OPEN===p)setChatHeaderPic(p);renderLists();}
+    else if(CHAT_OPEN===p)setChatHeaderPic(p);
+  }).catch(()=>{PIC_FETCHED[p]=0;});
+}
+function setChatHeaderPic(p){
+  const el=$("cvAv");if(!el)return;
+  const pic=PIC_CACHE[p];
+  if(pic){el.textContent="";el.style.backgroundImage="url("+pic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";}
+  else{el.style.backgroundImage="";el.textContent=esc(String(WIN_NAMES[p]||"+").charAt(0).toUpperCase());}
+  if(!PIC_FETCHED[p])fetchPic(p);
+}
+async function picChosen(fi){
+  const f=fi.files&&fi.files[0];fi.value="";
+  if(!f)return;
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(f);});
+    const cv=document.createElement("canvas");
+    let w=img.width,h=img.height;const mx=128;
+    if(w>mx||h>mx){const s=mx/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+    cv.width=Math.max(1,w);cv.height=Math.max(1,h);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    let pic=cv.toDataURL("image/jpeg",0.72);
+    while(pic.length>44000&&cv.width>16){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    const r=await api("avatar",{node:ME,pic:pic});
+    if(r&&r.ok){PIC_CACHE[ME]=pic;savePics();refreshMyPic();renderLists();toast("Photo saved ✓");}
+    else toast((r&&r.err)||"Could not save photo");
+  }catch(e){toast("Could not read image");}
+}
+function viewPic(p){
+  if(!p)return;
+  try{$("pvSub").textContent=WIN_NAMES[p]||("+"+p);$("pvWm").textContent="AirConnect · protected view · "+(ME_NAME||"");$("pvImg").style.filter="";}catch(e){}
+  const show=src=>{try{$("pvImg").src=src;$("picview").className="ovl";}catch(e){}};
+  if(PIC_CACHE[p]){show(PIC_CACHE[p]);return;}
+  api("pic",{node:p}).then(r=>{if(r&&r.pic){PIC_CACHE[p]=r.pic;savePics();show(r.pic);}else toast("No photo yet");}).catch(()=>toast("No photo yet"));
+}
+function closePicView(){try{$("picview").className="ovl hide";}catch(e){}}
+window.addEventListener("blur",()=>{try{const pv=document.getElementById("picview");if(pv&&!pv.classList.contains("hide"))document.getElementById("pvImg").style.filter="blur(28px)";}catch(e){}});
+window.addEventListener("focus",()=>{try{document.getElementById("pvImg").style.filter="";}catch(e){}});
 function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
 
 /* ---------- chat themes & wallpapers (WhatsApp-style) ---------- */
@@ -771,6 +936,7 @@ function renderBubbles(){
   const b=$("bubbles");b.innerHTML="";
   const list=CHATS[CHAT_OPEN]||[];
   for(const m of list){
+    if(String(m.text||"").startsWith("rr:"))continue;
     const d=document.createElement("div");
     if(m.img){
       d.className="bub out";
@@ -813,12 +979,13 @@ function renderTextBubble(d,m){
     return;
   }
   // normal text with clickable links
-  const esc2=esc(txt)+(m.who==="me"?" ✓":"");
+  const esc2=esc(txt)+(m.who==="me"?(m.r?" <span style=\"color:#53bdeb\">✓✓</span>":" ✓"):"");
   d.innerHTML=esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#53bdeb;text-decoration:underline;word-break:break-all">'+u+"</a>");
 }
 async function fetchFileBubble(m,d){
   try{
     const r=await api("fetchfile",{id:m.fileId,user:ME});
+    if(r&&r.text&&String(r.text).startsWith("e1:"))r.text=await e2eDec(CHAT_OPEN,r.text);
     if(r&&r.text&&String(r.text).startsWith("data:image/")){
       d.textContent="";const im=document.createElement("img");im.src=r.text;im.style.cssText="max-width:100%;border-radius:6px;display:block";
       im.onclick=()=>window.open(r.text);d.appendChild(im);
@@ -857,9 +1024,10 @@ async function fileChosen(fi){
       dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f);});
       if(dataUrl.length>95000){toast("File too large for direct chat — send it as a link instead");chatBusy=false;return;}
     }
-    const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:dataUrl});
+    const enc=await e2eEnc(CHAT_OPEN,dataUrl);
+    const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:enc});
     if(r&&r.ok){
-      (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",img:dataUrl,ts:new Date().toISOString()});
+      (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",img:dataUrl,ts:r.id});
       renderBubbles();
     }else toast("Send failed — "+((r&&r.err)||"check connection"));
   }catch(e){toast("Could not read file");}
@@ -892,7 +1060,7 @@ async function sendChat(){
   chatBusy=false;$("sendbtn").disabled=false;
   if(r&&r.ok){
     box.value="";
-    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t,ts:new Date().toISOString()});
+    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t,ts:r.id});
     renderBubbles();
   }else{
     (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"sys",text:"⚠ not sent — "+((r&&r.err)||"check connection"),ts:new Date().toISOString()});
@@ -1000,8 +1168,23 @@ async function newPC(){
   pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
   pc.onconnectionstatechange=()=>{
     if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected")&&state==="live"){
-      toast("Connection lost");
-      hangup(true);
+      if(CALL_ROLE==="offerer"&&Date.now()-ICE_RESTART_AT>15000){
+        ICE_RESTART_AT=Date.now();
+        toast("Network hiccup — reconnecting…");
+        (async()=>{try{
+          const o=await pc.createOffer({iceRestart:true});
+          await pc.setLocalDescription(o);
+          await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(o)});
+        }catch(e){}})();
+        setTimeout(()=>{
+          if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected")&&state==="live"){
+            toast("Connection lost");hangup(true);
+          }
+        },9000);
+      }else if(CALL_ROLE!=="offerer"||Date.now()-ICE_RESTART_AT<15000){
+        toast("Connection lost");
+        hangup(true);
+      }
     }
   };
   pc.ontrack=e=>{
@@ -1060,7 +1243,7 @@ function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
 }
 async function dial(p){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
-    PEER=p;
+    PEER=p;CALL_ROLE="offerer";
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
@@ -1110,7 +1293,7 @@ async function declineCall(){
 }
 async function answer(m){
   if(MODE==="offline"){MODE="online";localStorage.setItem("aicall_mode","online");refreshModeBtn();setOffline(false);}
-  PEER=m.from;state="live";showCall("Connecting…");
+  PEER=m.from;CALL_ROLE="answerer";state="live";showCall("Connecting…");
   setStatus("LIVE with +"+PEER,"live");
   try{
     const p=await newPC();
@@ -1232,7 +1415,7 @@ async function tickReqs(){
 async function poll(){
   if(MODE==="offline"){setOffline(true);setTimeout(poll,5000);return;}
   try{
-    const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
+    const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg,cv:(CHAT_OPEN?Date.now():0)});
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){toast("Account banned");return;}
       pollFails=Math.min(pollFails+1,6);
@@ -1271,6 +1454,7 @@ async function poll(){
         setStatus("LIVE","live");
         await log("call answered by +"+PEER+" — LIVE");
       }
+      else if(m.type==="typing"&&CHAT_OPEN===m.from){TYPING_UNTIL=Date.now()+3200;$("cvSub").textContent="typing…";}
       else if(m.type==="bye"&&(state==="live"||state==="dialing"||state==="incoming")){
         callCleanup();toast("Call ended by +"+m.from);await log("call ended by +"+m.from);
       }
@@ -1283,17 +1467,30 @@ async function poll(){
       lastMsg=m.id;
       if(m.from===ME)continue;
       const from=m.from;
-      const fm=String(m.text||"").match(/^\[file:([a-z0-9]+)\]$/i);
+      const rawTxt=String(m.text||"");
+      if(rawTxt.startsWith("rr:")){
+        const upTo=rawTxt.slice(3);
+        const arr=CHATS[from]||(CHATS[from]=[]);
+        let ch=false;
+        const upTo2=new Date(new Date(normTs(upTo)).getTime()+10000).toISOString();
+        for(const b2 of arr){if(b2.who==="me"&&normTs(b2.ts)<=upTo2&&!b2.r){b2.r=1;ch=true;}}
+        if(ch){persistChats();if(CHAT_OPEN===from)renderBubbles();}
+        continue;
+      }
+      const fm=rawTxt.match(/^\[file:([a-z0-9]+)\]$/i);
       if(fm)(CHATS[from]=CHATS[from]||[]).push({who:"them",fileId:fm[1],ts:m.id});
-      else (CHATS[from]=CHATS[from]||[]).push({who:"them",text:await e2eDec(from,m.text),ts:m.id});
-      if(CHAT_OPEN===from)renderBubbles();
+      else (CHATS[from]=CHATS[from]||[]).push({who:"them",text:await e2eDec(from,rawTxt),ts:m.id});
+      if(CHAT_OPEN===from){
+        renderBubbles();
+        if(Date.now()-RR_AT>3000){RR_AT=Date.now();api("chat",{from:ME,to:from,text:"rr:"+m.id}).catch(()=>{});}
+      }
       else {UNREAD[from]=(UNREAD[from]||0)+1;fresh=true;}
     }
     persistChats();
     setOffline(false);
     if(fresh){renderUnread();try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}}
     const prevFr=WIN_FRIENDS.length;
-    WIN_FRIENDS=d.friends||[];WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
+    WIN_FRIENDS=(d.friends||[]).filter(f=>!WIN_BLOCKS.includes(f.id));WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
     if(d.pks)E2E_PKS=d.pks;
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
