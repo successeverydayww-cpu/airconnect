@@ -158,6 +158,8 @@ footer a{color:#8696a0}
   </div>
 
   <div id="view-chats" class="view">
+    <div id="storystrip" style="display:flex;gap:12px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid #202c33"></div>
+    <input type="file" id="storyinput" class="hide" accept="image/*" onchange="storyChosen(this)">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Add a friend in the 👥 tab, then call or message them.</div>
   </div>
@@ -306,6 +308,7 @@ footer a{color:#8696a0}
     </div>
   </div>
   <div class="bubbles" id="bubbles"></div>
+  <div id="chipsrow" style="display:none;gap:6px;padding:6px 10px 0;overflow-x:auto"></div>
   <div class="cinput">
     <button class="bk" style="background:none;border:0;color:#8696a0;font-size:20px;padding:4px 6px" onclick="pickFile()">📎</button>
     <input type="file" id="fileinput" class="hide" accept="image/*,application/pdf,.doc,.docx,.txt,.zip,audio/*" onchange="fileChosen(this)">
@@ -672,6 +675,7 @@ async function finishLogin(d){
   e2eInit();
   api("friends",{node:ME}).then(fr=>{if(fr&&fr.blocks)WIN_BLOCKS=fr.blocks||[];}).catch(()=>{});
   refreshMyPic();
+  refreshStories();
   for(const f of WIN_FRIENDS)if(!PIC_CACHE[f.id]&&!PIC_FETCHED[f.id])fetchPic(f.id);
   setInterval(()=>{if(CHAT_OPEN&&TYPING_UNTIL&&Date.now()>TYPING_UNTIL){TYPING_UNTIL=0;try{$("cvSub").textContent="AirConnect · + "+CHAT_OPEN;}catch(e){}}},1200);
   const savedOK=saveLogin(ME);
@@ -872,6 +876,87 @@ function viewPic(p){
   api("pic",{node:p}).then(r=>{if(r&&r.pic){PIC_CACHE[p]=r.pic;savePics();show(r.pic);}else toast("No photo yet");}).catch(()=>toast("No photo yet"));
 }
 function closePicView(){try{$("picview").className="ovl hide";}catch(e){}}
+
+/* ---------------- stories / status ---------------- */
+let STORIES=[],STORY_SEEN={};try{STORY_SEEN=JSON.parse(localStorage.getItem("ac_story_seen"))||{};}catch(e){}
+function refreshStories(){
+  if(!ME)return;
+  api("stories",{node:ME}).then(d=>{if(d&&d.stories){STORIES=d.stories;renderStoryStrip();}}).catch(()=>{});
+}
+function storyCircle(pic,letter,ring,label,onclick){
+  const d=document.createElement("div");d.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
+  const c=document.createElement("div");
+  c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#00a884":"#2a3942")+";padding:2px;margin:0 auto;box-sizing:border-box";
+  const inner=document.createElement("div");
+  if(pic){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
+  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#1f2c34;color:#e9edef;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
+  c.appendChild(inner);d.appendChild(c);
+  const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#8696a0;margin-top:3px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+  d.appendChild(t);
+  d.onclick=onclick;
+  return d;
+}
+function renderStoryStrip(){
+  const el=$("storystrip");if(!el)return;
+  el.innerHTML="";
+  const myStory=STORIES.find(s=>s.num===ME);
+  el.appendChild(storyCircle(myStory?myStory.pic:PIC_CACHE[ME],myStory?"✓":"+",!!(myStory&&!STORY_SEEN[myStory.id]),"My status",()=>{if(myStory)viewStoryById(myStory.id);else document.getElementById("storyinput").click();}));
+  for(const s of STORIES){
+    if(s.num===ME)continue;
+    el.appendChild(storyCircle(s.pic,String(s.name).charAt(0).toUpperCase(),!STORY_SEEN[s.id],String(s.name),()=>viewStoryById(s.id)));
+  }
+}
+function viewStoryById(id){
+  const s=STORIES.find(x=>x.id===id);if(!s)return;
+  try{$("pvSub").textContent=(s.num===ME?"My status":s.name+" · status");$("pvWm").textContent="AirConnect · status · protected view · "+(ME_NAME||"");$("pvImg").style.filter="";}catch(e){}
+  $("pvImg").src=s.pic;$("picview").className="ovl";
+  STORY_SEEN[id]=1;try{localStorage.setItem("ac_story_seen",JSON.stringify(STORY_SEEN));}catch(e){}
+  renderStoryStrip();
+}
+async function storyChosen(fi){
+  const f=fi.files&&fi.files[0];fi.value="";
+  if(!f)return;
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(f);});
+    const cv=document.createElement("canvas");
+    let w=img.width,h=img.height;const mx=720;
+    if(w>mx||h>mx){const s2=mx/Math.max(w,h);w=Math.round(w*s2);h=Math.round(h*s2);}
+    cv.width=Math.max(1,w);cv.height=Math.max(1,h);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    let pic=cv.toDataURL("image/jpeg",0.7);
+    while(pic.length>44000&&cv.width>24){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    const r=await api("story",{node:ME,pic:pic});
+    if(r&&r.ok){toast("Status posted ✓ — visible to friends for 24h");refreshStories();}
+    else toast((r&&r.err)||"Could not post status");
+  }catch(e){toast("Could not read image");}
+}
+setInterval(refreshStories,60000);
+
+/* ---------------- smart replies ---------------- */
+function renderChips(){
+  const row=$("chipsrow");if(!row||!CHAT_OPEN)return;
+  row.innerHTML="";
+  const list=CHATS[CHAT_OPEN]||[];
+  let last=null;
+  for(let i=list.length-1;i>=0;i--){if(list[i].who==="them"&&list[i].text){last=String(list[i].text);break;}}
+  if(!last){row.style.display="none";return;}
+  const t=last.toLowerCase();
+  let sugg;
+  if(t.indexOf("?")>=0)sugg=["Yes ✓","No","Let me check"];
+  else if(/come|meet|call|ring|dial/.test(t))sugg=["On my way 🚶","Calling you now 📞","Can't right now"];
+  else if(/thank|appreciate/.test(t))sugg=["Anytime 🙏","You're welcome","👍"];
+  else if(/\b(hi|hello|hey|yo)\b|good (morning|afternoon|evening)/.test(t))sugg=["Hey 👋","I'm good, you?","What's up?"];
+  else if(/\b(ok|okay|alright|sure|fine|yes)\b/.test(t))sugg=["👍","Noted ✅","Cool"];
+  else sugg=["👍 OK","Received ✅","Talk later"];
+  row.style.display="flex";
+  for(const s of sugg.slice(0,3)){
+    const b=document.createElement("button");
+    b.textContent=s;
+    b.style.cssText="flex:0 0 auto;background:#1f2c34;color:#e9edef;border:1px solid #2a3942;border-radius:16px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap";
+    b.onclick=()=>{$("chatbox").value=s;$("chatbox").focus();};
+    row.appendChild(b);
+  }
+}
 window.addEventListener("blur",()=>{try{const pv=document.getElementById("picview");if(pv&&!pv.classList.contains("hide"))document.getElementById("pvImg").style.filter="blur(28px)";}catch(e){}});
 window.addEventListener("focus",()=>{try{document.getElementById("pvImg").style.filter="";}catch(e){}});
 function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
@@ -954,6 +1039,7 @@ function renderBubbles(){
   }
   b.scrollTop=999999;
   persistChats();
+  renderChips();
 }
 function renderTextBubble(d,m){
   const txt=m.text||"";
