@@ -98,6 +98,10 @@ button.big.blue{background:#0C4A6E;color:#fff}
 .ictrl .dec{background:#ea0038;color:#fff}
 #fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#0EA5E9;color:#0B1220;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
 #fab:active{transform:scale(.93)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#13223A;padding:16px;border-top:1px solid #2A3B5C;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
+.rchip{display:inline-flex;align-items:center;gap:3px;background:#182338;border:1px solid #2A3B5C;border-radius:10px;padding:2px 8px;font-size:12px;margin-top:4px;margin-right:4px}
+.rchip.mine{border-color:#0EA5E9}
+.qbox{border-left:3px solid #0EA5E9;background:#182338;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#94A3B8;overflow:hidden}
 #fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#182338;padding:16px;border-top:1px solid #2A3B5C;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1C2A45;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#E2E8F0;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 /* chat themes / wallpapers */
@@ -115,6 +119,8 @@ footer a{color:#94A3B8}
 </style>
 </head>
 <body>
+<script src="qrcode.min.js"></script>
+<script src="jsQR.min.js"></script>
 <div id="login" class="view">
   <div style="padding:30px 16px 10px;text-align:center">
     <div style="font-size:34px">🛰️</div>
@@ -197,6 +203,7 @@ footer a{color:#94A3B8}
         <button class="big" style="width:100%;background:#2A3B5C;margin-top:8px" onclick="stVoiceClose()">Close</button>
       </div>
     </div>
+    <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#13223A;border:1px solid #2A3B5C;color:#E2E8F0;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
   </div>
@@ -303,6 +310,26 @@ footer a{color:#94A3B8}
       <div id="sharehint" style="font-size:12px;color:#94A3B8;margin-top:8px">Your invite link carries your number — friends who join can add you in one tap.</div>
     </div>
     <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🔗 My QR code</div>
+      <div id="myqr" style="background:#fff;padding:12px;border-radius:12px;width:max-content;margin:0 auto"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="big blue" style="flex:1" onclick="document.getElementById('qrinput').click()">📷 Scan a friend's QR</button>
+        <button class="big" style="flex:0 0 auto;background:#2A3B5C" onclick="copyShare()">📋 Copy link</button>
+      </div>
+      <div style="font-size:11.5px;color:#94A3B8;margin-top:6px">A friend scans your QR with their camera — instant friend request, no typing numbers.</div>
+      <input type="file" id="qrinput" class="hide" accept="image/*" capture="environment" onchange="qrChosen(this)">
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🗄️ Archived chats</div>
+      <div id="archlist" style="font-size:13px;color:#94A3B8">None archived.</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button>
+      <button class="big" style="background:#e2445c;margin-top:8px;width:100%" onclick="delAccount()">🗑 Delete my account</button>
+      <div style="font-size:11.5px;color:#94A3B8;margin-top:6px;line-height:1.5">Download gives you a JSON file of your profile, friends and full message history. Delete permanently erases your account — number, chats, statuses, photo — from our servers. This cannot be undone.</div>
+    </div>
+    <div class="card">
       <div style="font-weight:600;margin-bottom:6px">👥 Your friends</div>
       <div id="flist" style="font-size:14px;color:#94A3B8">loading…</div>
     </div>
@@ -341,6 +368,7 @@ footer a{color:#94A3B8}
       <div style="font-weight:600;font-size:16px;margin-bottom:10px">＋ New chat</div>
       <input id="fabPeer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
       <button class="big blue" onclick="fabSend()">Send friend request</button>
+      <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="closeFab();openGc()">👥 New group</button>
       <div style="font-weight:600;font-size:13px;margin:14px 0 2px">Your friends</div>
       <div id="fabList"></div>
       <div style="height:10px"></div>
@@ -348,11 +376,67 @@ footer a{color:#94A3B8}
   </div>
 
   <nav>
-    <button id="tab-chats" class="on" onclick="showTab('chats')"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
-    <button id="tab-status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
-    <button id="tab-calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
-    <button id="tab-settings" onclick="showTab('settings')"><span class="ico">⚙️</span>Settings</button>
+    <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
+    <button id="tab-status" aria-label="Status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
+    <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
+    <button id="tab-settings" aria-label="Settings" onclick="showTab('settings')"><span class="ico">⚙️</span>Settings</button>
   </nav>
+</div>
+
+<!-- v12: message action sheet -->
+<div id="msheet" class="ovl hide" onclick="if(event.target===this)closeMs()">
+  <div class="sheet">
+    <div id="msReacts" style="display:flex;gap:8px;justify-content:center;font-size:26px;padding:4px 0 10px"></div>
+    <button class="big blue" id="msReply" style="width:100%" onclick="msReply()">↩ Reply</button>
+    <button class="big" id="msDel" style="width:100%;margin-top:8px;background:#e2445c" onclick="msDel()">🗑 Delete for everyone</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="closeMs()">Cancel</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+<!-- v12: chat row menu -->
+<div id="rsheet" class="ovl hide" onclick="if(event.target===this)closeRs()">
+  <div class="sheet">
+    <div id="rsTitle" style="font-weight:600;margin-bottom:10px;text-align:center"></div>
+    <button class="big blue" id="rsPin" style="width:100%" onclick="rsPin()">📌 Pin chat</button>
+    <button class="big" id="rsMute" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="rsMute()">🔕 Mute</button>
+    <button class="big" id="rsArch" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="rsArch()">🗄 Archive</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#2A3B5C" onclick="closeRs()">Cancel</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+<!-- v12: group creation -->
+<div id="gcsheet" class="ovl hide">
+  <div class="ohdr"><button class="bk" onclick="closeGc()">‹</button><div><div class="nm">New group</div><div class="st">Pick friends and name it</div></div></div>
+  <div style="padding:14px;overflow:auto">
+    <input id="gcName" placeholder="Group name, e.g. Family">
+    <div id="gcList" style="margin-top:10px"></div>
+    <button class="big blue" style="width:100%;margin-top:10px" onclick="createGroup()">👥 Create group</button>
+    <div style="font-size:11px;color:#94A3B8;margin-top:8px;line-height:1.5">Group chats work like Telegram cloud chats — everyone in the group can read them. Keep private things in 1-to-1 chats (those are end-to-end encrypted).</div>
+  </div>
+</div>
+<!-- v12: group chat view -->
+<div id="gview" class="ovl hide">
+  <div class="ohdr">
+    <button class="bk" onclick="closeGroup()">‹</button>
+    <div class="av">👥</div>
+    <div style="flex:1;min-width:0"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
+    <button class="bk" onclick="leaveGroup()" title="Leave group">👋</button>
+  </div>
+  <div class="bubbles" id="gbubbles"></div>
+  <div class="cinput">
+    <input id="gbox" placeholder="Message group" onkeydown="if(event.key==='Enter')gsend()">
+    <button onclick="gsend()">➤</button>
+  </div>
+</div>
+<!-- v12: onboarding -->
+<div id="ob" class="ovl hide">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;gap:14px;background:linear-gradient(170deg,#0C4A6E 0%,#0B1220 62%)">
+    <div id="obIco" style="font-size:54px">🛰️</div>
+    <div id="obT" style="font-size:20px;font-weight:700"></div>
+    <div id="obS" style="font-size:14px;color:#94A3B8;line-height:1.6"></div>
+    <button class="big blue" style="width:100%" onclick="obNext()">Next</button>
+    <button style="background:none;border:0;color:#64748B;font-size:13px;padding:8px" onclick="obSkip()">Skip</button>
+  </div>
 </div>
 
 <!-- profile photo viewer -->
@@ -465,6 +549,7 @@ footer a{color:#94A3B8}
       </div>
       <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#94A3B8;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
     </div>
+    <div id="replychip" class="hide" style="background:#13223A;margin:0 10px;border-left:3px solid #0EA5E9;border-radius:8px;padding:8px 10px;font-size:12px;color:#94A3B8"></div>
     <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()" oninput="typingPing()">
     <button id="sendbtn" onclick="sendChat()">➤</button>
   </div>
@@ -833,6 +918,7 @@ async function finishLogin(d){
   setInterval(flushOutIce,700);
   setInterval(tick,1000);
   renderLists();
+  if(!localStorage.getItem("ac_ob")){obShow();$("ob").className="ovl";}
 }
 /* ---- Android back button: close overlays, never dump to login ---- */
 function ovlOpen(id){const e=$(id);return e&&!e.classList.contains("hide");}
@@ -843,6 +929,10 @@ window.addEventListener("popstate",()=>{
   if(ovlOpen("stview")){closeStatusViewer();return;}if(ovlOpen("picview")){closePicView();return;}
   if(ovlOpen("chatview")){closeChat();return;}         // back closes chat -> home
   if(ovlOpen("fabsheet")){closeFab();return;}
+  if(ovlOpen("msheet")){closeMs();return;}
+  if(ovlOpen("rsheet")){closeRs();return;}
+  if(ovlOpen("gcsheet")){closeGc();return;}
+  if(ovlOpen("gview")){closeGroup();return;}
 });
 pushHist();
 function showTab(t){
@@ -851,7 +941,7 @@ function showTab(t){
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="status"){refreshStories();renderStatusScreen();}
-  if(t==="settings")renderPlan();
+  if(t==="settings"){renderPlan();ensureQR();renderArchived();}
 }
 function openFab(){
   const l=$("fabList");
@@ -864,16 +954,30 @@ function fabSend(){const v=$("fabPeer").value.trim();if(!v){toast("Type a number
 /* ---------------- chats ---------------- */
 function lastOf(p){const c=CHATS[p];return c&&c.length?c[c.length-1]:null;}
 function renderLists(){
-  const fr=WIN_FRIENDS;
+  let fr=WIN_FRIENDS;
+  if(SEARCH)fr=fr.filter(f=>((WIN_NAMES[f.id]||"")+" "+(lastOf(f.id)?String(lastOf(f.id).text||"").slice(0,80):"")).toLowerCase().includes(SEARCH));
   const cl=$("chatlist");cl.innerHTML="";
-  const allFr=fr.slice();
-  allFr.sort((a,b)=>{const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
+  const allFr=fr.slice().filter(f=>!ARCHS.includes(f.id)||(SEARCH&&SEARCH.length>0));
+  allFr.sort((a,b)=>{const pa=PINS.includes(a.id)?1:0,pb=PINS.includes(b.id)?1:0;if(pa!==pb)return pb-pa;const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
   for(const f of allFr){
-    const n=(WIN_NAMES[f.id]||"friend"),l=lastOf(f.id);
-    const prev=l?(l.img?"📷 Photo":(l.fileId?"📎 Attachment":esc(l.text).slice(0,40))):"Tap to message";
+    const n=(WIN_NAMES[f.id]||"friend")+(PINS.includes(f.id)?" 📌":""),l=lastOf(f.id);
+    const rawPrev=l?(l.img?"📷 Photo":(l.fileId?"📎 Attachment":esc(l.text).slice(0,40))):"Tap to message";
+    const prev=(ARCHS.includes(f.id)?rawPrev+" · archived":rawPrev);
     const row=document.createElement("div");row.className="row";
     row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
     row.onclick=()=>openChat(f.id);
+    row.oncontextmenu=e=>{e.preventDefault();openRs(f.id);};
+    row.addEventListener("touchstart",()=>{row._lp=setTimeout(()=>openRs(f.id),550);},{passive:true});
+    row.addEventListener("touchend",()=>clearTimeout(row._lp));
+    row.addEventListener("touchmove",()=>clearTimeout(row._lp));
+    cl.appendChild(row);
+  }
+  for(const g of GROUPS.slice().sort((a,b)=>{const ga=lastG(a),gb=lastG(b);return (ga?ga.id:0)<(gb?gb.id:0)?1:-1;})){
+    if(SEARCH&&!(g.name.toLowerCase().includes(SEARCH)))continue;
+    const l=lastG(g);
+    const row=document.createElement("div");row.className="row";
+    row.innerHTML='<div class="av">👥</div><div style="min-width:0;flex:1"><div class="rname">'+esc(g.name)+'</div><div class="rsub">'+(l?((l.from===ME?"You: ":""+esc(WIN_NAMES[l.from]||"?")+": ")+esc(String(l.text).slice(0,40))):(g.members.length+" members"))+'</div></div><div class="rtime">'+(l?ago(l.id):"")+'</div>'+(GUNREAD[g.id]?'<span class="badge">'+GUNREAD[g.id]+'</span>':'');
+    row.onclick=()=>openGroup(g.id);
     cl.appendChild(row);
   }
   if(WIN_BLOCKS&&WIN_BLOCKS.length){
@@ -1474,6 +1578,7 @@ function renderBubbles(){
       d.className="bub "+(m.who==="me"?"out":(m.who==="sys"?"sys":"in"));
       renderTextBubble(d,m);
     }
+    attachMsgEvents(d,m);
     b.appendChild(d);
   }
   b.scrollTop=999999;
@@ -1509,8 +1614,11 @@ function renderTextBubble(d,m){
     return;
   }
   // normal text with clickable links
-  const esc2=esc(txt)+(m.who==="me"?(m.r?" <span style=\"color:#38BDF8\">✓✓</span>":" ✓"):"");
-  d.innerHTML=esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#38BDF8;text-decoration:underline;word-break:break-all">'+u+"</a>");
+  const rmQ=txt.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
+  const quote=rmQ?rmQ[2].slice(0,90):null;
+  const body=rmQ?rmQ[3]:txt;
+  const esc2=esc(body)+(m.who==="me"?(m.r?" <span style=\"color:#38BDF8\">✓✓</span>":" ✓"):"");
+  d.innerHTML=(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#38BDF8;text-decoration:underline;word-break:break-all">'+u+"</a>");
 }
 async function fetchFileBubble(m,d){
   try{
@@ -1724,11 +1832,13 @@ async function sendChat(){
   const box=$("chatbox"),t=box.value.trim();
   if(!t||!CHAT_OPEN)return;
   chatBusy=true;$("sendbtn").disabled=true;
-  const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t)});
+  let t2=t;
+  if(REPLY_TO){t2="r:"+REPLY_TO.id+"|"+REPLY_TO.pv+"|"+t;clearReply();}
+  const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t2)});
   chatBusy=false;$("sendbtn").disabled=false;
   if(r&&r.ok){
     box.value="";
-    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t,ts:r.id});
+    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t2,ts:r.id});
     renderBubbles();
   }else{
     (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"sys",text:"⚠ not sent — "+((r&&r.err)||"check connection"),ts:new Date().toISOString()});
@@ -2087,7 +2197,7 @@ async function poll(){
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){toast("Account banned");return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(CHAT_OPEN?1200:8000));
+      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(document.hidden?9000:CHAT_OPEN?1500:3000));
       return;
     }
     const d=d0;
@@ -2152,7 +2262,7 @@ async function poll(){
         renderBubbles();
         if(Date.now()-RR_AT>3000){RR_AT=Date.now();api("chat",{from:ME,to:from,text:"rr:"+m.id}).catch(()=>{});}
       }
-      else {UNREAD[from]=(UNREAD[from]||0)+1;fresh=true;}
+      else {if(!MUTED.includes(from)){UNREAD[from]=(UNREAD[from]||0)+1;fresh=true;}}
     }
     persistChats();
     setOffline(false);
@@ -2160,10 +2270,25 @@ async function poll(){
     const prevFr=WIN_FRIENDS.length;
     WIN_FRIENDS=(d.friends||[]).filter(f=>!WIN_BLOCKS.includes(f.id));WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
     if(d.pks)E2E_PKS=d.pks;
+    let v12ch=false;
+    for(const g of (d.groups||[])){
+      const ex=GROUPS.find(x=>x.id===g.id);
+      if(!ex){GROUPS.push(g);v12ch=true;}
+      else if(JSON.stringify(ex.members)!==JSON.stringify(g.members)||ex.name!==g.name){Object.assign(ex,g);v12ch=true;}
+    }
+    for(const g of (d.gmsgs||[])){
+      const arr=GMS[g.g]=GMS[g.g]||[];
+      if(!arr.some(x=>x.id===g.id)){arr.push({id:g.id,who:g.from===ME?"me":"them",from:g.from,text:g.text});v12ch=true;if(g.from!==ME)GUNREAD[g.g]=(GUNREAD[g.g]||0)+1;}
+    }
+    if(d.reacts&&d.reacts.length){
+      for(const r of d.reacts){REACTS[r.id]=REACTS[r.id]||[];REACTS[r.id]=REACTS[r.id].filter(x=>x.by!==r.by);if(r.e)REACTS[r.id].push({by:r.by,e:r.e});}
+      if(CHAT_OPEN)renderBubbles();
+    }
+    if(v12ch){if(GROUP_OPEN)renderGBubbles();renderLists();}
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);setOffline(true);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(CHAT_OPEN?1200:8000));
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(document.hidden?9000:CHAT_OPEN?1500:3000));
 }
 setInterval(tickReqs,4000);
 
@@ -2223,6 +2348,242 @@ function nativeShare(){
   if(navigator.share){navigator.share({title:'AirConnect',text:'Call me on AirConnect — free voice & video chat. My number: + '+(ME||''),url:link}).catch(()=>{});}
   else copyShare();
 }
+/* ==================== v12: recall · replies · reactions · search · pin/mute/archive · groups · QR · onboarding · PWA ==================== */
+var SEARCH="",REPLY_TO=null,GROUP_OPEN=null;
+var PINS=JSON.parse(localStorage.getItem("ac_pins")||"[]");
+var MUTED=JSON.parse(localStorage.getItem("ac_mutes")||"[]");
+var ARCHS=JSON.parse(localStorage.getItem("ac_archs")||"[]");
+var GROUPS=[],GMS={},GUNREAD={},REACTS={};
+try{GROUPS=JSON.parse(localStorage.getItem("ac_groups")||"[]");GMS=JSON.parse(localStorage.getItem("ac_gms")||"{}");}catch(e){}
+function persistV12(){try{localStorage.setItem("ac_pins",JSON.stringify(PINS));localStorage.setItem("ac_mutes",JSON.stringify(MUTED));localStorage.setItem("ac_archs",JSON.stringify(ARCHS));localStorage.setItem("ac_groups",JSON.stringify(GROUPS));localStorage.setItem("ac_gms",JSON.stringify(GMS));}catch(e){}}
+function lastG(g){const a=GMS[g.id];return a&&a.length?a[a.length-1]:null;}
+function saveV12Pin(id){const i=PINS.indexOf(id);if(i>=0)PINS.splice(i,1);else PINS.push(id);persistV12();renderLists();}
+function saveV12Mute(id){const i=MUTED.indexOf(id);if(i>=0)MUTED.splice(i,1);else MUTED.push(id);persistV12();toast(MUTED.includes(id)?"Muted — no more alerts for this chat":"Unmuted");renderLists();}
+function saveV12Arch(id){const i=ARCHS.indexOf(id);if(i>=0)ARCHS.splice(i,1);else ARCHS.push(id);persistV12();renderLists();renderArchived();}
+/* ----- chat row menu (long-press) ----- */
+var RS_PEER=null;
+function openRs(id){RS_PEER=id;const n=WIN_NAMES[id]||("+"+id);$("rsTitle").textContent=n;
+  $("rsPin").textContent=PINS.includes(id)?"📌 Unpin chat":"📌 Pin chat";
+  $("rsMute").textContent=MUTED.includes(id)?"🔔 Unmute":"🔕 Mute";
+  $("rsArch").textContent=ARCHS.includes(id)?"📤 Unarchive":"🗄 Archive";
+  $("rsheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}}
+function closeRs(){$("rsheet").className="ovl hide";}
+function rsPin(){saveV12Pin(RS_PEER);closeRs();}
+function rsMute(){saveV12Mute(RS_PEER);closeRs();}
+function rsArch(){saveV12Arch(RS_PEER);closeRs();}
+function renderArchived(){
+  const el=$("archlist");if(!el)return;
+  if(!ARCHS.length){el.textContent="None archived.";return;}
+  el.innerHTML="";
+  for(const id of ARCHS){
+    const b=document.createElement("button");b.className="big";b.style.cssText="background:#2A3B5C;width:100%;margin-top:6px;text-align:left";
+    b.textContent=(WIN_NAMES[id]||("+"+id))+" — tap to unarchive";
+    b.onclick=()=>{saveV12Arch(id);toast("Unarchived");};
+    el.appendChild(b);
+  }
+}
+/* ----- message menu: reply / react / delete-for-everyone ----- */
+var MS_MSG=null,MS_LP=null;
+function attachMsgEvents(el,m){
+  if(!m||!m.ts||m.who==="sys")return;
+  const open=()=>{openMs(m,el);};
+  el.addEventListener("touchstart",()=>{MS_LP=setTimeout(open,550);},{passive:true});
+  el.addEventListener("touchend",()=>clearTimeout(MS_LP));
+  el.addEventListener("touchmove",()=>clearTimeout(MS_LP));
+  el.addEventListener("contextmenu",e=>{e.preventDefault();open();});
+  el.style.cursor="pointer";
+  const rs=REACTS[m.ts];
+  if(rs&&rs.length){
+    const byE={};
+    for(const r of rs)byE[r.e]=(byE[r.e]||0)+1;
+    const chip=document.createElement("div");
+    chip.innerHTML=Object.keys(byE).map(e=>'<span class="rchip'+(rs.some(r=>r.e===e&&r.by===ME)?' mine':'')+'">'+esc(e)+(byE[e]>1?byE[e]:"")+"</span>").join("");
+    el.appendChild(chip);
+  }
+}
+function openMs(m,el){
+  MS_MSG=m;
+  $("msReacts").innerHTML=["❤️","😂","👍","😮","😢","🙏"].map(e=>'<span style="cursor:pointer" onclick="msReact(\''+e+'\')">'+e+"</span>").join("");
+  const mine=m.who==="me";
+  $("msReply").style.display="";
+  const fresh=mine&&Date.now()-new Date(m.ts).getTime()<24*3600*1000;
+  $("msDel").style.display=fresh?"":"none";
+  $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+}
+function closeMs(){$("msheet").className="ovl hide";}
+async function msReact(e){
+  closeMs();
+  if(!MS_MSG||!CHAT_OPEN)return;
+  const cur=(REACTS[MS_MSG.ts]||[]).find(r=>r.by===ME);
+  const r=await api("react",{by:ME,id:MS_MSG.ts,e:cur&&cur.e===e?"":e});
+  if(r&&r.ok){
+    REACTS[MS_MSG.ts]=REACTS[MS_MSG.ts]||[];
+    REACTS[MS_MSG.ts]=REACTS[MS_MSG.ts].filter(x=>x.by!==ME);
+    if(!(cur&&cur.e===e))REACTS[MS_MSG.ts].push({by:ME,e});
+    renderBubbles();
+  }else toast((r&&r.err)||"Could not react");
+}
+function msReply(){
+  closeMs();
+  if(!MS_MSG||!CHAT_OPEN)return;
+  const raw=String(MS_MSG.text||"");
+  const rm=raw.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
+  const body=(rm?rm[3]:raw).slice(0,90);
+  REPLY_TO={id:MS_MSG.ts,pv:(MS_MSG.who==="me"?"You: ":(WIN_NAMES[CHAT_OPEN]||"Friend")+": ")+body};
+  $("replychip").textContent="↩ "+REPLY_TO.pv+" (tap to cancel)";
+  $("replychip").className="";
+  $("replychip").onclick=clearReply;
+  try{$("chatbox").focus();}catch(e){}
+}
+async function msDel(){
+  closeMs();
+  if(!MS_MSG||!CHAT_OPEN)return;
+  if(!confirm("Delete this message for everyone?"))return;
+  const r=await api("msgdel",{from:ME,id:MS_MSG.ts});
+  if(r&&r.ok){
+    const arr=CHATS[CHAT_OPEN]||[];
+    const m2=arr.find(x=>x.ts===MS_MSG.ts);
+    if(m2)m2.text="🚫 deleted";
+    renderBubbles();toast("Deleted for everyone");
+  }else toast((r&&r.err==="window expired")?"Too old — recall window is 24h":((r&&r.err)||"Could not delete"));
+}
+function clearReply(){REPLY_TO=null;const c=$("replychip");if(c)c.className="hide";}
+/* ----- groups ----- */
+function openGc(){
+  const l=$("gcList");
+  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<label class="row" style="cursor:pointer"><input type="checkbox" value="'+f.id+'" style="width:20px;height:20px"> <div class="rname" style="margin-left:10px">'+esc(WIN_NAMES[f.id]||f.id)+"</div></label>").join(""):'<div style="color:#94A3B8;font-size:13px;padding:6px 0">No friends yet — add one in Settings first.</div>';
+  $("gcName").value="";
+  $("gcsheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+}
+function closeGc(){$("gcsheet").className="ovl hide";}
+async function createGroup(){
+  const name=$("gcName").value.trim();
+  const members=Array.from(document.querySelectorAll("#gcList input:checked")).map(x=>x.value);
+  if(!name){toast("Give the group a name");return;}
+  if(!members.length){toast("Pick at least one friend");return;}
+  const r=await api("gcreate",{by:ME,name,members});
+  if(r&&r.ok){
+    GROUPS.push({id:r.id,name:r.name,by:ME,members:r.members,created:new Date().toISOString()});
+    persistV12();closeGc();renderLists();toast("Group created 🎉");
+  }else toast((r&&r.err)||"Could not create group");
+}
+function openGroup(gid){
+  const g=GROUPS.find(x=>x.id===gid);if(!g)return;
+  GROUP_OPEN=gid;GUNREAD[gid]=0;renderLists();
+  $("gvName").textContent=g.name;
+  $("gvSub").textContent=g.members.length+" members · not end-to-end encrypted";
+  renderGBubbles();
+  $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+}
+function closeGroup(){GROUP_OPEN=null;$("gview").className="ovl hide";renderLists();}
+function renderGBubbles(){
+  const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(!g)return;
+  const b=$("gbubbles");b.innerHTML="";
+  const arr=GMS[GROUP_OPEN]||[];
+  const head=document.createElement("div");
+  head.style.cssText="text-align:center;color:#64748B;font-size:11.5px;padding:6px 0";
+  head.textContent="Group chat · messages are visible to all members";
+  b.appendChild(head);
+  for(const m of arr){
+    const d=document.createElement("div");
+    d.className="bub "+(m.who==="me"?"out":"in");
+    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:#38BDF8;margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#38BDF8;word-break:break-all">'+u+"</a>");
+    b.appendChild(d);
+  }
+  b.scrollTop=999999;
+}
+async function gsend(){
+  const box=$("gbox"),txt=box.value.trim();
+  if(!txt||!GROUP_OPEN)return;
+  box.value="";
+  const r=await api("gmsg",{from:ME,g:GROUP_OPEN,text:txt});
+  if(r&&r.ok){
+    (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:r.id,who:"me",from:ME,text:txt});
+    persistV12();renderGBubbles();
+  }else{
+    (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:"sys"+Date.now(),who:"sys",from:ME,text:"⚠ not sent — "+((r&&r.err)||"check connection")});
+    renderGBubbles();
+  }
+}
+async function leaveGroup(){
+  if(!GROUP_OPEN)return;
+  if(!confirm("Leave this group?"))return;
+  const r=await api("gleave",{node:ME,g:GROUP_OPEN});
+  if(r&&r.ok){GROUPS=GROUPS.filter(x=>x.id!==GROUP_OPEN);persistV12();closeGroup();toast("You left the group");}
+  else toast((r&&r.err)||"Could not leave");
+}
+/* ----- QR add-friend ----- */
+function ensureQR(){
+  const el=$("myqr");
+  if(!el||el.childElementCount||typeof QRCode==="undefined"||!ME)return;
+  try{new QRCode(el,{text:location.origin+location.pathname.replace(/caller5?\.html.*$/,"caller5.html")+"?ref="+ME,width:150,height:150,colorDark:"#0B1220",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}catch(e){el.innerHTML="Use the invite link below";el.style.color="#0B1220";}
+}
+function qrChosen(inp){
+  const f=inp.files&&inp.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=async()=>{
+    try{
+      const img=new Image();
+      img.onload=async()=>{
+        const c=document.createElement("canvas");c.width=img.width;c.height=img.height;
+        const ctx=c.getContext("2d");ctx.drawImage(img,0,0);
+        const d=ctx.getImageData(0,0,c.width,c.height);
+        const code=(typeof jsQR!=="undefined")?jsQR(d.data,d.width,d.height):null;
+        if(!code){toast("No QR found in that photo — ask your friend for their link");return;}
+        const m=code.data.match(/(?:\?|&)ref=(\d{9,12})/)||code.data.match(/^(\d{9,12})$/);
+        if(!m){toast("That QR is not an AirConnect code");return;}
+        $("peer").value=m[1];
+        toast("Number + "+m[1]+" ready — tap Send friend request in Settings");
+        showTab("settings");
+      };
+      img.src=fr.result;
+    }catch(e){toast("Could not read that QR");}
+  };
+  fr.readAsDataURL(f);
+  inp.value="";
+}
+/* ----- your data: export + delete account ----- */
+async function exportData(){
+  toast("Preparing your data…");
+  const r=await api("export",{node:ME});
+  if(!r||r.err){toast((r&&r.err)||"Export failed");return;}
+  const blob=new Blob([JSON.stringify(r,null,1)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="airconnect-my-data.json";
+  a.click();
+  toast("Downloaded ✅");
+}
+async function delAccount(){
+  if(!confirm("Delete your account permanently?\n\nYour number, chats, statuses and photo will be erased from our servers. This cannot be undone."))return;
+  if(!confirm("Are you absolutely sure? This is the final step."))return;
+  toast("Deleting…");
+  const r=await api("account_del",{node:ME,confirm:"DELETE"});
+  if(r&&r.ok){
+    try{
+      for(const k of Object.keys(localStorage))if(k.startsWith("ac_")||k.startsWith("aicall"))localStorage.removeItem(k);
+      for(const k of Object.keys(sessionStorage))if(k.startsWith("ac_")||k.startsWith("aicall"))sessionStorage.removeItem(k);
+      document.cookie.split(";").forEach(c=>{document.cookie=c.replace(/^ +/,"").replace(/=.*/,";expires="+new Date(0).toUTCString());});
+      indexedDB.deleteDatabase("ac_store");
+    }catch(e){}
+    alert("Your account has been deleted. We are sad to see you go 💙");
+    location.replace(location.pathname);
+  }else toast((r&&r.err)||"Could not delete — try again");
+}
+/* ----- onboarding ----- */
+var OB_STEPS=[
+  {i:"🛰️",t:"Free calls worldwide",s:"Voice and video calls to your friends — clear quality, no airtime, works on 2G data."},
+  {i:"👥",t:"Groups, statuses & chats",s:"Share 24h statuses, create groups, send photos, videos and voice notes — friends-only, always private."},
+  {i:"🤖",t:"Your Guardian answers for you",s:"When you're busy, Premium AI can answer your calls and take messages."},
+  {i:"📲",t:"Install the app",s:"In your browser menu choose 'Add to Home screen' — AirConnect opens full-screen like a real app."}
+];
+var OB_I=0;
+function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").textContent=s.t;$("obS").textContent=s.s;}
+function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
+function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
+/* ----- PWA: service worker ----- */
+try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}
+
 (async function(){
   let id=readLoginSync();
   if(!id){id=await idbGet("me");}

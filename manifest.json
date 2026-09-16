@@ -1,28 +1,16 @@
 {
-  "name": "AirConnect \u2014 Calls, Chat & AI Nodes",
+  "name": "AirConnect — Free Calls & Chat",
   "short_name": "AirConnect",
-  "description": "Phone-number identities, friends-only voice & video calls, chat, AI nodes.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "Free voice & video calls and chat worldwide. Phone-number IDs, friends-only, private.",
+  "start_url": "caller.html",
+  "scope": ".",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220",
+  "orientation": "portrait",
+  "background_color": "#0B1220",
+  "theme_color": "#0C4A6E",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512-mask.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
