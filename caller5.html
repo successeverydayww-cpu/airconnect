@@ -590,6 +590,7 @@ footer a{color:#64748B}
   <div class="meters"><div class="m">them<div class="bar"><div id="rx"></div></div></div><div class="m">you<div class="bar"><div id="tx"></div></div></div></div>
   <div class="cctl">
     <button class="cbtn" id="muteBtn" onclick="toggleMute()">🎙️</button>
+    <button class="cbtn on" id="spkBtn" onclick="toggleSpk()" title="Loudspeaker">🔊</button>
     <button class="cbtn end" onclick="hangup()">✖</button>
     <button class="cbtn" id="camBtn" onclick="toggleCam()">🎥</button>
   </div>
@@ -2106,6 +2107,21 @@ async function answer(m){
     callCleanup();
     state="idle";
   }
+}
+let spkLoud=true;
+function toggleSpk(){
+  spkLoud=!spkLoud;
+  const b=$("spkBtn");
+  if(b){b.className="cbtn"+(spkLoud?" on":"");b.textContent=spkLoud?"🔊":"🔉";}
+  try{
+    const ael=$("remotea");
+    if(ael&&ael.srcObject){
+      if(spkLoud){ael.volume=1.0;}
+      else{ael.volume=0.55;}
+      ael.play().catch(()=>{});
+    }
+  }catch(e){}
+  toast&&toast(spkLoud?"Loudspeaker on":"Loudspeaker off");
 }
 function toggleMute(){
   muted=!muted;
