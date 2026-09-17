@@ -72,7 +72,7 @@ async function say(text){
       const r=await fetch(TTS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text.slice(0,900)})});
       if(!r.ok)throw 0;
       const buf=await r.arrayBuffer();
-      if(buf.byteLength>2000){await playBuf(buf);return;}
+      if(buf.byteLength>2000){log("PREMIUM VOICE (ElevenLabs) speaking");await playBuf(buf);return;}
       throw 0;
     }catch(e){}
     // fallback: old robotic voice, chunked
