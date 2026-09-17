@@ -622,6 +622,7 @@ footer a{color:#64748B}
 <script>
 const $=id=>document.getElementById(id);
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+const RINGFN="https://superagent-ccb075d2.base44.app/functions/airconnectRing";
 const RTC_CFG={iceServers:[
   {urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
   {urls:"turn:openrelay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
@@ -914,7 +915,7 @@ async function finishLogin(d){
     }catch(e){}
   })();
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
-  armPush();poll();
+  armPush();poll();ringLoop();presTick();
   setInterval(flushOutIce,700);
   setInterval(tick,1000);
   renderLists();
@@ -945,7 +946,7 @@ function showTab(t){
 }
 function openFab(){
   const l=$("fabList");
-  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#64748B;font-size:13px">No friends yet — add one above.</div>';
+  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#64748B;font-size:13px">No friends yet — add one above.</div>';
   $("fabsheet").className="ovl";
 }
 function closeFab(){$("fabsheet").className="ovl hide";}
@@ -964,7 +965,7 @@ function renderLists(){
     const rawPrev=l?(l.img?"📷 Photo":(l.fileId?"📎 Attachment":esc(l.text).slice(0,40))):"Tap to message";
     const prev=(ARCHS.includes(f.id)?rawPrev+" · archived":rawPrev);
     const row=document.createElement("div");row.className="row";
-    row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
+    row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
     row.onclick=()=>openChat(f.id);
     row.oncontextmenu=e=>{e.preventDefault();openRs(f.id);};
     row.addEventListener("touchstart",()=>{row._lp=setTimeout(()=>openRs(f.id),550);},{passive:true});
@@ -995,12 +996,12 @@ function renderLists(){
   for(const f of fr){
     const n=(WIN_NAMES[f.id]||"friend");
     const row=document.createElement("div");row.className="row";
-    row.innerHTML='<div class="av">'+n.charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">+ '+f.id+'</div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();dial(\''+f.id+'\')">📞</button><button class="cb2" onclick="event.stopPropagation();dialVideo(\''+f.id+'\')">🎥</button></div>';
+    row.innerHTML='<div class="av">'+n.charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">+ '+f.id+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();dial(\''+f.id+'\')">📞</button><button class="cb2" onclick="event.stopPropagation();dialVideo(\''+f.id+'\')">🎥</button></div>';
     ll.appendChild(row);
   }
   $("nocall").className=fr.length?"empty hide":"empty";
   const fl=$("flist");
-  fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
+  fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
   renderUnread();
 }
 function renderUnread(){
@@ -2199,6 +2200,44 @@ async function tickReqs(){
   }
 }
 
+/* ---------------- ring lane + presence ---------------- */
+let WIN_PRES={},ringBusy=false;
+function dotHTML(num){return '<span class="pdot" data-num="'+num+'" style="width:9px;height:9px;border-radius:50%;background:#ef4444;display:inline-block;flex:none;margin-right:6px"></span>';}
+function refreshDots(){
+  const now=Date.now();
+  document.querySelectorAll(".pdot").forEach(el=>{
+    const num=el.getAttribute("data-num")||"";
+    const t=WIN_PRES[num]||0;
+    el.style.background=(t&&now-t<30000)?"#22c55e":"#ef4444";
+  });
+}
+async function ringLoop(){
+  const inCall=(state==="live"||state==="dialing"||state==="incoming");
+  if(!inCall||ringBusy){setTimeout(ringLoop,inCall?500:2500);return;}
+  ringBusy=true;
+  try{
+    const r=await fetch(RINGFN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"ring",node:ME,since:lastSig})});
+    if(r.ok){
+      const d=await r.json();
+      const msgs=d.sigs||[];
+      if(msgs.length){lastSig=msgs[msgs.length-1].at;await handleSigs(msgs);}
+      if(d.pres)WIN_PRES=d.pres;
+      pollFails=0;
+    }
+  }catch(e){}
+  ringBusy=false;
+  setTimeout(ringLoop,900);
+}
+async function presTick(){
+  try{
+    const r=await fetch(RINGFN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"pres",node:ME})});
+    if(r.ok){const d=await r.json();if(d.pres)WIN_PRES=d.pres;}
+  }catch(e){}
+  refreshDots();
+  setTimeout(presTick,20000);
+}
+setInterval(refreshDots,5000);
+
 /* ---------------- poll ---------------- */
 async function poll(){
   if(MODE==="offline"){setOffline(true);setTimeout(poll,5000);return;}
@@ -2213,42 +2252,7 @@ async function poll(){
     const d=d0;
     const msgs=d.sigs||[];
     if(msgs.length)lastSig=msgs[msgs.length-1].at;
-    for(const m of msgs){
-      if(m.type==="offer"){
-        m.payload=await unzipDesc(m.payload);
-        if(state==="live"&&pc&&pc.remoteDescription){
-          await pc.setRemoteDescription(m.payload);await flushIce();
-          const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
-          await api("sig",{from:ME,to:m.from,type:"answer",payload:await zipDesc(ans)});
-          await log("renegotiation answered");
-          continue;
-        }
-        if(state==="idle"){
-          const gate=await api("can_call",{from:m.from,to:ME});
-          if(!gate.ok){await log("BLOCKED call from +"+m.from);continue;}
-          pendingOffer=m;state="incoming";incomingAt=Date.now();
-          const n=(WIN_NAMES[m.from]||"Caller")+" · +"+m.from;
-          $("incName").textContent=n;
-          $("incAv").textContent=n.charAt(0).toUpperCase();
-          $("incoming").className="ovl";
-          setStatus("Incoming call","ringing");
-          startRing("in");
-          await log("incoming call from +"+m.from);
-        }
-      }
-      else if(m.type==="answer"&&state==="dialing"){
-        m.payload=await unzipDesc(m.payload);await pc.setRemoteDescription(m.payload);await flushIce();
-        state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
-        setStatus("LIVE","live");
-        await log("call answered by +"+PEER+" — LIVE");
-      }
-      else if(m.type==="typing"&&CHAT_OPEN===m.from){TYPING_UNTIL=Date.now()+3200;$("cvSub").textContent="typing…";}
-      else if(m.type==="bye"&&(state==="live"||state==="dialing"||state==="incoming")){
-        callCleanup();toast("Call ended by +"+m.from);await log("call ended by +"+m.from);
-      }
-      else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
-      else if(m.type==="ice"&&pc){await queueIce(m.payload);}
-    }
+    await handleSigs(msgs);
     const ms=d.messages||[];
     let fresh=false;
     for(const m of ms){

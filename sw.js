@@ -1,5 +1,5 @@
 /* AirConnect service worker: offline shell + faster loads */
-const CACHE = 'airconnect-v17';
+const CACHE = 'airconnect-v18';
 const SHELL = ['./caller.html', './manifest.json', './icon-192.png', './icon-512.png', './qrcode.min.js'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

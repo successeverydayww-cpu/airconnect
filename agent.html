@@ -63,6 +63,9 @@
 <script>
 const $=id=>document.getElementById(id);
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+const RINGFN="https://superagent-ccb075d2.base44.app/functions/airconnectRing";
+const TTS_URL="https://superagent-ccb075d2.base44.app/functions/airconnectTts";
+const OWNER=(new URLSearchParams(location.search).get("owner"))||"234100000001";
 
 /* ---------- E2E chat encryption (ECDH P-256 + AES-GCM) ---------- */
 let E2E_KEYS=null,E2E_MAP={},E2E_PKS={};
@@ -212,6 +215,11 @@ async function speakTTS(){
   const text=PHRASES[Math.floor(Math.random()*PHRASES.length)];
   let buf=null;
   try{
+    const r=await fetch(TTS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})});
+    if(!r.ok)throw 0;
+    buf=await r.arrayBuffer();
+  }catch(e0){
+  try{
     const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"tts",text})});
     if(!r.ok)throw 0;
     buf=await r.arrayBuffer();
@@ -221,7 +229,8 @@ async function speakTTS(){
       const r2=await fetch(u);
       if(!r2.ok)throw 0;
       buf=await r2.arrayBuffer();
-    }catch(e2){throw e1;}
+    }catch(e2){throw e0;}
+  }
   }
   const decoded=await ctx.decodeAudioData(buf);
   const src=ctx.createBufferSource();src.buffer=decoded;
@@ -333,7 +342,7 @@ async function afterRegister(){
   armPush();
   lastSig=new Date().toISOString();
   lastMsg=new Date().toISOString();
-  poll();
+  poll();ringLoop();
   setInterval(flushOutIce,700);
   setInterval(()=>{
     try{
@@ -490,59 +499,84 @@ async function dialOut(num){
     state="idle";
   }
 }
+async function handleSigs(msgs){
+  for(const m of msgs){
+if(m.type==="offer"&&state!=="idle"){
+  const stale=!pc||!pc.remoteDescription||["failed","disconnected","closed"].includes(pc.connectionState);
+  if(stale){
+    try{if(pc)pc.close();}catch(err){}
+    pc=null;state="idle";
+    await log("self-heal: cleared stale "+(typeof pc==="undefined"?"":"call")+" state — accepting new call");
+  }
+}
+if(m.type==="offer"){m.payload=await unzipDesc(m.payload);}
+if(m.type==="offer"&&state==="idle"){
+  if(String(m.from)!==String(OWNER)){
+    await sig({to:m.from,type:"bye",payload:{owner:"Premium AI serves its owner only"}});
+    await sendChatTo(m.from,"Hi! This Premium AI answers only its owner. Get your own Premium AI in the AirConnect app — Settings → Premium. 🚀");
+    await log("GATED call from +"+m.from+" — not owner, ended politely");
+    continue;
+  }
+  const gate=await api("can_call",{from:m.from,to:ME});
+  if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
+  await log("RING from +"+m.from+" (owner verified)");
+  await answer(m);
+}
+else if(m.type==="offer"&&state==="live"&&pc&&pc.remoteDescription){
+  await pc.setRemoteDescription(m.payload);await flushIce();
+  const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+  await sig({to:m.from,type:"answer",payload:await zipDesc(ans)});
+  await log("renegotiation answered — video flowing");
+}
+else if(m.type==="answer"){m.payload=await unzipDesc(m.payload);}
+else if(m.type==="answer"&&state==="ringing"&&pc&&!pc.remoteDescription){
+  if(m.from!==PEER){continue;}
+  if(dialTO){clearTimeout(dialTO);dialTO=null;}
+  await pc.setRemoteDescription(m.payload);await flushIce();
+  state="live";
+  document.getElementById("status").textContent="📞 LIVE — AI speaking with +"+PEER;
+  await log("outbound call picked up by +"+PEER+" — AI speaking");
+  speak();
+}
+else if(m.type==="bye"&&(state==="live"||state==="ringing")){
+  aiRelease();
+  if(pc)pc.close();pc=null;state="idle";
+  document.getElementById("status").textContent="Call ended by +"+m.from;
+  await log("call ended by +"+m.from);
+}
+else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
+else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+  }
+}
+
+let ringBusy=false;
+async function ringLoop(){
+  const wait=(state==="live"||state==="dialing")?1200:1400;
+  try{
+    const r=await fetch(RINGFN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"ring",node:ME,since:lastSig})});
+    if(r.ok){
+      const d=await r.json();
+      const msgs=d.sigs||[];
+      if(msgs.length){lastSig=msgs[msgs.length-1].at;await handleSigs(msgs);}
+      pollFails=0;
+    }
+  }catch(e){}
+  setTimeout(ringLoop,wait);
+}
+
 async function poll(){
   try{
     const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){document.getElementById("status").textContent="Account banned";return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(3000*pollFails,20000):(state==="live"||state==="dialing")?1500:5000);
+      setTimeout(poll,pollFails?Math.min(3000*pollFails,20000):(state==="live"||state==="dialing")?8000:12000);
       return;
     }
     const d=d0;
     const msgs=d.sigs||[];
     if(msgs.length)lastSig=msgs[msgs.length-1].at;
-    for(const m of msgs){
-      if(m.type==="offer"&&state!=="idle"){
-        const stale=!pc||!pc.remoteDescription||["failed","disconnected","closed"].includes(pc.connectionState);
-        if(stale){
-          try{if(pc)pc.close();}catch(err){}
-          pc=null;state="idle";
-          await log("self-heal: cleared stale "+(typeof pc==="undefined"?"":"call")+" state — accepting new call");
-        }
-      }
-      if(m.type==="offer"){m.payload=await unzipDesc(m.payload);}
-      if(m.type==="offer"&&state==="idle"){
-        const gate=await api("can_call",{from:m.from,to:ME});
-        if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
-        await log("RING from +"+m.from+" (friend verified)");
-        await answer(m);
-      }
-      else if(m.type==="offer"&&state==="live"&&pc&&pc.remoteDescription){
-        await pc.setRemoteDescription(m.payload);await flushIce();
-        const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
-        await sig({to:m.from,type:"answer",payload:await zipDesc(ans)});
-        await log("renegotiation answered — video flowing");
-      }
-      else if(m.type==="answer"){m.payload=await unzipDesc(m.payload);}
-      else if(m.type==="answer"&&state==="ringing"&&pc&&!pc.remoteDescription){
-        if(m.from!==PEER){continue;}
-        if(dialTO){clearTimeout(dialTO);dialTO=null;}
-        await pc.setRemoteDescription(m.payload);await flushIce();
-        state="live";
-        document.getElementById("status").textContent="📞 LIVE — AI speaking with +"+PEER;
-        await log("outbound call picked up by +"+PEER+" — AI speaking");
-        speak();
-      }
-      else if(m.type==="bye"&&(state==="live"||state==="ringing")){
-        aiRelease();
-        if(pc)pc.close();pc=null;state="idle";
-        document.getElementById("status").textContent="Call ended by +"+m.from;
-        await log("call ended by +"+m.from);
-      }
-      else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
-      else if(m.type==="ice"&&pc){await queueIce(m.payload);}
-    }
+    await handleSigs(msgs);
     const ms=d.messages||[];
     for(const m of ms){
       lastMsg=m.id;

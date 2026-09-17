@@ -8,6 +8,7 @@
 <div id="st">guardian booting…</div><div id="log"></div>
 <script>
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
+const RINGFN="https://superagent-ccb075d2.base44.app/functions/airconnectRing";
 const GREET="https://superagent-ccb075d2.base44.app/functions/airconnectGreet";
 const RTC_CFG={iceServers:[
   {urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
@@ -123,52 +124,71 @@ function cleanup(){try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingI
 function pruneSeen(){const ks=Object.keys(seenIds);if(ks.length>300)for(const k of ks.slice(0,150))delete seenIds[k];}
 
 /* poll */
+async function handleSigs(msgs){
+  for(const m of msgs){
+if(m.type==="offer"){
+  let raw=m.payload;
+  try{raw=typeof raw==="string"?JSON.parse(raw):raw;}catch(e){}
+  const desc=await unzipDesc(raw);
+  if(!desc||!desc.type){
+    log("offer unparsable — keys="+(raw&&typeof raw==="object"?Object.keys(raw).join(","):typeof raw)+" cs="+(typeof CompressionStream)+" preview="+JSON.stringify(raw).slice(0,120));
+    continue;
+  }
+  const now=Date.now();
+  const sigKey=m.at||m.id;
+  if(seenIds[sigKey]){continue;}
+  seenIds[sigKey]=1;
+  const rec=OFFERS[m.from];
+  const freshRec=rec&&now-rec.at<10*60*1000;
+  if(!freshRec){
+    OFFERS[m.from]={at:now,n:1};
+    log("1st offer from +"+m.from+" — letting the human pick");
+  }else{
+    OFFERS[m.from]={at:now,n:(rec.n||1)+1};
+    if(state!=="live"&&!pc&&!pickTimer){
+      log("2nd offer from +"+m.from+" — AI picks in 4s");
+      const offer=m;
+      pickTimer=setTimeout(async()=>{
+        pickTimer=null;
+        if(state!=="live"&&!pc){
+          offer.payload=desc;
+          try{await answer(offer);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
+        }
+      },4000);
+    }
+  }
+}
+else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
+else if(m.type==="bye"){if(state==="live"||pc){log("caller +"+m.from+" ended call");cleanup();}}
+else if(m.type==="noans"){
+  try{await api("chat",{from:ME,to:m.from,text:"📞 Sorry I missed your call. I'll call you back — if it's urgent, reply here and I'll get it instantly."});log("voicemail notice sent to +"+m.from);}catch(e){}
+}
+  }
+}
+let ringLast=new Date().toISOString(),ringBusy=false;
+async function ringLoop(){
+  if(ringBusy){setTimeout(ringLoop,400);return;}
+  ringBusy=true;
+  try{
+    const r=await fetch(RINGFN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"ring",node:ME,since:ringLast})});
+    if(r.ok){
+      const d=await r.json();
+      const msgs=d.sigs||[];
+      if(msgs.length){ringLast=msgs[msgs.length-1].at;await handleSigs(msgs);}
+    }
+  }catch(e){}
+  ringBusy=false;
+  setTimeout(ringLoop,1400);
+}
+
 async function poll(){
   try{
     const d=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg});
     if(d.err){$("st").textContent="err: "+d.err;setTimeout(poll,5000);return;}
     const msgs=d.sigs||[];
     if(msgs.length)lastSig=msgs[msgs.length-1].id;
-    for(const m of msgs){
-      if(m.type==="offer"){
-        let raw=m.payload;
-        try{raw=typeof raw==="string"?JSON.parse(raw):raw;}catch(e){}
-        const desc=await unzipDesc(raw);
-        if(!desc||!desc.type){
-          log("offer unparsable — keys="+(raw&&typeof raw==="object"?Object.keys(raw).join(","):typeof raw)+" cs="+(typeof CompressionStream)+" preview="+JSON.stringify(raw).slice(0,120));
-          continue;
-        }
-        const now=Date.now();
-        const sigKey=m.at||m.id;
-        if(seenIds[sigKey]){continue;}
-        seenIds[sigKey]=1;
-        const rec=OFFERS[m.from];
-        const freshRec=rec&&now-rec.at<10*60*1000;
-        if(!freshRec){
-          OFFERS[m.from]={at:now,n:1};
-          log("1st offer from +"+m.from+" — letting the human pick");
-        }else{
-          OFFERS[m.from]={at:now,n:(rec.n||1)+1};
-          if(state!=="live"&&!pc&&!pickTimer){
-            log("2nd offer from +"+m.from+" — AI picks in 4s");
-            const offer=m;
-            pickTimer=setTimeout(async()=>{
-              pickTimer=null;
-              if(state!=="live"&&!pc){
-                offer.payload=desc;
-                try{await answer(offer);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
-              }
-            },4000);
-          }
-        }
-      }
-      else if(m.type==="ice"&&pc){await queueIce(m.payload);}
-      else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
-      else if(m.type==="bye"){if(state==="live"||pc){log("caller +"+m.from+" ended call");cleanup();}}
-      else if(m.type==="noans"){
-        try{await api("chat",{from:ME,to:m.from,text:"📞 Sorry I missed your call. I'll call you back — if it's urgent, reply here and I'll get it instantly."});log("voicemail notice sent to +"+m.from);}catch(e){}
-      }
-    }
+    await handleSigs(msgs);
     for(const r of (d.requests||[])){
       await api("accept",{user:ME,id:r.id});
       log("accepted friend request from +"+r.from);
@@ -187,7 +207,7 @@ async function poll(){
   if(!r||!r.ok){$("st").textContent="register failed: "+(r&&r.err);return;}
   log("guardian online for +"+ME+" ("+r.name+")");
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
-  poll();
+  poll();ringLoop();
 })();
 </script>
 </body></html>
