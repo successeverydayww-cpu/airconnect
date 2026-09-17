@@ -1206,7 +1206,9 @@ function showStItem(){
     STV.timer=setTimeout(function(){nextItem();},35000);
   }else if(isVid){
     try{$("stImg").className="hide";$("stAudWrap").className="hide";$("stVid").className="";}catch(e){}
-    const v=$("stVid");v.src=s.pic;try{v.currentTime=0;v.play().catch(function(){});}catch(e){}
+    const v=$("stVid");v.src=s.pic;
+    v.onclick=function(){try{v.muted=false;v.play().catch(function(){});}catch(e){}};
+    try{v.currentTime=0;v.muted=false;v.play().catch(function(){toast("Tap the video to play with sound");});}catch(e){}
   }else{
     try{$("stVid").className="hide";$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();$("stAudWrap").className="hide";$("stImg").className="";}catch(e){}
     $("stImg").src=s.pic;
@@ -1362,17 +1364,25 @@ async function stVideoRec(v2,dur,maxW,br){
     const ctx=cv.getContext("2d");
     const stream=cv.captureStream(15);
     let audioOk=false;
+    let acx=null;
     try{
       const AC=window.AudioContext||window.webkitAudioContext;
-      const acx=new AC();
+      acx=new AC();
       await acx.resume().catch(function(){});
       const srcN=acx.createMediaElementSource(v2);
       const dst=acx.createMediaStreamDestination();
       const mute=acx.createGain();mute.gain.value=0;
       srcN.connect(dst);srcN.connect(mute);mute.connect(acx.destination);
-      dst.stream.getAudioTracks().forEach(function(t){stream.addTrack(t);});
-      audioOk=true;
+      const at=dst.stream.getAudioTracks();
+      if(at.length){at.forEach(function(t){stream.addTrack(t);});audioOk=true;}
     }catch(e){}
+    if(!audioOk){
+      try{
+        const es=(v2.captureStream||v2.mozCaptureStream).call(v2);
+        const at2=es.getAudioTracks();
+        if(at2.length){at2.forEach(function(t){stream.addTrack(t);});audioOk=true;}
+      }catch(e){}
+    }
     let played=false;
     try{await v2.play();played=true;}catch(e){}
     if(!played)return "";
@@ -1387,14 +1397,14 @@ async function stVideoRec(v2,dur,maxW,br){
     mr.start(250);
     const t0=Date.now();
     await new Promise(function(res){
-      (function draw(){
-        if(v2.ended||Date.now()-t0>dur*1000){res();return;}
+      const tick=setInterval(function(){
+        if(v2.ended||Date.now()-t0>dur*1000){clearInterval(tick);res();return;}
         try{ctx.drawImage(v2,0,0,cv.width,cv.height);}catch(e){}
-        requestAnimationFrame(draw);
-      })();
+      },66);
     });
     mr.stop();
     await stopped;
+    try{if(acx)acx.close();}catch(e){}
     try{v2.pause();}catch(e){}
     const blob=new Blob(chunks,{type:mime.split(";")[0]});
     return await new Promise(function(res){const r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(blob);});
