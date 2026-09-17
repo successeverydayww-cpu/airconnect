@@ -54,11 +54,28 @@ function ensureAudio(){
     return true;
   }catch(e){log("audio ctx failed: "+e);return false;}
 }
+const TTS_URL="https://superagent-ccb075d2.base44.app/functions/airconnectTts";
+async function playBuf(buf){
+  const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
+  const src=voiceCtx.createBufferSource();src.buffer=decoded;
+  const g=voiceCtx.createGain();g.gain.value=1.0;
+  src.connect(g);g.connect(voiceBus);src.start();
+  await new Promise(res=>{src.onended=res;setTimeout(res,decoded.duration*1000+400);});
+}
 async function say(text){
   if(!ensureAudio()||!voiceCtx)return;
   while(speaking)await new Promise(r=>setTimeout(r,300));
   speaking=true;
   try{
+    try{
+      // PREMIUM VOICE: ElevenLabs via server-side proxy (key stays on the server)
+      const r=await fetch(TTS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text.slice(0,900)})});
+      if(!r.ok)throw 0;
+      const buf=await r.arrayBuffer();
+      if(buf.byteLength>2000){await playBuf(buf);return;}
+      throw 0;
+    }catch(e){}
+    // fallback: old robotic voice, chunked
     const chunks=text.match(/[^.!?]+[.!?]?/g)||[text];
     for(let ch of chunks){
       ch=ch.trim().slice(0,180);if(!ch)continue;
@@ -67,13 +84,7 @@ async function say(text){
         const u="https://api.allorigins.win/raw?url="+encodeURIComponent("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q="+encodeURIComponent(ch));
         const r=await fetch(u);if(!r.ok)throw 0;buf=await r.arrayBuffer();
       }catch(e){try{if(window.speechSynthesis){const u2=new SpeechSynthesisUtterance(ch);u2.rate=1;speechSynthesis.speak(u2);await new Promise(r2=>{u2.onend=r2;setTimeout(r2,6000);});}}catch(x){}continue;}
-      try{
-        const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
-        const src=voiceCtx.createBufferSource();src.buffer=decoded;
-        const g=voiceCtx.createGain();g.gain.value=1.0;
-        src.connect(g);g.connect(voiceBus);src.start();
-        await new Promise(res=>{src.onended=res;setTimeout(res,decoded.duration*1000+400);});
-      }catch(e){}
+      try{await playBuf(buf);}catch(e){}
     }
   }finally{speaking=false;}
 }
