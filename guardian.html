@@ -47,6 +47,7 @@ async function unzipDesc(p){
 
 /* TTS via translate.google through allorigins; chunked to <=180 chars */
 let voiceCtx=null,voiceBus=null,speaking=false;
+let listenRec=null,heard=[];
 function ensureAudio(){
   if(voiceCtx)return true;
   try{
@@ -56,6 +57,7 @@ function ensureAudio(){
   }catch(e){log("audio ctx failed: "+e);return false;}
 }
 const TTS_URL="https://superagent-ccb075d2.base44.app/functions/airconnectTts";
+const STT_URL="https://superagent-ccb075d2.base44.app/functions/airconnectStt";
 async function playBuf(buf){
   const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
   const src=voiceCtx.createBufferSource();src.buffer=decoded;
@@ -97,6 +99,8 @@ async function answer(m){
   log("answering 2nd call from +"+m.from);
   pc=new RTCPeerConnection(RTC_CFG);
   pc.onicecandidate=e=>{if(e.candidate)queueIceOut(e.candidate);};
+  const rs=new MediaStream();
+  pc.ontrack=e=>{try{for(const t of e.streams[0].getAudioTracks())rs.addTrack(t);if(rs.getAudioTracks().length)startListen(rs);}catch(err){}};
   pc.addTrack(voiceBus.stream.getAudioTracks()[0],voiceBus.stream);
   await pc.setRemoteDescription(m.payload);await flushIce();
   const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
@@ -114,13 +118,39 @@ async function answer(m){
     if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected"||pc.connectionState==="closed")){cleanup();}
   };
 }
+/* v21: LISTEN — capture the caller's voice, transcribe via airconnectStt, keep the voicemail */
+async function startListen(stream){
+  try{
+    if(listenRec){try{listenRec.stop();}catch(e){}}
+    const mt=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";
+    listenRec=new MediaRecorder(stream,{mimeType:mt});
+    listenRec.ondataavailable=async ev=>{
+      try{
+        if(!ev.data||ev.data.size<2000||state!=="live")return;
+        const b64=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result));fr.readAsDataURL(ev.data);});
+        const r=await fetch(STT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({audio:b64})});
+        if(!r.ok)return;
+        const j=await r.json();const txt=String(j.text||"").trim();
+        if(!txt||txt.length<2)return;
+        heard.push(txt);
+        log("heard: "+txt.slice(0,80));
+        try{await api("chat",{from:curCaller,to:ME,text:"\u{1F4DD} (voicemail transcript) "+txt.slice(0,400)});}catch(e){}
+        const low=txt.toLowerCase();
+        if(/\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(low)){await say("Hi there! I\u2019m listening \u2014 go ahead.");}
+        else if(txt.split(/\s+/).length>=12&&heard.length%2===0){await say("Noted \u2014 I\u2019ve recorded that for him.");}
+      }catch(e){}
+    };
+    listenRec.start(6000);
+    log("listening to caller (voicemail on)");
+  }catch(e){log("listen unavailable: "+e);}
+}
 let iceOut=[];
 async function queueIceOut(c){iceOut.push(c);}
 setInterval(async()=>{if(!iceOut.length||!pc||state!=="live")return;const batch=iceOut;iceOut=[];
   try{await api("sig",{from:ME,to:curCaller,type:"ice-batch",payload:batch});}catch(e){iceOut=iceOut.concat(batch);}},700);
 async function queueIce(c){pendingIce.push(c);}
 async function flushIce(){while(pendingIce.length&&pc){try{await pc.addIceCandidate(pendingIce.shift());}catch(e){pendingIce.shift();}}}
-function cleanup(){try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingIce=[];iceOut=[];curCaller=null;if(pickTimer){clearTimeout(pickTimer);pickTimer=null;}}
+function cleanup(){if(listenRec){try{listenRec.stop();}catch(e){}listenRec=null;}try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingIce=[];iceOut=[];curCaller=null;if(pickTimer){clearTimeout(pickTimer);pickTimer=null;}}
 function pruneSeen(){const ks=Object.keys(seenIds);if(ks.length>300)for(const k of ks.slice(0,150))delete seenIds[k];}
 
 /* poll */
