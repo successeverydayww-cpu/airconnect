@@ -118,6 +118,13 @@ async function answer(m){
     if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected"||pc.connectionState==="closed")){cleanup();}
   };
 }
+/* PERMANENT-HOST HARDENING: keep the device awake while hosting — screen wake-lock,
+   auto re-acquired whenever the tab becomes visible again (survives screen-off cycles) */
+let __wk=null;
+async function __keepAwake(){try{if("wakeLock" in navigator&&!__wk){__wk=await navigator.wakeLock.request("screen");__wk.addEventListener("release",()=>{__wk=null;});log&&log("host mode: device wake-lock ON");}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")__keepAwake();});
+__keepAwake();
+
 /* v21: LISTEN — capture the caller's voice, transcribe via airconnectStt, keep the voicemail */
 async function startListen(stream){
   try{
