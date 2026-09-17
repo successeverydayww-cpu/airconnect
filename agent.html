@@ -569,13 +569,25 @@ if(m.type==="offer"&&state==="idle"){
   const gate=await api("can_call",{from:m.from,to:ME});
   if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
   await log("RING from +"+m.from+" (owner verified)");
+  try{await sig({to:m.from,type:"ringing",payload:{}});}catch(err){}
   await answer(m);
 }
 else if(m.type==="offer"&&state==="live"&&pc&&pc.remoteDescription){
+  if(m.from!==PEER){
+    try{await sig({to:m.from,type:"busy",payload:{}});}catch(err){}
+    await log("busy — 2nd call from +"+m.from+" while LIVE with +"+PEER);
+    continue;
+  }
   await pc.setRemoteDescription(m.payload);await flushIce();
   const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
   await sig({to:m.from,type:"answer",payload:await zipDesc(ans)});
   await log("renegotiation answered — video flowing");
+}
+else if(m.type==="busy"&&state==="ringing"){
+  if(dialTO){clearTimeout(dialTO);dialTO=null;}
+  aiRelease();if(pc)pc.close();pc=null;state="idle";
+  document.getElementById("status").textContent="Line busy — call later";
+  await log("outbound call to +"+PEER+" hit busy");
 }
 else if(m.type==="answer"){m.payload=await unzipDesc(m.payload);}
 else if(m.type==="answer"&&state==="ringing"&&pc&&!pc.remoteDescription){

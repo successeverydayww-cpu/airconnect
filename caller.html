@@ -709,7 +709,7 @@ let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null,WIN_BLOCKS=[];
 let PIC_CACHE={};try{PIC_CACHE=JSON.parse(localStorage.getItem("aicall_pics"))||{};}catch(e){}
 let PIC_FETCHED={};
-let CALL_ROLE="",ICE_RESTART_AT=0,TYPING_UNTIL=0,TYPE_AT=0,RR_AT=0,chatHistBusy={};
+let CALL_ROLE="",ICE_RESTART_AT=0,TYPING_UNTIL=0,TYPE_AT=0,RR_AT=0,RING_ACKED=false,chatHistBusy={};
 let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,mixCtx=null,incomingAt=0,dialAt=0,
     rxAnalyser=null,txAnalyser=null,voiceBus=null,state="idle",pendingIce=[],iceOut=[],
     pendingOffer=null,callTimer=null,callStart=0,chatBusy=false;
@@ -2033,19 +2033,18 @@ function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
 }
 async function dial(p){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
-    PEER=p;CALL_ROLE="offerer";
+    PEER=p;CALL_ROLE="offerer";RING_ACKED=false;
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
   if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){}}
   if(camOn&&!cam){try{cam=await navigator.mediaDevices.getUserMedia({video:true});}catch(e){cam=null;}}
   if(cam){$("localv").srcObject=cam;setVLayout("ring");}
-  startRing("dial");
   await log("dialing +"+PEER+" (friends verified)");
   const pr=await newPC();
   const offer=await pr.createOffer();await pr.setLocalDescription(offer);
   await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(offer)});
-  $("callStat").textContent="Ringing…";setStatus("Ringing +"+PEER,"ringing");
+  setStatus("Calling +"+PEER,"ringing");
 }
 async function dialVideo(p){camOn=true;await dial(p);}
 document.addEventListener("click",e=>{
@@ -2234,6 +2233,11 @@ for(const m of msgs){
   if(m.type==="offer"){
     m.payload=await unzipDesc(m.payload);
     if(state==="live"&&pc&&pc.remoteDescription){
+      if(m.from!==PEER){
+        try{await api("sig",{from:ME,to:m.from,type:"busy",payload:{}});}catch(e){}
+        await log("busy — 2nd call from +"+m.from+" while LIVE with +"+PEER);
+        continue;
+      }
       await pc.setRemoteDescription(m.payload);await flushIce();
       const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
       await api("sig",{from:ME,to:m.from,type:"answer",payload:await zipDesc(ans)});
@@ -2250,6 +2254,7 @@ for(const m of msgs){
       $("incoming").className="ovl";
       setStatus("Incoming call","ringing");
       startRing("in");
+      try{await api("sig",{from:ME,to:m.from,type:"ringing",payload:{}});}catch(e){}
       await log("incoming call from +"+m.from);
     }
   }
@@ -2258,6 +2263,16 @@ for(const m of msgs){
     state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
     setStatus("LIVE","live");
     await log("call answered by +"+PEER+" — LIVE");
+  }
+  else if(m.type==="ringing"&&state==="dialing"){
+    if(!RING_ACKED){RING_ACKED=true;$("callStat").textContent="Ringing…";setStatus("Ringing +"+PEER,"ringing");startRing("dial");await log("ringing ACK from +"+PEER);}
+  }
+  else if(m.type==="busy"&&state==="dialing"){
+    stopRing();$("callStat").textContent="Busy";await log("busy — +"+PEER+" is on another call");toast("Line busy");
+    setTimeout(()=>{if(state==="dialing")hangup(true);},1200);
+  }
+  else if(m.type==="noans"&&state==="incoming"){
+    $("incoming").className="ovl hide";callCleanup();await log("missed call — caller hung up");toast("Missed call");
   }
   else if(m.type==="typing"&&CHAT_OPEN===m.from){TYPING_UNTIL=Date.now()+3200;$("cvSub").textContent="typing…";}
   else if(m.type==="bye"&&(state==="live"||state==="dialing"||state==="incoming")){

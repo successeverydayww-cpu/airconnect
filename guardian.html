@@ -177,6 +177,7 @@ if(m.type==="offer"){
   const sigKey=m.at||m.id;
   if(seenIds[sigKey]){continue;}
   seenIds[sigKey]=1;
+  try{await api("sig",{from:ME,to:m.from,type:"ringing",payload:{}});}catch(e){}
   const rec=OFFERS[m.from];
   const freshRec=rec&&now-rec.at<10*60*1000;
   if(!freshRec){
