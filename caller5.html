@@ -2211,6 +2211,45 @@ function refreshDots(){
     el.style.background=(t&&now-t<30000)?"#22c55e":"#ef4444";
   });
 }
+async function handleSigs(msgs){
+for(const m of msgs){
+  if(m.type==="offer"){
+    m.payload=await unzipDesc(m.payload);
+    if(state==="live"&&pc&&pc.remoteDescription){
+      await pc.setRemoteDescription(m.payload);await flushIce();
+      const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+      await api("sig",{from:ME,to:m.from,type:"answer",payload:await zipDesc(ans)});
+      await log("renegotiation answered");
+      continue;
+    }
+    if(state==="idle"){
+      const gate=await api("can_call",{from:m.from,to:ME});
+      if(!gate.ok){await log("BLOCKED call from +"+m.from);continue;}
+      pendingOffer=m;state="incoming";incomingAt=Date.now();
+      const n=(WIN_NAMES[m.from]||"Caller")+" · +"+m.from;
+      $("incName").textContent=n;
+      $("incAv").textContent=n.charAt(0).toUpperCase();
+      $("incoming").className="ovl";
+      setStatus("Incoming call","ringing");
+      startRing("in");
+      await log("incoming call from +"+m.from);
+    }
+  }
+  else if(m.type==="answer"&&state==="dialing"){
+    m.payload=await unzipDesc(m.payload);await pc.setRemoteDescription(m.payload);await flushIce();
+    state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
+    setStatus("LIVE","live");
+    await log("call answered by +"+PEER+" — LIVE");
+  }
+  else if(m.type==="typing"&&CHAT_OPEN===m.from){TYPING_UNTIL=Date.now()+3200;$("cvSub").textContent="typing…";}
+  else if(m.type==="bye"&&(state==="live"||state==="dialing"||state==="incoming")){
+    callCleanup();toast("Call ended by +"+m.from);await log("call ended by +"+m.from);
+  }
+  else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
+  else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+}
+}
+
 async function ringLoop(){
   const inCall=(state==="live"||state==="dialing"||state==="incoming");
   if(!inCall||ringBusy){setTimeout(ringLoop,inCall?500:2500);return;}
