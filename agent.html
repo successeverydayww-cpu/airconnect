@@ -65,6 +65,7 @@ const $=id=>document.getElementById(id);
 const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
 const RINGFN="https://superagent-ccb075d2.base44.app/functions/airconnectRing";
 const TTS_URL="https://superagent-ccb075d2.base44.app/functions/airconnectTts";
+const STT_URL="https://superagent-ccb075d2.base44.app/functions/airconnectStt";
 const OWNER=(new URLSearchParams(location.search).get("owner"))||"234100000001";
 
 /* ---------- E2E chat encryption (ECDH P-256 + AES-GCM) ---------- */
@@ -123,6 +124,7 @@ const ACX=[];
 function regCtx(c){ACX.push(c);try{if(c.state==="suspended")c.resume();}catch(e){}return c;}
 setInterval(()=>{for(const c of ACX){try{if(c.state==="suspended")c.resume();}catch(e){}}},5000);
 let ME=null, ME_NAME="", PEER=null, pc=null, rxAnalyser=null, txAnalyser=null,
+    listenRec=null,
     aiOut=null, voiceBus=null, voiceCtx=null, speaking=false, state="idle", pendingIce=[],iceOut=[],
     lastMsg=0, faceStream=null;
 
@@ -205,6 +207,18 @@ const PHRASES=[
   "I am your Premium AI assistant. Voice call is working perfectly.",
   "Nice! We are talking through the Air Connect trunk. What is next?"
 ];
+async function say(text){
+  if(!voiceCtx||!voiceBus)return;
+  try{
+    const r=await fetch(TTS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text.slice(0,900)})});
+    if(!r.ok)throw 0;
+    const buf=await r.arrayBuffer();
+    const decoded=await voiceCtx.decodeAudioData(buf);
+    const src=voiceCtx.createBufferSource();src.buffer=decoded;
+    const g=voiceCtx.createGain();g.gain.value=1.0;
+    src.connect(g);g.connect(voiceBus);src.start();
+  }catch(e){}
+}
 function speak(){
   if(!voiceCtx||!voiceBus||speaking)return;
   speaking=true;
@@ -359,7 +373,7 @@ async function afterRegister(){
   setInterval(()=>{ if(state==="live"&&!speaking)speak(); },4000);
 }
 async function register(){
-  const rid=localStorage.getItem("aicall_ai_id")||"";
+  const rid=localStorage.getItem("aicall_ai_id")||new URL(location).searchParams.get("id")||"";
   if(rid){
     const r=await api("register",{id:rid});
     if(r&&r.ok){ME=r.id;ME_NAME=r.name;localStorage.setItem("aicall_ai_id",ME);await afterRegister();return;}
@@ -385,6 +399,31 @@ async function register(){
   setInterval(()=>{ if(state==="live"&&!speaking)speak(); },4000);
 }
 
+/* LISTEN — capture the caller's voice, transcribe via airconnectStt (server-side key),
+   record their words in chat history, acknowledge briefly */
+async function startListen(stream){
+  try{
+    if(listenRec){try{listenRec.stop();}catch(e){}}
+    const mt=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"audio/webm";
+    listenRec=new MediaRecorder(stream,{mimeType:mt});
+    listenRec.ondataavailable=async ev=>{
+      try{
+        if(!ev.data||ev.data.size<2000||state!=="live")return;
+        const b64=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result));fr.readAsDataURL(ev.data);});
+        const r=await fetch(STT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({audio:b64})});
+        if(!r.ok)return;
+        const j=await r.json();const txt=String(j.text||"").trim();
+        if(!txt||txt.length<2)return;
+        log("heard: "+txt.slice(0,80));
+        try{await api("chat",{from:PEER,to:ME,text:"\u{1F4DD} (voice transcript) "+txt.slice(0,400)});}catch(e){}
+        const low=txt.toLowerCase();
+        if(/\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(low)){await say("Hi "+ (PEER?"+":"") +" — good to hear you!");}
+      }catch(e){}
+    };
+    listenRec.start(6000);
+    log("listening to caller (STT on)");
+  }catch(e){log("listen unavailable: "+e);}
+}
 async function answer(m){
   try{
     PEER=m.from;state="ringing";
@@ -410,6 +449,7 @@ async function answer(m){
           rxAnalyser=ctx.createAnalyser();src.connect(rxAnalyser);
         }catch(err){}
         log("hearing +"+PEER+"'s voice through the trunk (speaker output)");
+        try{startListen(e.streams[0]);}catch(err){}
       }
     };
     await pc.setRemoteDescription(m.payload);await flushIce();
