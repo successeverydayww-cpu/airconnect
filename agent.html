@@ -499,7 +499,9 @@ async function dialOut(num){
     state="idle";
   }
 }
+let SIG_PRIMED=false;
 async function handleSigs(msgs){
+  if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
   for(const m of msgs){
 if(m.type==="offer"&&state!=="idle"){
   const stale=!pc||!pc.remoteDescription||["failed","disconnected","closed"].includes(pc.connectionState);

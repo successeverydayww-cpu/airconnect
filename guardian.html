@@ -124,7 +124,9 @@ function cleanup(){try{if(pc)pc.close();}catch(e){}pc=null;state="idle";pendingI
 function pruneSeen(){const ks=Object.keys(seenIds);if(ks.length>300)for(const k of ks.slice(0,150))delete seenIds[k];}
 
 /* poll */
+let SIG_PRIMED=false;
 async function handleSigs(msgs){
+  if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
   for(const m of msgs){
 if(m.type==="offer"){
   let raw=m.payload;

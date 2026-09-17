@@ -2211,7 +2211,9 @@ function refreshDots(){
     el.style.background=(t&&now-t<30000)?"#22c55e":"#ef4444";
   });
 }
+let SIG_PRIMED=false;
 async function handleSigs(msgs){
+  if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
 for(const m of msgs){
   if(m.type==="offer"){
     m.payload=await unzipDesc(m.payload);
