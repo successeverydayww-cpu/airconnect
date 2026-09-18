@@ -116,6 +116,7 @@ footer a{color:#64748B}
 #sharelink{font-size:12px}
 .stseg{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;max-width:44px}
 .stseg.done,.stseg.on{background:#fff}
+.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#DC2626;font-weight:700}.tick.on{color:#16A34A}
 </style>
 </head>
 <body>
@@ -421,7 +422,7 @@ footer a{color:#64748B}
     <button class="bk" onclick="closeGroup()">‹</button>
     <div class="av">👥</div>
     <div style="flex:1;min-width:0"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
-    <button class="bk" onclick="leaveGroup()" title="Leave group">👋</button>
+    <button class="bk" onclick="gCall()" title="Group call">📞</button><button class="bk" onclick="leaveGroup()" title="Leave group">👋</button>
   </div>
   <div class="bubbles" id="gbubbles"></div>
   <div class="cinput">
@@ -852,6 +853,7 @@ function startRing(kind){
   const vib=kind==="in"?[600,400,600]:[400,250,400];
   try{navigator.vibrate&&navigator.vibrate(vib);}catch(e){}
   try{ringCtx=regCtx(new (window.AudioContext||window.webkitAudioContext)());}catch(e){}
+  try{ringCtx&&ringCtx.resume&&ringCtx.resume();}catch(e){}
   const beep=()=>{
     try{navigator.vibrate&&navigator.vibrate(vib);}catch(e){}
     if(!ringCtx||ringCtx.state!=="running")return;
@@ -859,7 +861,7 @@ function startRing(kind){
     const mk=(dt,freq)=>{
       const o=ringCtx.createOscillator(),g=ringCtx.createGain();
       o.frequency.value=freq;o.connect(g);g.connect(ringCtx.destination);
-      g.gain.setValueAtTime(0.11,t+dt);g.gain.setValueAtTime(0.11,t+dt+0.12);g.gain.linearRampToValueAtTime(0,t+dt+0.18);
+      g.gain.setValueAtTime(0.4,t+dt);g.gain.setValueAtTime(0.4,t+dt+0.12);g.gain.linearRampToValueAtTime(0,t+dt+0.18);
       o.start(t+dt);o.stop(t+dt+0.2);
     };
     if(kind==="in"){mk(0,780);mk(0.35,780);}else{mk(0,440);mk(0.5,440);}
@@ -1692,6 +1694,12 @@ function renderBubbles(){
       renderTextBubble(d,m);
     }
     attachMsgEvents(d,m);
+    if(m.who!=="sys"){
+      const meta=document.createElement("div");meta.className="bmeta";
+      let h=fmtT(m.ts);
+      if(m.who==="me")h='<span class="tick'+(m.r?" on":"")+'">'+(m.r?"✓✓":"✓")+"</span> "+h;
+      meta.innerHTML=h;d.appendChild(meta);
+    }
     b.appendChild(d);
   }
   b.scrollTop=999999;
@@ -2145,7 +2153,7 @@ async function dial(p){
   const pr=await newPC();
   const offer=await pr.createOffer();await pr.setLocalDescription(offer);
   await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(offer)});
-  setStatus("Calling +"+PEER,"ringing");
+  setStatus("Calling +"+PEER,"ringing");startRing("dial");
 }
 async function dialVideo(p){camOn=true;await dial(p);}
 document.addEventListener("click",e=>{
@@ -2331,7 +2339,116 @@ function refreshDots(){
   });
 }
 let SIG_PRIMED=false;
+
+/* ---- v29 GROUP CALLS (mesh audio) + chat meta ---- */
+function fmtT(ts){try{const d=new Date(normTs(ts||""));if(isNaN(d.getTime()))return"";return d.toTimeString().slice(0,5);}catch(e){return""}}
+var GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
+function gCall(){if(GC.on){toast("Already in a group call");return;}if(!GROUP_OPEN)return;gJoin(GROUP_OPEN,true);}
+async function gJoin(gid,initiator){
+  if(GC.on)return;
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){toast("Mic blocked — cannot join call");return;}
+  GC.on=true;GC.g=gid;GC.pcs={};GC.stream=stream;GC.muted=false;GC.t0=Date.now();
+  const g=GROUPS.find(x=>x.id===gid);
+  const members=((g&&g.members)||[]).filter(m=>m!==ME);
+  for(const m of members){api("sig",{from:ME,to:m,type:initiator?"gcallo":"gcj",payload:{g:gid}}).catch(()=>{});}
+  gcUI();
+  GC.gcTick=setInterval(()=>{const el=document.getElementById("gcstat");if(el){const s=Math.floor((Date.now()-GC.t0)/1000);el.textContent="Group call · "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}},1000);
+}
+function gcName(p){return WIN_NAMES[p]||("+"+p);}
+function gcUI(){
+  let el=document.getElementById("gcview");
+  if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#0C4A6E;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
+  const g=GROUPS.find(x=>x.id===GC.g);
+  const peers=Object.keys(GC.pcs);
+  let chips='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px">';
+  chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(ME))+' (you)</span>';
+  for(const p of peers)chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(p))+'</span>';
+  chips+="</div>";
+  el.innerHTML='<div style="font-size:30px">👥📞</div><div style="font-weight:700;font-size:17px">'+esc(g?g.name:"Group call")+'</div>'+
+  '<div id="gcstat" style="font-size:13px;opacity:.85">Group call · 0:00</div>'+
+  '<div style="font-size:12px;opacity:.7">'+(peers.length+1)+" connected</div>"+chips+
+  '<div style="display:flex;gap:14px;margin-top:10px">'+
+  '<button onclick="gMute()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(GC.muted?"#fff":"rgba(255,255,255,.25)")+';color:'+(GC.muted?"#0C4A6E":"#fff")+'">'+(GC.muted?"🔇":"🎙️")+"</button>"+
+  '<button onclick="gLeave()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:#DC2626;color:#fff">✖</button></div>';
+}
+function gMute(){GC.muted=!GC.muted;if(GC.stream)for(const t of GC.stream.getTracks())t.enabled=!GC.muted;gcUI();}
+function gLeave(){
+  if(!GC.on)return;
+  for(const p of Object.keys(GC.pcs)){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(()=>{});try{GC.pcs[p].close();}catch(e){}}
+  if(GC.stream)for(const t of GC.stream.getTracks())t.stop();
+  if(GC.gcTick)clearInterval(GC.gcTick);
+  GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
+  const el=document.getElementById("gcview");if(el)el.remove();
+  document.querySelectorAll("[id^='gca-']").forEach(a=>{try{a.remove();}catch(e){}});
+}
+var GCI=null;
+function gcInvite(from,gid){
+  if(GC.on||GCI)return;
+  const g=GROUPS.find(x=>x.id===gid);
+  GCI={from,gid};
+  let el=document.getElementById("gcinv");
+  if(el)el.remove();
+  el=document.createElement("div");el.id="gcinv";
+  el.style.cssText="position:fixed;top:0;left:0;right:0;z-index:85;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);padding:14px;display:flex;align-items:center;gap:10px;";
+  el.innerHTML='<div style="font-size:26px">👥📞</div><div style="flex:1"><div style="font-weight:700;color:#0F172A">'+esc(g?g.name:"Group")+' call</div><div style="font-size:12px;color:#64748B">from '+esc(gcName(from))+'</div></div>'+
+  '<button onclick="gcAccept()" style="border:0;background:#16A34A;color:#fff;border-radius:22px;padding:8px 16px;font-weight:700">Join</button>'+
+  '<button onclick="gcDecline()" style="border:0;background:#E2E8F0;color:#0F172A;border-radius:22px;padding:8px 16px">Ignore</button>';
+  document.body.appendChild(el);
+  try{navigator.vibrate&&navigator.vibrate([400,200,400]);}catch(e){}
+  try{startRing("in");}catch(e){}
+  setTimeout(()=>{if(GCI&&GCI.from===from&&GCI.gid===gid)gcDecline();},45000);
+}
+function gcAccept(){const i=GCI;gcDecline();if(i)gJoin(i.gid,false);}
+function gcDecline(){GCI=null;const el=document.getElementById("gcinv");if(el)el.remove();try{stopRing();}catch(e){}}
+async function gcPeer(p){
+  if(!GC.on||p===ME)return null;
+  let pc=GC.pcs[p];
+  if(pc)return pc;
+  pc=new RTCPeerConnection(RTC_CFG);
+  GC.pcs[p]=pc;
+  pc.onicecandidate=e=>{if(e.candidate)api("sig",{from:ME,to:p,type:"gice",payload:{g:GC.g,c:[JSON.stringify(e.candidate)]}}).catch(()=>{});};
+  pc.ontrack=e=>{
+    let a=document.getElementById("gca-"+p);
+    if(!a){a=document.createElement("audio");a.id="gca-"+p;a.autoplay=true;document.body.appendChild(a);}
+    a.srcObject=e.streams[0];try{a.play();}catch(x){}
+    gcUI();
+  };
+  pc.onconnectionstatechange=()=>{if(["failed","closed","disconnected"].indexOf(pc.connectionState)>=0){try{pc.close();}catch(e){}delete GC.pcs[p];gcUI();}};
+  if(GC.stream)for(const t of GC.stream.getTracks())pc.addTrack(t,GC.stream);
+  return pc;
+}
 async function handleSigs(msgs){
+
+  /* v29: group call signaling (mesh audio) */
+  for(const m of msgs){
+    if(!m||!m.type)continue;
+    const gp=(m.payload&&m.payload.g)||null;
+    if(m.type==="gcallo"){if(!GC.on)gcInvite(m.from,gp);continue;}
+    if(m.type==="gcj"){
+      if(GC.on&&GC.g===gp){(async()=>{try{const pc=await gcPeer(m.from);if(pc&&Number(ME)<Number(m.from)){const d=await pc.createOffer();await pc.setLocalDescription(d);const z=await zipDesc(d);api("sig",{from:ME,to:m.from,type:"goffer",payload:{g:GC.g,desc:z}}).catch(()=>{});}}catch(e){}})();}
+      continue;
+    }
+    if(m.type==="goffer"){
+      if(GC.on){(async()=>{try{
+        const raw=await unzipDesc((m.payload||{}).desc);if(!raw||!raw.type)return;
+        let pc=GC.pcs[m.from];
+        if(pc&&pc.signalingState==="have-local-offer"&&Number(ME)>=Number(m.from)){try{pc.close();}catch(e){}delete GC.pcs[m.from];pc=null;}
+        if(pc&&pc.signalingState==="have-local-offer"&&Number(ME)<Number(m.from))return;
+        if(pc&&pc.signalingState!=="stable"&&pc.signalingState!=="have-local-offer")return;
+        pc=pc||await gcPeer(m.from);if(!pc)return;
+        await pc.setRemoteDescription(raw);
+        const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+        const z=await zipDesc(ans);
+        api("sig",{from:ME,to:m.from,type:"ganswer",payload:{g:GC.g,desc:z}}).catch(()=>{});
+      }catch(e){}})();}
+      continue;
+    }
+    if(m.type==="ganswer"){if(GC.on&&GC.pcs[m.from]){(async()=>{try{const raw=await unzipDesc((m.payload||{}).desc);if(raw&&raw.type)await GC.pcs[m.from].setRemoteDescription(raw);}catch(e){}})();}continue;}
+    if(m.type==="gice"){if(GC.on&&GC.pcs[m.from]){(async()=>{try{for(const c of (((m.payload||{}).c)||[])){await GC.pcs[m.from].addIceCandidate(JSON.parse(c));}}catch(e){}})();}continue;}
+    if(m.type==="gbye"){if(GC.on&&GC.pcs[m.from]){try{GC.pcs[m.from].close();}catch(e){}delete GC.pcs[m.from];gcUI();}continue;}
+  }
+
   if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
 for(const m of msgs){
   if(m.type==="offer"){
@@ -2468,7 +2585,7 @@ async function poll(){
     }
     for(const g of (d.gmsgs||[])){
       const arr=GMS[g.g]=GMS[g.g]||[];
-      if(!arr.some(x=>x.id===g.id)){arr.push({id:g.id,who:g.from===ME?"me":"them",from:g.from,text:g.text});v12ch=true;if(g.from!==ME)GUNREAD[g.g]=(GUNREAD[g.g]||0)+1;}
+      if(!arr.some(x=>x.id===g.id)){arr.push({id:g.id,who:g.from===ME?"me":"them",from:g.from,text:g.text,ts:g.id});v12ch=true;if(g.from!==ME)GUNREAD[g.g]=(GUNREAD[g.g]||0)+1;}
     }
     if(d.reacts&&d.reacts.length){
       for(const r of d.reacts){REACTS[r.id]=REACTS[r.id]||[];REACTS[r.id]=REACTS[r.id].filter(x=>x.by!==r.by);if(r.e)REACTS[r.id].push({by:r.by,e:r.e});}
@@ -2598,7 +2715,7 @@ function openMs(m,el){
   const mine=m.who==="me";
   $("msReply").style.display="";
   const fresh=mine&&Date.now()-new Date(m.ts).getTime()<24*3600*1000;
-  $("msDel").style.display=fresh?"":"none";
+  $("msDel").style.display=(!GROUP_OPEN&&fresh)?"":"none";
   $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeMs(){$("msheet").className="ovl hide";}
@@ -2738,6 +2855,8 @@ function renderGBubbles(){
     const d=document.createElement("div");
     d.className="bub "+(m.who==="me"?"out":"in");
     d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:'+memColor(m.from)+';margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;word-break:break-all">'+u+"</a>");
+    if(m.who!=="sys"){const meta=document.createElement("div");meta.className="bmeta";meta.textContent=fmtT(m.ts||m.id);d.appendChild(meta);}
+    attachMsgEvents(d,m);
     b.appendChild(d);
   }
   b.scrollTop=999999;
@@ -2748,7 +2867,7 @@ async function gsend(){
   box.value="";
   const r=await api("gmsg",{from:ME,g:GROUP_OPEN,text:txt});
   if(r&&r.ok){
-    (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:r.id,who:"me",from:ME,text:txt});
+    (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:r.id,who:"me",from:ME,text:txt,ts:r.id});
     persistV12();renderGBubbles();
   }else{
     (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:"sys"+Date.now(),who:"sys",from:ME,text:"⚠ not sent — "+((r&&r.err)||"check connection")});
