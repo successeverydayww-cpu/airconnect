@@ -58,6 +58,7 @@ function ensureAudio(){
   }catch(e){log("audio ctx failed: "+e);return false;}
 }
 const TTS_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const MESH="https://mesh-citizen-one.successeverydayww-cpu.workers.dev/chat";
 const STT_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
 async function playBuf(buf){
   const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
@@ -73,7 +74,7 @@ async function say(text){
   try{
     try{
       // PREMIUM VOICE: ElevenLabs via server-side proxy (key stays on the server)
-      const r=await fetch(TTS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:text.slice(0,900)})});
+      const r=await fetch(TTS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:text.slice(0,900)})});
       if(!r.ok)throw 0;
       const buf=await r.arrayBuffer();
       if(buf.byteLength>2000){log("PREMIUM VOICE (ElevenLabs) speaking");await playBuf(buf);return;}
@@ -109,11 +110,14 @@ async function answer(m){
   pc.onconnectionstatechange=async()=>{
     if(pc&&pc.connectionState==="connected"){
       log("LIVE — speaking greeting");
-      let g="";try{const r=await fetch(GREET,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"get",num:ME})});const j=await r.json();g=j.text||"";}catch(e){}
-      if(!g)g="Hello! You have reached my AI assistant. I cannot take your call right now, but please leave a message and I will get back to you very soon. Thank you!";
       await say("Quick note: this call is being answered by an AI assistant.");
-      await say(g);
-      await say("You can leave your message now.");
+      try{
+        const br=await fetch(MESH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session:"air-"+(curCaller||"anon"),msg:"\u260E You just answered an incoming call as the AI receptionist. Greet the caller warmly in one or two short sentences and invite them to talk."})});
+        const j=await br.json();
+        const rep=String((j&&j.reply)||"").trim().slice(0,600);
+        if(rep)await say(rep);
+        else await say("Hello! I am the AI receptionist. Please go ahead.");
+      }catch(e){await say("Hello! I am the AI receptionist. Please go ahead.");}
       try{await api("chat",{from:ME,to:curCaller,text:"🤖 Auto-disclosure: this call was answered by my AI assistant — you have been talking to an AI voice."});}catch(e){}
     }
     if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected"||pc.connectionState==="closed")){cleanup();}
@@ -136,16 +140,17 @@ async function startListen(stream){
       try{
         if(!ev.data||ev.data.size<2000||state!=="live")return;
         const b64=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(String(fr.result));fr.readAsDataURL(ev.data);});
-        const r=await fetch(STT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({audio:b64})});
+        const r=await fetch(STT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"stt",audio:b64})});
         if(!r.ok)return;
         const j=await r.json();const txt=String(j.text||"").trim();
         if(!txt||txt.length<2)return;
         heard.push(txt);
         log("heard: "+txt.slice(0,80));
-        try{await api("chat",{from:curCaller,to:ME,text:"\u{1F4DD} (voicemail transcript) "+txt.slice(0,400)});}catch(e){}
-        const low=txt.toLowerCase();
-        if(/\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(low)){await say("Hi there! I\u2019m listening \u2014 go ahead.");}
-        else if(txt.split(/\s+/).length>=12&&heard.length%2===0){await say("Noted \u2014 I\u2019ve recorded that for him.");}
+        if(heard.length===1){try{await api("chat",{from:curCaller,to:ME,text:"\u{1F4DD} (call transcript begins) "+txt.slice(0,400)});}catch(e){}}
+        try{
+          const br=await fetch(MESH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session:"air-"+curCaller,msg:txt.slice(0,500)})});
+          if(br.ok){const j=await br.json();const rep=String((j&&j.reply)||"").trim().slice(0,600);if(rep)await say(rep);}
+        }catch(e){}
       }catch(e){}
     };
     listenRec.start(6000);

@@ -297,6 +297,7 @@ footer a{color:#64748B}
       <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
       <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
       <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
+      <button class="big blue" style="margin-top:10px" onclick="vmToggle()">AI Receptionist (Citizen One answers after 20s): <b id="vmStat">ON</b></button>
     <div style="font-size:11.5px;color:#64748B;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
     <div id="modehint" style="font-size:12px;color:#64748B;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
     </div>
@@ -591,6 +592,7 @@ footer a{color:#64748B}
   <div class="cctl">
     <button class="cbtn" id="muteBtn" onclick="toggleMute()">🎙️</button>
     <button class="cbtn on" id="spkBtn" onclick="toggleSpk()" title="Loudspeaker">🔊</button>
+    <button class="cbtn" id="vmTake" title="Take over the call" style="display:none" onclick="vmTakeOver()">🙋</button>
     <button class="cbtn end" onclick="hangup()">✖</button>
     <button class="cbtn" id="camBtn" onclick="toggleCam()">🎥</button>
   </div>
@@ -706,6 +708,102 @@ async function e2eDec(peer,text){
 }
 
 async function api(act,body){if(AID&&!(body||{}).aid){body=Object.assign({aid:AID},body||{});}const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+/* ===== AI RECEPTIONIST — Citizen One answers calls you miss (20s) ===== */
+const AI_VM="1100000004";
+let VM_MODE=false,vmRingTimer=null,vmRec=null,vmEndTimer=null,vmSpeaking=false,vmWantEnd=false,vmEndAt=0,vmSTTTries=0;
+function vmEnabled(){try{return localStorage.getItem("ac_vm")!=="0";}catch(e){return true;}}
+function vmToggle(){try{localStorage.setItem("ac_vm",vmEnabled()?"0":"1");}catch(e){}vmStat();}
+function vmStat(){try{$("vmStat").textContent=vmEnabled()?"ON":"OFF";}catch(e){}}
+function vmArm(){vmDisarm();if(!vmEnabled())return;vmRingTimer=setTimeout(function(){if(state==="incoming"&&pendingOffer&&ME)vmAnswer();},20000);}
+function vmDisarm(){if(vmRingTimer){clearTimeout(vmRingTimer);vmRingTimer=null;}}
+async function vmAnswer(){
+  vmDisarm();
+  const m=pendingOffer;if(!m||state!=="incoming")return;
+  VM_MODE=true;vmWantEnd=false;vmEndAt=Date.now()+120000;vmSTTTries=0;
+  pushHist();stopRing();$("incoming").className="ovl hide";
+  answer(m);
+  try{$("vmTake").style.display="inline-block";}catch(e){}
+  try{$("callStat").textContent="AI answering…";}catch(e){}
+  try{await log("AI Receptionist (Citizen One) answering call from +"+m.from);}catch(e){}
+  vmEnsureFriend();
+  try{await api("chat",{from:ME,to:AI_VM,text:"📞 RECEPTION: You are "+(ME_NAME||"my user")+"'s AI receptionist on an incoming call from +"+m.from+". In one short spoken sentence, greet the caller and ask who's calling."});}catch(e){}
+  vmSTT();
+  vmWatchEnd();
+}
+async function vmEnsureFriend(){
+  try{if(!WIN_FRIENDS.some(f=>f.id===AI_VM))await api("friend",{from:ME,to:AI_VM});}catch(e){}
+}
+function vmSTT(){
+  if(!VM_MODE)return;
+  try{
+    const rs=$("remotea")&&$("remotea").srcObject;
+    if(!rs||!rs.getAudioTracks||!rs.getAudioTracks().length){if(vmSTTTries<6){vmSTTTries++;setTimeout(vmSTT,2000);}return;}
+    let mime="";for(const m of ["audio/webm;codecs=opus","audio/webm","audio/mp4"]){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
+    if(!mime)return;
+    vmRec=new MediaRecorder(rs,{mimeType:mime});
+    vmRec.ondataavailable=async function(e){
+      if(!e.data||!e.data.size||!VM_MODE||vmSpeaking)return;
+      try{
+        const buf=await e.data.arrayBuffer();
+        const bytes=new Uint8Array(buf);let bin="";const CH=32768;
+        for(let i=0;i<bytes.length;i+=CH)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
+        const b64="data:"+(e.data.type||"audio/webm")+";base64,"+btoa(bin);
+        const r=await api("stt",{audio:b64});
+        const t=((r&&r.text)||"").trim();
+        if(t&&VM_MODE&&!vmSpeaking&&t.length>1)api("chat",{from:ME,to:AI_VM,text:"📞 Caller says: "+t.slice(0,300)}).catch(function(){});
+      }catch(err){}
+    };
+    vmRec.start(7000);
+  }catch(e){if(vmSTTTries<6){vmSTTTries++;setTimeout(vmSTT,2000);}}
+}
+function vmWatchEnd(){
+  vmEndTimer=setInterval(function(){
+    if(!VM_MODE){clearInterval(vmEndTimer);vmEndTimer=null;return;}
+    if(Date.now()>vmEndAt&&!vmWantEnd){
+      vmWantEnd=true;vmSpeak("Thank you for calling. I will pass your message on. Goodbye.");
+      setTimeout(function(){if(VM_MODE)hangup(true);},2800);
+    }
+  },2000);
+}
+async function vmSpeak(text){
+  if(!VM_MODE||vmSpeaking||!text)return;
+  vmSpeaking=true;
+  try{
+    const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:String(text).slice(0,600)})});
+    if(r.ok&&mixCtx){
+      const buf=await r.arrayBuffer();
+      try{await mixCtx.resume();}catch(e){}
+      const ab=await mixCtx.decodeAudioData(buf.slice(0));
+      const src=mixCtx.createBufferSource();src.buffer=ab;src.connect(voiceBus);src.start(0);
+      setTimeout(function(){vmSpeaking=false;},ab.duration*1000+400);
+      return;
+    }
+  }catch(e){}
+  vmSpeaking=false;
+}
+function vmOnMsg(from,text){
+  if(VM_MODE&&from===AI_VM){
+    if(text&&String(text).indexOf("📞")!==0)vmSpeak(text);
+    return true;
+  }
+  return false;
+}
+function vmStop(){
+  VM_MODE=false;vmDisarm();
+  if(vmEndTimer){clearInterval(vmEndTimer);vmEndTimer=null;}
+  try{if(vmRec&&vmRec.state!=="inactive")vmRec.stop();}catch(e){}
+  vmRec=null;
+  try{$("vmTake").style.display="none";}catch(e){}
+}
+function vmTakeOver(){
+  vmStop();toast("You have the call");
+  try{callStart=Date.now();$("callStat").textContent="00:00";}catch(e){}
+}
+function vmEndNote(){
+  if(!ME)return;
+  api("chat",{from:ME,to:AI_VM,text:"📞 The call has just ended. Send one final short line: a 📝 voicemail note summarizing the call for "+(ME_NAME||"me")+"."}).catch(function(){});
+}
+
 let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null,WIN_BLOCKS=[];
 let PIC_CACHE={};try{PIC_CACHE=JSON.parse(localStorage.getItem("aicall_pics"))||{};}catch(e){}
@@ -889,6 +987,7 @@ async function register(){
 async function finishLogin(d){
   ME=d.id;ME_NAME=d.name;
   if(d.aid){AID=d.aid;try{localStorage.setItem("ac_aid",d.aid);}catch(e){}}
+  vmStat();
   e2eInit();
   api("friends",{node:ME}).then(fr=>{if(fr&&fr.blocks)WIN_BLOCKS=fr.blocks||[];}).catch(()=>{});
   refreshMyPic();
@@ -2066,6 +2165,7 @@ function showCall(txt){
   $("callview").className="ovl";
 }
 function acceptCall(){
+  vmDisarm();
   pushHist();
   stopRing();
   const m=pendingOffer;pendingOffer=null;
@@ -2075,6 +2175,7 @@ function acceptCall(){
   try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}
 }
 async function declineCall(){
+  vmDisarm();
   stopRing();
   const m=pendingOffer;pendingOffer=null;
   $("incoming").className="ovl hide";
@@ -2147,6 +2248,7 @@ async function toggleCam(){
   }catch(e){toast("Camera unavailable");}
 }
 function callCleanup(){
+  if(VM_MODE){vmStop();vmEndNote();}
   stopRing();
   if(pc)pc.close();pc=null;state="idle";
   if(mic){try{mic.getTracks().forEach(t=>t.stop());}catch(e){}mic=null;}
@@ -2249,7 +2351,7 @@ for(const m of msgs){
     if(state==="idle"){
       const gate=await api("can_call",{from:m.from,to:ME});
       if(!gate.ok){await log("BLOCKED call from +"+m.from);continue;}
-      pendingOffer=m;state="incoming";incomingAt=Date.now();
+      pendingOffer=m;state="incoming";incomingAt=Date.now();vmArm();
       const n=(WIN_NAMES[m.from]||"Caller")+" · +"+m.from;
       $("incName").textContent=n;
       $("incAv").textContent=n.charAt(0).toUpperCase();
@@ -2345,7 +2447,7 @@ async function poll(){
       }
       const fm=rawTxt.match(/^\[file:([a-z0-9]+)\]$/i);
       if(fm)(CHATS[from]=CHATS[from]||[]).push({who:"them",fileId:fm[1],ts:m.id});
-      else (CHATS[from]=CHATS[from]||[]).push({who:"them",text:await e2eDec(from,rawTxt),ts:m.id});
+      else{const dtx=await e2eDec(from,rawTxt);(CHATS[from]=CHATS[from]||[]).push({who:"them",text:dtx,ts:m.id});vmOnMsg(from,dtx);}
       if(CHAT_OPEN===from){
         renderBubbles();
         if(Date.now()-RR_AT>3000){RR_AT=Date.now();api("chat",{from:ME,to:from,text:"rr:"+m.id}).catch(()=>{});}
