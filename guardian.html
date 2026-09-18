@@ -7,9 +7,9 @@
 </head><body>
 <div id="st">guardian booting…</div><div id="log"></div>
 <script>
-const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
-const RINGFN="https://superagent-ccb075d2.base44.app/functions/airconnectRing";
-const GREET="https://superagent-ccb075d2.base44.app/functions/airconnectGreet";
+const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const GREET="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const RTC_CFG={iceServers:[
   {urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
   {urls:"turn:openrelay.metered.ca:80",username:"openrelayproject",credential:"openrelayproject"},
@@ -56,8 +56,8 @@ function ensureAudio(){
     return true;
   }catch(e){log("audio ctx failed: "+e);return false;}
 }
-const TTS_URL="https://superagent-ccb075d2.base44.app/functions/airconnectTts";
-const STT_URL="https://superagent-ccb075d2.base44.app/functions/airconnectStt";
+const TTS_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const STT_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
 async function playBuf(buf){
   const decoded=await voiceCtx.decodeAudioData(buf.slice(0));
   const src=voiceCtx.createBufferSource();src.buffer=decoded;

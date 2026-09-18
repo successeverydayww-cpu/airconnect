@@ -62,10 +62,10 @@
 </div>
 <script>
 const $=id=>document.getElementById(id);
-const FN="https://superagent-ccb075d2.base44.app/functions/airconnectTrunk";
-const RINGFN="https://superagent-ccb075d2.base44.app/functions/airconnectRing";
-const TTS_URL="https://superagent-ccb075d2.base44.app/functions/airconnectTts";
-const STT_URL="https://superagent-ccb075d2.base44.app/functions/airconnectStt";
+const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const TTS_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
+const STT_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const OWNER=(new URLSearchParams(location.search).get("owner"))||"234100000001";
 
 /* ---------- E2E chat encryption (ECDH P-256 + AES-GCM) ---------- */
@@ -342,7 +342,7 @@ function claimReply(t,sender){
   if(/^\s*GREETING\s*:/i.test(t)){
     const gt=t.replace(/^\s*GREETING\s*:/i,"").trim().slice(0,490);
     if(gt.length<5)return "Almost! Type it like this: GREETING: (what your AI should say when it answers calls for you)";
-    fetch("https://superagent-ccb075d2.base44.app/functions/airconnectGreet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"set",num:sender||ME,text:gt})}).catch(()=>{});
+    fetch("https://airconnect-api.successeverydayww-cpu.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"set",num:sender||ME,text:gt})}).catch(()=>{});
     return "🎙️ Greeting saved! When someone calls you and you can't pick, call them back once more — on the second ring your personal AI answers and says: \""+gt+"\". You can change it anytime by sending GREETING: followed by your new words.";
   }
   return null;

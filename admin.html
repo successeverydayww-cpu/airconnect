@@ -30,7 +30,7 @@ async function loadStats(){
   const out=document.getElementById("out");
   out.innerHTML="Loading…";
   try{
-    const r=await fetch("https://superagent-ccb075d2.base44.app/functions/airconnectTrunk",{
+    const r=await fetch("https://airconnect-api.successeverydayww-cpu.workers.dev",{
       method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({act:"stats2",node:"234100000001"})});
     const d=await r.json();
