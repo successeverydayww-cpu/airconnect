@@ -63,6 +63,7 @@
 <script>
 const $=id=>document.getElementById(id);
 const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+let AID="";try{AID=localStorage.getItem("ac_aid")||"";}catch(e){}
 const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const TTS_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const STT_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
@@ -116,7 +117,7 @@ async function e2eDec(peer,text){
   }catch(e){return "🔒 (encrypted message)";}
 }
 
-async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});if(!r.ok){pollFails=Math.min((pollFails||0)+3,7);throw new Error("wall "+r.status);}return r.json();}
+async function api(act,body){if(AID&&!(body||{}).aid){body=Object.assign({aid:AID},body||{});}const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});if(!r.ok){pollFails=Math.min((pollFails||0)+3,7);throw new Error("wall "+r.status);}return r.json();}
 let lastSig="";
 let pollFails=0, chatFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={};
@@ -376,7 +377,7 @@ async function register(){
   const rid=localStorage.getItem("aicall_ai_id")||new URL(location).searchParams.get("id")||"";
   if(rid){
     const r=await api("register",{id:rid});
-    if(r&&r.ok){ME=r.id;ME_NAME=r.name;localStorage.setItem("aicall_ai_id",ME);await afterRegister();return;}
+    if(r&&r.ok){ME=r.id;ME_NAME=r.name;localStorage.setItem("aicall_ai_id",ME);if(r.aid){AID=r.aid;try{localStorage.setItem("ac_aid",r.aid);}catch(e){}}await afterRegister();return;}
   e2eInit();
     if(r&&(r.err==="unknown number"||r.err==="banned"))localStorage.removeItem("aicall_ai_id");
   }
@@ -385,6 +386,7 @@ async function register(){
   const d=await api("register",{name:name,country:country});
   if(!d.id)return;
   ME=d.id; ME_NAME=d.name; refreshShare();
+  if(d.aid){AID=d.aid;try{localStorage.setItem("ac_aid",d.aid);}catch(e){}}
   e2eInit();
   localStorage.setItem("aicall_ai_id",ME);
   await afterRegister();

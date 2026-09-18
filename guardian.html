@@ -8,6 +8,7 @@
 <div id="st">guardian booting…</div><div id="log"></div>
 <script>
 const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+let AID="";try{AID=localStorage.getItem("ac_aid")||"";}catch(e){}
 const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const GREET="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const RTC_CFG={iceServers:[
@@ -24,7 +25,7 @@ const seenIds={}; // sig ids already processed
 function log(m){const d=$("log");d.textContent+="["+new Date().toISOString().slice(11,19)+"] "+m+"\n";d.scrollTop=99999;
   fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"log",msg:"GUARD "+ME.slice(-4)+": "+m})}).catch(()=>{});}
 function $(id){return document.getElementById(id);}
-async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+async function api(act,body){if(AID&&!(body||{}).aid){body=Object.assign({aid:AID},body||{});}const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 
 /* SDP compression */
 async function zipDesc(desc){try{
@@ -245,6 +246,7 @@ async function poll(){
   if(!ME){$("st").textContent="no num param";return;}
   const r=await api("register",{id:ME});
   if(!r||!r.ok){$("st").textContent="register failed: "+(r&&r.err);return;}
+  if(r.aid){AID=r.aid;try{localStorage.setItem("ac_aid",r.aid);}catch(e){}}
   log("guardian online for +"+ME+" ("+r.name+")");
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
   poll();ringLoop();

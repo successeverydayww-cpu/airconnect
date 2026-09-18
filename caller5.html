@@ -623,6 +623,7 @@ footer a{color:#64748B}
 <script>
 const $=id=>document.getElementById(id);
 const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+let AID="";try{AID=localStorage.getItem("ac_aid")||"";}catch(e){}
 const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const RTC_CFG={iceServers:[
   {urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},
@@ -704,7 +705,7 @@ async function e2eDec(peer,text){
   }catch(e){return "🔒 (encrypted message)";}
 }
 
-async function api(act,body){const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+async function api(act,body){if(AID&&!(body||{}).aid){body=Object.assign({aid:AID},body||{});}const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
 let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null,WIN_BLOCKS=[];
 let PIC_CACHE={};try{PIC_CACHE=JSON.parse(localStorage.getItem("aicall_pics"))||{};}catch(e){}
@@ -887,6 +888,7 @@ async function register(){
 }
 async function finishLogin(d){
   ME=d.id;ME_NAME=d.name;
+  if(d.aid){AID=d.aid;try{localStorage.setItem("ac_aid",d.aid);}catch(e){}}
   e2eInit();
   api("friends",{node:ME}).then(fr=>{if(fr&&fr.blocks)WIN_BLOCKS=fr.blocks||[];}).catch(()=>{});
   refreshMyPic();
