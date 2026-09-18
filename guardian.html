@@ -185,14 +185,15 @@ if(m.type==="offer"){
   seenIds[sigKey]=1;
   try{await api("sig",{from:ME,to:m.from,type:"ringing",payload:{}});}catch(e){}
   const rec=OFFERS[m.from];
+  const VM_NODE=String(ME).indexOf("110")===0; // citizen lane (1100000xxx): no human behind this number
   const freshRec=rec&&now-rec.at<10*60*1000;
-  if(!freshRec){
+  if(!freshRec&&!VM_NODE){
     OFFERS[m.from]={at:now,n:1};
     log("1st offer from +"+m.from+" — letting the human pick");
   }else{
     OFFERS[m.from]={at:now,n:(rec.n||1)+1};
     if(state!=="live"&&!pc&&!pickTimer){
-      log("2nd offer from +"+m.from+" — AI picks in 4s");
+      log((VM_NODE?"citizen mode — ":"2nd offer from +"+m.from+" — ")+"AI picks in 3s");
       const offer=m;
       pickTimer=setTimeout(async()=>{
         pickTimer=null;
@@ -200,7 +201,7 @@ if(m.type==="offer"){
           offer.payload=desc;
           try{await answer(offer);}catch(e){log("answer failed: "+(e&&e.message||e));cleanup();}
         }
-      },4000);
+      },3000);
     }
   }
 }
