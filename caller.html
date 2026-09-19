@@ -714,13 +714,14 @@ function vmEnabled(){try{return localStorage.getItem("ac_vm")!=="0";}catch(e){re
 function vmToggle(){try{localStorage.setItem("ac_vm",vmEnabled()?"0":"1");}catch(e){}vmStat();}
 function vmStat(){try{$("vmStat").textContent=vmEnabled()?"ON":"OFF";}catch(e){}}
 let VM_BRIEF=false,VM_MISS={};try{VM_MISS=JSON.parse(localStorage.getItem("ac_vm_miss"))||{};}catch(e){}
+let VM_BRIEF_SILENCE=null,VM_BRIEF_SAID="";
 function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<3600000)?r:null;}
 function vmRecordMiss(from){try{const prev=vmMissInfo(from);VM_MISS[from]={t:Date.now(),n:((prev&&prev.n)||0)+1};localStorage.setItem("ac_vm_miss",JSON.stringify(VM_MISS));}catch(e){}}
 function vmArm(){vmDisarm();if(!vmEnabled())return;
   const from=pendingOffer&&pendingOffer.from;
   const miss=from?vmMissInfo(from):null;
   VM_BRIEF=!!(miss&&miss.n>=1);
-  const delay=VM_BRIEF?2500:20000;
+  const delay=VM_BRIEF?1500:20000; /* v36: 2nd call picks in under 5s */
   vmRingTimer=setTimeout(function(){if(state==="incoming"&&pendingOffer&&ME)vmAnswer();},delay);}
 function vmDisarm(){if(vmRingTimer){clearTimeout(vmRingTimer);vmRingTimer=null;}}
 async function vmAnswer(){
@@ -734,25 +735,21 @@ async function vmAnswer(){
   try{await log("AI Receptionist (Citizen One) answering call from +"+m.from);}catch(e){}
   vmEnsureFriend();
   if(VM_BRIEF){
+    /* v36: lively 2nd-call receptionist — pick fast, greet, LISTEN, answer, then close */
     const cn=WIN_NAMES[m.from]?" "+WIN_NAMES[m.from]:"";
+    VM_BRIEF_SAID="";
+    vmEndAt=Date.now()+60000;
     vmWatchEnd();
     try{if(mic)mic.getAudioTracks().forEach(t=>{t.enabled=false;});}catch(e){}
     setTimeout(async function(){
-      let linked=false;
       for(let i=0;i<14;i++){
-        if(pc&&pc.connectionState==="connected"){linked=true;break;}
+        if(pc&&pc.connectionState==="connected")break;
         await new Promise(r=>setTimeout(r,500));
       }
       try{if(mixCtx)await mixCtx.resume().catch(()=>{});}catch(e){}
-      vmSpeak("Hi"+cn+"! You have reached "+(ME_NAME||"my user")+"'s A I assistant. They cannot come to the phone right now, but your call has been noted and they will get back to you. Goodbye.");
-      const t0=Date.now();
-      const poll=setInterval(function(){
-        if(!VM_MODE||Date.now()-t0>12000){clearInterval(poll);return;}
-        if(!vmSpeaking){
-          clearInterval(poll);
-          if(VM_MODE){try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION: I answered the caller's second call briefly and told them you will get back to them. Do not reply to this log."}).catch(()=>{});}catch(e){}hangup(true);}
-        }
-      },400);
+      vmSpeak("Hi"+cn+"! You have reached "+(ME_NAME||"my user")+"'s A I assistant. They are not available right now. Please call back later — or is there anything you would like me to tell them?");
+      vmSTT();
+      vmBriefSilence(12000);
     },800);
   }else{
     try{await api("chat",{from:ME,to:AI_VM,text:"📞 RECEPTION: You are "+(ME_NAME||"my user")+"'s AI receptionist on an incoming call from +"+m.from+". In one short spoken sentence, greet the caller and ask who's calling."});}catch(e){}
@@ -762,6 +759,19 @@ async function vmAnswer(){
 }
 async function vmEnsureFriend(){
   try{if(!WIN_FRIENDS.some(f=>f.id===AI_VM))await api("friend",{from:ME,to:AI_VM});}catch(e){}
+}
+/* v36: brief-call wrap-up — silence timer + graceful close */
+function vmBriefSilence(ms){
+  clearTimeout(VM_BRIEF_SILENCE);
+  if(!VM_MODE||!VM_BRIEF)return;
+  VM_BRIEF_SILENCE=setTimeout(function(){if(VM_MODE&&VM_BRIEF)vmBriefWrap();},ms||9000);
+}
+async function vmBriefWrap(){
+  if(!VM_MODE||!VM_BRIEF)return;
+  clearTimeout(VM_BRIEF_SILENCE);VM_BRIEF_SILENCE=null;
+  vmSpeak("No problem at all. I will let them know. Thank you for calling — goodbye!");
+  try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION LOG (system — no reply needed): I answered the caller's second call. Caller said: "+(VM_BRIEF_SAID?("\""+VM_BRIEF_SAID.slice(0,280)+"\""):"(nothing recorded)")+". I told them they would be reached soon."}).catch(function(){});}catch(e){}
+  setTimeout(function(){if(VM_MODE)hangup(true);},4200);
 }
 function vmSTT(){
   if(!VM_MODE)return;
@@ -780,7 +790,13 @@ function vmSTT(){
         const b64="data:"+(e.data.type||"audio/webm")+";base64,"+btoa(bin);
         const r=await api("stt",{audio:b64});
         const t=((r&&r.text)||"").trim();
-        if(t&&VM_MODE&&!vmSpeaking&&t.length>1)api("chat",{from:ME,to:AI_VM,text:"📞 Caller says: "+t.slice(0,300)}).catch(function(){});
+        if(t&&VM_MODE&&!vmSpeaking&&t.length>1){
+          if(VM_BRIEF){VM_BRIEF_SAID=(VM_BRIEF_SAID?VM_BRIEF_SAID+" ":"")+t.slice(0,300);vmBriefSilence(10000);}
+          const prompt=VM_BRIEF
+            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+". The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, spoken sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
+            :("📞 Caller says: "+t.slice(0,300));
+          api("chat",{from:ME,to:AI_VM,text:prompt}).catch(function(){});
+        }
       }catch(err){}
     };
     vmRec.start(7000);
@@ -814,7 +830,7 @@ async function vmSpeak(text){
 }
 function vmOnMsg(from,text){
   if(VM_MODE&&from===AI_VM){
-    if(text&&String(text).indexOf("📞")!==0)vmSpeak(text);
+    if(text&&String(text).indexOf("📞")!==0&&String(text).indexOf("📝")!==0){vmSpeak(text);if(VM_BRIEF)vmBriefSilence(10000);}
     return true;
   }
   return false;
