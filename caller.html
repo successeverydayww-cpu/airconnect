@@ -196,7 +196,7 @@ footer a{color:#64748B}
         <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold the button and speak · max 30 seconds</div>
         <div id="stVRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="stVPrev" class="hide" style="margin:10px 0"></div>
-        <button id="stVMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Hold to record</button>
+        <button id="stVMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>
         <div id="stVBtns" class="hide" style="display:flex;gap:8px;margin-top:10px">
           <button class="big" style="flex:1;background:#CBD5E1" onclick="stVoiceDiscard()">Discard</button>
           <button class="big blue" style="flex:1" onclick="stVoicePost()">✔ Post</button>
@@ -503,7 +503,7 @@ footer a{color:#64748B}
         <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold and speak · max 60 seconds</div>
         <div id="cvRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="cvPrev" class="hide" style="margin:10px 0"></div>
-        <button id="cvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Hold to record</button>
+        <button id="cvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>
         <div id="cvBtns" class="hide" style="display:flex;gap:8px;margin-top:10px">
           <button class="big" style="flex:1;background:#CBD5E1" onclick="cvDiscard()">Discard</button>
           <button class="big blue" style="flex:1" onclick="cvSend()">➤ Send</button>
@@ -747,7 +747,7 @@ async function vmAnswer(){
         await new Promise(r=>setTimeout(r,500));
       }
       try{if(mixCtx)await mixCtx.resume().catch(()=>{});}catch(e){}
-      vmSpeak("Hi"+cn+"! You have reached "+(ME_NAME||"my user")+"'s A I assistant. They are not available right now. Please call back later — or is there anything you would like me to tell them?");
+      vmSpeak("Hello"+cn+", good to hear from you. You have reached "+(ME_NAME||"my user")+"'s assistant. They are not available at the moment. Please call back later — or, if there is anything you would like me to tell them, I would be glad to pass it on.");
       vmSTT();
       vmBriefSilence(12000);
     },800);
@@ -769,7 +769,7 @@ function vmBriefSilence(ms){
 async function vmBriefWrap(){
   if(!VM_MODE||!VM_BRIEF)return;
   clearTimeout(VM_BRIEF_SILENCE);VM_BRIEF_SILENCE=null;
-  vmSpeak("No problem at all. I will let them know. Thank you for calling — goodbye!");
+  vmSpeak("Of course. I will let them know. Thank you for calling — goodbye.");
   try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION LOG (system — no reply needed): I answered the caller's second call. Caller said: "+(VM_BRIEF_SAID?("\""+VM_BRIEF_SAID.slice(0,280)+"\""):"(nothing recorded)")+". I told them they would be reached soon."}).catch(function(){});}catch(e){}
   setTimeout(function(){if(VM_MODE)hangup(true);},4200);
 }
@@ -793,7 +793,7 @@ function vmSTT(){
         if(t&&VM_MODE&&!vmSpeaking&&t.length>1){
           if(VM_BRIEF){VM_BRIEF_SAID=(VM_BRIEF_SAID?VM_BRIEF_SAID+" ":"")+t.slice(0,300);vmBriefSilence(10000);}
           const prompt=VM_BRIEF
-            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+". The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, spoken sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
+            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+" — serve this user's caller with calm, humble loyalty. The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, wise, calm sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
             :("📞 Caller says: "+t.slice(0,300));
           api("chat",{from:ME,to:AI_VM,text:prompt}).catch(function(){});
         }
@@ -1875,21 +1875,22 @@ async function fetchFileBubble(m,d){
   }catch(e){d.textContent="⚠ attachment unavailable";}
 }
 function pickFile(){const s=$("attsheet"),bg=$("attsheetbg");const show=s.className.indexOf("hide")>=0;s.className=show?"":"hide";bg.className=show?"":"hide";}
+let CVR_ACTIVE=false;
+function cvToggle(){
+  if(CVR_B64)return;
+  if(CVR_ACTIVE){cvUp();CVR_ACTIVE=false;}
+  else{CVR_ACTIVE=true;cvDown();}
+}
 (function(){const b=document.getElementById("cvMic");if(!b)return;
- let down=false;
- function dn(e){if(down)return;down=true;e&&e.preventDefault&&e.preventDefault();cvDown(e);}
- function up(){if(!down)return;down=false;cvUp();}
- b.addEventListener("pointerdown",dn);b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);b.addEventListener("pointerleave",up);
- b.addEventListener("touchstart",function(e){e.preventDefault();dn(e);},{passive:false});
- b.addEventListener("touchend",function(e){e.preventDefault();up();},{passive:false});
+ b.addEventListener("click",function(e){e.preventDefault();cvToggle();});
 })();
+let STV_ACTIVE=false;
+function stVToggle(){
+  if(STV_ACTIVE){stVoiceUp();STV_ACTIVE=false;}
+  else{STV_ACTIVE=true;stVoiceDown();}
+}
 (function(){const b=document.getElementById("stVMic");if(!b)return;
- let down=false;
- function dn(e){if(down)return;down=true;e&&e.preventDefault&&e.preventDefault();stVoiceDown(e);}
- function up(){if(!down)return;down=false;stVoiceUp();}
- b.addEventListener("pointerdown",dn);b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);b.addEventListener("pointerleave",up);
- b.addEventListener("touchstart",function(e){e.preventDefault();dn(e);},{passive:false});
- b.addEventListener("touchend",function(e){e.preventDefault();up();},{passive:false});
+ b.addEventListener("click",function(e){e.preventDefault();stVToggle();});
 })();
 function attPick(w){$("attsheet").className="hide";$("attsheetbg").className="hide";const map={cam:"caminput",gal:"galinput",doc:"docinput"};const el=$(map[w]);if(el)el.click();}
 async function fileChosen(fi){
@@ -1956,7 +1957,8 @@ const F2_CACHE={};
 async function attVideoChosen(fi){
   const f=fi.files&&fi.files[0];fi.value="";
   if(!f||!CHAT_OPEN||chatBusy)return;
-  if(f.size>60*1024*1024){toast("Please keep chat videos under 60MB");return;}
+  if(f.size>100*1024*1024){toast("Please keep chat videos under 100MB");return;}
+  if(f.size>60*1024*1024)toast("Large video — upload may take a few minutes");
   chatBusy=true;
   const CH=100000; /* b64 chars per chunk (~75KB binary) */
   const n=Math.ceil(f.size/(CH*0.75));
@@ -2036,7 +2038,7 @@ async function cvDown(e){
   CVR.onstop=function(){
     try{CVR_STREAM.getTracks().forEach(function(t){t.stop();});}catch(e2){}
     const blob=new Blob(CVR_CH,{type:mime.split(";")[0]});
-    if(!blob.size){toast("Nothing recorded — hold while you speak");return;}
+    if(!blob.size){toast("Nothing recorded — tap once, speak, then tap again");return;}
     const fr=new FileReader();
     fr.onload=function(){
       CVR_B64=String(fr.result);
@@ -2721,7 +2723,7 @@ function gVoiceSheet(){
   if(!el){el=document.createElement("div");el.id="gvsheet";el.className="ovl";el.style.zIndex="60";
     el.innerHTML='<div class="sheet" style="text-align:center"><div style="font-weight:600;margin-bottom:4px">🎙️ Voice note to group</div>'+
     '<div id="gvRec" class="hide" style="color:#DC2626;font-weight:700;margin:8px 0"></div>'+
-    '<button id="gvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Hold to record</button>'+
+    '<button id="gvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>'+
     '<div id="gvPrev" class="hide" style="margin:10px 0"></div>'+
     '<div id="gvBtns" class="hide" style="display:flex;gap:8px"><button class="big" style="flex:1;background:#CBD5E1" onclick="gvDiscard()">✖ Discard</button><button class="big blue" style="flex:1" onclick="gvSend()">➤ Send</button></div>'+
     '<button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="gvClose()">Close</button></div>';
@@ -2751,7 +2753,7 @@ async function gvDown(){
   GV.rec.onstop=function(){
     try{GV.stream.getTracks().forEach(function(t){t.stop();});}catch(e2){}
     const blob=new Blob(GV.ch,{type:(mime||"audio/webm").split(";")[0]});
-    if(!blob.size){toast("Nothing recorded — hold while you speak");return;}
+    if(!blob.size){toast("Nothing recorded — tap once, speak, then tap again");return;}
     const fr=new FileReader();
     fr.onload=function(){GV.b64=String(fr.result);$("gvPrev").className="";$("gvPrev").innerHTML='<audio controls autoplay src="'+GV.b64+'" style="width:100%"></audio>';$("gvBtns").className="";};
     fr.readAsDataURL(blob);
