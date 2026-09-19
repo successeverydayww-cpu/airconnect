@@ -23,6 +23,20 @@ button{background:#0C4A6E;color:#fff;border:0;border-radius:10px;padding:11px;wi
 <div class="sub">Private dashboard — data pulls live from the trunk for the owner number only.</div>
 <button onclick="loadStats()">Load live stats</button>
 <div id="out" style="margin-top:14px">Tap the button — numbers load in ~2 seconds.</div>
+<h2>💰 Wallet admin — payment receipts</h2>
+<div class="sub">Every submitted top-up receipt lands here. Confirm to credit the user's wallet, reject to clear the claim. Owner login only.</div>
+<div style="display:flex;gap:8px;margin:10px 0">
+<input id="waNum" placeholder="Owner number" value="234100000001" style="flex:1;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
+<input id="waAid" placeholder="AIR ID" type="password" style="flex:1.4;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
+</div>
+<button onclick="waLoad()">Load payment receipts</button>
+<div id="waOut" style="margin-top:10px"></div>
+<h2>⚡ Manual activation</h2>
+<div style="display:flex;gap:8px;margin:10px 0">
+<input id="waTo" placeholder="User number" style="flex:1;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
+<input id="waAmt" placeholder="₦ amount" style="flex:1;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
+</div>
+<button onclick="waManual()">Credit wallet</button>
 <h2>Signups by day</h2>
 <div id="days"></div>
 <script>
@@ -49,6 +63,78 @@ async function loadStats(){
     document.getElementById("days").innerHTML=keys.map(k=>'<div class="day"><span style="min-width:80px">'+k+'</span><span class="bar" style="width:'+Math.round(days[k]/mx*220)+'px"></span><span>'+days[k]+"</span></div>").join("")||"No signups yet.";
   }catch(e){out.innerHTML="⚠ Could not reach the trunk";}
 }
+
+const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+async function waApi(body){
+  const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  return r.json();
+}
+function waCred(){return {by:String(document.getElementById("waNum").value||"").trim(), aid:String(document.getElementById("waAid").value||"").trim()};}
+async function waLoad(){
+  const out=document.getElementById("waOut");
+  out.innerHTML="Loading…";
+  try{localStorage.setItem("ac_wa_aid",waCred().aid);}catch(e){}
+  const d=await waApi(Object.assign({act:"wclaims"},waCred()));
+  if(d.err){out.innerHTML="⚠ "+d.err;return;}
+  const claims=d.claims||[];
+  if(!claims.length){out.innerHTML='<div class="m"><div class="k">No pending claims</div><div class="v">✓</div></div>';return;}
+  out.innerHTML=claims.map(c=>
+    '<div class="m" style="flex-direction:column;align-items:stretch">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center">'+
+    '<div><div class="k" style="font-size:14px;color:#E2E8F0;font-weight:600">'+esc2(c.name||c.num)+' <span style="color:#94A3B8">+'+c.num+'</span></div>'+
+    '<div class="k">₦'+Number(c.amt||0).toLocaleString()+' · '+esc2(c.ref||"")+' · '+new Date(c.at||0).toLocaleString()+(c.fid?' · 📎 '+esc2(c.rcp||"receipt"):' · no receipt')+'</div></div>'+
+    '<div style="display:flex;gap:6px"><button style="width:auto;background:#16a34a;padding:9px 14px" onclick="waConfirm(\''+c.k+'\',\''+c.num+'\','+c.amt+')">✓ Confirm</button>'+
+    '<button style="width:auto;background:#e2445c;padding:9px 12px" onclick="waReject(\''+c.k+'\')">✕</button></div></div>'+
+    (c.fid?'<img src="https://successeverydayww-cpu.github.io/airconnect/pixel.png" data-fid="'+c.fid+'" onload="waRcp(this)" style="display:none;max-width:100%;border-radius:10px;margin-top:8px;cursor:pointer" onclick="waBig(this)"><div class="k" style="color:#0EA5E9;cursor:pointer;margin-top:6px" onclick="waRcpBtn(\''+c.fid+'\')">📎 View receipt</div>':'')+
+    '</div>').join("");
+}
+async function waRcp(img){
+  try{
+    const fid=img.getAttribute("data-fid");
+    const m=await waApi({act:"fget",from:"234100000001",fid,ci:-1});
+    if(!m||!m.ok||!m.n){return;}
+    let b64="";
+    for(let i=0;i<m.n;i++){
+      const c=await waApi({act:"fget",from:"234100000001",fid,ci:i});
+      if(!c||!c.ok){return;}
+      b64+=c.v;
+    }
+    img.src="data:image/jpeg;base64,"+b64;
+    img.style.display="block";
+  }catch(e){}
+}
+async function waRcpBtn(fid){
+  const imgs=document.querySelectorAll('img[data-fid="'+fid+'"]');
+  if(imgs.length&&imgs[0].src.indexOf("base64")>0){waBig(imgs[0]);return;}
+  for(const im of imgs){await waRcp(im);}
+  if(imgs.length&&imgs[0].src.indexOf("base64")>0)waBig(imgs[0]);
+}
+function waBig(img){try{const w=window.open("");w.document.write('<body style="margin:0;background:#0B1220"><img style="max-width:100%" src="'+img.src+'"></body>');}catch(e){}}
+async function waConfirm(k,num,amt){
+  const c=waCred();
+  const r=await waApi({act:"wconfirm",by:c.by,aid:c.aid,to:num,amt:amt,note:"receipt verified"});
+  if(r&&r.ok){
+    await waApi({act:"wconfirm",by:c.by,aid:c.aid,claim:k});
+    waLoad();
+  } else { alert("Failed: "+((r&&r.err)||"try again")); }
+}
+async function waReject(k){
+  if(!confirm("Reject and clear this claim?"))return;
+  const c=waCred();
+  const r=await waApi({act:"wconfirm",by:c.by,aid:c.aid,claim:k});
+  if(r&&r.ok)waLoad(); else alert("Failed: "+((r&&r.err)||"try again"));
+}
+async function waManual(){
+  const to=String(document.getElementById("waTo").value||"").replace(/[^0-9]/g,"");
+  const amt=Math.round(Number(String(document.getElementById("waAmt").value||"").replace(/[^0-9.-]/g,"")));
+  if(!to||!amt){alert("Enter number and amount");return;}
+  const c=waCred();
+  const r=await waApi({act:"wconfirm",by:c.by,aid:c.aid,to,amt,note:"manual activation"});
+  if(r&&r.ok){alert("Credited ✓ new balance ₦"+Number(r.bal||0).toLocaleString());document.getElementById("waAmt").value="";}
+  else alert("Failed: "+((r&&r.err)||"try again"));
+}
+try{document.getElementById("waAid").value=localStorage.getItem("ac_wa_aid")||"";}catch(e){}
+function esc2(s){return String(s).replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 </script>
 </body>
 </html>

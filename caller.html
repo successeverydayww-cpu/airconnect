@@ -215,13 +215,31 @@ footer a{color:#64748B}
       <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')">▶️ Watch</button>
       <button id="wtb-chans" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('chans')">📺 Channels</button>
     </div>
+    <div id="wtcatbar" style="display:flex;gap:6px;padding:8px 12px 0;overflow-x:auto;white-space:nowrap;position:sticky;top:46px;background:#fff;z-index:5"></div>
     <div id="wtfeed" style="padding:10px 12px 20px"></div>
     <div id="wtchans" class="hide" style="padding:10px 12px 20px"></div>
     <div style="display:flex;justify-content:center;padding:0 0 90px">
       <button class="big blue" style="border-radius:24px;padding:12px 22px" onclick="wtComposeOpen()">＋ Create post</button>
     </div>
   </div>
-  <div id="wtComposer" class="ovl hide" style="z-index:60" onclick="if(event.target===this)wtComposeClose()">
+  <div id="wtChSheet" class="ovl hide" style="z-index:62">
+  <div class="card" style="max-width:420px;margin:8vh auto 0;padding:18px">
+    <div style="font-weight:700;font-size:16px;margin-bottom:4px">📺 Create your channel</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:12px">Channels are email-verified so viewers know it's really you.</div>
+    <input id="wtChName" placeholder="Channel name" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;font-size:14px;box-sizing:border-box">
+    <textarea id="wtChAbout" placeholder="What your channel is about" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;font-size:14px;min-height:52px;box-sizing:border-box"></textarea>
+    <input id="wtChEmail" placeholder="Your email (we send the code here)" inputmode="email" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:10px;font-size:14px;box-sizing:border-box">
+    <button id="wtChSendBtn" class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChSendCode()">Send code 📧</button>
+    <div id="wtChCodeRow" style="display:none">
+      <div id="wtChSent" style="font-size:12px;color:#0EA5E9;margin:10px 0 6px"></div>
+      <input id="wtChCode" placeholder="6-digit code" inputmode="numeric" maxlength="6" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;font-size:16px;letter-spacing:4px;text-align:center;box-sizing:border-box">
+      <button class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChVerify()">Verify &amp; create channel ✓</button>
+      <button class="big" style="width:100%;padding:8px;margin-top:6px;border-radius:12px;background:#E2E8F0;color:#334155;font-size:12px" onclick="wtChSendCode()">Resend code</button>
+    </div>
+    <button class="big" style="width:100%;padding:8px;margin-top:10px;border-radius:12px;background:#E2E8F0;color:#334155" onclick="$('wtChSheet').className='ovl hide'">Cancel</button>
+  </div>
+</div>
+<div id="wtComposer" class="ovl hide" style="z-index:60" onclick="if(event.target===this)wtComposeClose()">
     <div class="card" style="position:absolute;bottom:0;left:0;right:0;border-radius:16px 16px 0 0;max-width:480px;margin:0 auto;padding:16px">
       <div style="font-weight:700;margin-bottom:8px">＋ New post</div>
       <textarea id="wtText" placeholder="Share a word, a lesson, a blessing…" style="width:100%;min-height:80px;border:1px solid #CBD5E1;border-radius:10px;padding:10px;font-size:14px;box-sizing:border-box"></textarea>
@@ -230,6 +248,7 @@ footer a{color:#64748B}
 
       </div>
       <div id="wtVidStat" style="font-size:12px;color:#64748B;margin-top:6px"></div>
+      <div id="wtPCatBar" style="display:flex;gap:6px;overflow-x:auto;margin-top:8px"></div>
       <input type="file" id="wtVidIn" accept="video/*" class="hide">
       <button class="big blue" style="width:100%;margin-top:10px;padding:12px" onclick="wtPost()">Post</button>
     </div>
@@ -488,6 +507,7 @@ footer a{color:#64748B}
     <button class="big blue" id="rsPin" style="width:100%" onclick="rsPin()">📌 Pin chat</button>
     <button class="big" id="rsMute" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="rsMute()">🔕 Mute</button>
     <button class="big" id="rsArch" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="rsArch()">🗄 Archive</button>
+    <button class="big" id="rsName" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="rsRename()">✏️ Rename contact</button>
     <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeRs()">Cancel</button>
     <div style="height:8px"></div>
   </div>
@@ -1216,19 +1236,37 @@ function fabSend(){const v=$("fabPeer").value.trim();if(!v){toast("Type a number
 /* ================= v39 WATCH: public feed + videos + channels (YouTube/Facebook-style) ================= */
 let WT_SCOPE="feed",WT_POSTS=[],WT_CHANS=[],WT_CH_PAGE=null,WT_LOADED=false,WT_VID=null,WT_CPID=null;
 try{WT_SEEN=JSON.parse(localStorage.getItem("ac_wt_seen"))||{};}catch(e){}var WT_SEEN={};
-function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtOpen("feed");}else wtRefresh();}
+var WT_CAT="all";
+const WT_CATS=[["all","All"],["shorts","Shorts"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
+function wtCats(){
+  const bar=$("wtcatbar");if(!bar)return;
+  bar.innerHTML="";
+  for(const [k,lbl] of WT_CATS){
+    const b=document.createElement("button");
+    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#0EA5E9":"#E2E8F0")+";background:"+(WT_CAT===k?"#0EA5E9":"#fff")+";color:"+(WT_CAT===k?"#fff":"#334155");
+    b.textContent=lbl;
+    b.onclick=()=>{WT_CAT=k;wtCats();wtLoad();};
+    bar.appendChild(b);
+  }
+}
+function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtCats();wtOpen("feed");}else wtRefresh();}
 function wtRefresh(){if(WT_SCOPE==="chans")wtChannels();else wtLoad();}
 function wtOpen(sc){
   WT_SCOPE=sc;
   for(const x of["feed","watch","chans"]){const b=$("wtb-"+x);b.style.background=x===sc?"#0EA5E9":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
-  if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";wtChannels();}
-  else{$("wtfeed").className="";$("wtchans").className="hide";WT_CH_PAGE=null;wtLoad();}
+  if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";wtChannels();}
+  else{$("wtfeed").className="";$("wtchans").className="hide";WT_CH_PAGE=null;$("wtcatbar").className="";wtCats();wtLoad();}
 }
 async function wtLoad(){
   if(!ME)return;
   const el=$("wtfeed");el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Loading…</div>';
   try{
-    const d=await api("posts",{node:ME,scope:WT_CH_PAGE?("ch"):WT_SCOPE,ch:WT_CH_PAGE||""});
+    let scope="feed";
+    if(WT_CH_PAGE)scope="ch";
+    else if(WT_CAT==="shorts")scope="shorts";
+    else if(WT_CAT!=="all")scope="cat";
+    else scope=WT_SCOPE;
+    const d=await api("posts",{node:ME,scope,ch:WT_CH_PAGE||"",cat:(WT_CAT==="all"||WT_CAT==="shorts")?"":WT_CAT});
     WT_POSTS=(d&&d.posts)||[];
     wtRender();
     /* count my view once per post */
@@ -1241,7 +1279,7 @@ function wtRender(){
     el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#0EA5E9;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
-  const big=WT_SCOPE==="watch"&&!WT_CH_PAGE;
+  const big=(WT_SCOPE==="watch"||WT_CAT==="shorts")&&!WT_CH_PAGE;
   for(const p of WT_POSTS)el.appendChild(wtCard(p,big));
 }
 function wtCard(p,big){
@@ -1305,15 +1343,32 @@ async function wtShare(pid){
     else{try{await navigator.clipboard.writeText(txt);toast("Copied — paste anywhere to share");}catch(e){toast("Copy: "+txt.slice(0,80));}}
   }
 }
-function wtComposeOpen(){$("wtComposer").className="ovl";$("wtVidStat").textContent="";}
+function wtComposeOpen(){$("wtComposer").className="ovl";$("wtVidStat").textContent="";wtPCats();}
+function wtPCats(){
+  const el=$("wtPCatBar");if(!el)return;
+  el.innerHTML="";
+  const cats=[["general","General"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
+  for(const [k,lbl] of cats){
+    const b=document.createElement("button");
+    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#0EA5E9":"#E2E8F0")+";background:"+(WT_PCAT===k?"#0EA5E9":"#fff")+";color:"+(WT_PCAT===k?"#fff":"#334155");
+    b.textContent=lbl;
+    b.onclick=()=>{WT_PCAT=k;wtPCats();};
+    el.appendChild(b);
+  }
+}
 function wtComposeClose(){$("wtComposer").className="ovl hide";}
 function wtVidChosen(){
   const fi=$("wtVidIn");const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
   if(f.size>100*1024*1024){toast("Please keep videos under 100MB");return;}
-  WT_VID=f;
+  WT_VID=f;WT_VIDDUR=0;
   $("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB)";
+  try{
+    const u=URL.createObjectURL(f);const v=document.createElement("video");v.preload="metadata";v.src=u;
+    v.onloadedmetadata=()=>{if(v.duration&&isFinite(v.duration)){WT_VIDDUR=Math.round(v.duration);$("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB · "+WT_VIDDUR+"s"+(WT_VIDDUR<=60?" · short":"")+")";}URL.revokeObjectURL(u);};
+  }catch(e){}
 }
+var WT_PCAT="general",WT_VIDDUR=0;
 async function wtPost(){
   const text=$("wtText").value.trim();
   if(!text&&!WT_VID){toast("Write something or add a video");return;}
@@ -1335,8 +1390,8 @@ async function wtPost(){
         $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
       }
     }
-    const r=await api("post",{from:ME,text,fid,name,rs:""});
-    if(!r||!r.ok)throw 0;
+    const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR});
+    if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
     WT_VID=null;$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
     toast("Posted to your channel ✓");
     WT_SEEN[r.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}
@@ -1349,8 +1404,8 @@ async function wtChannels(){
   try{
     const d=await api("channels",{node:ME});
     WT_CHANS=(d&&d.channels)||[];
-    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px"><button class="big blue" style="flex:1;padding:10px;border-radius:12px" onclick="wtMyChannel()">✏️ My channel</button></div>';
-    if(!WT_CHANS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:20px;font-size:13px">No channels yet — post something and yours is created automatically!</div>';return;}
+    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px"><button class="big blue" style="flex:1;padding:10px;border-radius:12px" onclick="wtChOpen()">➕ Create channel</button><button class="big" style="flex:1;padding:10px;border-radius:12px;background:#E2E8F0;color:#334155" onclick="wtMyChannel()">✏️ My channel</button></div>';
+    if(!WT_CHANS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:20px;font-size:13px">No channels yet — create yours with a verified email.</div>';return;}
     for(const c of WT_CHANS){
       const d2=document.createElement("div");
       d2.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px";
@@ -1374,8 +1429,36 @@ function wtChanPage(num){
   wtLoad();
 }
 (function(){var el=document.getElementById("wtVidIn");if(el)el.addEventListener("change",wtVidChosen);})();
+function wtChOpen(name,about){
+  try{$("wtChName").value=name||"";$("wtChAbout").value=about||"";$("wtChCode").value="";$("wtChCodeRow").style.display="none";}catch(e){}
+  $("wtChSheet").className="ovl";
+}
+async function wtChSendCode(){
+  const name=$("wtChName").value.trim(),about=$("wtChAbout").value.trim(),email=$("wtChEmail").value.trim();
+  if(!name){toast("Enter a channel name");return;}
+  if(!/.+@.+\..+/.test(email)){toast("Enter a valid email");return;}
+  $("wtChSendBtn").textContent="Sending code…";
+  try{
+    const r=await api("chanreq",{from:ME,name,about,email});
+    if(r&&r.ok){
+      $("wtChCodeRow").style.display="";
+      $("wtChSent").textContent="Code sent to "+(r.masked||email)+" — check your inbox (and spam).";
+    } else toast((r&&r.err)||"Could not send code");
+  }catch(e){toast("Could not send code");}
+  $("wtChSendBtn").textContent="Send code 📧";
+}
+async function wtChVerify(){
+  const code=$("wtChCode").value.trim();
+  if(!/^\d{6}$/.test(code)){toast("Enter the 6-digit code from your email");return;}
+  try{
+    const r=await api("chanverify",{from:ME,code});
+    if(r&&r.ok){toast("Channel created ✓ — you can post now!");$("wtChSheet").className="ovl hide";wtRefresh();}
+    else toast((r&&r.err)||"Verification failed");
+  }catch(e){toast("Verification failed");}
+}
 function wtMyChannel(){
   const m=WT_CHANS.find(c=>c.mine);
+  if(!m){wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;}
   const nm=prompt("Channel name:",m?m.name:(WIN_NAMES[ME]||"My Channel"));
   if(nm===null)return;
   const ab=prompt("Channel description (what you post about):",m?m.about:"");
@@ -1393,7 +1476,7 @@ function renderLists(){
   allFr.sort((a,b)=>{const pa=PINS.includes(a.id)?1:0,pb=PINS.includes(b.id)?1:0;if(pa!==pb)return pb-pa;const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
   for(const f of allFr){
     const n=(WIN_NAMES[f.id]||"friend")+(PINS.includes(f.id)?" 📌":""),l=lastOf(f.id);
-    const rawPrev=l?(l.img?"📷 Photo":(l.fileId?"📎 Attachment":esc(l.text).slice(0,40))):"Tap to message";
+    const rawPrev=l?(l.img?"📷 Photo":(l.aud?"🎙️ Voice note":(l.vid?"🎬 Video":(l.fileId?"📎 Attachment":(l.f2?("📎 "+(l.f2.name||"Attachment")):esc(l.text).slice(0,40)))))):"Tap to message";
     const prev=(ARCHS.includes(f.id)?rawPrev+" · archived":rawPrev);
     const row=document.createElement("div");row.className="row";
     row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
@@ -1467,6 +1550,7 @@ async function loadHistory(p){
         const nid=normTs(m.id);
         const who=(m.from===ME)?"me":"them";
         if(cur.some(b=>b.who===who&&b.ts&&Math.abs(new Date(normTs(b.ts))-new Date(nid))<8000))continue;
+        if(txt.startsWith("fchunk:"))continue;
         const fm=txt.match(/^\[file:([a-z0-9]+)\]$/i);
         if(fm)cur.push({who,fileId:fm[1],ts:nid});
         else cur.push({who,text:await e2eDec(p,txt),ts:nid});
@@ -3382,11 +3466,41 @@ async function walRefresh(){
 }
 function walShow(){walRefresh();$("walSheet").className="ovl";}
 function walClose(){$("walSheet").className="ovl hide";}
+async function walRcpShrink(file){
+  const dt=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result));fr.readAsDataURL(file);});
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=dt;});
+    const mx=900,sc=Math.min(1,mx/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return {b64:c.toDataURL("image/jpeg",0.72).split(",")[1],name:(file.name||"receipt").slice(0,40)};
+  }catch(e){ return {b64:dt.split(",")[1],name:(file.name||"receipt").slice(0,40)}; }
+}
 async function walAdd(){
   const v=prompt("How much do you want to add? (₦)\nMin ₦100");if(!v)return;
   const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
   if(!amt||amt<100){toast("Minimum is ₦100");return;}
-  const d=await api("wtopup",{node:ME,amt});
+  /* v43: optional receipt attach — goes straight to the owner admin panel */
+  let fid="",rcp="";
+  try{
+    if(confirm("Attach your payment receipt (screenshot)?\nOptional — it speeds up verification a lot.")){
+      const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
+      if(f){
+        toast("Uploading receipt…");
+        const sm=await walRcpShrink(f);
+        const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
+        const st=await api("fstart",{from:ME,to:ME,name:sm.name,n,pub:1});
+        if(st&&st.fid){
+          for(let i=0;i<n;i++){
+            const r=await api("fput",{from:ME,fid:st.fid,ci:i,v:sm.b64.slice(i*CH,(i+1)*CH)});
+            if(!r||!r.ok)throw 0;
+          }
+          fid=st.fid;rcp=sm.name;toast("Receipt attached ✓");
+        }
+      }
+    }
+  }catch(e){toast("Receipt upload skipped — you can still top up");}
+  const d=await api("wtopup",{node:ME,amt,fid,rcp});
   if(!d||!d.ok){toast("Could not start top-up");return;}
   const details="BANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\nREFERENCE: "+d.ref;
   alert("Transfer ₦"+amt.toLocaleString()+" with this EXACT reference:\n\n"+details+"\n\nYour wallet is credited after verification.");
@@ -3471,6 +3585,19 @@ function closeRs(){$("rsheet").className="ovl hide";}
 function rsPin(){saveV12Pin(RS_PEER);closeRs();}
 function rsMute(){saveV12Mute(RS_PEER);closeRs();}
 function rsArch(){saveV12Arch(RS_PEER);closeRs();}
+async function rsRename(){
+  const id=RS_PEER;
+  const cur=WIN_NAMES[id]||("");
+  const nm=prompt("What should you call this contact?",cur);
+  closeRs();
+  if(nm===null)return;
+  const v=nm.trim().slice(0,32);
+  try{
+    const r=await api("cname",{from:ME,aid:AID,to:id,name:v});
+    if(r&&r.ok){WIN_NAMES[id]=v||r.orig;renderLists();toast(v?("Saved — now called "+v):"Name reset");}
+    else toast((r&&r.err)||"Could not save name");
+  }catch(e){toast("Could not save name");}
+}
 function renderArchived(){
   const el=$("archlist");if(!el)return;
   if(!ARCHS.length){el.textContent="None archived.";return;}
