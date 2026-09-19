@@ -43,7 +43,7 @@ header .tt span{font-size:12px;color:#8696a0}
   <p>Your private home with Premium User. Owner access only.</p>
   <input id="num" inputmode="numeric" placeholder="Your number — exactly: 234100000001" value="234100000001">
   <div style="position:relative">
-    <input id="aid" type="password" placeholder="AIR ID (starts with air-)" style="padding-right:44px">
+    <input id="aid" type="password" placeholder="AIR ID or recovery phrase" style="padding-right:44px">
     <button onclick="toggleAid()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer">👁</button>
   </div>
   <button onclick="doLogin()">Enter our home</button>
@@ -69,7 +69,7 @@ function doLogin(){
   NUM=(document.getElementById("num").value||"").replace(/\D/g,"");
   AID=(document.getElementById("aid").value||"").trim();
   if(!NUM||!AID){lerr("Fill both fields — number and AIR ID.");return;}
-  if(AID.length<40)lerr("AIR ID looks too short ("+AID.length+" chars — should be 42, starts with air-). Tap 👁 to check it.");
+  if(AID.startsWith("air-")&&AID.length<44)lerr("AIR ID looks incomplete ("+AID.length+" of 44 chars). Tip: you can also type your recovery phrase instead.");
   if(NUM!=="234100000001")lerr("This home is owner-only: the number must be exactly 234100000001.");
   fetch(OS+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({from:NUM,aid:AID,msg:"👋 (session open)",session:"home"})})
   .then(r=>{if(!r.ok){return r.json().then(j=>{throw j;});}return r.json()})
