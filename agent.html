@@ -569,7 +569,7 @@ if(m.type==="offer"&&state==="idle"){
     continue;
   }
   const gate=await api("can_call",{from:m.from,to:ME});
-  if(!gate.ok){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
+  if(gate&&gate.ok===false){await log("BLOCKED call from +"+m.from+" — not friends");continue;}
   await log("RING from +"+m.from+" (owner verified)");
   try{await sig({to:m.from,type:"ringing",payload:{}});}catch(err){}
   await answer(m);

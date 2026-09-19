@@ -2553,7 +2553,7 @@ for(const m of msgs){
     }
     if(state==="idle"){
       const gate=await api("can_call",{from:m.from,to:ME});
-      if(!gate.ok){await log("BLOCKED call from +"+m.from);continue;}
+      if(gate&&gate.ok===false){await log("BLOCKED call from +"+m.from);continue;} /*v31: transient api failure never blocks a call - server enforces friendship at sig layer*/
       pendingOffer=m;state="incoming";incomingAt=Date.now();vmArm();
       const n=(WIN_NAMES[m.from]||"Caller")+" · +"+m.from;
       $("incName").textContent=n;
