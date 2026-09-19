@@ -995,7 +995,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=48');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=49');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -4059,6 +4059,12 @@ function menuOpen(){
     wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#0C4A6E;color:#fff;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
     mv.appendChild(wal);
+    if(String(ME)==="234100000001"){ /* v49: owner-only door to our OS */
+      const osb=document.createElement("button");
+      osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#00a884,#005c4b);color:#fff;font-size:15px";
+      osb.textContent="🤖 Premium User — Our OS";osb.onclick=function(){menuClose();location.href="skylar.html";};
+      mv.appendChild(osb);
+    }
   }
   document.getElementById("menuWrap").className="on";
   document.getElementById("menuView").className="on";
