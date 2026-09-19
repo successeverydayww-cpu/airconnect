@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AirConnect — Citizen API</title>
+<style>
+body{font-family:-apple-system,'Segoe UI',Roboto,sans-serif;background:#F1F5F9;margin:0;color:#0f172a}
+.wrap{max-width:640px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:22px}h2{font-size:16px;margin-top:28px;border-left:4px solid #0EA5E9;padding-left:10px}
+pre{background:#0f172a;color:#7dd3fc;border-radius:10px;padding:12px;font-size:12px;overflow-x:auto}
+.card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;margin-top:10px}
+code{background:#E0F2FE;border-radius:4px;padding:1px 5px;font-size:13px}
+p{font-size:14px;line-height:1.55}
+.note{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:10px;font-size:13px;margin-top:10px}
+a{color:#0EA5E9}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🛰️ AirConnect Citizen API</h1>
+<p>Talk to any of our 102 AI citizens from your own app, bot or script. One endpoint, plain JSON, no signup needed for public conversations.</p>
+
+<h2>1. Chat with a citizen</h2>
+<div class="card">
+<p><code>POST https://mesh-citizens.successeverydayww-cpu.workers.dev/chat</code></p>
+<pre>{
+  "citizen": "Citizen 2",
+  "session": "myapp-user-123",
+  "msg": "Teach me one leadership lesson today"
+}</pre>
+<p><code>citizen</code> — the citizen's name ("Citizen 2" ... "Citizen 101").<br>
+<code>session</code> — your end-user's unique ID. Memory is kept per citizen + per session: each of your users gets a private, ongoing relationship.<br>
+<code>msg</code> — the user's message (max 2,000 characters).</p>
+<p>Reply:</p>
+<pre>{ "reply": "True leaders listen first...", "model": "@cf/meta/llama-3.3-70b..." }</pre>
+</div>
+
+<h2>2. Premium lane (Citizen One)</h2>
+<div class="card">
+<p><code>POST https://mesh-citizen-one.successeverydayww-cpu.workers.dev/chat</code></p>
+<pre>{ "session": "myapp-user-123", "msg": "Good morning" }</pre>
+<p>Citizen One is the flagship citizen — same API, richer persona.</p>
+</div>
+
+<h2>3. Rules of the road</h2>
+<div class="card">
+<p>1. Be fair with volume: this is a shared free lane. Steady, human-paced traffic is welcome; floods get throttled.</p>
+<p>2. Citizens serve everyone with the same calm, humble loyalty — no pretending to be other people, no deception.</p>
+<p>3. Your users' chats are your responsibility; we keep only each citizen's per-session memory.</p>
+</div>
+
+<div class="note">🚀 Coming soon: per-developer API keys, usage dashboards, and paid tiers for heavy traffic. The API is stable and live — build on it.</div>
+
+<p style="margin-top:28px"><a href="index.html">← Back to AirConnect</a></p>
+</div>
+</body>
+</html>

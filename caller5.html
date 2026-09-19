@@ -276,6 +276,31 @@ footer a{color:#64748B}
   </div>
 
   <div id="view-settings" class="view hide">
+    <div class="card" style="background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;border:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:26px">💰</div>
+        <div style="flex:1">
+          <div style="font-size:12px;opacity:.85">My AirConnect Wallet</div>
+          <div style="font-size:22px;font-weight:700" id="walBal">₦0</div>
+        </div>
+        <button class="big" style="background:#fff;color:#0C4A6E;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🛒 Citizen Marketplace</div>
+      <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Hire an AI citizen for real work — paid straight from your wallet.</div>
+      <button class="big blue" onclick="mkShow()">Browse services</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🧩 Developer API</div>
+      <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Build on our 102 AI citizens — public API docs.</div>
+      <a href="api.html" style="font-size:14px;color:#0EA5E9">Open API docs →</a>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">📶 Lite mode (data saver)</div>
+      <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Photos load on tap, videos never autoplay — saves your data.</div>
+      <button class="big" id="liteBtn" style="background:#CBD5E1;color:#334155" onclick="liteToggle()">Lite mode: OFF</button>
+    </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
       <input id="peer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
@@ -374,6 +399,29 @@ footer a{color:#64748B}
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
 
+<!-- v40: wallet sheet -->
+<div id="walSheet" class="ovl hide" onclick="if(event.target===this)walClose()">
+  <div class="sheet">
+    <div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 My Wallet</div>
+    <div style="font-size:26px;font-weight:700;color:#0EA5E9;margin-bottom:10px" id="walBal2">₦0</div>
+    <button class="big blue" style="width:100%" onclick="walAdd()">➕ Add money</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="walSend()">📤 Send money</button>
+    <div style="font-weight:600;margin-top:14px;margin-bottom:4px">History</div>
+    <div id="walHist" style="font-size:12.5px;max-height:180px;overflow-y:auto"></div>
+    <button class="big" style="width:100%;margin-top:10px;background:#CBD5E1" onclick="walClose()">Close</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+<!-- v40: marketplace sheet -->
+<div id="mkSheet" class="ovl hide" onclick="if(event.target===this)mkClose()">
+  <div class="sheet" style="max-height:80vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:16px;margin-bottom:2px">🛒 Citizen Marketplace</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hire a specialized AI citizen — paid from your wallet, delivered in chat.</div>
+    <div id="mkList"></div>
+    <button class="big" style="width:100%;margin-top:10px;background:#CBD5E1" onclick="mkClose()">Close</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
 <!-- payment sheet (v14) -->
 <div id="payModal" class="ovl hide">
   <div style="background:#E2E8F0;max-width:420px;margin:40px auto;border-radius:12px;padding:18px">
@@ -427,6 +475,7 @@ footer a{color:#64748B}
   <div class="sheet">
     <div id="msReacts" style="display:flex;gap:8px;justify-content:center;font-size:26px;padding:4px 0 10px"></div>
     <button class="big blue" id="msReply" style="width:100%" onclick="msReply()">↩ Reply</button>
+    <button class="big" id="msTr" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="msTranslate()">🌐 Translate</button>
     <button class="big" id="msDel" style="width:100%;margin-top:8px;background:#e2445c" onclick="msDel()">🗑 Delete for everyone</button>
     <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeMs()">Cancel</button>
     <div style="height:8px"></div>
@@ -1159,7 +1208,8 @@ function showTab(t){
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="watch"){wtBoot();}
   if(t==="status"){refreshStories();renderStatusScreen();}
-  if(t==="settings"){renderPlan();ensureQR();renderArchived();}
+  if(t==="settings"){renderPlan();ensureQR();renderArchived();liteBoot();walRefresh();}
+  if(t==="watch"){if(typeof WT_CH_PAGE==="string"&&WT_CH_PAGE){}}
 }
 function openFab(){
   const l=$("fabList");
@@ -1194,7 +1244,7 @@ async function wtLoad(){
 function wtRender(){
   const el=$("wtfeed");
   if(WT_CH_PAGE){
-    el.innerHTML='<button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back to channels</button><div style="height:10px"></div>';
+    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#0EA5E9;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
   const big=WT_SCOPE==="watch"&&!WT_CH_PAGE;
@@ -1999,7 +2049,12 @@ function renderBubbles(){
       d.className="bub out";
       const im=document.createElement("img");im.src=m.img;im.style.cssText="max-width:100%;border-radius:6px;display:block";
       im.onclick=()=>window.open(m.img);
-      d.appendChild(im);
+      if(typeof LITE!=="undefined"&&LITE){
+        const lb=document.createElement("button");lb.className="big";lb.style.cssText="width:100%;background:#E2E8F0;color:#334155;padding:10px;font-size:12px;border-radius:8px";
+        lb.textContent="🖼 Photo — tap to load (Lite mode)";
+        lb.onclick=()=>{d.appendChild(im);lb.remove();};
+        d.appendChild(lb);
+      } else d.appendChild(im);
     }else if(m.vid){
       d.className="bub "+(m.who==="me"?"out":"in");
       const vd=document.createElement("video");vd.src=m.vid;vd.controls=true;vd.playsInline=true;
@@ -3304,6 +3359,104 @@ function lastG(g){const a=GMS[g.id];return a&&a.length?a[a.length-1]:null;}
 function saveV12Pin(id){const i=PINS.indexOf(id);if(i>=0)PINS.splice(i,1);else PINS.push(id);persistV12();renderLists();}
 function saveV12Mute(id){const i=MUTED.indexOf(id);if(i>=0)MUTED.splice(i,1);else MUTED.push(id);persistV12();toast(MUTED.includes(id)?"Muted — no more alerts for this chat":"Unmuted");renderLists();}
 function saveV12Arch(id){const i=ARCHS.indexOf(id);if(i>=0)ARCHS.splice(i,1);else ARCHS.push(id);persistV12();renderLists();renderArchived();}
+/* ================= v40: WALLET, MARKETPLACE, TRANSLATE, LITE ================= */
+let LITE=(localStorage.getItem("ac_lite")==="1");
+function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#0EA5E9":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
+function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#0EA5E9":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";}}
+async function walRefresh(){
+  if(!ME)return;
+  try{const d=await api("wbal",{node:ME});
+    if(d&&d.ok){
+      $("walBal").textContent="₦"+(d.bal||0).toLocaleString();
+      $("walBal2").textContent="₦"+(d.bal||0).toLocaleString();
+      const h=$("walHist");
+      if(h)h.innerHTML=(d.hist||[]).length?d.hist.map(t=>{
+        const inn=t.to===ME;
+        return '<div style="padding:7px 0;border-bottom:1px solid #F1F5F9"><span style="color:'+(inn?"#16a34a":"#e2445c")+';font-weight:600">'+(inn?"+":"-")+'₦'+Number(t.amt||0).toLocaleString()+'</span> '+(inn?"from ":"to ")+(t.from===ME?"me":esc(String(t.from)))+(t.note?' · <i>'+esc(String(t.note))+'</i>':'')+'<div style="font-size:10.5px;color:#94A3B8">'+new Date(t.at).toLocaleString()+'</div></div>';
+      }).join(""):'<div style="color:#64748B;padding:6px 0">No transactions yet.</div>';
+    }
+  }catch(e){}
+}
+function walShow(){walRefresh();$("walSheet").className="ovl";}
+function walClose(){$("walSheet").className="ovl hide";}
+async function walAdd(){
+  const v=prompt("How much do you want to add? (₦)\nMin ₦100");if(!v)return;
+  const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
+  if(!amt||amt<100){toast("Minimum is ₦100");return;}
+  const d=await api("wtopup",{node:ME,amt});
+  if(!d||!d.ok){toast("Could not start top-up");return;}
+  const details="BANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\nREFERENCE: "+d.ref;
+  alert("Transfer ₦"+amt.toLocaleString()+" with this EXACT reference:\n\n"+details+"\n\nYour wallet is credited after verification.");
+  try{await navigator.clipboard.writeText(details);toast("Bank details copied ✓");}catch(e){}
+}
+async function walSend(){
+  const num=prompt("Send to which number?\n(friend or citizen number)");if(!num)return;
+  const to=String(num).replace(/[^0-9]/g,"");
+  const v=prompt("Amount (₦)");if(!v)return;
+  const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
+  if(!amt||amt<1){toast("Enter a valid amount");return;}
+  const note=prompt("What is it for? (optional)","")||"";
+  const d=await api("wsend",{from:ME,to,amt,note});
+  if(d&&d.ok){toast("Sent ₦"+amt.toLocaleString()+" ✓");walRefresh();}
+  else toast((d&&d.err)||"Could not send");
+}
+const MK_SERVICES=[
+  {id:"tutor",n:"📚 Citizen Tutor",d:"Homework help, JAMB prep, study coaching — 1 week of daily sessions",p:1000},
+  {id:"cv",n:"📝 CV Writer",d:"Professional CV + cover letter, delivered in 48h",p:2000},
+  {id:"plan",n:"📊 Business Plan",d:"Funding-ready business plan for your idea or grant",p:10000},
+  {id:"research",n:"🔬 Research Assistant",d:"Deep research report on any topic, delivered in 24h",p:1500},
+  {id:"recep",n:"📞 AI Receptionist Setup",d:"Your own AI answering your calls for a month",p:500},
+  {id:"practice",n:"❓ Practice Questions (1,000)",d:"1,000 practice questions + answers on any subject",p:500}
+];
+function mkShow(){
+  const el=$("mkList");
+  el.innerHTML=MK_SERVICES.map((x,i)=>'<div style="padding:10px 0;border-bottom:1px solid #F1F5F9"><div style="font-weight:600;font-size:14px">'+x.n+'</div><div style="font-size:12.5px;color:#64748B">'+x.d+'</div><button class="big blue" style="margin-top:6px;padding:7px 12px;font-size:12px;border-radius:10px" onclick="mkHire('+i+')">Hire · ₦'+x.p.toLocaleString()+'</button></div>').join("");
+  $("mkSheet").className="ovl";
+}
+function mkClose(){$("mkSheet").className="ovl hide";}
+async function mkHire(i){
+  const x=MK_SERVICES[i];
+  if(!confirm("Hire "+x.n+" for ₦"+x.p.toLocaleString()+"?\nPaid from your wallet."))return;
+  const d=await api("wsend",{from:ME,to:"1100000004",amt:x.p,note:"Marketplace: "+x.n});
+  if(!d||!d.ok){toast((d&&d.err)||"Could not hire — add money to your wallet");return;}
+  toast("Hired ✓ — opening your citizen chat");
+  mkClose();
+  const task=prompt("Describe the job for your citizen:","");
+  if(task)openChat("1100000004"),setTimeout(()=>{$("chatbox").value="PAID ORDER ("+x.n+"): "+task;},400);
+  else openChat("1100000004"),setTimeout(()=>{$("chatbox").value="PAID ORDER ("+x.n+"): Hello citizen, I have paid for "+x.n+".";},400);
+}
+/* translate any message: text or voice note */
+async function msTranslate(){
+  closeMs();
+  const m=MS_MSG;if(!m)return;
+  toast("Translating…");
+  const lang=prompt("Translate into which language?","English");
+  if(!lang)return;
+  try{
+    let d;
+    if(m.aud){
+      d=await api("vtr",{node:ME,audio:m.aud,lang});
+      if(d&&d.ok){alert("They said ("+(d.srcLang||"spoken")+"):\n"+d.src+"\n\n🌐 "+lang+": "+d.text);}
+      else toast((d&&d.err)||"Could not translate");
+    } else {
+      let txt=String(m.text||"");
+      if(txt.startsWith("r:"))txt=txt.split("|").slice(2).join("|");
+      d=await api("vtr",{node:ME,text:txt,lang});
+      if(d&&d.ok){alert("Original: "+d.src+"\n\n🌐 "+lang+": "+d.text);}
+      else toast((d&&d.err)||"Could not translate");
+    }
+  }catch(e){toast("Could not translate");}
+}
+/* v40: tip a channel from the Watch channel page */
+async function wtTip(num){
+  const v=prompt("Support this channel (₦):","200");if(!v)return;
+  const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
+  if(!amt||amt<50){toast("Minimum tip is ₦50");return;}
+  const d=await api("wsend",{from:ME,to:num,amt,note:"Channel tip 🎁"});
+  if(d&&d.ok)toast("Sent ₦"+amt.toLocaleString()+" — thank you 🎁");
+  else toast((d&&d.err)||"Could not send — check your wallet");
+}
+
 /* ----- chat row menu (long-press) ----- */
 var RS_PEER=null;
 function openRs(id){RS_PEER=id;const n=WIN_NAMES[id]||("+"+id);$("rsTitle").textContent=n;
