@@ -736,13 +736,29 @@ async function vmAnswer(){
   try{await log("AI Receptionist answering call from +"+m.from+(VM_BRIEF?" (2nd call — brief pickup)":""));}catch(e){}
   vmEnsureFriend();
   if(VM_BRIEF){
-    /* short scripted greeting, <=6 seconds, then end the call */
+    /* v35: short scripted greeting — speak ONLY once call media is connected, end after speech */
     const cn=WIN_NAMES[m.from]?" "+WIN_NAMES[m.from]:"";
     vmWatchEnd();
-    setTimeout(function(){
+    try{if(mic)mic.getAudioTracks().forEach(t=>{t.enabled=false;});}catch(e){}
+    setTimeout(async function(){
+      /* wait for the live media link (max 7s) so the greeting is never lost */
+      let linked=false;
+      for(let i=0;i<14;i++){
+        if(pc&&pc.connectionState==="connected"){linked=true;break;}
+        await new Promise(r=>setTimeout(r,500));
+      }
+      try{if(mixCtx)await mixCtx.resume().catch(()=>{});}catch(e){}
       vmSpeak("Hi"+cn+"! You have reached "+(ME_NAME||"my user")+"'s A I assistant. They cannot come to the phone right now, but your call has been noted and they will get back to you. Goodbye.");
-      setTimeout(function(){if(VM_MODE){try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION: I answered +"+m.from+"'s second call briefly and told them you will get back to them."}).catch(()=>{});}catch(e){}hangup(true);}},7500);
-    },1200);
+      /* end the call once the greeting finishes speaking (cap 12s) */
+      const t0=Date.now();
+      const poll=setInterval(function(){
+        if(!VM_MODE||Date.now()-t0>12000){clearInterval(poll);return;}
+        if(!vmSpeaking){
+          clearInterval(poll);
+          if(VM_MODE){try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION: I answered the caller's second call briefly and told them you will get back to them. Do not reply to this log."}).catch(()=>{});}catch(e){}hangup(true);}
+        }
+      },400);
+    },800);
   }else{
     try{await api("chat",{from:ME,to:AI_VM,text:"📞 RECEPTION: You are "+(ME_NAME||"my user")+"'s AI receptionist on an incoming call from +"+m.from+". In one short spoken sentence, greet the caller and ask who's calling."});}catch(e){}
     vmSTT();
@@ -790,6 +806,7 @@ async function vmSpeak(text){
   try{
     const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:String(text).slice(0,600)})});
     if(r.ok&&mixCtx){
+      try{await mixCtx.resume();}catch(e){}
       const buf=await r.arrayBuffer();
       try{await mixCtx.resume();}catch(e){}
       const ab=await mixCtx.decodeAudioData(buf.slice(0));
@@ -815,6 +832,7 @@ function vmStop(){
   try{$("vmTake").style.display="none";}catch(e){}
 }
 function vmTakeOver(){
+  try{if(mic)mic.getAudioTracks().forEach(t=>{t.enabled=true;});}catch(e){}
   vmStop();toast("You have the call");
   try{callStart=Date.now();$("callStat").textContent="00:00";}catch(e){}
 }
@@ -1442,6 +1460,22 @@ async function stPhotoChosen(fi){
 }
 let STV_DATA=null,STV_DUR=0,SVR=null,SVR_CH=[],SVR_B64=null,SVR_T0=0,SVR_TIMER=null,SVR_STREAM=null;
 function fmtT(s){s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function tsClock(ts){
+  try{const d=new Date(ts);if(isNaN(d.getTime()))return "";
+    let h=d.getHours();const ap=h>=12?"PM":"AM";h=h%12||12;
+    return h+":"+String(d.getMinutes()).padStart(2,"0")+" "+ap;
+  }catch(e){return "";}
+}
+function tsDay(ts){
+  try{const d=new Date(ts);if(isNaN(d.getTime()))return "";
+    const today=new Date();const yest=new Date(today.getTime()-86400000);
+    const same=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+    if(same(d,today))return "Today";
+    if(same(d,yest))return "Yesterday";
+    const m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+    return d.getDate()+" "+m+(d.getFullYear()!==today.getFullYear()?" "+d.getFullYear():"");
+  }catch(e){return "";}
+}
 async function stVideoChosen(fi){
   const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
@@ -1718,7 +1752,15 @@ async function applyWallpaper(){
 function renderBubbles(){
   const b=$("bubbles");b.innerHTML="";
   const list=CHATS[CHAT_OPEN]||[];
+  let lastDay=null;
   for(const m of list){
+    const day=tsDay(m.ts);
+    if(day&&day!==lastDay){
+      lastDay=day;
+      const sep=document.createElement("div");sep.className="daysep";
+      sep.style.cssText="text-align:center;margin:8px auto;font-size:11.5px;background:#E2E8F0;color:#334155;border-radius:10px;padding:3px 10px;width:fit-content";
+      sep.textContent=day;b.appendChild(sep);
+    }
     if(String(m.text||"").startsWith("rr:"))continue;
     const d=document.createElement("div");
     if(m.img){
@@ -1757,7 +1799,7 @@ function renderBubbles(){
     attachMsgEvents(d,m);
     if(m.who!=="sys"){
       const meta=document.createElement("div");meta.className="bmeta";
-      let h=fmtT(m.ts);
+      let h=tsClock(m.ts)||fmtT(m.ts);
       if(m.who==="me")h='<span class="tick'+(m.r?" on":"")+'">'+(m.r?"✓✓":"✓")+"</span> "+h;
       meta.innerHTML=h;d.appendChild(meta);
     }
@@ -2213,7 +2255,7 @@ async function newPC(){
   const mixOut=ctx.createMediaStreamDestination();
   txAnalyser=ctx.createAnalyser();
   voiceBus=ctx.createGain();
-  voiceBus.connect(mixOut);voiceBus.connect(txAnalyser);
+  voiceBus.connect(mixOut);voiceBus.connect(txAnalyser);voiceBus.connect(ctx.destination);
   pc.addTrack(mixOut.stream.getAudioTracks()[0],mixOut.stream);
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
     mic=stream;
