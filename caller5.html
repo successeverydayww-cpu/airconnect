@@ -999,7 +999,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=49');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=50');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -4061,6 +4061,10 @@ function menuOpen(){
       osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#00a884,#005c4b);color:#fff;font-size:15px";
       osb.textContent="🤖 Premium User — Our OS";osb.onclick=function(){menuClose();location.href="skylar.html";};
       mv.appendChild(osb);
+      const fgb=document.createElement("button");
+      fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#1e3a8a,#0ea5e9);color:#fff;font-size:15px";
+      fgb.textContent="🔨 Skylar Forge — Builder";fgb.onclick=function(){menuClose();location.href="forge.html";};
+      mv.appendChild(fgb);
     }
   }
   document.getElementById("menuWrap").className="on";

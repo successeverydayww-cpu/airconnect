@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Skylar Forge — Builder</title>
+<style>
+:root{--bg:#0b141a;--pan:#111f29;--pan2:#0e1a23;--acc:#00a884;--acc2:#0ea5e9;--txt:#e8f0f4;--dim:#7b93a3;--line:#1d3040}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;padding-bottom:60px}
+button{font:inherit}
+.hidden{display:none!important}
+/* login */
+#login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:14px;padding:20px}
+#login h1{font-size:24px}#login h1 b{color:var(--acc)}
+#login p{color:var(--dim);font-size:13px;text-align:center}
+input,textarea,select{background:var(--pan2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:12px;width:100%;font:inherit}
+input:focus,textarea:focus{outline:1px solid var(--acc)}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;width:100%}
+.btn.ghost{background:var(--pan);border:1px solid var(--line);color:var(--txt)}
+.btn.blue{background:var(--acc2)}
+.btn.red{background:#b3392f}
+.btn:active{opacity:.8}
+/* app */
+#app{display:none}
+header{position:sticky;top:0;background:linear-gradient(135deg,#00382a,#00a884);padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:5}
+header h2{font-size:17px;color:#fff;flex:1}header .sub{font-size:11px;opacity:.85;color:#fff;display:block;font-weight:400}
+main{padding:14px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h3{font-size:14px;color:var(--acc);display:flex;justify-content:space-between;align-items:center}
+.card h3 .r{color:var(--dim);font-size:11px;font-weight:400}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.mono{font-family:ui-monospace,monospace;font-size:12px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{color:var(--dim);text-align:left;padding:6px;border-bottom:1px solid var(--line);font-weight:600}
+.tbl td{padding:6px;border-bottom:1px solid var(--pan2);vertical-align:top;word-break:break-word}
+.dim{color:var(--dim);font-size:12px}
+.tag{display:inline-block;background:var(--pan2);border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--acc2)}
+pre{background:var(--pan2);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11px;overflow:auto;max-height:220px;white-space:pre-wrap}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0a2e24;border:1px solid var(--acc);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;display:none;z-index:99}
+select{appearance:none}
+label{font-size:12px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div id="login">
+  <h1>🔨 Skylar <b>Forge</b></h1>
+  <p>Your platform builder console.<br>Sign in with your AirConnect number and AIR ID.</p>
+  <input id="f_num" placeholder="Number e.g. 234100000001" inputmode="numeric">
+  <input id="f_aid" placeholder="AIR ID (air-...)">
+  <button class="btn" onclick="doLogin()">Enter the Forge</button>
+  <p id="lerr" style="color:#ff8f8f"></p>
+</div>
+<div id="app">
+  <header>
+    <div style="flex:1"><h2>🔨 Skylar Forge <span class="sub">builder console v0.1 — your platform, your rules</span></h2></div>
+    <select id="appSel" onchange="loadAll()" style="width:42%;background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.2);color:#fff"></select>
+    <button class="btn ghost" style="width:auto;padding:10px 14px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25)" onclick="showNewApp()">+ App</button>
+  </header>
+  <main>
+    <div class="card" id="newAppCard" style="display:none">
+      <h3>Create a new workspace app</h3>
+      <input id="na_name" placeholder="App name e.g. MyFirstApp">
+      <button class="btn blue" onclick="createApp()">Create workspace</button>
+    </div>
+    <div class="card">
+      <h3>Entities <span class="r" id="schemaInfo">—</span></h3>
+      <div class="row"><input id="ne_name" placeholder="Entity name e.g. Task"><button class="btn ghost" style="flex:0 0 110px" onclick="createSchema()">+ Entity</button></div>
+      <div id="schemaList" class="dim">No entities yet.</div>
+    </div>
+    <div class="card">
+      <h3>Records <span class="r" id="recInfo">select an entity</span></h3>
+      <div class="row">
+        <select id="entSel" onchange="loadRecords()"></select>
+        <button class="btn ghost" style="flex:0 0 90px" onclick="loadRecords()">↻</button>
+        <button class="btn ghost" style="flex:0 0 90px" onclick="toggle('addRecCard')">+ Add</button>
+      </div>
+      <div id="addRecCard" style="display:none">
+        <label>Data (JSON)</label>
+        <textarea id="nr_data" rows="3" placeholder='{"title":"Ship it","status":"open"}'></textarea>
+        <button class="btn" onclick="createRecord()">Create record</button>
+      </div>
+      <div id="recTable"><span class="dim">—</span></div>
+    </div>
+    <div class="card">
+      <h3>Functions (pipelines) <span class="r" id="fnInfo">—</span></h3>
+      <div class="row"><input id="nf_name" placeholder="Function name e.g. openDigest"><button class="btn ghost" style="flex:0 0 110px" onclick="toggle('fnEditCard')">+ Function</button></div>
+      <div id="fnEditCard" style="display:none">
+        <label>Pipeline steps (JSON) — ops: rec.list / rec.get / rec.create / rec.update / rec.delete / template / ai · chain with $prev</label>
+        <textarea id="nf_code" rows="5" placeholder='{"steps":[{"op":"rec.list","entity":"Task","where":{"status":"open"}},{"op":"template","text":"Digest: $prev"},{"op":"rec.create","entity":"Log","data":{"summary":"$prev"}}]}'></textarea>
+        <button class="btn" onclick="saveFn()">Save function</button>
+      </div>
+      <div id="fnList" class="dim">No functions yet.</div>
+    </div>
+    <div class="card">
+      <h3>Run a function</h3>
+      <div class="row"><input id="rf_name" placeholder="Function name"><button class="btn ghost" style="flex:0 0 110px" onclick="runFn()">▶ Run</button></div>
+      <pre id="fnOut" class="hidden">—</pre>
+    </div>
+    <div class="card">
+      <h3>Recent runs <span class="r">last 20</span></h3>
+      <div id="runsList" class="dim">—</div>
+    </div>
+    <div class="card">
+      <h3>Platform status</h3>
+      <div id="health" class="dim">—</div>
+    </div>
+  </main>
+</div>
+<div id="toast"></div>
+<script>
+let ME = localStorage.getItem("forge_me") || "";
+let AID = localStorage.getItem("forge_aid") || "";
+let APPKEY = localStorage.getItem("forge_key") || "";
+let APPS = [];
+const API = "https://skylar-forge.successeverydayww-cpu.workers.dev/api";
+if (ME && AID) enter();
+
+function toast(m, bad){const t=document.getElementById("toast");t.textContent=m;t.style.borderColor=bad?"#b3392f":"var(--acc)";t.style.display="block";setTimeout(()=>t.style.display="none",2600);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function toggle(id){const e=document.getElementById(id);e.style.display=e.style.display==="none"?"block":"none";}
+async function api(payload){
+  const r = await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({from:ME,aid:AID,...payload})});
+  return r.json();
+}
+function doLogin(){
+  ME=document.getElementById("f_num").value.trim();
+  AID=document.getElementById("f_aid").value.trim();
+  if(!ME||!AID){document.getElementById("lerr").textContent="Number and AIR ID required.";return;}
+  localStorage.setItem("forge_me",ME);localStorage.setItem("forge_aid",AID);enter();
+}
+async function enter(){
+  const h = await api({act:"app.list"});
+  if(h.err){document.getElementById("lerr").textContent="Access denied.";return;}
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  APPS=h.apps||[];
+  const s=document.getElementById("appSel");
+  s.innerHTML = APPS.map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`).join("") || "<option value=''>no apps</option>";
+  await loadAll(); health();
+}
+function showNewApp(){toggle("newAppCard");}
+async function createApp(){
+  const n=document.getElementById("na_name").value.trim(); if(!n)return toast("Name required",1);
+  const r=await api({act:"app.create",name:n}); if(r.err)return toast(r.err,1);
+  toast("Workspace created: "+r.app.name+" · key "+r.app.key.slice(0,8)+"…");
+  localStorage.setItem("forge_key_"+n,r.app.key);
+  document.getElementById("na_name").value=""; toggle("newAppCard");
+  await enter();
+  document.getElementById("appSel").value=n; await loadAll();
+}
+function curKey(){return localStorage.getItem("forge_key_"+(document.getElementById("appSel").value||""))||"";}
+async function ensureKey(){
+  const name=document.getElementById("appSel").value; if(!name)return false;
+  if(localStorage.getItem("forge_key_"+name))return true;
+  const r=await api({act:"app.key",name:name});
+  if(r.err||!r.key)return false;
+  localStorage.setItem("forge_key_"+name,r.key); return true;
+}
+async function needKey(){if(!curKey()){const ok=await ensureKey();if(!ok){toast("Could not load app key (owner auth failed).",1);return false;}}return true;}
+async function loadAll(){
+  const sel=document.getElementById("appSel").value;
+  document.getElementById("schemaInfo").textContent=sel?("app: "+sel):"—";
+  if(!sel){document.getElementById("schemaList").textContent="Create an app first.";return;}
+  const k=curKey(); if(!k){document.getElementById("schemaList").innerHTML="<span class='dim'>Key not saved on this device.</span>";return;}
+  const [sc,fl]=await Promise.all([api({act:"schema.list",key:k}),api({act:"fn.list",key:k})]);
+  const sl=document.getElementById("schemaList");
+  sl.innerHTML = sc.schemas&&sc.schemas.length ? sc.schemas.map(s=>`<span class="tag">${esc(s.entity)}</span>`).join(" ") : "<span class='dim'>No entities yet.</span>";
+  const es=document.getElementById("entSel");
+  es.innerHTML=(sc.schemas||[]).map(s=>`<option>${esc(s.entity)}</option>`).join("")||"<option value=''>—</option>";
+  const fl2=document.getElementById("fnList");
+  fl2.innerHTML=fl.fns&&fl.fns.length?fl.fns.map(f=>`<span class="tag">${esc(f.name)}</span>`).join(" "):"<span class='dim'>No functions yet.</span>";
+  document.getElementById("fnInfo").textContent=(fl.fns||[]).length+" function(s)";
+  await loadRecords(); loadRuns();
+}
+async function createSchema(){
+  if(!await needKey())return;
+  const n=document.getElementById("ne_name").value.trim(); if(!n)return toast("Entity name required",1);
+  const r=await api({act:"schema.create",key:curKey(),entity:n,fields:{note:"schema v1"}});
+  if(r.err)return toast(r.err,1);
+  toast("Entity created: "+n); document.getElementById("ne_name").value=""; loadAll();
+}
+async function loadRecords(){
+  if(!await needKey())return;
+  const e=document.getElementById("entSel").value; if(!e)return;
+  const r=await api({act:"rec.list",key:curKey(),entity:e,limit:50});
+  document.getElementById("recInfo").textContent=e+" · "+((r.records||[]).length)+" shown";
+  const recs=r.records||[];
+  const keys=[...new Set(recs.flatMap(x=>Object.keys(x).filter(k=>!["created_at","updated_at"].includes(k))))].slice(0,5);
+  document.getElementById("recTable").innerHTML = recs.length?
+    `<table class="tbl"><tr>${keys.map(k=>`<th>${esc(k)}</th>`).join("")}<th></th></tr>${recs.map(x=>`<tr>${keys.map(k=>`<td>${esc(typeof x[k]==="object"?JSON.stringify(x[k]):x[k])}</td>`).join("")}<td><button class="btn red" style="padding:4px 10px;width:auto" onclick="delRec(${x.id})">✕</button></td></tr>`).join("")}</table>`
+    : "<span class='dim'>No records.</span>";
+}
+async function createRecord(){
+  if(!await needKey())return;
+  const e=document.getElementById("entSel").value; if(!e)return toast("Pick an entity",1);
+  let d; try{d=JSON.parse(document.getElementById("nr_data").value||"{}");}catch(x){return toast("Invalid JSON",1);}
+  const r=await api({act:"rec.create",key:curKey(),entity:e,data:d});
+  if(r.err)return toast(r.err,1);
+  toast("Record created #"+r.id); document.getElementById("nr_data").value=""; loadRecords();
+}
+async function delRec(id){
+  const e=document.getElementById("entSel").value;
+  const r=await api({act:"rec.delete",key:curKey(),entity:e,id:id});
+  toast(r.err||"Deleted",!!r.err); loadRecords();
+}
+async function saveFn(){
+  if(!await needKey())return;
+  const n=document.getElementById("nf_name").value.trim(); if(!n)return toast("Name required",1);
+  let c=document.getElementById("nf_code").value; try{c=JSON.parse(c);}catch(x){return toast("Pipeline must be valid JSON",1);}
+  const r=await api({act:"fn.save",key:curKey(),fn:n,code:c});
+  if(r.err)return toast(r.err,1);
+  toast("Saved "+r.steps+" step(s)"); document.getElementById("nf_name").value=""; document.getElementById("nf_code").value=""; toggle("fnEditCard"); loadAll();
+}
+async function runFn(){
+  if(!await needKey())return;
+  const n=document.getElementById("rf_name").value.trim(); if(!n)return toast("Function name required",1);
+  const out=document.getElementById("fnOut"); out.classList.remove("hidden"); out.textContent="running…";
+  const r=await api({act:"fn.run",key:curKey(),fn:n,args:{}});
+  out.textContent=JSON.stringify(r,null,1).slice(0,3000);
+  loadRuns();
+}
+async function loadRuns(){
+  if(!curKey()){document.getElementById("runsList").textContent="—";return;}
+  const r=await api({act:"runs",key:curKey()});
+  document.getElementById("runsList").innerHTML=(r.runs||[]).map(x=>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--pan2)"><b>${esc(x.fn)}</b> <span class="dim">${esc((x.created_at||"").slice(0,19).replace("T"," "))}</span> ${x.err?`<span style="color:#ff8f8f">✗</span>`:"<span style='color:var(--acc)'>✓</span>"}<div class="dim mono">${esc((x.out||x.err||"").slice(0,140))}</div></div>`).join("")||"<span class='dim'>No runs yet.</span>";
+}
+async function health(){
+  try{const r=await fetch("https://skylar-forge.successeverydayww-cpu.workers.dev/health").then(x=>x.json());
+    document.getElementById("health").innerHTML=`<span style="color:var(--acc)">● ${esc(r.platform)} ${esc(r.v)} alive</span> <span class="dim mono">${new Date().toLocaleTimeString()}</span>`;}catch(e){}
+}
+</script>
+</body>
+</html>
