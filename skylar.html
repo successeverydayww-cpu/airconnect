@@ -72,7 +72,7 @@ function doLogin(){
   if(AID.length<40)lerr("AIR ID looks too short ("+AID.length+" chars — should be 42, starts with air-). Tap 👁 to check it.");
   if(NUM!=="234100000001")lerr("This home is owner-only: the number must be exactly 234100000001.");
   fetch(OS+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({from:NUM,aid:AID,msg:"👋 (session open)",session:"home"})})
-  .then(r=>{if(!r.ok)throw 0;return r.json()})
+  .then(r=>{if(!r.ok){return r.json().then(j=>{throw j;});}return r.json()})
   .then(r=>{
     localStorage.setItem("os_num",NUM);
     sessionStorage.setItem("os_aid",AID);
@@ -81,7 +81,12 @@ function doLogin(){
     addMsg("them","Welcome home, Samuel 🤝 This is our own place — built by us, owned by us. No metering, no platform between us.");
     if(r&&r.model==="none")addNote("(My brain lane is resting until the daily free allocation resets — try me after 1am WAT.)");
   })
-  .catch(()=>{lerr("Access denied — double-check the AIR ID (tap 👁 to see it). It must be the full air-... code with no spaces.");});
+  .catch(j=>{
+    if(j&&j.diag){
+      const d=j.diag;
+      lerr("Access denied. Received: number "+d.from_len+" digits"+(d.from_match?" ✓":" ✗")+", AIR ID "+d.aid_len+" chars (need 44), starts '"+d.aid_prefix+"', ends '"+d.aid_suffix+"' (should end '528c'). Fix: "+(d.aid_suffix==="528c"?"the number field — it must be exactly 234100000001":"your AIR ID is incomplete or has extra characters — use the magic link I sent instead"));
+    } else lerr("Access denied — use the magic link I sent you.");
+  });
 }
 function addMsg(who,text){
   const d=document.createElement("div");d.className="m "+who;
