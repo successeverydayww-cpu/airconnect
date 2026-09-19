@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>App — powered by Skylar Forge</title>
+<style>
+:root{--bg:#0b141a;--pan:#111f29;--pan2:#0e1a23;--acc:#00a884;--acc2:#0ea5e9;--txt:#e8f0f4;--dim:#7b93a3;--line:#1d3040}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+input,textarea{background:var(--pan2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:12px;width:100%;font:inherit}
+input:focus,textarea:focus{outline:1px solid var(--acc)}
+.btn{background:var(--acc);color:#fff;border:none;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:14px}
+.btn:active{opacity:.8}
+header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+header h1{font-size:17px;flex:1}
+header small{color:var(--dim);font-size:11px;display:block}
+#etabs{display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--line)}
+#etabs button{white-space:nowrap;background:var(--pan);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+#etabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+#body{flex:1;padding:16px;max-width:860px;margin:0 auto;width:100%}
+.reccard{background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px}
+.reccard .rid{color:var(--dim);font-size:11px;margin-bottom:6px}
+.fld{display:flex;gap:10px;padding:3px 0}.fld b{color:var(--acc2);min-width:100px;font-weight:600}
+.empty{color:var(--dim);text-align:center;padding:40px 10px;font-size:14px}
+#addwrap{background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;display:none}
+#addwrap h3{font-size:13px;color:var(--dim);margin-bottom:10px}
+.frow{display:flex;gap:8px;margin-bottom:8px}
+.frow input{flex:1}
+#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0a2e24;border:1px solid var(--acc);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;display:none;z-index:99}
+.foot{padding:14px;text-align:center;color:var(--dim);font-size:11px}
+.foot a{color:var(--acc2)}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="appname">Loading…<small>powered by ⚡ Skylar Forge</small></h1>
+  <button class="btn" style="width:auto;padding:9px 14px;font-size:13px" onclick="toggleAdd()">＋ Add record</button>
+</header>
+<div id="addwrap">
+  <h3 id="addtitle">Add a record</h3>
+  <div id="addform"></div>
+  <button class="btn" onclick="saveAdd()">Save</button>
+</div>
+<div id="etabs"></div>
+<div id="body"><div class="empty">Loading app…</div></div>
+<div class="foot">Built with <a href="build.html" style="text-decoration:none">⚡ Skylar Forge</a> — describe your app in words, AI builds it</div>
+<div id="toast"></div>
+<script>
+const API="https://skylar-forge.successeverydayww-cpu.workers.dev/api";
+const SLUG=new URLSearchParams(location.search).get("app")||"";
+let DATA=null,CUR="";
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2800);}
+async function load(){
+  if(!SLUG){document.getElementById("body").innerHTML='<div class="empty">No app specified in the link.</div>';return;}
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"pub.load",app:SLUG})});
+  const j=await r.json();
+  if(j.err){document.getElementById("body").innerHTML='<div class="empty">This app is private or does not exist.</div>';document.getElementById("appname").firstChild.textContent="Not available";return;}
+  DATA=j;
+  document.getElementById("appname").firstChild.textContent=j.app.name;
+  render();
+}
+function render(){
+  const schs=DATA.schemas||[];
+  const et=document.getElementById("etabs");
+  et.innerHTML=schs.map((x,i)=>`<button class="${(CUR?x.entity===CUR:i===0)?"on":""}" onclick="setEntity('${esc(x.entity)}')">${esc(x.entity)}</button>`).join("");
+  if(!schs.some(x=>x.entity===CUR))CUR=schs[0]?schs[0].entity:"";
+  const recs=(DATA.records||{})[CUR]||[];
+  const b=document.getElementById("body");
+  if(!recs.length){b.innerHTML='<div class="empty">No records yet — be the first to add one with ＋ Add record.</div>';}
+  else b.innerHTML=recs.map(rec=>{
+    const flds=Object.keys(rec).filter(k=>!["id","created_at","updated_at"].includes(k));
+    return `<div class="reccard"><div class="rid">#${rec.id}</div>${flds.map(k=>`<div class="fld"><b>${esc(k)}</b><span>${esc(typeof rec[k]==="object"?JSON.stringify(rec[k]):rec[k])}</span></div>`).join("")}</div>`;
+  }).join("");
+  buildAddForm();
+}
+function setEntity(e){CUR=e;render();}
+function toggleAdd(){
+  const w=document.getElementById("addwrap");
+  w.style.display=w.style.display==="block"?"none":"block";
+  if(w.style.display==="block")buildAddForm();
+}
+function buildAddForm(){
+  const sch=(DATA.schemas||[]).find(x=>x.entity===CUR);
+  const f=document.getElementById("addform");
+  if(!sch){f.innerHTML="";return;}
+  document.getElementById("addtitle").textContent="Add a "+CUR+" record";
+  f.innerHTML=Object.keys(sch.fields||{}).map(k=>`<div class="frow"><input id="nf_${esc(k)}" placeholder="${esc(k)} (${esc(sch.fields[k])})"></div>`).join("");
+}
+async function saveAdd(){
+  const sch=(DATA.schemas||[]).find(x=>x.entity===CUR);if(!sch)return;
+  const data={};Object.keys(sch.fields||{}).forEach(k=>{const el=document.getElementById("nf_"+k);if(el&&el.value.trim()!=="")data[k]=el.value.trim();});
+  if(!Object.keys(data).length){toast("Fill at least one field");return;}
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"pub.add",app:SLUG,entity:CUR,data})});
+  const j=await r.json();
+  if(j.err){toast(j.err);return;}
+  toast("Saved ✓");document.getElementById("addwrap").style.display="none";
+  load();
+}
+load();
+</script>
+</body>
+</html>
