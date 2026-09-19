@@ -209,6 +209,42 @@ footer a{color:#64748B}
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
   </div>
 
+  <div id="view-watch" class="view hide">
+    <div style="display:flex;gap:6px;padding:10px 12px 0;position:sticky;top:0;background:#fff;z-index:5">
+      <button id="wtb-feed" class="big blue" style="flex:1;padding:8px;font-size:13px;border-radius:20px" onclick="wtOpen('feed')">📰 Feed</button>
+      <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')">▶️ Watch</button>
+      <button id="wtb-chans" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('chans')">📺 Channels</button>
+    </div>
+    <div id="wtfeed" style="padding:10px 12px 20px"></div>
+    <div id="wtchans" class="hide" style="padding:10px 12px 20px"></div>
+    <div style="display:flex;justify-content:center;padding:0 0 90px">
+      <button class="big blue" style="border-radius:24px;padding:12px 22px" onclick="wtComposeOpen()">＋ Create post</button>
+    </div>
+  </div>
+  <div id="wtComposer" class="ovl hide" style="z-index:60" onclick="if(event.target===this)wtComposeClose()">
+    <div class="card" style="position:absolute;bottom:0;left:0;right:0;border-radius:16px 16px 0 0;max-width:480px;margin:0 auto;padding:16px">
+      <div style="font-weight:700;margin-bottom:8px">＋ New post</div>
+      <textarea id="wtText" placeholder="Share a word, a lesson, a blessing…" style="width:100%;min-height:80px;border:1px solid #CBD5E1;border-radius:10px;padding:10px;font-size:14px;box-sizing:border-box"></textarea>
+      <div id="wtVidPick" style="margin-top:8px;display:flex;gap:8px">
+        <button class="big" style="flex:1;background:#E2E8F0;color:#334155;padding:9px;font-size:13px;border-radius:10px" onclick="document.getElementById('wtVidIn').click()">📹 Add video (up to 100MB)</button>
+
+      </div>
+      <div id="wtVidStat" style="font-size:12px;color:#64748B;margin-top:6px"></div>
+      <input type="file" id="wtVidIn" accept="video/*" class="hide">
+      <button class="big blue" style="width:100%;margin-top:10px;padding:12px" onclick="wtPost()">Post</button>
+    </div>
+  </div>
+  <div id="wtComments" class="ovl hide" style="z-index:61" onclick="if(event.target===this)wtCommentsClose()">
+    <div class="card" style="position:absolute;bottom:0;left:0;right:0;border-radius:16px 16px 0 0;max-width:480px;margin:0 auto;padding:16px;max-height:70vh;overflow-y:auto">
+      <div style="font-weight:700;margin-bottom:10px">Comments <span id="wtCSCount" style="color:#64748B;font-weight:400"></span></div>
+      <div id="wtCList"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input id="wtCIn" placeholder="Write a comment…" style="flex:1;border:1px solid #CBD5E1;border-radius:20px;padding:10px 14px;font-size:14px">
+        <button class="big blue" style="padding:10px 16px;border-radius:20px" onclick="wtCPost()">➤</button>
+      </div>
+    </div>
+  </div>
+
   <div id="view-status" class="view hide">
     <div class="card">
       <div style="display:flex;align-items:center;gap:12px">
@@ -379,6 +415,7 @@ footer a{color:#64748B}
 
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
+    <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico">▶️</span>Watch</button>
     <button id="tab-status" aria-label="Status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
     <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
     <button id="tab-settings" aria-label="Settings" onclick="showTab('settings')"><span class="ico">⚙️</span>Settings</button>
@@ -1111,10 +1148,11 @@ window.addEventListener("popstate",()=>{
 });
 pushHist();
 function showTab(t){
-  for(const v of["chats","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
-  const TITLES={chats:"🛰️ AirConnect",status:"Status",calls:"Calls",settings:"Settings"};
+  for(const v of["chats","watch","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
+  const TITLES={chats:"🛰️ AirConnect",watch:"Watch",status:"Status",calls:"Calls",settings:"Settings"};
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
   if(t==="chats")UNREAD={},renderUnread();
+  if(t==="watch"){wtBoot();}
   if(t==="status"){refreshStories();renderStatusScreen();}
   if(t==="settings"){renderPlan();ensureQR();renderArchived();}
 }
@@ -1125,6 +1163,176 @@ function openFab(){
 }
 function closeFab(){$("fabsheet").className="ovl hide";}
 function fabSend(){const v=$("fabPeer").value.trim();if(!v){toast("Type a number first");return;}$("peer").value=v;sendRequest();closeFab();}
+
+/* ================= v39 WATCH: public feed + videos + channels (YouTube/Facebook-style) ================= */
+let WT_SCOPE="feed",WT_POSTS=[],WT_CHANS=[],WT_CH_PAGE=null,WT_LOADED=false,WT_VID=null,WT_CPID=null;
+try{WT_SEEN=JSON.parse(localStorage.getItem("ac_wt_seen"))||{};}catch(e){}var WT_SEEN={};
+function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtOpen("feed");}else wtRefresh();}
+function wtRefresh(){if(WT_SCOPE==="chans")wtChannels();else wtLoad();}
+function wtOpen(sc){
+  WT_SCOPE=sc;
+  for(const x of["feed","watch","chans"]){const b=$("wtb-"+x);b.style.background=x===sc?"#0EA5E9":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
+  if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";wtChannels();}
+  else{$("wtfeed").className="";$("wtchans").className="hide";WT_CH_PAGE=null;wtLoad();}
+}
+async function wtLoad(){
+  if(!ME)return;
+  const el=$("wtfeed");el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Loading…</div>';
+  try{
+    const d=await api("posts",{node:ME,scope:WT_CH_PAGE?("ch"):WT_SCOPE,ch:WT_CH_PAGE||""});
+    WT_POSTS=(d&&d.posts)||[];
+    wtRender();
+    /* count my view once per post */
+    for(const p of WT_POSTS){if(!WT_SEEN[p.id]){WT_SEEN[p.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}api("pview",{from:ME,id:p.id}).catch(()=>{});}}
+  }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load feed — pull down and try again.</div>';}
+}
+function wtRender(){
+  const el=$("wtfeed");
+  if(WT_CH_PAGE){
+    el.innerHTML='<button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back to channels</button><div style="height:10px"></div>';
+  } else el.innerHTML="";
+  if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
+  const big=WT_SCOPE==="watch"&&!WT_CH_PAGE;
+  for(const p of WT_POSTS)el.appendChild(wtCard(p,big));
+}
+function wtCard(p,big){
+  const d=document.createElement("div");
+  d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:10px";
+  const t=new Date(p.at||Date.now());
+  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#0EA5E9;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div><button class="big" style="padding:5px 10px;font-size:11px;border-radius:14px;background:'+(p.mysub?"#E2E8F0":"#0EA5E9")+';color:'+(p.mysub?"#334155":"#fff")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
+  let body="";
+  if(p.rs)body+='<div style="font-size:11px;color:#0EA5E9;margin-top:6px">🔁 reshared post</div>';
+  if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
+  if(p.fid)body+='<div style="margin-top:8px;border-radius:10px;overflow:hidden;background:#0f172a" id="pv-'+p.id+'"><button class="big blue" style="width:100%;padding:14px;font-size:13px" onclick="wtPlay(\''+p.id+'\',\''+p.fid+'\','+p.fidn+')">▶️ Play video</button></div>';
+  const RE=["👍","❤️","😂","😮","🙏","🔥"];
+  let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
+  for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#0EA5E9":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
+  rrow+='</div>';
+  const acts='<div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:#64748B"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right">👁 '+(p.vcnt||0)+' views</span></div>';
+  d.innerHTML=head+body+rrow+acts;
+  return d;
+}
+function fmtWT(ts){const s=Math.floor((Date.now()-(ts||Date.now()))/1000);if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+"m ago";if(s<86400)return Math.floor(s/3600)+"h ago";return Math.floor(s/86400)+"d ago";}
+async function wtPlay(pid,fid,n){
+  const box=$("pv-"+pid);if(!box)return;
+  box.innerHTML='<div style="color:#94A3B8;text-align:center;padding:18px;font-size:12px">Loading video…</div>';
+  try{
+    let bin="";
+    for(let i=0;i<n;i++){const r=await api("fget",{from:ME,fid,ci:i});if(!r||!r.v)throw 0;bin+=r.v;}
+    const b64=bin.startsWith("data:")?bin.split(",")[1]:bin;
+    const mime=bin.slice(5,bin.indexOf(";"))||"video/mp4";
+    const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+    const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+    box.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:420px;background:#000" src="'+url+'"></video>';
+  }catch(e){box.innerHTML='<div style="color:#f15c6d;text-align:center;padding:14px;font-size:13px">Could not load video.</div>';}
+}
+async function wtReact(pid,r){
+  const p=WT_POSTS.find(x=>x.id===pid);if(!p)return;
+  if(p.myreact===r)r="";
+  try{const d=await api("preact",{from:ME,id:pid,r});if(d&&d.ok){p.reacts=d.reacts;p.myreact=d.mine;wtRender();}}catch(e){toast("Could not react");}
+}
+async function wtCommentsOpen(pid){
+  WT_CPID=pid;
+  try{const d=await api("pcomments",{node:ME,id:pid});const cs=(d&&d.comments)||[];
+    $("wtCList").innerHTML=cs.length?cs.map(c=>'<div style="padding:8px 0;border-bottom:1px solid #F1F5F9"><div style="font-weight:600;font-size:13px">'+esc(c.name||c.from)+'</div><div style="font-size:13.5px;white-space:pre-wrap">'+esc(c.text||"")+'</div><div style="font-size:10.5px;color:#94A3B8">'+fmtWT(c.at)+'</div></div>').join(""):'<div style="color:#64748B;font-size:13px;padding:10px 0">No comments yet — say something!</div>';
+    $("wtCSCount").textContent=cs.length?("("+cs.length+")"):"";
+  }catch(e){}
+  $("wtComments").className="ovl";
+}
+function wtCommentsClose(){$("wtComments").className="ovl hide";}
+async function wtCPost(){
+  const v=$("wtCIn").value.trim();if(!v||!WT_CPID)return;
+  $("wtCIn").value="";
+  try{await api("pcomment",{from:ME,id:WT_CPID,text:v});const p=WT_POSTS.find(x=>x.id===WT_CPID);if(p)p.ccnt=(p.ccnt||0)+1;wtCommentsOpen(WT_CPID);}catch(e){toast("Could not comment");}
+}
+async function wtShare(pid){
+  const p=WT_POSTS.find(x=>x.id===pid);if(!p)return;
+  const resh=confirm("Reshare this post to your channel?\n\nCancel = copy the text instead (share outside)");
+  if(resh){
+    try{await api("post",{from:ME,text:(p.pname?("[via "+p.pname+"] "):"")+(p.text||"Watch this video 📹"),rs:pid});toast("Reshared to your channel ✓");wtRefresh();}catch(e){toast("Could not reshare");}
+  } else {
+    const txt=(p.pname?p.pname+": ":"")+(p.text||"")+" — via AirConnect Watch";
+    if(navigator.share){try{await navigator.share({text:txt});}catch(e){}}
+    else{try{await navigator.clipboard.writeText(txt);toast("Copied — paste anywhere to share");}catch(e){toast("Copy: "+txt.slice(0,80));}}
+  }
+}
+function wtComposeOpen(){$("wtComposer").className="ovl";$("wtVidStat").textContent="";}
+function wtComposeClose(){$("wtComposer").className="ovl hide";}
+function wtVidChosen(){
+  const fi=$("wtVidIn");const f=fi.files&&fi.files[0];fi.value="";
+  if(!f)return;
+  if(f.size>100*1024*1024){toast("Please keep videos under 100MB");return;}
+  WT_VID=f;
+  $("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB)";
+}
+async function wtPost(){
+  const text=$("wtText").value.trim();
+  if(!text&&!WT_VID){toast("Write something or add a video");return;}
+  $("wtVidStat").textContent="Posting…";
+  try{
+    let fid="",name="";
+    if(WT_VID){
+      name=WT_VID.name||"video";
+      const CH=75000;
+      const n=Math.min(900,Math.ceil(WT_VID.size/CH));
+      const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
+      if(!s||!s.fid)throw 0;
+      fid=s.fid;
+      for(let i=0;i<n;i++){
+        const sl=WT_VID.slice(i*CH,(i+1)*CH);
+        const b64=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.readAsDataURL(sl);});
+        const r=await api("fput",{from:ME,fid,ci:i,v:b64});
+        if(!r||!r.ok)throw 0;
+        $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
+      }
+    }
+    const r=await api("post",{from:ME,text,fid,name,rs:""});
+    if(!r||!r.ok)throw 0;
+    WT_VID=null;$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
+    toast("Posted to your channel ✓");
+    WT_SEEN[r.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}
+    wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();
+  }catch(e){toast("Post failed — check connection and try again");$("wtVidStat").textContent="";}
+}
+async function wtChannels(){
+  const el=$("wtchans");
+  el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Loading channels…</div>';
+  try{
+    const d=await api("channels",{node:ME});
+    WT_CHANS=(d&&d.channels)||[];
+    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px"><button class="big blue" style="flex:1;padding:10px;border-radius:12px" onclick="wtMyChannel()">✏️ My channel</button></div>';
+    if(!WT_CHANS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:20px;font-size:13px">No channels yet — post something and yours is created automatically!</div>';return;}
+    for(const c of WT_CHANS){
+      const d2=document.createElement("div");
+      d2.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px";
+      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.mine?' <span style="color:#0EA5E9;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#0EA5E9")+';color:'+(c.subscribed?"#334155":"#fff")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
+      el.appendChild(d2);
+    }
+  }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load channels.</div>';}
+}
+async function wtSub(num){
+  try{
+    const mine=WT_CHANS.find(c=>c.num===num);
+    const on=!(mine&&mine.subscribed);
+    const d=await api("sub",{node:ME,to:num,on:on?1:0});
+    if(d&&d.ok){toast(on?"Subscribed ✓ — their posts come to you first":"Unsubscribed");wtChannels();}
+  }catch(e){toast("Could not subscribe");}
+}
+function wtChanPage(num){
+  WT_CH_PAGE=num;
+  $("wtfeed").className="";$("wtchans").className="hide";
+  $("wtb-feed").style.background="#E2E8F0";$("wtb-feed").style.color="#334155";
+  wtLoad();
+}
+(function(){var el=document.getElementById("wtVidIn");if(el)el.addEventListener("change",wtVidChosen);})();
+function wtMyChannel(){
+  const m=WT_CHANS.find(c=>c.mine);
+  const nm=prompt("Channel name:",m?m.name:(WIN_NAMES[ME]||"My Channel"));
+  if(nm===null)return;
+  const ab=prompt("Channel description (what you post about):",m?m.about:"");
+  if(ab===null)return;
+  api("channel",{node:ME,name:nm||"My Channel",about:ab||""}).then(()=>{toast("Channel saved ✓");wtChannels();}).catch(()=>toast("Could not save channel"));
+}
 
 /* ---------------- chats ---------------- */
 function lastOf(p){const c=CHATS[p];return c&&c.length?c[c.length-1]:null;}
