@@ -2357,6 +2357,8 @@ let SIG_PRIMED=false;
 /* ---- v29 GROUP CALLS (mesh audio) + chat meta ---- */
 function fmtT(ts){try{const d=new Date(normTs(ts||""));if(isNaN(d.getTime()))return"";return d.toTimeString().slice(0,5);}catch(e){return""}}
 var GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
+/* v33: SFU group-call state (Cloudflare Realtime) */
+var SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false};
 function gCall(){if(GC.on){toast("Already in a group call");return;}if(!GROUP_OPEN)return;gJoin(GROUP_OPEN,true);}
 async function gJoin(gid,initiator){
   if(GC.on)return;
@@ -2369,13 +2371,87 @@ async function gJoin(gid,initiator){
   try{startRing("dial");}catch(e){}
   gcUI();
   GC.gcTick=setInterval(()=>{const el=document.getElementById("gcstat");if(el){const s=Math.floor((Date.now()-GC.t0)/1000);el.textContent="Group call · "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}},1000);
+  sfuJoin(gid);
+}
+/* ---------- v33: SFU group-call core (Cloudflare Realtime SFU) ---------- */
+async function sfuJoin(gid){
+  try{
+    SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false};
+    const r=await api("sfusess",{from:ME});
+    if(!r||!r.ok||!r.sid){await log("GC-SFU: no session ("+((r&&r.err)||"?")+")");return;}
+    SF.sid=r.sid;
+    SF.pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.cloudflare.com:3478","stun:stun.l.google.com:19302"]}]});
+    SF.pc.ontrack=async e=>{
+      try{
+        const key=e.streams[0]?e.streams[0].id:("gcs"+Math.random().toString(36).slice(2));
+        let a=document.getElementById("sfua-"+key);
+        if(!a){a=document.createElement("audio");a.id="sfua-"+key;a.autoplay=true;a.setAttribute("playsinline","true");a.style.display="none";document.body.appendChild(a);}
+        a.srcObject=e.streams[0];a.play().catch(()=>{});
+        await log("GC-SFU: remote audio attached");
+      }catch(x){}
+      gcUI();
+    };
+    try{SF.pc.onconnectionstatechange=()=>{log("GC-SFU ICE: "+SF.pc.connectionState).catch(()=>{});if(SF.pc.connectionState==="connected"){try{stopRing();}catch(e){}}};}catch(e){}
+    const track=GC.stream.getAudioTracks()[0];
+    SF.pc.addTrack(track,GC.stream);
+    const offer=await SF.pc.createOffer();
+    await SF.pc.setLocalDescription(offer);
+    await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,2500);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
+    const mid=(SF.pc.getTransceivers().filter(t=>t.sender.track===track)[0]||{}).mid||"0";
+    const pub=await api("sfupub",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
+    if(!pub||!pub.ok){await log("GC-SFU: publish failed ("+((pub&&pub.err)||"?")+")");sfuLeave(true);return;}
+    await SF.pc.setRemoteDescription({type:"answer",sdp:pub.sdp});
+    await api("sfureg",{from:ME,gid,sid:SF.sid});
+    await log("GC-SFU: joined (sid "+SF.sid.slice(0,8)+"…)");
+    SF.poll=setInterval(()=>sfuTick(gid),3000);
+    sfuTick(gid);
+  }catch(e){await log("GC-SFU join error: "+String(e).slice(0,100));}
+}
+async function sfuTick(gid){
+  if(!GC.on||!SF.sid||SF.busy)return;
+  SF.busy=true;
+  try{
+    const r=await api("sfumembers",{from:ME,gid,sid:SF.sid});
+    if(!r||!r.ok)return;
+    SF.mems={};
+    for(const m of (r.members||[]))SF.mems[m.n]={s:m.s};
+    gcUI();
+    for(const node of Object.keys(SF.mems)){
+      const rsid=SF.mems[node].s;
+      if(!SF.subs[rsid]){
+        SF.subs[rsid]={n:node,pending:true};
+        const sub=await api("sfusub",{from:ME,sid:SF.sid,rsid,gid});
+        if(!sub||!sub.ok){delete SF.subs[rsid];continue;}
+        await SF.pc.setRemoteDescription({type:"offer",sdp:sub.sdp});
+        const ans=await SF.pc.createAnswer();
+        await SF.pc.setLocalDescription(ans);
+        const ren=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans.sdp});
+        if(!ren||!ren.ok){await log("GC-SFU: reneg failed for +"+node+" ("+((ren&&ren.err)||"?")+")");}
+        else{SF.subs[rsid].pending=false;await log("GC-SFU: subscribed to +"+node);}
+      }
+    }
+  }catch(e){}
+  SF.busy=false;
+}
+async function sfuLeave(silent){
+  try{clearInterval(SF.poll);}catch(e){}
+  try{
+    if(SF.sid&&SF.pc){
+      const mids=SF.pc.getTransceivers().map(t=>t.mid).filter(Boolean);
+      if(mids.length)await api("sfuleave",{from:ME,sid:SF.sid,mids}).catch(()=>{});
+    }
+    if(SF.sid&&GC.g)await api("sfureg",{from:ME,gid:GC.g,sid:SF.sid,off:1}).catch(()=>{});
+  }catch(e){}
+  try{if(SF.pc)SF.pc.close();}catch(e){}
+  document.querySelectorAll("[id^='sfua-']").forEach(a=>{try{a.remove();}catch(e){}});
+  SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false};
 }
 function gcName(p){return WIN_NAMES[p]||("+"+p);}
 function gcUI(){
   let el=document.getElementById("gcview");
   if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#0C4A6E;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
   const g=GROUPS.find(x=>x.id===GC.g);
-  const peers=Object.keys(GC.pcs);
+  const peers=Object.keys(SF.mems||{});
   let chips='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px">';
   chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(ME))+' (you)</span>';
   for(const p of peers)chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(p))+'</span>';
@@ -2390,7 +2466,9 @@ function gcUI(){
 function gMute(){GC.muted=!GC.muted;if(GC.stream)for(const t of GC.stream.getTracks())t.enabled=!GC.muted;gcUI();}
 function gLeave(){
   if(!GC.on)return;
-  for(const p of Object.keys(GC.pcs)){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(()=>{});try{GC.pcs[p].close();}catch(e){}}
+  const remaining=Object.keys(SF.mems||{});
+  for(const p of remaining){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(()=>{});}
+  sfuLeave(true);
   if(GC.stream)for(const t of GC.stream.getTracks())t.stop();
   if(GC.gcTick)clearInterval(GC.gcTick);
   GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
@@ -2525,27 +2603,13 @@ async function handleSigs(msgs){
     const gp=(m.payload&&m.payload.g)||null;
     if(m.type==="gcallo"){if(!GC.on)gcInvite(m.from,gp);continue;}
     if(m.type==="gcj"){
-      if(GC.on&&GC.g===gp){(async()=>{try{const pc=await gcPeer(m.from);if(pc&&Number(ME)<Number(m.from)){const d=await pc.createOffer();await pc.setLocalDescription(d);const z=await zipDesc(d);api("sig",{from:ME,to:m.from,type:"goffer",payload:{g:GC.g,desc:z}}).catch(()=>{});}}catch(e){}})();}
+      /* v33: SFU mode — members are discovered by polling; no mesh dialing */
       continue;
     }
-    if(m.type==="goffer"){
-      if(GC.on){(async()=>{try{
-        const raw=await unzipDesc((m.payload||{}).desc);if(!raw||!raw.type)return;
-        let pc=GC.pcs[m.from];
-        if(pc&&pc.signalingState==="have-local-offer"&&Number(ME)>=Number(m.from)){try{pc.close();}catch(e){}delete GC.pcs[m.from];pc=null;}
-        if(pc&&pc.signalingState==="have-local-offer"&&Number(ME)<Number(m.from))return;
-        if(pc&&pc.signalingState!=="stable"&&pc.signalingState!=="have-local-offer")return;
-        pc=pc||await gcPeer(m.from);if(!pc)return;
-        await pc.setRemoteDescription(raw);
-        const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
-        const z=await zipDesc(ans);
-        api("sig",{from:ME,to:m.from,type:"ganswer",payload:{g:GC.g,desc:z}}).catch(()=>{});
-      }catch(e){}})();}
-      continue;
-    }
-    if(m.type==="ganswer"){if(GC.on&&GC.pcs[m.from]){(async()=>{try{const raw=await unzipDesc((m.payload||{}).desc);if(raw&&raw.type)await GC.pcs[m.from].setRemoteDescription(raw);}catch(e){}})();}continue;}
-    if(m.type==="gice"){if(GC.on&&GC.pcs[m.from]){(async()=>{try{for(const c of (((m.payload||{}).c)||[])){await GC.pcs[m.from].addIceCandidate(JSON.parse(c));}}catch(e){}})();}continue;}
-    if(m.type==="gbye"){if(GC.on&&GC.pcs[m.from]){try{GC.pcs[m.from].close();}catch(e){}delete GC.pcs[m.from];gcUI();}continue;}
+    if(m.type==="goffer"){continue;} /* v33: SFU mode — legacy mesh sigs ignored */
+    if(m.type==="ganswer"){continue;}
+    if(m.type==="gice"){continue;}
+    if(m.type==="gbye"){if(GC.on){gcUI();}continue;} /* member list refreshes via poll */
   }
 
   if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
