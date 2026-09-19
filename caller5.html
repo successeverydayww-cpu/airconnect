@@ -741,7 +741,7 @@ footer a{color:#64748B}
   <div class="top" style="padding-top:80px">
     <div class="av" id="incAv">📞</div>
     <div class="iname" id="incName">—</div>
-    <div class="istat">Incoming call…</div>
+    <div class="istat" id="incStat">Incoming call…</div>
   </div>
   <div class="ictrl">
     <button class="dec" onclick="declineCall()">✖</button>
@@ -841,13 +841,16 @@ function vmStat(){try{$("vmStat").textContent=vmEnabled()?"ON":"OFF";}catch(e){}
    the retry from the same caller gets a fast, brief (<=6s) AI answer that ends the call itself. */
 let VM_BRIEF=false,VM_MISS={};try{VM_MISS=JSON.parse(localStorage.getItem("ac_vm_miss"))||{};}catch(e){}
 let VM_BRIEF_SILENCE=null,VM_BRIEF_SAID="";
-function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<3600000)?r:null;}
+function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<900000)?r:null; /* v48: 15min window */}
 function vmRecordMiss(from){try{const prev=vmMissInfo(from);VM_MISS[from]={t:Date.now(),n:((prev&&prev.n)||0)+1};localStorage.setItem("ac_vm_miss",JSON.stringify(VM_MISS));}catch(e){}}
 function vmArm(){vmDisarm();if(!vmEnabled())return;
   const from=pendingOffer&&pendingOffer.from;
   const miss=from?vmMissInfo(from):null;
   VM_BRIEF=!!(miss&&miss.n>=1);
-  const delay=VM_BRIEF?1500:20000; /* v36: 2nd call picks in under 5s */
+  /* v48 (skylar: "the second call did not come in"): the 2nd call now RINGS normally —
+     AI only steps in after 6.5s of no pickup, with a visible countdown. */
+  const delay=VM_BRIEF?6500:20000;
+  if(VM_BRIEF){try{const el=document.getElementById("incStat");if(el){el.textContent="AI receptionist answers in 7s — pick up to take the call";setTimeout(()=>{try{if(state==="incoming"&&el)el.textContent="AI receptionist answering…";}catch(e){}},5200);}}catch(e){}}
   vmRingTimer=setTimeout(function(){if(state==="incoming"&&pendingOffer&&ME)vmAnswer();},delay);}
 function vmDisarm(){if(vmRingTimer){clearTimeout(vmRingTimer);vmRingTimer=null;}}
 async function vmAnswer(){
@@ -996,7 +999,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js');
+    const reg=await navigator.serviceWorker.register('sw.js?v=48');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1233,7 +1236,7 @@ async function finishLogin(d){
   })();
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
   armPush();poll();ringLoop();presTick();
-  setInterval(flushOutIce,700);
+  setInterval(function(){if(state==="live"||state==="dialing"||state==="incoming")flushOutIce();},400);setInterval(flushOutIce,700);
   setInterval(tick,1000);setInterval(callBarTick,1000);
   renderLists();
   if(!localStorage.getItem("ac_ob")){obShow();$("ob").className="ovl";}
@@ -2611,6 +2614,7 @@ async function newPC(){
   pc=new RTCPeerConnection(iceCfg());hookPc(pc);
   pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
   pc.onconnectionstatechange=()=>{
+    if(pc&&pc.connectionState==="connected"&&PENDING_RENEG)renegSend(); /* v48 */
     if(pc&&(pc.connectionState==="failed"||pc.connectionState==="disconnected")&&state==="live"){
       if(CALL_ROLE==="offerer"&&Date.now()-ICE_RESTART_AT>15000){
         ICE_RESTART_AT=Date.now();
@@ -2652,13 +2656,10 @@ async function newPC(){
       log("receiving +"+PEER+"'s audio (speaker output)");
     }
   };
-  pc.onnegotiationneeded=async()=>{
-    if(state!=="live"||!pc)return;
-    try{
-      const o=await pc.createOffer();await pc.setLocalDescription(o);
-      await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(o)});
-      await log("camera renegotiation sent");
-    }catch(e){}
+  pc.onnegotiationneeded=()=>{
+    if(!pc)return;
+    if(state!=="live"){PENDING_RENEG=true;return;} /* v48: queue — flushed when live */
+    renegSend();
   };
   const ctx=new AudioContext();mixCtx=ctx;
   const mixOut=ctx.createMediaStreamDestination();
@@ -2679,6 +2680,16 @@ async function newPC(){
     await log("camera ON — video streaming");
   }
   return pc;
+}
+let PENDING_RENEG=false;
+async function renegSend(){
+  PENDING_RENEG=false;
+  if(!pc||!PEER||state!=="live")return;
+  try{
+    const o=await pc.createOffer();await pc.setLocalDescription(o);
+    await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(o)});
+    await log("camera renegotiation sent");
+  }catch(e){}
 }
 function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
   const w=$("vwrap");
@@ -2792,10 +2803,14 @@ async function toggleCam(){
       await log("camera OFF");
     }else{
       cam=await navigator.mediaDevices.getUserMedia({video:true});
-      const vtr=pc.getSenders().find(s=>s.track&&s.track.kind==="video");
-      if(vtr)await vtr.replaceTrack(cam.getVideoTracks()[0]);
+      /* v48 FIX: calls that start audio-only have a RECVONLY video transceiver —
+         replaceTrack alone sends NOTHING. Flip to sendrecv and renegotiate. */
+      let vtr=null;
+      for(const tr of pc.getTransceivers()){if(tr.sender&&tr.sender.track&&tr.sender.track.kind==="video"){vtr=tr;break;}}
+      if(vtr){await vtr.sender.replaceTrack(cam.getVideoTracks()[0]);try{if(vtr.direction!=="sendrecv")vtr.direction="sendrecv";}catch(e){}}
       else for(const vt of cam.getVideoTracks())pc.addTrack(vt,cam);
       $("localv").srcObject=cam;camOn=true;setVLayout(state==="live"&&$("remotev").srcObject?"live":"ring");
+      await renegSend();
       await log("camera ON mid-call");
     }
   }catch(e){toast("Camera unavailable");}
@@ -3347,7 +3362,7 @@ async function poll(){
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){toast("Account banned");return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(document.hidden?9000:CHAT_OPEN?1500:3000));
+      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?800:(document.hidden?9000:CHAT_OPEN?1500:3000));
       return;
     }
     const d=d0;
@@ -3405,7 +3420,7 @@ async function poll(){
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);if(pollFails>=3)setOffline(true);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(document.hidden?9000:CHAT_OPEN?1500:3000));
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?800:(document.hidden?9000:CHAT_OPEN?1500:3000));
 }
 setInterval(tickReqs,4000);
 
