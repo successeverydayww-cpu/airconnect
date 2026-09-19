@@ -924,16 +924,25 @@ function startRing(kind){
     try{navigator.vibrate&&navigator.vibrate(vib);}catch(e){}
     if(!ringCtx||ringCtx.state!=="running")return;
     const t=ringCtx.currentTime;
-    const mk=(dt,freq)=>{
+    /* v38: clean soft tones — smooth fade in/out, no clicks or harshness */
+    const mk=(dt,freq,dur,gain)=>{
       const o=ringCtx.createOscillator(),g=ringCtx.createGain();
-      o.frequency.value=freq;o.connect(g);g.connect(ringCtx.destination);
-      g.gain.setValueAtTime(0.4,t+dt);g.gain.setValueAtTime(0.4,t+dt+0.12);g.gain.linearRampToValueAtTime(0,t+dt+0.18);
-      o.start(t+dt);o.stop(t+dt+0.2);
+      o.type="sine";o.frequency.value=freq;o.connect(g);g.connect(ringCtx.destination);
+      g.gain.setValueAtTime(0.0001,t+dt);
+      g.gain.linearRampToValueAtTime(gain,t+dt+0.02);
+      g.gain.setValueAtTime(gain,t+dt+dur-0.03);
+      g.gain.linearRampToValueAtTime(0.0001,t+dt+dur);
+      o.start(t+dt);o.stop(t+dt+dur+0.01);
     };
-    if(kind==="in"){mk(0,780);mk(0.35,780);}else{mk(0,440);mk(0.5,440);}
+    if(kind==="in"){mk(0,780,0.28,0.3);mk(0.35,780,0.28,0.3);}
+    else{
+      /* classic Naija/UK double-ring: warm 400+450Hz pair, gentle level */
+      const pair=(dt)=>{mk(dt,400,0.4,0.16);mk(dt,450,0.4,0.16);};
+      pair(0);pair(0.6);
+    }
   };
   beep();
-  ringInt=setInterval(beep,2000);
+  ringInt=setInterval(beep,kind==="in"?2000:3000);
 }
 function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+(cls||"");}
 
@@ -2453,6 +2462,32 @@ document.addEventListener("visibilitychange",()=>{
     },20000);
   }else{hiddenSince=0;}
 });
+/* ---- v38 KEEP-ALIVE: a near-silent looping audio marks this tab "playing audio",
+ so Android Chrome never freezes it in the background — incoming calls always ring
+ and the AI receptionist always answers, even with the screen off. ---- */
+let KA_AUDIO=null;
+function kaBoot(){
+  if(KA_AUDIO)return;
+  try{
+    const sr=8000,n=1600,p=44;
+    const buf=new Uint8Array(p+n);
+    const dv=new DataView(buf.buffer);
+    const w=(o,str)=>{for(let i=0;i<str.length;i++)dv.setUint8(o+i,str.charCodeAt(i));};
+    w(0,"RIFF");dv.setUint32(4,36+n,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);
+    dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,sr,true);
+    dv.setUint32(28,sr,true);dv.setUint16(32,1,true);dv.setUint16(34,8,true);
+    w(36,"data");dv.setUint32(40,n,true);
+    for(let i=0;i<n;i++)buf[p+i]=128;
+    let bin="";for(let i=0;i<buf.length;i+=8192)bin+=String.fromCharCode.apply(null,buf.subarray(i,i+8192));
+    KA_AUDIO=document.createElement("audio");
+    KA_AUDIO.src="data:audio/wav;base64,"+btoa(bin);
+    KA_AUDIO.loop=true;KA_AUDIO.volume=0.02;
+    KA_AUDIO.play().catch(()=>{});
+    setInterval(()=>{try{if(KA_AUDIO.paused){KA_AUDIO.play().catch(()=>{});}}catch(e){}},30000);
+  }catch(e){}
+}
+["click","touchstart","keydown"].forEach(ev=>document.addEventListener(ev,function once(){kaBoot();["click","touchstart","keydown"].forEach(x=>document.removeEventListener(x,once));},{once:true}));
+
 /* ---- Auto-end watchdog (directive: every call ends automatically on hangup) ---- */
 setInterval(async()=>{
   try{
