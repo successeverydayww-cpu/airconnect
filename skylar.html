@@ -75,6 +75,7 @@ function doLogin(){
   .then(r=>{if(!r.ok){return r.json().then(j=>{throw j;});}return r.json()})
   .then(r=>{
     localStorage.setItem("os_num",NUM);
+    localStorage.setItem("os_aid",AID);
     sessionStorage.setItem("os_aid",AID);
     document.getElementById("login").style.display="none";
     document.getElementById("chat").style.display="flex";
@@ -119,10 +120,11 @@ function send(){
     doLogin();
   }
 })();
-/* auto-resume */
+/* auto-resume — remember me forever on this device */
 (function(){
-  const n=localStorage.getItem("os_num"),a=sessionStorage.getItem("os_aid");
-  if(n&&a){document.getElementById("num").value=n;doLogin();}
+  const n=localStorage.getItem("os_num");
+  const a=localStorage.getItem("os_aid")||sessionStorage.getItem("os_aid");
+  if(n&&a){document.getElementById("num").value=n;document.getElementById("aid").value=a;doLogin();}
   else if(n){document.getElementById("num").value=n;}
 })();
 </script>
