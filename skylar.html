@@ -104,6 +104,16 @@ function send(){
   .catch(()=>addNote("(connection hiccup — message kept in history, try again)"))
   .finally(()=>{busy=false;});
 }
+/* magic link: ?n=NUM&a=AID auto-logs in, no typing needed */
+(function(){
+  const qs=new URLSearchParams(location.search);
+  const qn=qs.get("n"),qa=qs.get("a");
+  if(qn&&qa){
+    document.getElementById("num").value=qn;
+    document.getElementById("aid").value=qa;
+    doLogin();
+  }
+})();
 /* auto-resume */
 (function(){
   const n=localStorage.getItem("os_num"),a=sessionStorage.getItem("os_aid");
