@@ -120,6 +120,13 @@ footer a{color:#64748B}
 </style>
 </head>
 <body>
+<style>
+#menuWrap{position:fixed;inset:0;background:rgba(2,6,23,.55);z-index:70;opacity:0;pointer-events:none;transition:opacity .18s}
+#menuWrap.on{opacity:1;pointer-events:auto}
+#menuView{position:fixed;top:0;right:0;bottom:0;width:min(92%,400px);background:#F8FAFC;z-index:71;transform:translateX(105%);transition:transform .2s;overflow-y:auto;border-left:1px solid #E2E8F0;box-shadow:-6px 0 24px rgba(2,6,23,.18)}
+#menuView.on{transform:translateX(0)}
+</style>
+
 <script src="qrcode.min.js"></script>
 <script src="jsQR.min.js"></script>
 <div id="login" class="view">
@@ -167,7 +174,7 @@ footer a{color:#64748B}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
   <div class="hdr">
     <div><span id="hdrTitle">🛰️ AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="menuBtn" aria-label="Menu" onclick="menuOpen()" style="background:none;border:0;color:#fff;font-size:22px;line-height:1;padding:2px 4px;cursor:pointer">☰</button></div>
   </div>
 
   <div id="view-chats" class="view">
@@ -295,16 +302,6 @@ footer a{color:#64748B}
   </div>
 
   <div id="view-settings" class="view hide">
-    <div class="card" style="background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;border:0">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:26px">💰</div>
-        <div style="flex:1">
-          <div style="font-size:12px;opacity:.85">My AirConnect Wallet</div>
-          <div style="font-size:22px;font-weight:700" id="walBal">₦0</div>
-        </div>
-        <button class="big" style="background:#fff;color:#0C4A6E;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
-      </div>
-    </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🛒 Citizen Marketplace</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Hire an AI citizen for real work — paid straight from your wallet.</div>
@@ -478,14 +475,23 @@ footer a{color:#64748B}
       <div id="fabList"></div>
       <div style="height:10px"></div>
     </div>
+      <div class="card" style="background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;border:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:26px">💰</div>
+        <div style="flex:1">
+          <div style="font-size:12px;opacity:.85">My AirConnect Wallet</div>
+          <div style="font-size:22px;font-weight:700" id="walBal">₦0</div>
+        </div>
+        <button class="big" style="background:#fff;color:#0C4A6E;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
+      </div>
+    </div>
   </div>
-
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
     <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico">▶️</span>Watch</button>
     <button id="tab-status" aria-label="Status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
     <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
-    <button id="tab-settings" aria-label="Settings" onclick="showTab('settings')"><span class="ico">⚙️</span>Settings</button>
+    <button id="tab-settings" aria-label="Settings" onclick="menuOpen()"><span class="ico">⚙️</span>Menu</button>
   </nav>
 </div>
 
@@ -1222,6 +1228,7 @@ window.addEventListener("popstate",()=>{
 });
 pushHist();
 function showTab(t){
+  if(t==="settings"){menuOpen();return;}
   for(const v of["chats","watch","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
   const TITLES={chats:"🛰️ AirConnect",watch:"Watch",status:"Status",calls:"Calls",settings:"Settings"};
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
@@ -3453,6 +3460,7 @@ async function walRefresh(){
     if(d&&d.ok){
       $("walBal").textContent="₦"+(d.bal||0).toLocaleString();
       $("walBal2").textContent="₦"+(d.bal||0).toLocaleString();
+      const wm=$("walBalMenu");if(wm)wm.textContent="₦"+(d.bal||0).toLocaleString();
       const h=$("walHist");
       if(h)h.innerHTML=(d.hist||[]).length?d.hist.map(t=>{
         const inn=t.to===ME;
@@ -3916,6 +3924,41 @@ window.addEventListener("unhandledrejection",e=>{
   if(diagSent>=3)return;diagSent++;
   try{log("[DIAG] promise: "+String((e.reason&&e.reason.message)||e.reason||"").slice(0,140));}catch(x){}
 });
+</script>
+
+<div id="menuWrap" onclick="menuClose()"></div>
+<div id="menuView"></div>
+<script>
+function menuOpen(){
+  const mv=document.getElementById("menuView");
+  if(!mv._owned){mv._owned=1;
+    const vs=document.getElementById("view-settings");
+    const prof=document.createElement("div");
+    prof.style.cssText="background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;border-radius:14px;padding:14px;margin:12px;display:flex;gap:12px;align-items:center";
+    prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#0C4A6E">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
+      '<div><div style="font-size:16px;font-weight:700">'+esc(ME_NAME||"Me")+'</div>'+
+      '<div style="font-size:12px;opacity:.85">+'+ME+' · my profile</div></div>';
+    prof.onclick=function(){menuClose();document.getElementById("picinput")&&document.getElementById("picinput").click();};
+    mv.appendChild(prof);
+    try{const mp=PIC_CACHE[ME];if(mp){prof.querySelector("#menuProfAv").innerHTML='<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}}catch(e){}
+    const back=document.createElement("button");
+    back.className="big blue";back.style.cssText="margin:12px;width:calc(100% - 24px)";
+    back.textContent="✕ Close menu";back.onclick=menuClose;
+    mv.appendChild(back);
+    if(vs)mv.appendChild(vs); /* settings content lives here now — single copy, no dup ids */
+    const wal=document.createElement("button");
+    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#0C4A6E;color:#fff;font-size:15px";
+    wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
+    mv.appendChild(wal);
+  }
+  document.getElementById("menuWrap").className="on";
+  document.getElementById("menuView").className="on";
+  try{walRefresh();liteBoot();}catch(e){}
+}
+function menuClose(){
+  document.getElementById("menuWrap").className="";
+  document.getElementById("menuView").className="";
+}
 </script>
 </body>
 </html>
