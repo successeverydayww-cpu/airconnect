@@ -2450,8 +2450,9 @@ function toggleMode(){
 }
 let OFFLINE=false;
 function setOffline(v){if(v!==OFFLINE){OFFLINE=v;$("offbanner").className=v?"":"hide";}}
-window.addEventListener("online",()=>setOffline(false));
-window.addEventListener("offline",()=>setOffline(true));
+let OFF_T=null;
+window.addEventListener("online",()=>{if(OFF_T){clearTimeout(OFF_T);OFF_T=null;}setOffline(false);});
+window.addEventListener("offline",()=>{if(OFF_T)clearTimeout(OFF_T);OFF_T=setTimeout(()=>{OFF_T=null;setOffline(true);},4000);});
 setOffline(!navigator.onLine);
 let chatSeq=0;
 async function sendChat(){
@@ -3379,7 +3380,7 @@ async function poll(){
     if(v12ch){if(GROUP_OPEN)renderGBubbles();renderLists();}
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
-  }catch(e){pollFails=Math.min(pollFails+1,6);setOffline(true);}
+  }catch(e){pollFails=Math.min(pollFails+1,6);if(pollFails>=3)setOffline(true);}
   setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?1500:(document.hidden?9000:CHAT_OPEN?1500:3000));
 }
 setInterval(tickReqs,4000);

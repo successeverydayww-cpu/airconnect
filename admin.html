@@ -27,7 +27,7 @@ button{background:#0C4A6E;color:#fff;border:0;border-radius:10px;padding:11px;wi
 <div class="sub">Every submitted top-up receipt lands here. Confirm to credit the user's wallet, reject to clear the claim. Owner login only.</div>
 <div style="display:flex;gap:8px;margin:10px 0">
 <input id="waNum" placeholder="Owner number" value="234100000001" style="flex:1;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
-<input id="waAid" placeholder="AIR ID" type="password" style="flex:1.4;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
+<input id="waAid" placeholder="AIR ID or admin key" type="password" style="flex:1.4;background:#13223A;border:1px solid #2A3B5C;border-radius:10px;color:#E2E8F0;padding:10px;font-size:13px">
 </div>
 <button onclick="waLoad()">Load payment receipts</button>
 <div id="waOut" style="margin-top:10px"></div>
@@ -69,7 +69,11 @@ async function waApi(body){
   const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   return r.json();
 }
-function waCred(){return {by:String(document.getElementById("waNum").value||"").trim(), aid:String(document.getElementById("waAid").value||"").trim()};}
+function waCred(){
+  const aid=String(document.getElementById("waAid").value||"").trim();
+  if(aid.startsWith("air-"))return {tk:aid};
+  return {by:String(document.getElementById("waNum").value||"").trim(), aid};
+}
 async function waLoad(){
   const out=document.getElementById("waOut");
   out.innerHTML="Loading…";
