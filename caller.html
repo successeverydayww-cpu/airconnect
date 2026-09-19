@@ -161,6 +161,9 @@ footer a{color:#64748B}
     <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
     <button class="big blue" onclick="register()">Resume my number</button>
+    <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or log in with your recovery phrase —</div>
+    <input id="phrasein" placeholder="e.g. golden-harvest-pearl-wisdom-482" style="text-transform:lowercase">
+    <button class="big green" onclick="phraseLogin()">Log in with phrase</button>
     <div style="font-size:11px;color:#94A3B8;margin-top:12px;text-align:center;line-height:1.5">
       Verify by SMS or email code, so nobody can sign up as you.<br>Same email + code also logs you back in on any device.<br>
       <a href="terms.html" target="_blank" style="color:#2563EB">Terms &amp; Data Policy</a> ·
@@ -316,6 +319,7 @@ footer a{color:#64748B}
       <div style="font-weight:600;margin-bottom:6px">📶 Lite mode (data saver)</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Photos load on tap, videos never autoplay — saves your data.</div>
       <button class="big" id="liteBtn" style="background:#CBD5E1;color:#334155" onclick="liteToggle()">Lite mode: OFF</button>
+      <button class="big" style="margin-top:8px" onclick="showMyPhrase()">🔐 My recovery phrase</button>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
@@ -1150,8 +1154,8 @@ async function verifyOtp(){
     if(!code||code.length!==6){toast("Enter the 6-digit code from your email");return;}
     const d=await api("otp",{op:"verify",channel:"email",email:OTP_EMAIL,code:code});
     if(d&&d.ok){
-      const d2=await api("claim_email",{email:OTP_EMAIL,name:name,country:country});
-      if(d2&&d2.ok){await finishLogin(d2);return;}
+      const d2=await api("claim_email",{email:OTP_EMAIL,name:name,country:country,dev:await getDevAsync()});
+      if(d2&&d2.ok){await finishLogin(d2);if(d2.phrase)showPhraseModal(d2.phrase,d2.resumed==="new");return;}
       toast((d2&&d2.err)||"Could not create your account");
       return;
     }
@@ -1163,22 +1167,35 @@ async function verifyOtp(){
   const name=$("myname").value.trim(),country=$("country").value;
   const d=await api("otp",{op:"verify",num:OTP_NUM,code:code});
   if(!d||!d.verified){toast((d&&d.err)||"Wrong code — check and try again");return;}
-  const d2=await api("claim",{num:OTP_NUM,name:name,country:country});
+  const d2=await api("claim",{num:OTP_NUM,name:name,country:country,dev:await getDevAsync()});
   if(!d2||!d2.id){toast((d2&&d2.err)||"Could not create account");return;}
   finishLogin(d2);
+  if(d2.phrase)showPhraseModal(d2.phrase,d2.resumed==="new");
 }
 async function register(){
   const name=$("myname").value.trim(),country=$("country").value;
   const resume=$("oldnum").value.trim()||readLoginSync()||"";
+  const dev=await getDevAsync();
   let d=null;
-  if(resume){d=await api("register",{id:resume,name:name});if(d&&d.id)await log('resumed my number');}
-  if(!d||!d.id){if(!name){toast("Enter your name");return;}d=await api("register",{name:name,country:country});}
+  if(resume){d=await api("register",{id:resume,name:name,dev:dev});if(d&&d.id)await log('resumed my number');}
+  if(!d||!d.id){d=await api("register",{dev:dev,name:name});if(d&&d.id)await log('resumed by device');}
+  if(!d||!d.id){
+    if(resume||ME){
+      toast("Could not resume your number — use your recovery phrase");
+      $("login").className="view";$("app").className="hide";
+      return;
+    }
+    if(!name){toast("Enter your name");return;}
+    d=await api("register",{name:name,country:country,dev:dev});
+  }
   if(!d.id){toast(d.err||"registration failed");return;}
   finishLogin(d);
+  if(d.phrase)showPhraseModal(d.phrase,d.resumed==="new");
 }
 async function finishLogin(d){
   ME=d.id;ME_NAME=d.name;
   if(d.aid){AID=d.aid;try{localStorage.setItem("ac_aid",d.aid);}catch(e){}}
+  if(d.phrase)savePhraseLocally(d.phrase);
   vmStat();
   e2eInit();
   api("friends",{node:ME}).then(fr=>{if(fr&&fr.blocks)WIN_BLOCKS=fr.blocks||[];}).catch(()=>{});
@@ -1193,6 +1210,7 @@ async function finishLogin(d){
   $("mynum").textContent="+ "+ME;
   restoreChats();
   refreshModeBtn();
+  try{const lt=localStorage.getItem("ac_tab");if(lt&&$(lt)&&lt!=="tab-settings"){showTab(lt.replace("tab-",""));}}catch(e){}
   refreshShare();
   await log("app ready");
   (async()=>{
@@ -1232,6 +1250,7 @@ window.addEventListener("popstate",()=>{
 pushHist();
 function showTab(t){
   if(t==="settings"){menuOpen();return;}
+  try{localStorage.setItem("ac_tab","tab-"+t);}catch(e){}
   for(const v of["chats","watch","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
   const TITLES={chats:"🛰️ AirConnect",watch:"Watch",status:"Status",calls:"Calls",settings:"Settings"};
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
@@ -3412,6 +3431,63 @@ function saveLogin(num){
   return saved;
 }
 
+/* ---- v47: stable device id + recovery phrase ---- */
+function genDev(){return 'dev'+(crypto.randomUUID?crypto.randomUUID().replace(/-/g,'').slice(0,20):(''+Date.now()+Math.random().toString(36).slice(2,12)));}
+function getDev(){
+  try{const x=localStorage.getItem("ac_dev");if(x)return x;}catch(e){}
+  try{const m=document.cookie.match(/(?:^|;\s*)ac_dev=([a-zA-Z0-9-]+)/);if(m)return m[1];}catch(e){}
+  const d=genDev();
+  try{localStorage.setItem("ac_dev",d);}catch(e){}
+  try{document.cookie="ac_dev="+d+"; max-age=31536000; path=/; SameSite=Lax";}catch(e){}
+  idbSet("dev",d);
+  return d;
+}
+async function getDevAsync(){
+  const d=getDev();
+  try{const s=await idbGet("dev");if(s){try{if(!localStorage.getItem("ac_dev"))localStorage.setItem("ac_dev",s);}catch(e){}return s;}}catch(e){}
+  return d;
+}
+function savePhraseLocally(p){try{if(p)localStorage.setItem("ac_phrase",p);}catch(e){}}
+function showPhraseModal(p,force){
+  if(!p)return;
+  savePhraseLocally(p);
+  try{
+    const wasSeen=localStorage.getItem("ac_phrase_seen")==="1";
+    if(wasSeen&&!force)return;
+    localStorage.setItem("ac_phrase_seen","1");
+  }catch(e){}
+  const o=document.createElement("div");o.className="ovl";o.style.cssText="display:flex;z-index:999";
+  o.innerHTML='<div style="background:#fff;color:#0F172A;border-radius:16px;padding:22px;max-width:330px;width:90%;margin:auto;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35)">'+
+    '<div style="font-size:38px">🔐</div>'+
+    '<div style="font-weight:700;font-size:17px;margin:8px 0 4px">Your recovery phrase</div>'+
+    '<div style="font-size:12.5px;color:#475569;margin-bottom:12px">Write this down or screenshot it. It is forever tied to your number — it brings your account back on any device, so your number never changes.</div>'+
+    '<div style="background:#F1F5F9;border:1px dashed #94A3B8;border-radius:10px;padding:12px;font-family:monospace;font-size:13px;word-break:break-all;user-select:all">'+p+'</div>'+
+    '<button class="big blue" style="margin-top:14px" onclick="this.closest(\'.ovl\').remove()">Got it — saved</button>'+
+    '</div>';
+  document.body.appendChild(o);
+}
+async function phraseLogin(){
+  const p=($("phrasein").value||'').trim().toLowerCase();
+  if(!p){toast("Enter your recovery phrase");return;}
+  const dev=await getDevAsync();
+  const d=await api("register",{phrase:p,dev:dev});
+  if(!d||!d.id){toast((d&&d.err)||"Phrase not recognised — check spelling");return;}
+  finishLogin(d);
+  if(d.phrase)showPhraseModal(d.phrase,d.resumed==="new");
+}
+async function showMyPhrase(){
+  let p="";
+  try{p=localStorage.getItem("ac_phrase")||"";}catch(e){}
+  if(!p){
+    const dev=await getDevAsync();
+    const id=ME||readLoginSync()||"";
+    const d=id?await api("register",{id:id,dev:dev}):await api("register",{dev:dev});
+    if(d&&d.phrase)p=d.phrase;
+  }
+  if(!p){toast("Phrase not available — try again after logging in");return;}
+  showPhraseModal(p,true);
+}
+
 /* ---- SDP compression (deflate-raw) to fit platform record limits ---- */
 async function zipDesc(desc){
   try{
@@ -3900,7 +3976,7 @@ try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serv
 (async function(){
   let id=readLoginSync();
   if(!id){id=await idbGet("me");}
-  if(id){setTimeout(()=>{try{register();}catch(e){}},400);}
+  if(id){try{$("login").className="hide";$("app").className="";}catch(e){}setTimeout(()=>{try{register();}catch(e){}},400);}
 })();
 (function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('settings');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
 
