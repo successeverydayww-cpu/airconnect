@@ -429,6 +429,14 @@ footer a{color:#64748B}
   </div>
 </div>
 <!-- v40: marketplace sheet -->
+<div id="walAddSheet" class="ovl hide" onclick="if(event.target===this)walAddClose()">
+  <div class="sheet" style="max-height:85vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:16px" id="walAddTitle">💳 Add money</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:10px">Transfer the exact amount, then upload your receipt.</div>
+    <div id="walAddBody"></div>
+    <div style="height:8px"></div>
+  </div>
+</div>
 <div id="mkSheet" class="ovl hide" onclick="if(event.target===this)mkClose()">
   <div class="sheet" style="max-height:80vh;overflow-y:auto">
     <div style="font-weight:700;font-size:16px;margin-bottom:2px">🛒 Citizen Marketplace</div>
@@ -3486,31 +3494,37 @@ async function walAdd(){
   const v=prompt("How much do you want to add? (₦)\nMin ₦100");if(!v)return;
   const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
   if(!amt||amt<100){toast("Minimum is ₦100");return;}
-  /* v43: optional receipt attach — goes straight to the owner admin panel */
-  let fid="",rcp="";
-  try{
-    if(confirm("Attach your payment receipt (screenshot)?\nOptional — it speeds up verification a lot.")){
-      const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
-      if(f){
-        toast("Uploading receipt…");
-        const sm=await walRcpShrink(f);
-        const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
-        const st=await api("fstart",{from:ME,to:ME,name:sm.name,n,pub:1});
-        if(st&&st.fid){
-          for(let i=0;i<n;i++){
-            const r=await api("fput",{from:ME,fid:st.fid,ci:i,v:sm.b64.slice(i*CH,(i+1)*CH)});
-            if(!r||!r.ok)throw 0;
-          }
-          fid=st.fid;rcp=sm.name;toast("Receipt attached ✓");
-        }
-      }
-    }
-  }catch(e){toast("Receipt upload skipped — you can still top up");}
-  const d=await api("wtopup",{node:ME,amt,fid,rcp});
+  const d=await api("wtopup",{node:ME,amt});
   if(!d||!d.ok){toast("Could not start top-up");return;}
   const details="BANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\nREFERENCE: "+d.ref;
-  alert("Transfer ₦"+amt.toLocaleString()+" with this EXACT reference:\n\n"+details+"\n\nYour wallet is credited after verification.");
-  try{await navigator.clipboard.writeText(details);toast("Bank details copied ✓");}catch(e){}
+  try{await navigator.clipboard.writeText(details);}catch(e){}
+  $("walAddTitle").textContent="💳 Add ₦"+amt.toLocaleString();
+  $("walAddBody").innerHTML=
+    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#0C4A6E;color:#fff;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
+    '<button class="big blue" style="width:100%;margin-top:12px;font-size:15px;padding:14px" onclick="walRcpGo()">📷 I have paid — upload my receipt</button>'+
+    '<div id="walRcpPrev" style="margin-top:10px"></div>'+
+    '<button class="big" style="width:100%;margin-top:8px;background:#1E293B" onclick="walAddClose()">Later — my claim is already saved</button>'+
+    '<div style="font-size:12px;color:#64748B;margin-top:10px">Your claim is recorded. Upload the receipt and it goes straight to verification — crediting takes minutes instead of hours.</div>';
+  $("walAddSheet").className="ovl";
+}
+function walAddClose(){$("walAddSheet").className="ovl hide";}
+async function walRcpGo(){
+  const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.capture="environment";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
+  if(!f)return;
+  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#0EA5E9">⏳ Uploading receipt…</div>';
+  try{
+    const sm=await walRcpShrink(f);
+    $("walRcpPrev").innerHTML='<img src="data:image/jpeg;base64,'+sm.b64.slice(0,2000)+'" style="display:none"><div style="font-size:12.5px;color:#94A3B8">📷 '+sm.name+' — sending…</div>';
+    const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
+    const st=await api("fstart",{from:ME,to:ME,name:sm.name,n,pub:1});
+    if(!st||!st.fid)throw 0;
+    for(let i=0;i<n;i++){const r=await api("fput",{from:ME,fid:st.fid,ci:i,v:sm.b64.slice(i*CH,(i+1)*CH)});if(!r||!r.ok)throw 0;}
+    const r2=await api("wrcpt",{node:ME,fid:st.fid,rcp:sm.name});
+    if(!r2||!r2.ok)throw 0;
+    $("walRcpPrev").innerHTML='<div style="background:#14532D;color:#BBF7D0;border-radius:10px;padding:12px;font-size:13.5px">✅ Receipt uploaded — verification in progress. Your wallet will be credited shortly.</div>';
+    toast("Receipt sent ✓");walRefresh();
+    setTimeout(walAddClose,1800);
+  }catch(e){$("walRcpPrev").innerHTML='<div style="color:#F87171;font-size:12.5px">Upload failed — tap the upload button to try again.</div>';}
 }
 async function walSend(){
   const num=prompt("Send to which number?\n(friend or citizen number)");if(!num)return;
