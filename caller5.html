@@ -1065,7 +1065,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=60');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=66');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -4402,7 +4402,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=65;
+const AC_V=66;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4421,8 +4421,22 @@ async function checkForcedUpdate(){
     }
   }catch(e){}
 }
-/* ----- PWA: service worker ----- */
-try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js?v=63").catch(()=>{});}catch(e){}
+/* ----- PWA: service worker + silent auto-update (v66: WhatsApp-style — new version installs itself on open, page refreshes once in background, no taps needed) ----- */
+try{
+  if("serviceWorker" in navigator && location.protocol==="https:"){
+    const HAD_CTL = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register("sw.js?v=66").then(function(reg){
+      try{ reg.update().catch(function(){}); }catch(e){}
+      setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
+      navigator.serviceWorker.addEventListener("controllerchange", function(){
+        if(!HAD_CTL) return; /* first-ever install: no reload */
+        try{ if(sessionStorage.getItem("ac_swreloaded")==="1") return; sessionStorage.setItem("ac_swreloaded","1"); }catch(e){}
+        setTimeout(function(){ location.reload(); }, 600); /* silent one-time refresh */
+      });
+    }).catch(function(){});
+    setTimeout(function(){ try{ sessionStorage.removeItem("ac_swreloaded"); }catch(e){} }, 20000);
+  }
+}catch(e){}
 
 (async function(){
   checkForcedUpdate();
