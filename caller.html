@@ -2492,7 +2492,10 @@ async function applyWallpaper(){
 
 function renderBubbles(){
   const b=$("bubbles");b.innerHTML="";
-  const list=CHATS[CHAT_OPEN]||[];
+  /* v68: display + storage self-heal — drop duplicate bubbles (same ts) so
+     already-stored doubles from the old race disappear on next render */
+  const list=[];{const seen={};for(const m of (CHATS[CHAT_OPEN]||[])){if(m.ts&&seen[m.ts])continue;seen[m.ts]=1;list.push(m);}}
+  if(list.length!==(CHATS[CHAT_OPEN]||[]).length)CHATS[CHAT_OPEN]=list;
   let lastDay=null;
   for(const m of list){
     const day=tsDay(m.ts);
