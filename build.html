@@ -329,12 +329,14 @@ function setMode(m){
 }
 async function refreshCredits(){
   const r=await api({act:"credits",key:KEY});
-  if(r.credits){
-    document.getElementById("creditwrap").style.display="flex";
-    document.getElementById("credt").textContent=r.credits.used+" / "+r.credits.limit;
-    document.getElementById("credbar").style.width=Math.min(100,(r.credits.used/r.credits.limit)*100)+"%";
-    window._lastCredits=r.credits;
-  }
+  if(r.credits){drawCredits(r.credits);}
+}
+function drawCredits(c){
+  const m=c.msg||{day_used:c.used||0,mon_used:0,day_limit:c.limit||300,mon_limit:1000};
+  document.getElementById("creditwrap").style.display="flex";
+  document.getElementById("credt").textContent=m.day_used+" / "+m.day_limit;
+  document.getElementById("credbar").style.width=Math.min(100,(m.day_used/m.day_limit)*100)+"%";
+  window._lastCredits=c;
 }
 async function loadChat(){
   const r=await api({act:"build.chat",key:KEY});
@@ -368,7 +370,7 @@ async function send(){
   if(r.err){toast(r.err,1);return;}
   addBubble("a",r.reply||"(no reply)",r.executed||[]);
   if(r.executed&&r.executed.length)api({act:"cont.push",key:KEY}).then(()=>{}).catch(()=>{});
-  if(r.credits){document.getElementById("credt").textContent=r.credits.used+" / "+r.credits.limit;document.getElementById("credbar").style.width=Math.min(100,(r.credits.used/r.credits.limit)*100)+"%";}
+  if(r.credits){drawCredits(r.credits);}
   refreshPreview();
 }
 /* ---- nav rail + pages ---- */
@@ -657,19 +659,24 @@ function copyPub(){ if(!PUBURL)return toast("Publish your app first"); try{navig
 /* modal helpers */
 function openModal(html){document.getElementById("modal-body").innerHTML=html;document.getElementById("overlay").style.display="flex";}
 function closeModal(){document.getElementById("overlay").style.display="none";}
+function creditMeter(title,used,limit,note){
+  return `<div style="text-align:left;margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><b>${title}</b><span>${used} / ${limit}</span></div>
+  <div style="height:8px;border-radius:6px;background:var(--line);margin:6px 0 2px"><div style="height:8px;border-radius:6px;background:var(--brand);width:${Math.min(100,(used/limit)*100)}%"></div></div>
+  <div style="font-size:11.5px;color:var(--dim)">${note}</div></div>`;
+}
 function creditsModal(){
-  const r=window._lastCredits||{used:0,limit:30};
+  const c=window._lastCredits;
   openModal(`<div class="dia">⚡</div><h3>Credits</h3>
-  <div class="ms">You've used <b>${r.used} / ${r.limit}</b> builder messages today. Credits refresh every day at midnight UTC.</div>
-  <div style="height:8px;border-radius:6px;background:var(--line);margin:12px 0"><div style="height:8px;border-radius:6px;background:var(--brand);width:${Math.min(100,(r.used/r.limit)*100)}%"></div></div>
+  ${c?creditMeter("Builder messages — today",c.msg.day_used,c.msg.day_limit,"Refreshes at midnight")+creditMeter("Builder messages — this month",c.msg.mon_used,c.msg.mon_limit,"Renews on the 1st at midnight")+creditMeter("Integrations — today",c.int.day_used,c.int.day_limit,"Function + automation runs")+creditMeter("Integrations — this month",c.int.mon_used,c.int.mon_limit,"Renews on the 1st at midnight"):`<div class="ms">Loading your credits…</div>`}
   <button class="btn" onclick="closeModal()">Close</button>`);
 }
 function plansModal(){
-  const r=window._lastCredits||{used:0,limit:30};
+  const c=window._lastCredits||{msg:{day_limit:300,mon_limit:1000},int:{day_limit:300,mon_limit:1000}};
   openModal(`<div class="dia">◆</div><h3>Plans</h3>
   <div class="ms" style="text-align:left">
     <b>Free</b> — current plan<br>
-    · ${r.limit} builder messages per day<br>
+    · ${c.msg.day_limit} builder messages per day, ${c.msg.mon_limit} per month<br>
+    · ${c.int.day_limit} integration credits per day, ${c.int.mon_limit} per month<br>
     · Unlimited published apps<br>
     · Your own Cloudflare engine, your data<br><br>
     <b>Pro</b><br>
