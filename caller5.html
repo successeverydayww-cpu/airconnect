@@ -571,7 +571,8 @@ footer a{color:#64748B}
     <div id="msReacts" style="display:flex;gap:8px;justify-content:center;font-size:26px;padding:4px 0 10px"></div>
     <button class="big blue" id="msReply" style="width:100%" onclick="msReply()">↩ Reply</button>
     <button class="big" id="msTr" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="msTranslate()">🌐 Translate</button>
-    <button class="big" id="msDel" style="width:100%;margin-top:8px;background:#e2445c" onclick="msDel()">🗑 Delete for everyone</button>
+    <button class="big blue" id="msPin" style="width:100%;margin-top:8px" onclick="msPin()">📌 Pin chat</button>
+    <button class="big" id="msDel" style="width:100%;margin-top:8px;background:#e2445c" onclick="msDel()">🗑 Delete chat</button>
     <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeMs()">Cancel</button>
     <div style="height:8px"></div>
   </div>
@@ -686,9 +687,10 @@ footer a{color:#64748B}
         <div id="cvRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="cvPrev" class="hide" style="margin:10px 0"></div>
         <button id="cvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>
-        <div id="cvBtns" class="hide" style="display:flex;gap:8px;margin-top:10px">
-          <button class="big" style="flex:1;background:#CBD5E1" onclick="cvDiscard()">Discard</button>
-          <button class="big blue" style="flex:1" onclick="cvSend()">➤ Send</button>
+        <div id="cvBtns" class="hide" style="display:flex;gap:14px;margin-top:12px;align-items:center;justify-content:center">
+          <button class="big" title="Delete" style="flex:0 0 56px;height:56px;background:#e2445c;color:#fff;border-radius:50%;font-size:20px;padding:0" onclick="cvTrash()">🗑</button>
+          <button class="big blue" title="Send" style="flex:0 0 64px;height:64px;border-radius:50%;font-size:24px;padding:0" onclick="cvSendNow()">➤</button>
+          <button class="big" id="cvPauseBtn" title="Pause" style="flex:0 0 56px;height:56px;background:#CBD5E1;border-radius:50%;font-size:20px;padding:0" onclick="cvPause()">⏸</button>
         </div>
         <button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="cvClose()">Close</button>
       </div>
@@ -1069,7 +1071,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=68');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=69');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1408,10 +1410,10 @@ function wtRender(){
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
   const big=WT_SCOPE!=="feed"&&!WT_CH_PAGE; /* v67: any video view (shorts + long) = full-screen autoplay */
-  for(const p of WT_POSTS)el.appendChild(wtCard(p,big));
+  for(const p of WT_POSTS)el.appendChild(wtCard(p,big,(WT_SCOPE==="watch"&&WT_CAT==="shorts"))); /* v69: shorts autoplay WITH sound */
   wtObserveVideos();
 }
-function wtCard(p,big){
+function wtCard(p,big,sound){
   const d=document.createElement("div");
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)";
   const t=new Date(p.at||Date.now());
@@ -1419,7 +1421,7 @@ function wtCard(p,big){
   let body="";
   if(p.rs)body+='<div style="font-size:11px;color:#00A884;margin-top:6px">🔁 reshared post</div>';
   if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
-  if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
+  if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'" data-sound="'+(sound?"1":"")+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
   const RE=["👍","❤️","😂","😮","🙏","🔥"];
   let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
   for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
@@ -1465,9 +1467,13 @@ async function wtAutoPlayVid(pid,fid,n,box){
     const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
-    box.innerHTML='<video id="wtv-'+pid+'" playsinline muted loop autoplay style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video><div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔇</div>';
+    box.innerHTML='<video id="wtv-'+pid+'" playsinline'+((box.dataset.sound==="1")?"":" muted")+' loop autoplay style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video><div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔇</div>';
     const vv=document.getElementById("wtv-"+pid);
-    vv.play().catch(function(){});
+    const snd=box.dataset.sound==="1";
+    if(snd){ /* v69: shorts play sound-on; fall back to muted if the browser refuses */
+      vv.muted=false;
+      vv.play().catch(function(){vv.muted=true;vv.play().catch(function(){});const b2=document.getElementById("wtmute-"+pid);if(b2)b2.textContent="🔇";});
+    } else vv.play().catch(function(){});
     if(te>ts){
       vv.addEventListener("loadedmetadata",function(){try{vv.currentTime=ts;}catch(e){}});
       vv.addEventListener("timeupdate",function(){if(vv.currentTime>=te){vv.currentTime=ts;}});
@@ -2571,6 +2577,7 @@ function renderBubbles(){
       sep.textContent=day;b.appendChild(sep);
     }
     if(String(m.text||"").startsWith("rr:"))continue;
+    if(String(m.text||"")==="kq:")continue; /* v69: hide key-resync pings */
     const d=document.createElement("div");
     try{d.setAttribute("data-ts",m.ts);}catch(x){} /* v67: reply quotes scroll here */
     if(m.img){
@@ -2697,8 +2704,8 @@ async function fetchFileBubble(m,d){
   }catch(e){d.textContent="⚠ attachment unavailable";}
 }
 function pickFile(){const s=$("attsheet"),bg=$("attsheetbg");const show=s.className.indexOf("hide")>=0;s.className=show?"":"hide";bg.className=show?"":"hide";}
-/* v37: tap once = start recording instantly, tap again = done -> preview+send */
-let CVR_ACTIVE=false;
+/* v69: WhatsApp-style recorder — 🗑 delete left · ➤ send middle · ⏸ pause right */
+let CVR_ACTIVE=false,CVR_PAUSED=false,CVR_PAUSE_AT=0,CVR_AUTOSEND=false;
 function cvToggle(){
   if(CVR_B64)return;
   if(CVR_ACTIVE){cvUp();CVR_ACTIVE=false;}
@@ -2843,9 +2850,10 @@ function f2Show(du,name){
 let CVR=null,CVR_CH=[],CVR_B64=null,CVR_T0=0,CVR_TIMER=null,CVR_STREAM=null;
 function chatVoiceSheet(){
   const sh=$("cvSheet");if(!sh)return;
-  CVR_B64=null;
+  CVR_B64=null;CVR_PAUSED=false;CVR_AUTOSEND=false;
   $("cvRec").className="hide";$("cvBtns").className="hide";
   $("cvPrev").className="hide";$("cvPrev").innerHTML="";
+  try{$("cvMic").style.display="";}catch(e){}
   sh.className="ovl";
 }
 function cvClose(){cvUp();try{CVR_STREAM.getTracks().forEach(function(t){t.stop();});}catch(e){}$("cvSheet").className="ovl hide";}
@@ -2868,6 +2876,7 @@ async function cvDown(e){
     const fr=new FileReader();
     fr.onload=function(){
       CVR_B64=String(fr.result);
+      if(CVR_AUTOSEND){CVR_AUTOSEND=false;cvSend();return;}
       $("cvPrev").className="";
       $("cvPrev").innerHTML='<audio controls autoplay src="'+CVR_B64+'" style="width:100%"></audio>';
       $("cvBtns").className="";
@@ -2875,13 +2884,38 @@ async function cvDown(e){
     fr.readAsDataURL(blob);
   };
   CVR.start(250);
-  CVR_T0=Date.now();
+  CVR_T0=Date.now();CVR_PAUSED=false;CVR_PAUSE_AT=0;
   $("cvRec").className="";
+  $("cvMic").style.display="none";$("cvBtns").className="";$("cvPrev").className="hide";
+  try{$("cvPauseBtn").textContent="⏸";}catch(e){}
   CVR_TIMER=setInterval(function(){
+    if(CVR_PAUSED)return;
     const s=Math.floor((Date.now()-CVR_T0)/1000);
     $("cvRec").textContent="● "+fmtT(s);
-    if(s>=60)cvUp();
+    if(s>=60)cvSendNow();
   },200);
+}
+function cvPause(){
+  if(!CVR)return;
+  try{
+    if(CVR.state==="recording"){CVR.pause();CVR_PAUSED=true;CVR_PAUSE_AT=Date.now();}
+    else if(CVR.state==="paused"){CVR_T0+=Date.now()-CVR_PAUSE_AT;CVR.resume();CVR_PAUSED=false;}
+    try{$("cvPauseBtn").textContent=CVR_PAUSED?"▶":"⏸";}catch(e){}
+  }catch(e){toast("Pause not supported on this browser");}
+}
+function cvSendNow(){
+  if(!CVR){if(CVR_B64)cvSend();return;}
+  CVR_AUTOSEND=true;
+  if(CVR_TIMER){clearInterval(CVR_TIMER);CVR_TIMER=null;}
+  try{if(CVR.state!=="inactive")CVR.stop();}catch(e){}
+}
+function cvTrash(){
+  CVR_B64=null;CVR_ACTIVE=false;CVR_AUTOSEND=false;
+  if(CVR_TIMER){clearInterval(CVR_TIMER);CVR_TIMER=null;}
+  try{if(CVR&&CVR.state!=="inactive"){CVR.onstop=null;CVR.stop();}}catch(e){}
+  try{CVR_STREAM.getTracks().forEach(function(t){t.stop();});}catch(e2){}
+  CVR=null;CVR_PAUSED=false;
+  $("cvRec").className="hide";$("cvBtns").className="hide";$("cvMic").style.display="";
 }
 function cvUp(){
   if(CVR_TIMER){clearInterval(CVR_TIMER);CVR_TIMER=null;}
@@ -3649,7 +3683,7 @@ function gVoiceSheet(){
     '<div id="gvRec" class="hide" style="color:#DC2626;font-weight:700;margin:8px 0"></div>'+
     '<button id="gvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>'+
     '<div id="gvPrev" class="hide" style="margin:10px 0"></div>'+
-    '<div id="gvBtns" class="hide" style="display:flex;gap:8px"><button class="big" style="flex:1;background:#CBD5E1" onclick="gvDiscard()">✖ Discard</button><button class="big blue" style="flex:1" onclick="gvSend()">➤ Send</button></div>'+
+    '<div id="gvBtns" class="hide" style="display:flex;gap:14px;margin-top:10px;align-items:center;justify-content:center"><button class="big" title="Delete" style="flex:0 0 56px;height:56px;background:#e2445c;color:#fff;border-radius:50%;font-size:20px;padding:0" onclick="gvTrash()">🗑</button><button class="big blue" title="Send" style="flex:0 0 64px;height:64px;border-radius:50%;font-size:24px;padding:0" onclick="gvSendNow()">➤</button><button class="big" id="gvPauseBtn" title="Pause" style="flex:0 0 56px;height:56px;background:#CBD5E1;border-radius:50%;font-size:20px;padding:0" onclick="gvPause()">⏸</button></div>'+
     '<button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="gvClose()">Close</button></div>';
     document.body.appendChild(el);
     const mic=$("gvMic");
@@ -3660,6 +3694,7 @@ function gVoiceSheet(){
     mic.addEventListener("mouseup",gvUp);
   }
   $("gvRec").className="hide";$("gvBtns").className="hide";$("gvPrev").className="hide";$("gvPrev").innerHTML="";
+  try{$("gvMic").style.display="";}catch(e){}
   el.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function gvClose(){gvUp();try{GV.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}$("gvsheet").className="ovl hide";}
@@ -3679,12 +3714,36 @@ async function gvDown(){
     const blob=new Blob(GV.ch,{type:(mime||"audio/webm").split(";")[0]});
     if(!blob.size){toast("Nothing recorded — tap once, speak, then tap again");return;}
     const fr=new FileReader();
-    fr.onload=function(){GV.b64=String(fr.result);$("gvPrev").className="";$("gvPrev").innerHTML='<audio controls autoplay src="'+GV.b64+'" style="width:100%"></audio>';$("gvBtns").className="";};
+    fr.onload=function(){GV.b64=String(fr.result);if(GV.autosend){GV.autosend=false;gvSend();return;}$("gvPrev").className="";$("gvPrev").innerHTML='<audio controls autoplay src="'+GV.b64+'" style="width:100%"></audio>';$("gvBtns").className="";};
     fr.readAsDataURL(blob);
   };
-  GV.rec.start(250);GV.t0=Date.now();
+  GV.rec.start(250);GV.t0=Date.now();GV.paused=false;GV.pauseAt=0;
   $("gvRec").className="";
-  GV.timer=setInterval(function(){const s=Math.floor((Date.now()-GV.t0)/1000);$("gvRec").textContent="● Recording "+s+"s";if(s>=60)gvUp();},200);
+  $("gvMic").style.display="none";$("gvBtns").className="";
+  try{$("gvPauseBtn").textContent="⏸";}catch(e){}
+  GV.timer=setInterval(function(){if(GV.paused)return;const s=Math.floor((Date.now()-GV.t0)/1000);$("gvRec").textContent="● Recording "+s+"s";if(s>=60)gvSendNow();},200);
+}
+function gvPause(){
+  if(!GV.rec)return;
+  try{
+    if(GV.rec.state==="recording"){GV.rec.pause();GV.paused=true;GV.pauseAt=Date.now();}
+    else if(GV.rec.state==="paused"){GV.t0+=Date.now()-GV.pauseAt;GV.rec.resume();GV.paused=false;}
+    try{$("gvPauseBtn").textContent=GV.paused?"▶":"⏸";}catch(e){}
+  }catch(e){toast("Pause not supported on this browser");}
+}
+function gvSendNow(){
+  if(!GV.rec){if(GV.b64)gvSend();return;}
+  GV.autosend=true;
+  if(GV.timer){clearInterval(GV.timer);GV.timer=null;}
+  try{if(GV.rec.state!=="inactive")GV.rec.stop();}catch(e){}
+}
+function gvTrash(){
+  GV.b64=null;GV.autosend=false;
+  if(GV.timer){clearInterval(GV.timer);GV.timer=null;}
+  try{if(GV.rec&&GV.rec.state!=="inactive"){GV.rec.onstop=null;GV.rec.stop();}}catch(e){}
+  try{GV.stream.getTracks().forEach(function(t){t.stop();});}catch(e2){}
+  GV.rec=null;
+  $("gvRec").className="hide";$("gvBtns").className="hide";$("gvMic").style.display="";
 }
 function gvUp(){if(GV.timer){clearInterval(GV.timer);GV.timer=null;}try{if(GV.rec&&GV.rec.state!=="inactive")GV.rec.stop();}catch(e){}$("gvRec").className="hide";}
 async function gvSend(){
@@ -4049,11 +4108,12 @@ function nativeShare(){
 var SEARCH="",REPLY_TO=null,GROUP_OPEN=null;
 function memColor(n){const P=["#2563EB","#7C3AED","#DB2777","#DC2626","#16A34A","#D97706","#0F766E","#B45309"];let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%P.length;return P[h];}
 var PINS=JSON.parse(localStorage.getItem("ac_pins")||"[]");
+var PMSG=JSON.parse(localStorage.getItem("ac_pmsg")||"{}"); /* v69: pinned group messages */
 var MUTED=JSON.parse(localStorage.getItem("ac_mutes")||"[]");
 var ARCHS=JSON.parse(localStorage.getItem("ac_archs")||"[]");
 var GROUPS=[],GMS={},GUNREAD={},REACTS={};
 try{GROUPS=JSON.parse(localStorage.getItem("ac_groups")||"[]");GMS=JSON.parse(localStorage.getItem("ac_gms")||"{}");}catch(e){}
-function persistV12(){try{localStorage.setItem("ac_pins",JSON.stringify(PINS));localStorage.setItem("ac_mutes",JSON.stringify(MUTED));localStorage.setItem("ac_archs",JSON.stringify(ARCHS));localStorage.setItem("ac_groups",JSON.stringify(GROUPS));localStorage.setItem("ac_gms",JSON.stringify(GMS));}catch(e){}}
+function persistV12(){try{localStorage.setItem("ac_pins",JSON.stringify(PINS));localStorage.setItem("ac_mutes",JSON.stringify(MUTED));localStorage.setItem("ac_archs",JSON.stringify(ARCHS));localStorage.setItem("ac_groups",JSON.stringify(GROUPS));localStorage.setItem("ac_gms",JSON.stringify(GMS));localStorage.setItem("ac_pmsg",JSON.stringify(PMSG));}catch(e){}}
 function lastG(g){const a=GMS[g.id];return a&&a.length?a[a.length-1]:null;}
 function saveV12Pin(id){const i=PINS.indexOf(id);if(i>=0)PINS.splice(i,1);else PINS.push(id);persistV12();renderLists();}
 function saveV12Mute(id){const i=MUTED.indexOf(id);if(i>=0)MUTED.splice(i,1);else MUTED.push(id);persistV12();toast(MUTED.includes(id)?"Muted — no more alerts for this chat":"Unmuted");renderLists();}
@@ -4232,8 +4292,10 @@ function renderArchived(){
 var MS_MSG=null,MS_LP=null;
 function attachMsgEvents(el,m){
   if(!m||!m.ts||m.who==="sys")return;
-  const open=()=>{openMs(m,el);};
+  let lastSheet=0;
+  const open=()=>{lastSheet=Date.now();openMs(m,el,"sheet");};
   el.addEventListener("touchstart",()=>{MS_LP=setTimeout(open,550);},{passive:true});
+  el.addEventListener("click",()=>{if(Date.now()-lastSheet<700)return;openMs(m,el,"pill");}); /* v69: single tap = quick reactions (Telegram-style) */
   el.addEventListener("touchend",()=>clearTimeout(MS_LP));
   el.addEventListener("touchmove",()=>clearTimeout(MS_LP));
   el.addEventListener("contextmenu",e=>{e.preventDefault();open();});
@@ -4248,8 +4310,19 @@ function attachMsgEvents(el,m){
     el.appendChild(chip);
   }
 }
-function openMs(m,el){
+function openMs(m,el,mode){
   MS_MSG=m;
+  if(mode==="sheet"){ /* v69: long-press = action sheet with pin/delete, no pill */
+    closeMsFloat();
+    const g=!!GROUP_OPEN;
+    try{$("msReacts").innerHTML=["❤️","😂","👍","😮","😢","🙏"].map(e=>'<span style="cursor:pointer;font-size:26px" onclick="msReact(\''+e+'\')">'+e+"</span>").join("");}catch(x){}
+    $("msReply").style.display=(g||!CHAT_OPEN)?"none":"";
+    $("msPin").textContent=g?((PMSG[GROUP_OPEN]&&PMSG[GROUP_OPEN].ts===m.ts)?"📌 Unpin message":"📌 Pin message"):((CHAT_OPEN&&PINS.includes(CHAT_OPEN))?"📌 Unpin chat":"📌 Pin chat");
+    $("msDel").textContent=g?"🗑 Delete message":"🗑 Delete chat";
+    $("msDel").style.display="";
+    $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(x){}
+    return;
+  }
   /* v67 WhatsApp-style: quick-reaction pill floats right above the pressed message */
   try{
     let fb=$("msFloat");
@@ -4266,15 +4339,10 @@ function openMs(m,el){
     let left=Math.max(10,Math.min(r.left+r.width/2-fw/2,window.innerWidth-fw-10));
     fb.style.top=top+"px";fb.style.left=left+"px";
   }catch(e){}
-  const mine=m.who==="me";
-  $("msReply").style.display="";
-  const fresh=mine&&Date.now()-new Date(m.ts).getTime()<24*3600*1000;
-  $("msDel").style.display=(!GROUP_OPEN&&fresh)?"":"none";
-  $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeMs(){$("msheet").className="ovl hide";}
 function closeMsFloat(){const fb=$("msFloat");if(fb)fb.style.display="none";}
-function openMsSheet(){closeMsFloat();$("msheet").className="ovl";}
+function openMsSheet(){closeMsFloat();if(MS_MSG)openMs(MS_MSG,null,"sheet");else $("msheet").className="ovl";}
 document.addEventListener("click",e=>{const fb=$("msFloat");if(fb&&fb.style.display!=="none"&&!fb.contains(e.target)&&e.target.closest&&e.target.closest(".bub")===null)closeMsFloat();},true);
 document.addEventListener("scroll",()=>closeMsFloat(),true);
 async function msReact(e){
@@ -4301,17 +4369,33 @@ function msReply(){
   $("replychip").onclick=clearReply;
   try{$("chatbox").focus();}catch(e){}
 }
+function msPin(){
+  closeMs();
+  if(!MS_MSG)return;
+  if(GROUP_OPEN){ /* v69: pin a message inside the group */
+    const pm=PMSG[GROUP_OPEN];
+    if(pm&&pm.ts===MS_MSG.ts){delete PMSG[GROUP_OPEN];persistV12();renderGBubbles();toast("Unpinned");}
+    else{PMSG[GROUP_OPEN]={ts:MS_MSG.ts,pv:(MS_MSG.who==="me"?"You":(WIN_NAMES[MS_MSG.from]||"Member"))+": "+String(MS_MSG.text||"").slice(0,80)};persistV12();renderGBubbles();toast("Message pinned 📌");}
+    return;
+  }
+  if(!CHAT_OPEN)return;
+  saveV12Pin(CHAT_OPEN);renderLists();
+  toast(PINS.includes(CHAT_OPEN)?"Chat pinned 📌":"Chat unpinned");
+}
 async function msDel(){
   closeMs();
-  if(!MS_MSG||!CHAT_OPEN)return;
-  if(!confirm("Delete this message for everyone?"))return;
-  const r=await api("msgdel",{from:ME,id:MS_MSG.ts});
-  if(r&&r.ok){
-    const arr=CHATS[CHAT_OPEN]||[];
-    const m2=arr.find(x=>x.ts===MS_MSG.ts);
-    if(m2)m2.text="🚫 deleted";
-    renderBubbles();toast("Deleted for everyone");
-  }else toast((r&&r.err==="window expired")?"Too old — recall window is 24h":((r&&r.err)||"Could not delete"));
+  if(!MS_MSG)return;
+  if(GROUP_OPEN){ /* v69: delete a group message locally */
+    if(!confirm("Delete this message?"))return;
+    GMS[GROUP_OPEN]=(GMS[GROUP_OPEN]||[]).filter(x=>x.ts!==MS_MSG.ts);
+    if(PMSG[GROUP_OPEN]&&PMSG[GROUP_OPEN].ts===MS_MSG.ts)delete PMSG[GROUP_OPEN];
+    persistV12();renderGBubbles();toast("Message deleted");
+    return;
+  }
+  if(!CHAT_OPEN)return;
+  if(!confirm("Delete this chat? This clears your conversation on this device."))return;
+  delete CHATS[CHAT_OPEN];delete UNREAD[CHAT_OPEN];
+  persistChats();renderLists();closeChat();toast("Chat deleted");
 }
 function clearReply(){REPLY_TO=null;const c=$("replychip");if(c)c.className="hide";}
 /* ----- groups ----- */
@@ -4409,6 +4493,8 @@ function renderGBubbles(){
   head.style.cssText="text-align:center;color:#94A3B8;font-size:11.5px;padding:6px 0";
   head.textContent="Group chat · messages are visible to all members";
   b.appendChild(head);
+  const pm=PMSG[GROUP_OPEN];
+  if(pm&&pm.ts){const pb=document.createElement("div");pb.style.cssText="margin:6px 12px;background:#F0FDFA;border-left:3px solid #00A884;border-radius:8px;padding:6px 10px;font-size:12px;color:#12554A;cursor:pointer";pb.textContent="📌 "+pm.pv;pb.onclick=function(){if(confirm("Unpin this message?")){delete PMSG[GROUP_OPEN];persistV12();renderGBubbles();}};b.appendChild(pb);}
   for(const m of arr){
     const d=document.createElement("div");
     d.className="bub "+(m.who==="me"?"out":"in");
@@ -4511,7 +4597,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=68;
+const AC_V=69;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
