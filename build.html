@@ -272,6 +272,7 @@ tr:hover td{background:var(--panel2)}
 <div id="toast"></div>
 
 <script>
+window.onerror=function(m){try{var d=document.getElementById("pgerr");if(!d){d=document.createElement("div");d.id="pgerr";d.style.cssText="position:fixed;bottom:10px;left:10px;right:10px;background:#e06c75;color:#fff;padding:10px;border-radius:10px;z-index:9999;font-size:12px";document.body.appendChild(d);}d.textContent="JS ERR: "+m;}catch(e){}};
 var rec_keysCache={};
 const API = "https://skylar-forge.successeverydayww-cpu.workers.dev/api";
 let KEY = sessionStorage.getItem("forge_build_key") || "";
