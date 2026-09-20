@@ -995,7 +995,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=54');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=55');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1240,6 +1240,7 @@ async function finishLogin(d){
 function ovlOpen(id){const e=$(id);return e&&!e.classList.contains("hide");}
 function pushHist(){try{history.pushState({ac:1},"");}catch(e){}}
 window.addEventListener("popstate",()=>{
+  if(document.getElementById("gcview")){gLeave();return;}   /* v55: back button must exit a stuck/active group call */
   if(ovlOpen("incoming")){declineCall();pushHist();return;}
   if(ovlOpen("callview")){pushHist();return;}          // stay on the call screen
   if(ovlOpen("stview")){closeStatusViewer();return;}if(ovlOpen("picview")){closePicView();return;}
@@ -3114,14 +3115,22 @@ function gcUI(){
 }
 function gMute(){GC.muted=!GC.muted;if(GC.stream)for(const t of GC.stream.getTracks())t.enabled=!GC.muted;gcUI();}
 function gLeave(){
-  if(!GC.on)return;
-  for(const p of Object.keys(SF.mems||{})){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(()=>{});}
-  sfuLeave(true);
+  /* v55 fix: was gated on GC.on -- if that flag ever went stale (peer left,
+     signaling race, etc) the exit button + Android back both silently did
+     nothing, stranding the user on a full-screen call overlay until a hard
+     refresh. Now the DOM/media teardown always runs; only the "tell peers
+     I'm leaving" signal is skipped when there's truly no active call. */
+  const wasOn=GC.on;
+  if(wasOn){
+    for(const p of Object.keys(SF.mems||{})){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(()=>{});}
+    try{sfuLeave(true);}catch(e){}
+  }
   if(GC.stream)for(const t of GC.stream.getTracks())t.stop();
   if(GC.gcTick)clearInterval(GC.gcTick);
   GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
   const el=document.getElementById("gcview");if(el)el.remove();
   document.querySelectorAll("[id^='gca-']").forEach(a=>{try{a.remove();}catch(e){}});
+  const bar=document.getElementById("callbar");if(bar)bar.remove();
 }
 var GCI=null;
 function gcInvite(from,gid){
