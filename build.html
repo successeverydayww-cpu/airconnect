@@ -499,19 +499,31 @@ function renderDomains(){
       ${PUBURL?"":'<div class="formnote">Publish from Overview first, then the QR code appears here.</div>'}
     </div>
     <div class="card"><h3>Custom domain</h3>
-      <div class="csub">Use your own domain (e.g. app.yourbrand.com) on your published app.</div>
+      <div class="csub">Your own domain (e.g. app.yourbrand.com) on your published app. Included with the <b>Builder plan</b> — you can also just ask the AI in chat: "add my domain yourdomain.com".</div>
       <div class="toolbar"><input id="cd-in" placeholder="yourdomain.com"></div>
-      <button class="btn sm" onclick="requestDomain()">Request domain setup</button>
-      <div class="formnote">Drafts an email to the platform owner, who attaches the domain to the network.</div>
+      <button class="btn sm" onclick="requestDomain()">Add domain</button>
+      <div class="formnote" id="cd-note">Free plan: domain is queued and activates when you subscribe to Builder.</div>
     </div>`;
   if(PUBURL&&window.QRCode){try{new QRCode(document.getElementById("qrc"),{text:PUBURL,width:132,height:132,colorDark:"#0b141a",colorLight:"#ffffff"});}catch(e){}}
+  loadDomainStatus();
 }
-function requestDomain(){
+async function loadDomainStatus(){
+  const r=await api({act:"domain.status",key:KEY});
+  if(!r||r.err)return;
+  const n=document.getElementById("cd-note");
+  if(r.custom_domain){
+    const st=r.plan==="builder"?"attaching — live after DNS":"queued — activates on the Builder plan";
+    n.innerHTML=`<b>${esc(r.custom_domain)}</b> · ${esc(st)}`;
+    const i=document.getElementById("cd-in"); if(i)i.value=r.custom_domain;
+  }else n.innerHTML="Free plan: domain is queued and activates when you subscribe to Builder.";
+}
+async function requestDomain(){
   const d=document.getElementById("cd-in").value.trim();
   if(!d)return toast("Type the domain first");
-  const body=encodeURIComponent("Custom domain request\n\nDomain: "+d+"\nApp: "+(PUBURL||"unpublished")+"\nWorkspace: "+EMAIL);
-  window.open("mailto:successeverydayww@gmail.com?subject="+encodeURIComponent("Forge domain request: "+d)+"&body="+body);
-  toast("Request drafted — hit send in your mail app");
+  const r=await api({act:"domain.request",key:KEY,domain:d});
+  if(r.err){toast(r.err,1);return;}
+  document.getElementById("cd-note").innerHTML=`<b>${esc(r.domain)}</b> · ${r.status==="attaching"?"attaching — live after DNS":"queued — activates on the Builder plan"}`;
+  toast(r.status==="attaching"?"Domain attaching!":"Domain saved — activates on the Builder plan");
 }
 let META={}, RLS=0, curSettingsTab="app";
 async function renderSettings(){

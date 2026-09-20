@@ -48,7 +48,7 @@ header small{color:var(--dim);font-size:11px;display:block}
 <div id="toast"></div>
 <script>
 const API="https://skylar-forge.successeverydayww-cpu.workers.dev/api";
-const SLUG=new URLSearchParams(location.search).get("app")||"";
+const SLUG=window.__PUB_SLUG||new URLSearchParams(location.search).get("app")||"";
 let DATA=null,CUR="";
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2800);}
