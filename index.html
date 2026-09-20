@@ -4,19 +4,43 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>AirConnect</title><style>
-*{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#F8FAFC;color:#111827;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center}
-.c{max-width:420px;padding:32px;text-align:center}
-h1{font-size:26px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px}
-.logo{width:42px;height:42px;border-radius:12px;background:#00A884;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px}
-p.s{color:#64748B;font-size:14px;line-height:1.5;margin:14px 0}
-a{display:block;margin:12px 0;padding:16px;border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F8FAFC;color:#111827;margin:0;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+.hero{background:#00A884;padding:56px 24px 70px;text-align:center;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;left:-20%;right:-20%;bottom:-1px;height:40px;background:#F8FAFC;border-radius:50% 50% 0 0 / 100% 100% 0 0}
+.logo{width:64px;height:64px;border-radius:18px;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.hero h1{color:#fff;font-size:26px;font-weight:700;margin:0 0 8px}
+.hero p{color:rgba(255,255,255,.92);font-size:14px;line-height:1.55;max-width:340px;margin:0 auto}
+.wrap{max-width:420px;width:100%;margin:-42px auto 0;padding:0 20px 36px;flex:1}
+.feat{display:flex;justify-content:space-between;gap:8px;background:#fff;border-radius:16px;padding:16px 10px;box-shadow:0 8px 24px rgba(15,23,42,.08);margin-bottom:22px}
+.feat div{flex:1;text-align:center;font-size:11px;color:#64748B;font-weight:600}
+.feat div span{display:block;font-size:22px;margin-bottom:4px}
+a.btn{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0;padding:16px;border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,.08);transition:transform .15s}
+a.btn:active{transform:scale(.97)}
 a.primary{background:#00A884}
 a.secondary{background:#1F2937}
-</style></head><body><div class="c">
-<h1><span class="logo">&#128241;</span>AirConnect</h1>
-<p class="s">Phone-number identities &middot; friends-only calls &middot; chat &middot; voice &amp; video &middot; rings your phone when called</p>
-<a class="primary" href="caller5.html">&#128241; Open my node (get a number)</a>
-<a class="secondary" href="agent.html">&#129302; Create an AI node</a>
-<p class="s">Trunk: Base44 serverless. Numbers persist. Calls are direct peer-to-peer. Fraud &amp; hacking = instant ban.</p>
-</div></body></html>
+.trust{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:24px}
+.trust span{background:#F1F5F9;color:#475569;font-size:11px;font-weight:600;padding:6px 11px;border-radius:20px}
+</style></head><body>
+<div class="hero">
+  <div class="logo">&#128241;</div>
+  <h1>AirConnect</h1>
+  <p>Phone-number identities &middot; friends-only calls &middot; chat &middot; voice &amp; video &middot; rings your phone when called</p>
+</div>
+<div class="wrap">
+  <div class="feat">
+    <div><span>&#128222;</span>Calls</div>
+    <div><span>&#128172;</span>Chat</div>
+    <div><span>&#127909;</span>Video</div>
+    <div><span>&#128274;</span>Private</div>
+  </div>
+  <a class="btn primary" href="caller5.html">&#128241; Open my node (get a number)</a>
+  <a class="btn secondary" href="agent.html">&#129302; Create an AI node</a>
+  <div class="trust">
+    <span>Base44 serverless</span>
+    <span>Numbers persist</span>
+    <span>Peer-to-peer calls</span>
+    <span>Fraud = instant ban</span>
+  </div>
+</div>
+</body></html>
