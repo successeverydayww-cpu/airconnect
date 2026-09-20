@@ -195,6 +195,20 @@ tr:hover td{background:var(--panel2)}
   <p class="fine">Already have a workspace?</p>
   <button class="btn ghost" onclick="login()">Sign in</button>
   <p id="aerr" style="color:#ff8f8f;font-size:12.5px"></p>
+  <p class="fine" style="margin-top:4px"><a href="#" onclick="showForgot();return false" style="color:var(--dim)">Forgot password?</a></p>
+  <p class="fine">By continuing you agree to our <a href="https://skylar-forge.successeverydayww-cpu.workers.dev/terms" target="_blank" style="color:var(--dim)">Terms</a> and <a href="https://skylar-forge.successeverydayww-cpu.workers.dev/privacy" target="_blank" style="color:var(--dim)">Privacy Policy</a>.</p>
+  <div id="forgot" style="display:none;width:100%;flex-direction:column;gap:8px">
+    <div class="div"></div>
+    <input id="fg_email" type="email" placeholder="Your email">
+    <button class="btn ghost" onclick="fgSend()">Email me a reset code</button>
+    <div id="fg_step2" style="display:none;flex-direction:column;gap:8px">
+      <input id="fg_code" placeholder="6-digit code from email">
+      <input id="fg_newpass" type="password" placeholder="New password (6+ chars)">
+      <button class="btn" onclick="fgReset()">Set new password</button>
+    </div>
+    <p id="fg_msg" style="color:var(--dim);font-size:12.5px;text-align:center"></p>
+    <p class="fine"><a href="#" onclick="hideForgot();return false" style="color:var(--dim)">← Back to sign in</a></p>
+  </div>
 </div>
 
 <!-- ======== SHELL ======== -->
@@ -204,6 +218,7 @@ tr:hover td{background:var(--panel2)}
     <button onclick="nav('domains')">Connect domain</button>
     <button class="x" onclick="this.parentElement.style.display='none'">✕</button>
   </div>
+  <div id="vbanner" style="display:none;background:#3a2c12;border-bottom:1px solid #56431f;padding:9px 14px;font-size:12.5px;color:#ffd98a;align-items:center;gap:8px;flex-wrap:wrap"><b>Verify your email</b> to unlock Go Live <input id="vcode" placeholder="6-digit code" style="width:110px;padding:5px 8px;border-radius:7px;border:1px solid #56431f;background:#1b1409;color:#ffd98a;font-size:12.5px"><button class="btn sm" style="padding:5px 10px;font-size:12px" onclick="doVerify()">Verify</button><button class="btn ghost sm" style="padding:5px 10px;font-size:12px" onclick="doResend()">Resend code</button><span id="vmsg" style="width:100%;font-size:11.5px"></span></div>
   <div id="topbar">
     <span class="brand"><span class="mk" style="background:none;padding:0"><img src="logo.svg" style="width:24px;height:24px;border-radius:7px" alt=""></span> Skylar <b>Forge</b></span>
     <span class="branch" style="position:relative"><span onclick="branchMenu(event)">Main ▾</span><div id="bmenu" style="display:none;position:absolute;top:110%;left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:210px;z-index:40;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.45)"><div class="bmi" onclick="copyAPI()">Copy API endpoint</div><div class="bmi" onclick="copyKey()">Copy workspace key</div><div class="bmi" onclick="closeBranch();refreshPreview();refreshCredits();toast('Refreshed')">Refresh data</div></div></span>
@@ -211,6 +226,7 @@ tr:hover td{background:var(--panel2)}
     <div id="creditwrap">
       <div id="cred" onclick="creditsModal()" style="cursor:pointer"><span class="t">Credits <b id="credt">—</b></span><span class="bar"><i id="credbar" style="width:0%"></i></span></div>
     </div>
+    <button class="who" style="cursor:pointer" onclick="helpModal()" title="Help">?</button>
     <div class="seg">
       <button id="seg-prev" onclick="setMode('preview')">Preview</button>
       <button id="seg-dash" class="on" onclick="setMode('dashboard')">Dashboard</button>
@@ -228,11 +244,14 @@ tr:hover td{background:var(--panel2)}
     <div id="chatpane">
       <div id="chathead"><span class="t">Builder chat</span><span class="h" onclick="toggleChat()">Hide chat panel</span></div>
       <div id="msgs"></div>
-      <div class="suggest"><div class="h">Suggestions</div></div>
+      <div class="suggest"><div class="h">Templates — tap to start</div></div>
       <div class="chips" id="chips">
         <span class="chip" onclick="chip(this)">Build a school app with students, classes and fees</span>
         <span class="chip" onclick="chip(this)">Build a shop with products and orders</span>
         <span class="chip" onclick="chip(this)">Build a task manager for my team</span>
+        <span class="chip" onclick="chip(this)">Build a prayer journal with entries and reflections</span>
+        <span class="chip" onclick="chip(this)">Build an event app with guests and RSVPs</span>
+        <span class="chip" onclick="chip(this)">Build a recipe collection with ingredients and steps</span>
       </div>
       <div id="composer">
         <textarea id="msg" rows="1" placeholder="What would you like to build?"></textarea>
@@ -292,6 +311,17 @@ let KEY = sessionStorage.getItem("forge_build_key") || "";
 let EMAIL = sessionStorage.getItem("forge_build_email") || "";
 let SCHEMAS = [], CURENT = "", MODE = "dashboard", PAGE = "overview", PUBURL = "";
 if (KEY) enter();
+function helpModal(){
+  openModal(`<div class="dia">🔥</div><h3>How Skylar Forge works</h3>
+  <div style="font-size:13px;line-height:1.7;color:var(--dim)">
+  <b style="color:var(--fg)">1. Describe it.</b> Type what you want in plain words — the AI builds data tables, records and pages.<br><br>
+  <b style="color:var(--fg)">2. Watch the live view.</b> Everything the builder does appears instantly in the Preview panel.<br><br>
+  <b style="color:var(--fg)">3. Go Live 🚀</b> Publish from Overview to get a public link anyone can use. Verify your email first (banner at the top).<br><br>
+  <b style="color:var(--fg)">4. Your own app.</b> "Open app" gives you a real working app with sign-in for your users.<br><br>
+  <b style="color:var(--fg)">5. Connections.</b> Link your AirConnect agent (Mesh) to build by chat, and Continuity (Beacon) to back up everything.<br><br>
+  <b style="color:var(--fg)">Credits:</b> 30 free builder messages per day, refreshes at midnight UTC. Your workspace key (Main ▾ menu) is your API access.<br><br>
+  <span style="color:var(--dim2);font-size:12px">Terms: https://skylar-forge.successeverydayww-cpu.workers.dev/terms · Privacy: https://skylar-forge.successeverydayww-cpu.workers.dev/privacy</span>
+  </div>`);}
 function toast(m,bad){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",3200);}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 async function api(p){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});return r.json();}
@@ -302,12 +332,42 @@ async function authed(act){
   if(!email||!pass){document.getElementById("aerr").textContent="Email and password required.";return;}
   const r=await api({act,email,password:pass,name});
   if(r.err){document.getElementById("aerr").textContent=r.err;return;}
-  KEY=r.key;EMAIL=email;
+  KEY=r.key;EMAIL=email;VERIFIED=r.user&&r.user.verified?1:0;
   sessionStorage.setItem("forge_build_key",KEY);sessionStorage.setItem("forge_build_email",EMAIL);
   enter();
+  if(!VERIFIED)showVerifyBanner();
 }
 function signup(){authed("user.signup")}
 function login(){authed("user.login")}
+let VERIFIED=1;
+function showVerifyBanner(){document.getElementById("vbanner").style.display="flex";document.getElementById("vmsg").textContent="We sent a 6-digit code to "+EMAIL+".";}
+async function doVerify(){
+  const c=document.getElementById("vcode").value.trim();
+  if(!c)return document.getElementById("vmsg").textContent="Enter the code from your email.";
+  const r=await api({act:"user.verify",email:EMAIL,code:c});
+  if(r.err)return document.getElementById("vmsg").textContent=r.err;
+  VERIFIED=1;document.getElementById("vbanner").style.display="none";toast("Email verified — Go Live unlocked 🔥");
+}
+async function doResend(){
+  const r=await api({act:"user.resend",email:EMAIL});
+  document.getElementById("vmsg").textContent=r.already?"Already verified.":(r.email_sent?"New code sent to "+EMAIL+".":"Could not send email — try again shortly.");
+}
+function showForgot(){document.getElementById("forgot").style.display="flex";document.getElementById("aerr").textContent="";}
+function hideForgot(){document.getElementById("forgot").style.display="none";}
+async function fgSend(){
+  const em=document.getElementById("fg_email").value.trim().toLowerCase();
+  if(!em)return document.getElementById("fg_msg").textContent="Enter your email first.";
+  const r=await api({act:"user.forgot",email:em});
+  if(r.err)return document.getElementById("fg_msg").textContent=r.err;
+  document.getElementById("fg_step2").style.display="flex";
+  document.getElementById("fg_msg").textContent=r.sent?"Reset code sent — check your inbox.":"If that email exists, a code has been sent.";
+}
+async function fgReset(){
+  const em=document.getElementById("fg_email").value.trim().toLowerCase();
+  const r=await api({act:"user.reset",email:em,code:document.getElementById("fg_code").value.trim(),password:document.getElementById("fg_newpass").value});
+  document.getElementById("fg_msg").textContent=r.err?r.err:"Password updated — sign in with it now.";
+  if(r.ok){hideForgot();document.getElementById("f_email").value=em;}
+}
 function enter(){
   document.getElementById("auth").style.display="none";
   document.getElementById("shell").style.display="flex";
@@ -427,10 +487,14 @@ async function renderOverview(){
       <div class="card"><h3>Invite users</h3><div class="csub">Share your app so people can start using it.</div>
         <div class="toolbar"><button class="btn sm" onclick="copyPub()">Copy link</button><button class="btn ghost sm" onclick="sendInvites()">Send invites</button></div></div>
     </div>
-    <div class="card"><h3>Records snapshot</h3><div class="csub" id="ov-stats">Loading…</div></div>`;
+    <div class="grid2">
+      <div class="card"><h3>👀 Views</h3><div class="csub" id="ov-views">Loading…</div></div>
+      <div class="card"><h3>Records snapshot</h3><div class="csub" id="ov-stats">Loading…</div></div>
+    </div>`;
   const m=await api({act:"app.meta.get",key:KEY});
   if(m.meta)document.getElementById("vis-sel").value=String(m.meta.visibility===0?0:1);
   const counts=await Promise.all(SCHEMAS.map(x=>api({act:"rec.stats",key:KEY,entity:x.entity,q:{}})));
+  (async()=>{const s=await api({act:"app.stats",key:KEY});if(s.ok)document.getElementById("ov-views").innerHTML="<b>"+s.total+"</b> all-time · <b>"+s.week+"</b> this week · <b>"+s.today+"</b> today";})();
   document.getElementById("ov-stats").innerHTML=SCHEMAS.length?SCHEMAS.map((x,i)=>"<b>"+esc(x.entity)+"</b>: "+(counts[i].count||0)+" records").join(" · "):"No tables yet — build something in the chat first.";
 }
 function renderData(){
@@ -674,7 +738,7 @@ async function setVisibility(v){const r=await api({act:"app.meta.set",key:KEY,da
 async function setRLS(v){const r=await api({act:"app.rls",key:KEY,on:v==="1"});if(r.err)return toast(r.err,1);RLS=r.rls;toast(v==="1"?"Row-level security on":"Row-level security off");}
 async function doPublish(){
   const r=await api({act:"app.publish",key:KEY});
-  if(r.err){toast(r.err,1);return;}
+  if(r.err){if(r.err==="verify_email"){showVerifyBanner();toast("Verify your email first — banner at the top",1);}else{toast(r.err,1);}return;}
   PUBURL=r.url;localStorage.setItem("forge_pub_"+EMAIL,PUBURL);
   document.getElementById("purl").textContent=PUBURL;document.getElementById("urlstrip").style.display="flex";
   try{await navigator.clipboard.writeText(r.url);}catch(e){}
