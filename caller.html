@@ -592,7 +592,7 @@ footer a{color:#64748B}
     <input id="gcName" placeholder="Group name, e.g. Family">
     <div id="gcList" style="margin-top:10px"></div>
     <button class="big blue" style="width:100%;margin-top:10px" onclick="createGroup()">👥 Create group</button>
-    <div style="font-size:11px;color:#64748B;margin-top:8px;line-height:1.5">Group chats work like Telegram cloud chats — everyone in the group can read them. Keep private things in 1-to-1 chats (those are end-to-end encrypted).</div>
+    <div style="font-size:11px;color:#64748B;margin-top:8px;line-height:1.5">Everyone in the group can read group messages. Keep private things in a one-to-one chat — those are end-to-end encrypted.</div>
   </div>
 </div>
 <!-- v12: group chat view -->
@@ -1778,7 +1778,9 @@ async function loadHistory(p){
         if(txt.startsWith("rr:"))continue;
         const nid=normTs(m.id);
         const who=(m.from===ME)?"me":"them";
-        if(cur.some(b=>b.who===who&&b.ts&&Math.abs(new Date(normTs(b.ts))-new Date(nid))<8000))continue;
+        /* v69: dedupe TRUE duplicates only (same sender + same text within 8s) —
+           was dropping any second message sent within 8s even with different text */
+        if(cur.some(b=>b.who===who&&String(b.text||"")===String(txt)&&Math.abs(new Date(normTs(b.ts))-new Date(nid))<8000))continue;
         if(txt.startsWith("fchunk:"))continue;
         const fm=txt.match(/^\[file:([a-z0-9]+)\]$/i);
         if(fm)cur.push({who,fileId:fm[1],ts:nid});
@@ -1992,11 +1994,11 @@ function renderStatusScreen(){
     const pic=PIC_CACHE[ME];
     if(pic){av.textContent="";av.style.backgroundImage="url("+pic+")";av.style.backgroundSize="cover";av.style.backgroundPosition="center";}
     else{av.style.backgroundImage="";av.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();}
-    $("stMySub").textContent=mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Tap a button to add a photo, video or voice status";
+    $("stMySub").textContent=mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours";
     $("stDelBtn").style.display=mine.length?"":"none";
     const fr=storyGroups().filter(g=>g.num!==ME);
     const el=$("stFriends");
-    if(!fr.length){el.innerHTML="No friend statuses yet — statuses from friends appear here for 24 hours.";return;}
+    if(!fr.length){el.innerHTML="No updates from friends yet. When someone shares a moment, it shows up here.";return;}
     el.innerHTML="";
     for(const g of fr){
       const last=g.items[g.items.length-1];
@@ -4343,7 +4345,7 @@ function openGroup(gid){
   const g=GROUPS.find(x=>x.id===gid);if(!g)return;
   GROUP_OPEN=gid;GUNREAD[gid]=0;renderLists();
   $("gvName").textContent=g.name;$("gvName").style.cursor="pointer";$("gvName").onclick=openGInfo;$("gvSub").style.cursor="pointer";$("gvSub").onclick=openGInfo;
-  $("gvSub").textContent=g.members.length+" members · not end-to-end encrypted";
+  $("gvSub").textContent=g.members.length+" members";
   renderGBubbles();
   $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
@@ -4413,7 +4415,6 @@ function renderGBubbles(){
   const arr=GMS[GROUP_OPEN]||[];
   const head=document.createElement("div");
   head.style.cssText="text-align:center;color:#94A3B8;font-size:11.5px;padding:6px 0";
-  head.textContent="Group chat · messages are visible to all members";
   b.appendChild(head);
   const pm=PMSG[GROUP_OPEN];
   if(pm&&pm.ts){const pb=document.createElement("div");pb.style.cssText="margin:6px 12px;background:#F0FDFA;border-left:3px solid #00A884;border-radius:8px;padding:6px 10px;font-size:12px;color:#12554A;cursor:pointer";pb.textContent="📌 "+pm.pv;pb.onclick=function(){if(confirm("Unpin this message?")){delete PMSG[GROUP_OPEN];persistV12();renderGBubbles();}};b.appendChild(pb);}
