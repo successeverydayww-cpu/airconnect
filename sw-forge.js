@@ -1,5 +1,5 @@
 /* Skylar Forge service worker: installable PWA + offline shell */
-const CACHE = 'skylar-forge-v1';
+const CACHE = 'skylar-forge-v2';
 const SHELL = ['./build.html', './manifest-forge.json', './forge-icon-192.png', './forge-icon-512.png', './forge-icon-maskable-512.png'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -301,7 +301,22 @@ function pwaInstall(){
   if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;const b=document.getElementById('pwa-btn');if(b)b.style.display='none';});return;}
   toast('Menu ⋮ → "Add to Home screen / Install app"');
 }
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw-forge.js').catch(()=>{});}
+/* silent auto-update (v2): new version installs on open, page refreshes itself once — no manual action  */
+try{
+  if('serviceWorker' in navigator && location.protocol==='https:'){
+    var HAD_CTL = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw-forge.js?v=2').then(function(reg){
+      try{ reg.update().catch(function(){}); }catch(e){}
+      setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000);
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(!HAD_CTL) return;
+        try{ if(sessionStorage.getItem('sf_swreloaded')==='1') return; sessionStorage.setItem('sf_swreloaded','1'); }catch(e){}
+        setTimeout(function(){ location.reload(); }, 600);
+      });
+    }).catch(function(){});
+    setTimeout(function(){ try{ sessionStorage.removeItem('sf_swreloaded'); }catch(e){} }, 20000);
+  }
+}catch(e){}
 
 <script>
 window.onerror=function(m){try{var d=document.getElementById("pgerr");if(!d){d=document.createElement("div");d.id="pgerr";d.style.cssText="position:fixed;bottom:10px;left:10px;right:10px;background:#e06c75;color:#fff;padding:10px;border-radius:10px;z-index:9999;font-size:12px";document.body.appendChild(d);}d.textContent="JS ERR: "+m;}catch(e){}};
