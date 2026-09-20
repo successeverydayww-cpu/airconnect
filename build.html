@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Skylar Forge — Build your app</title>
+  <link rel="manifest" href="manifest-forge.json">
+  <meta name="theme-color" content="#F47B20">
+  <link rel="apple-touch-icon" href="forge-icon-192.png">
 <style>
 /* ==== BASE44 LAYOUT PARITY + AIRCONNECT COLORS (v54 theme, spec forge_ui_spec.md) ==== */
 :root{
@@ -212,6 +215,7 @@ tr:hover td{background:var(--panel2)}
       <button id="seg-prev" onclick="setMode('preview')">Preview</button>
       <button id="seg-dash" class="on" onclick="setMode('dashboard')">Dashboard</button>
     </div>
+    <button class="up" id="pwa-btn" style="display:none" onclick="pwaInstall()">📲 Install</button>
     <button class="up" onclick="plansModal()">Plans</button>
     <button class="btn ghost sm" onclick="logout()">Sign out</button>
   </div>
@@ -270,6 +274,15 @@ tr:hover td{background:var(--panel2)}
   </div>
 </div>
 <div id="toast"></div>
+
+
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;const b=document.getElementById('pwa-btn');if(b){b.style.display='inline-block';}});
+function pwaInstall(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;const b=document.getElementById('pwa-btn');if(b)b.style.display='none';});return;}
+  toast('Menu ⋮ → "Add to Home screen / Install app"');
+}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw-forge.js').catch(()=>{});}
 
 <script>
 window.onerror=function(m){try{var d=document.getElementById("pgerr");if(!d){d=document.createElement("div");d.id="pgerr";d.style.cssText="position:fixed;bottom:10px;left:10px;right:10px;background:#e06c75;color:#fff;padding:10px;border-radius:10px;z-index:9999;font-size:12px";document.body.appendChild(d);}d.textContent="JS ERR: "+m;}catch(e){}};
