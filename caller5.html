@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0C4A6E">
+<meta name="theme-color" content="#00806F">
 <meta name="description" content="AirConnect — free voice & video calling and chat with phone-number IDs.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -13,50 +13,50 @@
 body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#F8FAFC;color:#0F172A;overflow-x:hidden}
 .hide{display:none!important}
 /* header */
-.hdr{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.15)}
+.hdr{position:sticky;top:0;z-index:20;background:#00A884;color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.15)}
 .hdr .sub{font-size:12px;color:rgba(255,255,255,.8);font-weight:400}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#667781;margin-right:6px;vertical-align:1px}
 .dot.live{background:#22c55e}.dot.ringing{background:#ffb02e;animation:pulse .8s infinite}
 @keyframes pulse{50%{opacity:.25}}
 /* nav */
-nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#0C4A6E;display:flex;border-top:1px solid rgba(255,255,255,.12);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:0;color:rgba(255,255,255,.62);font-size:11px;padding:8px 0 6px;cursor:pointer;font-weight:600}
-nav button.on{color:#fff}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#FFFFFF;display:flex;border-top:1px solid #E2E8F0;box-shadow:0 -1px 4px rgba(0,0,0,.04);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:#64748B;font-size:11px;padding:8px 0 6px;cursor:pointer;font-weight:600}
+nav button.on{color:#00A884}
 nav button .ico{display:block;font-size:20px;position:relative}
-.badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#0EA5E9;color:#0B1220;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
+.badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#00A884;color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
 /* lists */
 .view{padding-bottom:64px;min-height:100vh}
 .row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #E2E8F0}
-.row:active{background:#E2E8F0}
-.av{width:46px;height:46px;border-radius:50%;background:#0C4A6E;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#fff;flex-shrink:0}
+.row:active{background:#F5F3F0}
+.av{width:46px;height:46px;border-radius:50%;background:#00A884;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#fff;flex-shrink:0}
 .rname{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rsub{font-size:13px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rtime{font-size:11px;color:#64748B;margin-left:auto;flex-shrink:0}
 .empty{padding:40px 20px;text-align:center;color:#64748B;font-size:14px}
 .callbtns{display:flex;gap:8px;margin-left:auto}
 .callbtns button{border:0;border-radius:50%;width:42px;height:42px;font-size:17px;cursor:pointer;flex-shrink:0}
-.cb1{background:#0C4A6E;color:#fff}.cb2{background:#0b3d4d;color:#fff}
+.cb1{background:#00A884;color:#fff}.cb2{background:#64748B;color:#fff}
 /* forms */
-.card{margin:12px;background:#FFFFFF;border:1px solid #0F172A;border-radius:12px;padding:16px}
-input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;font-size:15px;margin-bottom:10px;outline:none}
-button.big{width:100%;padding:14px;font-size:15px;font-weight:700;border:0;border-radius:12px;background:#0EA5E9;color:#0B1220;cursor:pointer;margin-top:4px}
+.card{margin:12px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:16px}
+input,select{width:100%;padding:13px;border-radius:22px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;font-size:15px;margin-bottom:10px;outline:none}
+button.big{width:100%;padding:14px;font-size:15px;font-weight:700;border:0;border-radius:12px;background:#00A884;color:#fff;cursor:pointer;margin-top:4px}
 button.big:disabled{opacity:.5}
 button.big.red{background:#f15c6d}
-button.big.blue{background:#0C4A6E;color:#fff}
+button.big.blue{background:#1F2937;color:#fff}
 /* chat overlay */
 .ovl{position:fixed;inset:0;z-index:30;background:#F8FAFC;display:flex;flex-direction:column}
-.ovl .ohdr{background:linear-gradient(135deg,#0C4A6E,#0EA5E9);padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ovl .ohdr{background:#00A884;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .ohdr .bk{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
 .ohdr .nm{font-weight:600;font-size:16px;color:#fff}
 .ohdr .st{font-size:12px;color:rgba(255,255,255,.75)}
 .bubbles{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:6px}
 .bub{max-width:80%;padding:8px 11px;border-radius:10px;font-size:14.5px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
-.bub.out{align-self:flex-end;background:#0C4A6E;border-top-right-radius:2px}
-.bub.in{align-self:flex-start;background:#FFFFFF;border:1px solid #0F172A;border-top-left-radius:2px}
-.bub.sys{align-self:center;background:#1C2A45;color:#ffd27d;font-size:12.5px}
-.cinput{display:flex;gap:8px;padding:10px;background:#FFFFFF;border-top:1px solid #0F172A;flex-shrink:0}
+.bub.out{align-self:flex-end;background:#D6F5C9;color:#111827;border-top-right-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.bub.in{align-self:flex-start;background:#FFFFFF;border:1px solid #E9E9E7;border-top-left-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.bub.sys{align-self:center;background:#E7F4EF;color:#0B6B57;font-size:12.5px}
+.cinput{display:flex;gap:8px;padding:8px 10px;background:#F0F2F5;border-top:0;flex-shrink:0}
 .cinput input{margin:0;flex:1}
-.cinput button{width:52px;border-radius:50%;border:0;background:#0EA5E9;font-size:19px;cursor:pointer;flex-shrink:0}
+.cinput button{width:52px;border-radius:50%;border:0;background:#00A884;color:#fff;font-size:19px;cursor:pointer;flex-shrink:0}
 .cinput button:disabled{opacity:.5}
 /* call + incoming overlays */
 #callview .top{padding:24px;text-align:center}
@@ -79,38 +79,38 @@ button.big.blue{background:#0C4A6E;color:#fff}
 #callview .cctl{position:absolute;bottom:26px;left:0;right:0;z-index:10}
 #callview .meters{position:absolute;bottom:110px;left:0;right:0;z-index:10;background:none}
 #callview .cstat{color:#cfd8dc}
-#localv{position:absolute;right:8px;bottom:8px;width:28%;border:2px solid #0EA5E9;border-radius:8px}
+#localv{position:absolute;right:8px;bottom:8px;width:28%;border:2px solid #00A884;border-radius:8px}
 .cctl{position:fixed;bottom:0;left:0;right:0;padding:18px 10px 30px;display:flex;justify-content:center;gap:22px;background:linear-gradient(transparent,#F8FAFC 40%)}
 .cbtn{border:0;border-radius:50%;width:58px;height:58px;font-size:22px;cursor:pointer;color:#fff;background:#CBD5E1}
 .cbtn.end{background:#ea0038}
-.cbtn.on{background:#0EA5E9}
+.cbtn.on{background:#00A884}
 .meters{display:flex;gap:10px;justify-content:center;margin:8px 16px;font-size:11px;color:#64748B}
 .meters .m{flex:1;max-width:160px}
-.meters .bar{height:4px;background:#0F172A;border-radius:2px;overflow:hidden}
-.meters .bar>div{height:100%;width:0;background:#0EA5E9;transition:width .3s}
+.meters .bar{height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden}
+.meters .bar>div{height:100%;width:0;background:#00A884;transition:width .3s}
 #incoming{align-items:center;justify-content:center;text-align:center}
 #incoming .av{width:110px;height:110px;font-size:44px;margin:0 auto}
 #incoming .iname{font-size:26px;font-weight:600;margin-top:20px}
 #incoming .istat{color:#64748B;margin-top:8px}
 .ictrl{position:fixed;bottom:60px;left:0;right:0;display:flex;justify-content:space-around}
 .ictrl button{border:0;border-radius:50%;width:64px;height:64px;font-size:26px;cursor:pointer}
-.ictrl .acc{background:#16a34a;color:#0B1220}
+.ictrl .acc{background:#16a34a;color:#fff}
 .ictrl .dec{background:#ea0038;color:#fff}
-#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#0EA5E9;color:#0B1220;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
+#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#00A884;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
 #fab:active{transform:scale(.93)}
 .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .rchip{display:inline-flex;align-items:center;gap:3px;background:#E2E8F0;border:1px solid #CBD5E1;border-radius:10px;padding:2px 8px;font-size:12px;margin-top:4px;margin-right:4px}
-.rchip.mine{border-color:#0EA5E9}
-.qbox{border-left:3px solid #0EA5E9;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
-#fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1C2A45;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#F8FAFC;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.rchip.mine{border-color:#00A884}
+.qbox{border-left:3px solid #00A884;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
+#fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1F2937;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#F8FAFC;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 /* chat themes / wallpapers */
-#wpg{position:absolute;inset:0;z-index:0;background:#F8FAFC;overflow:hidden}
+#wpg{position:absolute;inset:0;z-index:0;background:#ECE5DD;overflow:hidden}
 #chatview .ohdr,#chatview .cinput{position:relative;z-index:2}
 #chatview .bubbles{position:relative;z-index:1}
 .tsw{width:56px;height:56px;border-radius:50%;border:2px solid #CBD5E1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#64748B}
 .tsw:active{transform:scale(.93)}
-#login{background:linear-gradient(180deg,#E0F2FE 0%,#F8FAFC 45%)}
+#login{background:linear-gradient(180deg,#D9F2EA 0%,#F8FAFC 45%)}
 footer{display:block;text-align:center;padding:14px;font-size:12px;color:#64748B}
 footer a{color:#64748B}
 #sharelink{font-size:12px}
@@ -146,7 +146,7 @@ footer a{color:#64748B}
       <option>Turkey</option><option>Canada</option><option>Australia</option>
     </select>
     <div style="display:flex;margin-bottom:2px">
-      <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
+      <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#00806F;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
       <button id="tabEmail" onclick="setMethod('email')" style="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px">📧 Email</button>
     </div>
     <input id="phone" placeholder="Your phone number, e.g. 0803 123 4567" inputmode="tel" autocomplete="tel">
@@ -241,7 +241,7 @@ footer a{color:#64748B}
     <input id="wtChEmail" placeholder="Your email (we send the code here)" inputmode="email" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:10px;font-size:14px;box-sizing:border-box">
     <button id="wtChSendBtn" class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChSendCode()">Send code 📧</button>
     <div id="wtChCodeRow" style="display:none">
-      <div id="wtChSent" style="font-size:12px;color:#0EA5E9;margin:10px 0 6px"></div>
+      <div id="wtChSent" style="font-size:12px;color:#00A884;margin:10px 0 6px"></div>
       <input id="wtChCode" placeholder="6-digit code" inputmode="numeric" maxlength="6" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;font-size:16px;letter-spacing:4px;text-align:center;box-sizing:border-box">
       <button class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChVerify()">Verify &amp; create channel ✓</button>
       <button class="big" style="width:100%;padding:8px;margin-top:6px;border-radius:12px;background:#E2E8F0;color:#334155;font-size:12px" onclick="wtChSendCode()">Resend code</button>
@@ -313,7 +313,7 @@ footer a{color:#64748B}
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🧩 Developer API</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Build on our 102 AI citizens — public API docs.</div>
-      <a href="api.html" style="font-size:14px;color:#0EA5E9">Open API docs →</a>
+      <a href="api.html" style="font-size:14px;color:#00A884">Open API docs →</a>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">📶 Lite mode (data saver)</div>
@@ -423,7 +423,7 @@ footer a{color:#64748B}
 <div id="walSheet" class="ovl hide" onclick="if(event.target===this)walClose()">
   <div class="sheet">
     <div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 My Wallet</div>
-    <div style="font-size:26px;font-weight:700;color:#0EA5E9;margin-bottom:10px" id="walBal2">₦0</div>
+    <div style="font-size:26px;font-weight:700;color:#00A884;margin-bottom:10px" id="walBal2">₦0</div>
     <button class="big blue" style="width:100%" onclick="walAdd()">➕ Add money</button>
     <button class="big" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="walSend()">📤 Send money</button>
     <div style="font-weight:600;margin-top:14px;margin-bottom:4px">History</div>
@@ -467,7 +467,7 @@ footer a{color:#64748B}
     </div>
     <div style="text-align:center;margin-bottom:10px">
       <span style="font-size:12px;color:#64748B">Pay before this runs out: </span>
-      <span id="payTimer" style="font-size:18px;font-weight:700;color:#0EA5E9">30:00</span>
+      <span id="payTimer" style="font-size:18px;font-weight:700;color:#00A884">30:00</span>
     </div>
     <div style="font-size:12px;color:#64748B;margin-bottom:10px">After paying, keep your receipt ready — you will send it as a screenshot to Premium AI in chat.</div>
     <button class="big blue" style="width:100%" onclick="paidNow()">✅ I've Paid — Continue</button>
@@ -487,14 +487,14 @@ footer a{color:#64748B}
       <div id="fabList"></div>
       <div style="height:10px"></div>
     </div>
-      <div class="card" style="background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;border:0">
+      <div class="card" style="background:linear-gradient(135deg,#00806F,#00A884);color:#fff;border:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:26px">💰</div>
         <div style="flex:1">
           <div style="font-size:12px;opacity:.85">My AirConnect Wallet</div>
           <div style="font-size:22px;font-weight:700" id="walBal">₦0</div>
         </div>
-        <button class="big" style="background:#fff;color:#0C4A6E;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
+        <button class="big" style="background:#fff;color:#00806F;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
       </div>
     </div>
   </div>
@@ -676,7 +676,7 @@ footer a{color:#64748B}
       </div>
       <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#64748B;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
     </div>
-    <div id="replychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #0EA5E9;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
+    <div id="replychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #00A884;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
     <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()" oninput="typingPing()">
     <button onclick="chatVoiceSheet()" title="Voice note" style="border:1px solid #CBD5E1;background:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;flex:0 0 38px;padding:0">🎙️</button>
     <button id="sendbtn" onclick="sendChat()">➤</button>
@@ -729,7 +729,7 @@ footer a{color:#64748B}
 <div id="lockview" class="ovl hide" style="z-index:80;align-items:center;justify-content:center;text-align:center">
   <div style="font-size:40px">🔒</div>
   <div style="font-size:18px;font-weight:600;margin:10px 0 16px">Enter your PIN</div>
-  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#0EA5E9;margin-bottom:18px;min-height:34px"></div>
+  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#00A884;margin-bottom:18px;min-height:34px"></div>
   <input id="pininput" type="tel" inputmode="numeric" maxlength="6" style="width:160px;text-align:center;font-size:24px;letter-spacing:8px">
   <button class="big" onclick="pinTry()" style="margin-top:12px">Unlock</button>
   <div style="font-size:11px;color:#94A3B8;margin-top:14px;line-height:1.5">Forgot PIN? Reinstalling the app removes the lock<br>and your local data. Your account is safe.</div>
@@ -999,7 +999,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=52');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=53');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1092,8 +1092,8 @@ let VERIFY_METHOD="phone",OTP_EMAIL="";
 function setMethod(m){
   VERIFY_METHOD=m;
   const p=$("phone"),e=$("emailin"),tp=$("tabPhone"),te=$("tabEmail");
-  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
-  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#0C4A6E;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
+  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#00806F;color:#fff;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
+  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#00806F;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
 }
 async function startSignup(){
   const name=$("myname").value.trim();
@@ -1289,7 +1289,7 @@ function wtCats(){
   bar.innerHTML="";
   for(const [k,lbl] of WT_CATS){
     const b=document.createElement("button");
-    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#0EA5E9":"#E2E8F0")+";background:"+(WT_CAT===k?"#0EA5E9":"#fff")+";color:"+(WT_CAT===k?"#fff":"#334155");
+    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#00A884":"#E2E8F0")+";background:"+(WT_CAT===k?"#00A884":"#fff")+";color:"+(WT_CAT===k?"#fff":"#334155");
     b.textContent=lbl;
     b.onclick=()=>{WT_CAT=k;wtCats();wtLoad();};
     bar.appendChild(b);
@@ -1299,7 +1299,7 @@ function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtCats();wtOpen("feed");}else wt
 function wtRefresh(){if(WT_SCOPE==="chans")wtChannels();else wtLoad();}
 function wtOpen(sc){
   WT_SCOPE=sc;
-  for(const x of["feed","watch","chans"]){const b=$("wtb-"+x);b.style.background=x===sc?"#0EA5E9":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
+  for(const x of["feed","watch","chans"]){const b=$("wtb-"+x);b.style.background=x===sc?"#00A884":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
   if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";}
   else{$("wtfeed").className="";$("wtchans").className="hide";$("wtcatbar").className="";WT_CH_PAGE=null;wtCats();wtLoad();}
 }
@@ -1322,7 +1322,7 @@ async function wtLoad(){
 function wtRender(){
   const el=$("wtfeed");
   if(WT_CH_PAGE){
-    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#0EA5E9;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
+    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#00A884;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
   const big=(WT_SCOPE==="watch"||WT_CAT==="shorts")&&!WT_CH_PAGE;
@@ -1332,14 +1332,14 @@ function wtCard(p,big){
   const d=document.createElement("div");
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:10px";
   const t=new Date(p.at||Date.now());
-  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#0EA5E9;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div><button class="big" style="padding:5px 10px;font-size:11px;border-radius:14px;background:'+(p.mysub?"#E2E8F0":"#0EA5E9")+';color:'+(p.mysub?"#334155":"#fff")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
+  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#00A884;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div><button class="big" style="padding:5px 10px;font-size:11px;border-radius:14px;background:'+(p.mysub?"#E2E8F0":"#00A884")+';color:'+(p.mysub?"#334155":"#fff")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
   let body="";
-  if(p.rs)body+='<div style="font-size:11px;color:#0EA5E9;margin-top:6px">🔁 reshared post</div>';
+  if(p.rs)body+='<div style="font-size:11px;color:#00A884;margin-top:6px">🔁 reshared post</div>';
   if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
   if(p.fid)body+='<div style="margin-top:8px;border-radius:10px;overflow:hidden;background:#0f172a" id="pv-'+p.id+'"><button class="big blue" style="width:100%;padding:14px;font-size:13px" onclick="wtPlay(\''+p.id+'\',\''+p.fid+'\','+p.fidn+')">▶️ Play video</button></div>';
   const RE=["👍","❤️","😂","😮","🙏","🔥"];
   let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
-  for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#0EA5E9":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
+  for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
   rrow+='</div>';
   const acts='<div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:#64748B"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right">👁 '+(p.vcnt||0)+' views</span></div>';
   d.innerHTML=head+body+rrow+acts;
@@ -1396,7 +1396,7 @@ function wtPCats(){
   const cats=[["general","General"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
   for(const [k,lbl] of cats){
     const b=document.createElement("button");
-    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#0EA5E9":"#E2E8F0")+";background:"+(WT_PCAT===k?"#0EA5E9":"#fff")+";color:"+(WT_PCAT===k?"#fff":"#334155");
+    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#00A884":"#E2E8F0")+";background:"+(WT_PCAT===k?"#00A884":"#fff")+";color:"+(WT_PCAT===k?"#fff":"#334155");
     b.textContent=lbl;
     b.onclick=()=>{WT_PCAT=k;wtPCats();};
     el.appendChild(b);
@@ -1455,7 +1455,7 @@ async function wtChannels(){
     for(const c of WT_CHANS){
       const d2=document.createElement("div");
       d2.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px";
-      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.mine?' <span style="color:#0EA5E9;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#0EA5E9")+';color:'+(c.subscribed?"#334155":"#fff")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
+      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.mine?' <span style="color:#00A884;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#00A884")+';color:'+(c.subscribed?"#334155":"#fff")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
       el.appendChild(d2);
     }
   }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load channels.</div>';}
@@ -1752,10 +1752,10 @@ function refreshStories(){
 function storyCircle(pic,letter,ring,label,onclick){
   const d=document.createElement("div");d.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
   const c=document.createElement("div");
-  c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#0EA5E9":"#CBD5E1")+";padding:2px;margin:0 auto;box-sizing:border-box";
+  c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#00A884":"#CBD5E1")+";padding:2px;margin:0 auto;box-sizing:border-box";
   const inner=document.createElement("div");
   if(pic){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
-  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
+  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
   c.appendChild(inner);d.appendChild(c);
   const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#64748B;margin-top:3px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   d.appendChild(t);
@@ -1868,11 +1868,11 @@ function renderStatusScreen(){
       const row=document.createElement("div");
       row.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer";
       const c=document.createElement("div");
-      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#0EA5E9":"#CBD5E1")+";padding:2px;flex:0 0 50px;box-sizing:border-box";
+      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#00A884":"#CBD5E1")+";padding:2px;flex:0 0 50px;box-sizing:border-box";
       const inner=document.createElement("div");
       const _pk=String(g.items[0].pic);
-      if(_pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
-      else if(_pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#0C4A6E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
+      if(_pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
+      else if(_pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
       else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
       c.appendChild(inner);row.appendChild(c);
       const t=document.createElement("div");
@@ -2249,7 +2249,7 @@ function renderBubbles(){
       const ic=document.createElement("div");ic.textContent="🎬";ic.style.fontSize="24px";
       const tx=document.createElement("div");
       tx.innerHTML='<div style="font-weight:600">Video</div><div style="font-size:12px;color:#64748B">'+esc((m.f2.name||"video").slice(0,40))+'</div>';
-      const bt=document.createElement("div");bt.textContent="▶";bt.style.cssText="background:#0C4A6E;color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center";
+      const bt=document.createElement("div");bt.textContent="▶";bt.style.cssText="background:#00806F;color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center";
       w.appendChild(ic);w.appendChild(tx);w.appendChild(bt);
       w.onclick=()=>f2Play(m.f2.fid,m.f2.name);
       d.appendChild(w);
@@ -2288,7 +2288,7 @@ function renderTextBubble(d,m){
     card.appendChild(t);
     const a=document.createElement("a");a.href=urlM[0];a.target="_blank";a.rel="noopener";
     a.textContent="⬇ Download";a.className="big blue";
-    a.style.cssText="display:block;width:100%;background:#0EA5E9;color:#fff;text-align:center;text-decoration:none;box-sizing:border-box";
+    a.style.cssText="display:block;width:100%;background:#00A884;color:#fff;text-align:center;text-decoration:none;box-sizing:border-box";
     card.appendChild(a);
     const hint=document.createElement("div");hint.textContent="Tap Download — it opens in your browser and saves to your phone. If nothing opens, long-press to copy the link below.";
     hint.style.cssText="font-size:11px;color:#64748B;margin-top:6px";
@@ -2606,7 +2606,7 @@ function startPay(plan,price){
     if(left<=0){$("payTimer").textContent="EXPIRED";$("payTimer").style.color="#f15c6d";clearInterval(payTick);toast("Code expired — cancel and Subscribe again");return;}
     const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);
     $("payTimer").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
-    $("payTimer").style.color=left<300000?"#f15c6d":"#0EA5E9";
+    $("payTimer").style.color=left<300000?"#f15c6d":"#00A884";
   },1000);
 }
 function cancelPay(){PAYING=null;clearInterval(payTick);$("payModal").className="ovl hide";}
@@ -3163,7 +3163,7 @@ function gcVideoLayout(){
 function gcName(p){return WIN_NAMES[p]||("+"+p);}
 function gcUI(){
   let el=document.getElementById("gcview");
-  if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#0C4A6E;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
+  if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#00806F;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
   const g=GROUPS.find(x=>x.id===GC.g);
   const peers=Object.keys(SF.mems||{});
   let chips='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px">';
@@ -3175,8 +3175,8 @@ function gcUI(){
   '<div id="gcvids" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px"></div>'+
   '<div style="font-size:12px;opacity:.7">'+(peers.length+1)+" connected</div>"+chips+
   '<div style="display:flex;gap:14px;margin-top:10px">'+
-  '<button onclick="gMute()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(GC.muted?"#fff":"rgba(255,255,255,.25)")+';color:'+(GC.muted?"#0C4A6E":"#fff")+'">'+(GC.muted?"🔇":"🎙️")+"</button>"+
-  '<button onclick="gcVideoToggle()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(SF.vOn?"#FDE047":"rgba(255,255,255,.25)")+';color:'+(SF.vOn?"#0C4A6E":"#fff")+'">'+(SF.vOn?"📷":"🎥")+"</button>"+
+  '<button onclick="gMute()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(GC.muted?"#fff":"rgba(255,255,255,.25)")+';color:'+(GC.muted?"#00806F":"#fff")+'">'+(GC.muted?"🔇":"🎙️")+"</button>"+
+  '<button onclick="gcVideoToggle()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(SF.vOn?"#FDE047":"rgba(255,255,255,.25)")+';color:'+(SF.vOn?"#00806F":"#fff")+'">'+(SF.vOn?"📷":"🎥")+"</button>"+
   '<button onclick="gLeave()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:#DC2626;color:#fff">✖</button></div>';
   gcVideoLayout();
 }
@@ -3610,8 +3610,8 @@ function saveV12Mute(id){const i=MUTED.indexOf(id);if(i>=0)MUTED.splice(i,1);els
 function saveV12Arch(id){const i=ARCHS.indexOf(id);if(i>=0)ARCHS.splice(i,1);else ARCHS.push(id);persistV12();renderLists();renderArchived();}
 /* ================= v40: WALLET, MARKETPLACE, TRANSLATE, LITE ================= */
 let LITE=(localStorage.getItem("ac_lite")==="1");
-function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#0EA5E9":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
-function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#0EA5E9":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";}}
+function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#00A884":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
+function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#00A884":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";}}
 async function walRefresh(){
   if(!ME)return;
   try{const d=await api("wbal",{node:ME});
@@ -3649,7 +3649,7 @@ async function walAdd(){
   try{await navigator.clipboard.writeText(details);}catch(e){}
   $("walAddTitle").textContent="💳 Add ₦"+amt.toLocaleString();
   $("walAddBody").innerHTML=
-    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#0C4A6E;color:#fff;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
+    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#00806F;color:#fff;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
     '<button class="big blue" style="width:100%;margin-top:12px;font-size:15px;padding:14px" onclick="walRcpGo()">📷 I have paid — upload my receipt</button>'+
     '<div id="walRcpPrev" style="margin-top:10px"></div>'+
     '<button class="big" style="width:100%;margin-top:8px;background:#1E293B" onclick="walAddClose()">Later — my claim is already saved</button>'+
@@ -3660,7 +3660,7 @@ function walAddClose(){$("walAddSheet").className="ovl hide";}
 async function walRcpGo(){
   const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.capture="environment";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
   if(!f)return;
-  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#0EA5E9">⏳ Uploading receipt…</div>';
+  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#00A884">⏳ Uploading receipt…</div>';
   try{
     const sm=await walRcpShrink(f);
     $("walRcpPrev").innerHTML='<img src="data:image/jpeg;base64,'+sm.b64.slice(0,2000)+'" style="display:none"><div style="font-size:12.5px;color:#94A3B8">📷 '+sm.name+' — sending…</div>';
@@ -3896,7 +3896,7 @@ async function openGInfo(){
   let addRow="";
   if(iAmAdmin&&cand.length){
     let opts="";for(const f of cand)opts+='<option value="'+f.id+'">'+esc(f.name||("+"+f.id))+"</option>";
-    addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#0EA5E9;color:#0B1220">Add</button></div>';
+    addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#00A884;color:#fff">Add</button></div>';
   }
   el.innerHTML=
     '<div class="ohdr"><button class="bk" onclick="document.getElementById(\'ginfosheet\').remove()">‹</button><div class="nm" style="flex:1">Group info</div><div style="width:30px"></div></div>'+
@@ -3904,7 +3904,7 @@ async function openGInfo(){
     '<div style="text-align:center;padding:6px 0 14px"><div style="font-size:44px">👥</div>'+
     '<div style="font-weight:700;font-size:18px;color:#0F172A">'+esc(r.name)+'</div>'+
     '<div style="font-size:12px;color:#64748B">'+r.members.length+' members · not end-to-end encrypted</div></div>'+
-    (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#0EA5E9;color:#0B1220">Save</button></div>':"")+
+    (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#00A884;color:#fff">Save</button></div>':"")+
     addRow+
     '<div style="margin-top:8px">'+rows+'</div>'+
     '<button onclick="ginfoLeave()" class="big" style="background:#DC2626;color:#fff;margin-top:16px">Leave group 👋</button>'+
@@ -4098,8 +4098,8 @@ function menuOpen(){
   if(!mv._owned){mv._owned=1;
     const vs=document.getElementById("view-settings");
     const prof=document.createElement("div");
-    prof.style.cssText="background:linear-gradient(135deg,#0C4A6E,#0EA5E9);color:#fff;border-radius:14px;padding:14px;margin:12px;display:flex;gap:12px;align-items:center";
-    prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#0C4A6E">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
+    prof.style.cssText="background:linear-gradient(135deg,#00806F,#00A884);color:#fff;border-radius:14px;padding:14px;margin:12px;display:flex;gap:12px;align-items:center";
+    prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#00806F">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
       '<div><div style="font-size:16px;font-weight:700">'+esc(ME_NAME||"Me")+'</div>'+
       '<div style="font-size:12px;opacity:.85">+'+ME+' · my profile</div></div>';
     prof.onclick=function(){menuClose();document.getElementById("picinput")&&document.getElementById("picinput").click();};
@@ -4111,7 +4111,7 @@ function menuOpen(){
     mv.appendChild(back);
     if(vs)mv.appendChild(vs); /* settings content lives here now — single copy, no dup ids */
     const wal=document.createElement("button");
-    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#0C4A6E;color:#fff;font-size:15px";
+    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#00806F;color:#fff;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
     mv.appendChild(wal);
     if(String(ME)==="234100000001"){ /* v49: owner-only door to our OS */
