@@ -999,7 +999,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=51');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=52');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1073,6 +1073,9 @@ function startRing(kind){
 }
 function setStatus(txt,cls){$("stxt").textContent=txt;$("dot").className="dot "+(cls||"");}
 
+/* ---------------- v52: visible errors ---------------- */
+window.addEventListener("error",function(ev){try{var m="JS error: "+(ev.message||"?")+" @ line "+(ev.lineno||"?");localStorage.setItem("ac_lasterr",m+" | "+new Date().toISOString());var t=document.getElementById("toast");if(t&&t.textContent!==undefined){toast("⚠ "+m.slice(0,80));}else{console.warn(m);}}catch(e){}});
+window.addEventListener("unhandledrejection",function(ev){try{localStorage.setItem("ac_lasterr","Promise: "+String(ev.reason).slice(0,160)+" | "+new Date().toISOString());}catch(e){}});
 /* ---------------- register / login ---------------- */
 const CC={Nigeria:'234',Ghana:'233',Kenya:'254','South Africa':'27',Egypt:'20',USA:'1',UK:'44',Ireland:'353',Germany:'49',France:'33',Spain:'34',Italy:'39',Brazil:'55',Argentina:'54',India:'91',China:'86',Japan:'81','Saudi Arabia':'966',Qatar:'974',UAE:'971',Turkey:'90',Canada:'1',Australia:'61'};
 let OTP_NUM="";
@@ -1515,7 +1518,7 @@ function renderLists(){
   let fr=WIN_FRIENDS;
   if(SEARCH)fr=fr.filter(f=>((WIN_NAMES[f.id]||"")+" "+(lastOf(f.id)?String(lastOf(f.id).text||"").slice(0,80):"")).toLowerCase().includes(SEARCH));
   const cl=$("chatlist");cl.innerHTML="";
-  if(String(ME)==="234100000001"){ /* v51: OS chat lives in the main list like a friend */
+  try{ if(String(ME)==="234100000001"){ /* v51: OS chat lives in the main list like a friend */
     const oc=CHATS["__OS__"],ol=oc&&oc.length?oc[oc.length-1]:null;
     const oprev=ol?(ol.who==="me"?"You: ":"")+esc(String(ol.text||"").slice(0,40)):"Our OS — always on";
     const orow=document.createElement("div");orow.className="row";
@@ -1523,7 +1526,7 @@ function renderLists(){
     orow.innerHTML='<div class="av">🤖</div><div style="min-width:0;flex:1"><div class="rname" style="color:#7DE2C3">Premium User <span style="font-size:10px;color:#7DE2C3">· OS</span></div><div class="rsub" style="color:#9CC7BC">'+oprev+'</div></div><div class="rtime">'+(ol?ago(ol.ts):"")+'</div>'+(OS_UNREAD>0?'<span class="badge">'+OS_UNREAD+'</span>':'');
     orow.onclick=()=>openOsChat();
     cl.appendChild(orow);
-  }
+  } }catch(eOs){console.warn("OS row skipped:",eOs);}
   const allFr=fr.slice().filter(f=>!ARCHS.includes(f.id)||(SEARCH&&SEARCH.length>0));
   allFr.sort((a,b)=>{const pa=PINS.includes(a.id)?1:0,pb=PINS.includes(b.id)?1:0;if(pa!==pb)return pb-pa;const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
   for(const f of allFr){
@@ -1616,6 +1619,7 @@ async function osSend(t){
   OS_BUSY=false;$("sendbtn").disabled=false;
 }
 function openChat(p){
+  try{
   pushHist();
   CHAT_OPEN=p;UNREAD[p]=0;renderUnread();
   const n=(WIN_NAMES[p]||"+"+p);
@@ -1626,6 +1630,7 @@ function openChat(p){
   renderBubbles();
   loadHistory(p);
   try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}
+  }catch(e){try{toast("⚠ chat failed: "+String(e&&e.message||e).slice(0,90));}catch(e2){}}
 }
 function normTs(s){s=String(s);const m=s.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{1,6})/);if(!m)return s;const f=(m[2]+"00").slice(0,3);return m[1]+"."+f+"Z";}
 async function loadHistory(p){
