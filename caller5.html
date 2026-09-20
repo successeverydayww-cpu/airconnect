@@ -305,19 +305,16 @@ footer a{color:#64748B}
   <div id="view-status" class="view hide">
     <div class="card">
       <div style="display:flex;align-items:center;gap:12px">
-        <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer;flex:0 0 60px" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else document.getElementById('stPhotoIn').click()">?</div>
-        <div style="flex:1;min-width:0">
+        <div style="position:relative;flex:0 0 60px">
+          <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">?</div>
+          <div onclick="stAddOpen()" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#00A884;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)">📷</div>
+        </div>
+        <div style="flex:1;min-width:0;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">
           <div style="font-weight:600">My status</div>
-          <div style="font-size:12.5px;color:#64748B" id="stMySub">Tap a button to add a photo, video or voice status</div>
-          <div style="display:flex;gap:6px;margin-top:8px">
-            <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stCamIn').click()">📸 Camera</button>
-            <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stPhotoIn').click()">🖼️ Photo</button>
-            <button class="big blue" style="flex:1;padding:9px 4px" onclick="document.getElementById('stVidIn').click()">🎬 Video</button>
-            <button class="big blue" style="flex:1;padding:9px 4px" onclick="stVoiceSheet()">🎙️ Voice</button>
-          </div>
-          <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:8px;background:#CBD5E1" onclick="deleteMyStatus()">🗑 Delete my status</button>
+          <div style="font-size:12.5px;color:#64748B" id="stMySub">Tap to add a status update</div>
         </div>
       </div>
+      <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:10px;background:#F1F5F9;color:#334155" onclick="deleteMyStatus()">🗑 Delete my status</button>
       <div style="font-size:11.5px;color:#64748B;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
     <div class="card">
@@ -325,6 +322,30 @@ footer a{color:#64748B}
       <div id="stFriends" style="font-size:14px;color:#64748B">No friend statuses yet.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
+  </div>
+  <div id="stFab" class="hide" style="position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:50%;background:#00A884;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29" onclick="stAddOpen()">📷</div>
+  <div id="stAddBg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="stAddClose()"></div>
+  <div id="stAddSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
+    <div style="font-weight:700;text-align:center;margin-bottom:16px;color:#0F172A">Add to my status</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center">
+      <div onclick="stAddClose();document.getElementById('stCamIn').click()" style="cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;background:#e2445c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📸</div>
+        <div style="font-size:12px;color:#0F172A">Camera</div>
+      </div>
+      <div onclick="stAddClose();document.getElementById('stPhotoIn').click()" style="cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;background:#7e57ff;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🖼️</div>
+        <div style="font-size:12px;color:#0F172A">Photo</div>
+      </div>
+      <div onclick="stAddClose();document.getElementById('stVidIn').click()" style="cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;background:#e2845c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div>
+        <div style="font-size:12px;color:#0F172A">Video</div>
+      </div>
+      <div onclick="stAddClose();stVoiceSheet()" style="cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;background:#4ad66d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
+        <div style="font-size:12px;color:#0F172A">Voice</div>
+      </div>
+    </div>
+    <button class="big" style="width:100%;margin-top:18px;background:#F1F5F9;color:#334155" onclick="stAddClose()">Cancel</button>
   </div>
 
   <div id="view-calls" class="view hide">
@@ -1027,7 +1048,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=56');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=57');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1297,6 +1318,7 @@ function showTab(t){
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="watch"){wtBoot();}
   if(t==="status"){refreshStories();renderStatusScreen();}
+  const _sf=$("stFab");if(_sf)_sf.className=t==="status"?"":"hide";
   if(t==="settings"){renderPlan();ensureQR();renderArchived();liteBoot();walRefresh();}
   if(t==="watch"){if(typeof WT_CH_PAGE==="string"&&WT_CH_PAGE){}}
 }
@@ -2179,6 +2201,8 @@ async function stVideoRec(v2,dur,maxW,br){
 }
 
 /* ================= v56: owner Admin dashboard — activate/reject wallet claims by hand ================= */
+function stAddOpen(){$("stAddSheet").className="";$("stAddBg").className="";}
+function stAddClose(){$("stAddSheet").className="hide";$("stAddBg").className="hide";}
 var ADM_CLAIMS=[];
 function admOpen(){$("admView").className="ovl";admLoad();}
 function admClose(){$("admView").className="ovl hide";}
@@ -2200,7 +2224,8 @@ function admCard(c){
   const status=c.activated?'<span style="color:#00A884;font-weight:700">✅ Activated</span>':c.rejected?'<span style="color:#94A3B8;font-weight:700">❌ Rejected</span>':'<span style="color:#D97706;font-weight:700">⏳ Pending</span>';
   const when=c.doneAt?new Date(c.doneAt).toLocaleString():new Date(c.at).toLocaleString();
   const rcpBtn=c.fid?'<button onclick="admViewReceipt(\''+c.fid+'\',this)" style="border:1px solid #CBD5E1;background:#fff;border-radius:8px;padding:5px 10px;font-size:11.5px;margin-top:6px">🖼 View receipt</button>':'<div style="font-size:11px;color:#94A3B8;margin-top:4px">No receipt uploaded yet</div>';
-  const actions=(!c.activated&&!c.rejected)?('<div style="display:flex;gap:8px;margin-top:8px">'+
+  const actions=(!c.activated&&!c.rejected)?('<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
+    (c.fid?'<button onclick="admAutoCheck(\''+c.k+'\',this)" style="flex:1;background:#EFF6FF;color:#1D4ED8;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">🤖 AI check</button>':"")+
     '<button onclick="admActivate(\''+c.k+'\',\''+c.num+'\','+c.amt+',\''+esc(c.ref||"")+'\')" style="flex:1;background:#00A884;color:#fff;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">✅ Activate</button>'+
     '<button onclick="admReject(\''+c.k+'\')" style="flex:1;background:#F1F5F9;color:#334155;border:0;border-radius:8px;padding:8px;font-size:12.5px">❌ Reject</button>'+
     '</div>'):"";
@@ -2239,6 +2264,15 @@ async function admActivate(k,num,amt,ref){
 async function admReject(k){
   if(!confirm("Reject this claim? No money will be credited."))return;
   try{await api("wconfirm",{by:ME,claim:k,reject:true});toast("Rejected");admLoad();}catch(e){toast("Could not reject");}
+}
+async function admAutoCheck(k,btn){
+  btn.textContent="Checking…";btn.disabled=true;
+  try{
+    const r=await api("wautocheck",{by:ME,claim:k});
+    if(r&&r.ok&&r.activated){toast("AI verified & activated ✓");admLoad();}
+    else if(r&&r.ok){toast("AI unsure: "+(r.note||"needs your review").slice(0,80));btn.textContent="🤖 AI check";btn.disabled=false;}
+    else{toast((r&&r.err)||"Could not run AI check");btn.textContent="🤖 AI check";btn.disabled=false;}
+  }catch(e){toast("Could not run AI check");btn.textContent="🤖 AI check";btn.disabled=false;}
 }
 /* ---------------- voice status ---------------- */
 function stVoiceSheet(){
