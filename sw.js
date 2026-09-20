@@ -1,5 +1,5 @@
 /* AirConnect service worker: offline shell + faster loads */
-const CACHE = 'airconnect-v60';
+const CACHE = 'airconnect-v61';
 const SHELL = ['./caller.html', './manifest.json', './icon-192.png', './icon-512.png', './qrcode.min.js'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -23,6 +23,11 @@ self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (x) {}
   const what = d.what || '';
+  if (what === 'missed_call') {
+    e.waitUntil(self.registration.showNotification('Missed AirConnect call', {
+      body: (d.fromName || ('+' + (d.from || ''))) + ' called you', tag: 'miss-' + (d.from || 'x'), data: { url: './caller.html' }
+    }));
+  }
   if (what === 'incoming_call') {
     e.waitUntil(self.registration.showNotification('📞 Incoming AirConnect call', {
       body: (d.fromName || ('+' + (d.from || ''))) + ' is calling you',

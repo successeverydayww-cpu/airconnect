@@ -373,6 +373,7 @@ footer a{color:#64748B}
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Photos load on tap, videos never autoplay — saves your data.</div>
       <button class="big" id="liteBtn" style="background:#CBD5E1;color:#334155" onclick="liteToggle()">Lite mode: OFF</button>
       <button class="big" style="margin-top:8px" onclick="showMyPhrase()">🔐 My recovery phrase</button>
+      <button class="big" id="installBtn" style="margin-top:8px;display:none" onclick="installApp()">📲 Install AirConnect app</button>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
@@ -840,6 +841,12 @@ async function e2eInit(){
     if(ME)pubkeyPush(3);
   }catch(e){}
 }
+async function resyncKeys(peer){
+  try{
+    if(!E2E_PKS[peer]){await api("chat",{from:ME,to:peer,text:"kq:"}).catch(()=>{});toast("Asked "+(WIN_NAMES[peer]||("+"+peer))+" to re-sync encryption keys");}
+    pubkeyPush(3);
+  }catch(e){}
+}
 async function pubkeyPush(tries){
   try{
     const ok=await api("pubkey",{node:ME,pk:JSON.stringify(E2E_KEYS.pub)});
@@ -1249,6 +1256,10 @@ async function register(){
   let d=null;
   if(resume){d=await api("register",{id:resume,name:name,dev:dev});if(d&&d.id)await log('resumed my number');}
   if(!d||!d.id){d=await api("register",{dev:dev,name:name});if(d&&d.id)await log('resumed by device');}
+  if(!d||!d.id){
+    const sp=getPhraseSync();
+    if(sp){d=await api("register",{phrase:sp,dev:dev});if(d&&d.id)await log('resumed by saved phrase');}
+  }
   if(!d||!d.id){
     if(resume||ME){
       toast("Could not resume your number — use your recovery phrase");
@@ -1709,6 +1720,8 @@ function openChat(p){
   applyWallpaper();
   renderBubbles();
   loadHistory(p);
+  if(!E2E_PKS[p])resyncKeys(p); /* v61: auto re-sync missing peer key */
+  
   try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}
   }catch(e){try{toast("⚠ chat failed: "+String(e&&e.message||e).slice(0,90));}catch(e2){}}
 }
@@ -3681,6 +3694,7 @@ async function poll(){
         if(ch){persistChats();if(CHAT_OPEN===from)renderBubbles();}
         continue;
       }
+      if(rawTxt.startsWith("kq:")){try{pubkeyPush(3);}catch(x){}continue;} /* silent key re-sync request */
       const fm=rawTxt.match(/^\[file:([a-z0-9]+)\]$/i);
       const f2m=rawTxt.match(/^\[f2:([a-z0-9]+):([^\]]{0,80}):(\d+)\]$/);
       if(f2m)(CHATS[from]=CHATS[from]||[]).push({who:"them",f2:{fid:f2m[1],name:f2m[2]},ts:m.id});
@@ -3755,7 +3769,19 @@ async function getDevAsync(){
   try{const s=await idbGet("dev");if(s){try{if(!localStorage.getItem("ac_dev"))localStorage.setItem("ac_dev",s);}catch(e){}return s;}}catch(e){}
   return d;
 }
-function savePhraseLocally(p){try{if(p)localStorage.setItem("ac_phrase",p);}catch(e){}}
+function savePhraseLocally(p){
+  if(!p)return;
+  try{localStorage.setItem("ac_phrase",p);}catch(e){}
+  try{sessionStorage.setItem("ac_phrase",p);}catch(e){}
+  try{document.cookie="ac_phrase="+encodeURIComponent(p)+"; max-age=31536000; path=/; SameSite=Lax";}catch(e){}
+  try{idbSet("acphrase",p);}catch(e){}
+}
+function getPhraseSync(){
+  try{const p=localStorage.getItem("ac_phrase");if(p)return p;}catch(e){}
+  try{const p=sessionStorage.getItem("ac_phrase");if(p)return p;}catch(e){}
+  try{const m=document.cookie.match(/(?:^|;\s*)ac_phrase=([^;]+)/);if(m)return decodeURIComponent(m[1]);}catch(e){}
+  return "";
+}
 function showPhraseModal(p,force){
   if(!p)return;
   savePhraseLocally(p);
@@ -4278,10 +4304,31 @@ var OB_I=0;
 function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").textContent=s.t;$("obS").textContent=s.s;}
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
+/* ---- v61: client version + forced updates + install prompt ---- */
+const AC_V=61;
+let _deferredInstall=null;
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
+function installApp(){
+  if(_deferredInstall){_deferredInstall.prompt();_deferredInstall=null;return;}
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  toast(isIOS?"On iPhone: tap Share, then 'Add to Home Screen' to install":"Menu ⋮ → 'Install app' / 'Add to Home Screen' to install AirConnect");
+}
+async function checkForcedUpdate(){
+  try{
+    const v=await api("vcheck",{});
+    if(v&&v.minv&&v.minv>AC_V){
+      const o=document.createElement("div");
+      o.id="fupd";o.style.cssText="position:fixed;inset:0;z-index:99999;background:#0B141A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;font-family:inherit";
+      o.innerHTML='<div style="font-size:40px;margin-bottom:14px">⚡</div><div style="font-size:19px;font-weight:700;margin-bottom:10px">Update required</div><div style="font-size:14px;color:#CBD5E1;max-width:320px;line-height:1.5">A new version of AirConnect is out. Close the app completely and reopen it <b>twice</b> to finish updating. Your account is safe.</div>';
+      document.body.appendChild(o);
+    }
+  }catch(e){}
+}
 /* ----- PWA: service worker ----- */
-try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(e){}
+try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js?v=61").catch(()=>{});}catch(e){}
 
 (async function(){
+  checkForcedUpdate();
   let id=readLoginSync();
   if(!id){id=await idbGet("me");}
   if(id){try{$("login").className="hide";$("app").className="";}catch(e){}setTimeout(()=>{try{register();}catch(e){}},400);}
