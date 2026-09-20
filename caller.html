@@ -1376,7 +1376,7 @@ async function wtLoad(){
     else if(WT_CAT!=="all")scope="cat";
     else scope=WT_SCOPE;
     const d=await api("posts",{node:ME,scope,ch:WT_CH_PAGE||"",cat:(WT_CAT==="all"||WT_CAT==="shorts")?"":WT_CAT});
-    WT_POSTS=(d&&d.posts)||[];
+    WT_POSTS=(d&&d.posts)||[];WT_POSTS.forEach(function(p){if(p.ch)WT_SUBCACHE[p.ch]=!!p.mysub;});wtSubSave();
     wtRender();
     /* count my view once per post */
     for(const p of WT_POSTS){if(!WT_SEEN[p.id]){WT_SEEN[p.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}api("pview",{from:ME,id:p.id}).catch(()=>{});}}
@@ -1413,8 +1413,18 @@ async function wtPlay(pid,fid,n){
   const box=$("pv-"+pid);if(!box)return;
   box.innerHTML='<div style="color:#94A3B8;text-align:center;padding:18px;font-size:12px">Loading video…</div>';
   try{
+    /* v63: ONE bulk request for all chunks (was n sequential requests) */
     let bin="";
-    for(let i=0;i<n;i++){const r=await api("fget",{from:ME,fid,ci:i});if(!r||!r.v)throw 0;bin+=r.v;}
+    try{
+      const r=await api("fgetall",{from:ME,fid});
+      if(!r||!r.ok||!r.v)throw 0;
+      bin=r.v;
+    }catch(e0){
+      for(let i=0;i<n;i++){
+        box.innerHTML='<div style="color:#94A3B8;text-align:center;padding:18px;font-size:12px">Loading video… '+(i+1)+'/'+n+'</div>';
+        const r=await api("fget",{from:ME,fid,ci:i});if(!r||!r.v)throw 0;bin+=r.v;
+      }
+    }
     const b64=bin.startsWith("data:")?bin.split(",")[1]:bin;
     const mime=bin.slice(5,bin.indexOf(";"))||"video/mp4";
     const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
@@ -1531,7 +1541,7 @@ async function wtChannels(){
   el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Loading channels…</div>';
   try{
     const d=await api("channels",{node:ME});
-    WT_CHANS=(d&&d.channels)||[];
+    WT_CHANS=(d&&d.channels)||[];WT_CHANS.forEach(function(c){WT_SUBCACHE[c.num]=!!c.subscribed;});wtSubSave();
     el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:12px"><button class="big blue" style="flex:1;padding:10px;border-radius:12px" onclick="wtChOpen()">➕ Create channel</button><button class="big" style="flex:1;padding:10px;border-radius:12px;background:#E2E8F0;color:#334155" onclick="wtMyChannel()">✏️ My channel</button></div>';
     if(!WT_CHANS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:20px;font-size:13px">No channels yet — create yours with a verified email.</div>';return;}
     for(const c of WT_CHANS){
@@ -1542,13 +1552,33 @@ async function wtChannels(){
     }
   }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load channels.</div>';}
 }
+/* v63: subscribe flips INSTANTLY (optimistic), server confirms in background */
+let WT_SUBCACHE={};try{WT_SUBCACHE=JSON.parse(localStorage.getItem("ac_wt_subs"))||{};}catch(e){}
+function wtSubSave(){try{localStorage.setItem("ac_wt_subs",JSON.stringify(WT_SUBCACHE));}catch(e){}}
+function wtSubFlip(num,on){
+  document.querySelectorAll("button").forEach(function(b){
+    var oc=b.getAttribute("onclick")||"";
+    if(oc.indexOf("wtSub('"+num+"')")>-1){
+      b.textContent=on?"✓ Subscribed":"Subscribe";
+      b.style.background=on?"#E2E8F0":"#00A884";
+      b.style.color=on?"#334155":"#fff";
+    }
+  });
+  WT_CHANS.forEach(function(c){if(c.num===num)c.subscribed=on;});
+  WT_POSTS.forEach(function(p){if(String(p.ch)===String(num))p.mysub=on;});
+}
 async function wtSub(num){
+  var mine=WT_CHANS.find(c=>c.num===num);
+  var cur=(WT_SUBCACHE[num]!==undefined)?WT_SUBCACHE[num]:!!(mine&&mine.subscribed);
+  var on=!cur;
+  WT_SUBCACHE[num]=on;wtSubSave();wtSubFlip(num,on); /* instant visual response */
   try{
-    const mine=WT_CHANS.find(c=>c.num===num);
-    const on=!(mine&&mine.subscribed);
     const d=await api("sub",{node:ME,to:num,on:on?1:0});
-    if(d&&d.ok){toast(on?"Subscribed ✓ — their posts come to you first":"Unsubscribed");wtChannels();}
-  }catch(e){toast("Could not subscribe");}
+    if(d&&d.ok){
+      toast(on?"Subscribed ✓ — their posts come to you first":"Unsubscribed");
+      if(WT_SCOPE==="chans"&&!WT_CH_PAGE){try{const r=await api("channels",{node:ME});(r&&r.channels||[]).forEach(function(c){WT_SUBCACHE[c.num]=!!c.subscribed;});wtSubSave();}catch(e){}}
+    }else{WT_SUBCACHE[num]=cur;wtSubSave();wtSubFlip(num,cur);toast("Could not subscribe");}
+  }catch(e){WT_SUBCACHE[num]=cur;wtSubSave();wtSubFlip(num,cur);toast("Could not subscribe");}
 }
 function wtChanPage(num){
   WT_CH_PAGE=num;
@@ -4252,7 +4282,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=61;
+const AC_V=63;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4272,7 +4302,7 @@ async function checkForcedUpdate(){
   }catch(e){}
 }
 /* ----- PWA: service worker ----- */
-try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js?v=61").catch(()=>{});}catch(e){}
+try{if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js?v=63").catch(()=>{});}catch(e){}
 
 (async function(){
   checkForcedUpdate();
