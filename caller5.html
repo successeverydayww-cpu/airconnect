@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <div style="display:flex;gap:6px;padding:10px 12px 0;position:sticky;top:0;background:#fff;z-index:5">
       <button id="wtb-feed" class="big blue" style="flex:1;padding:8px;font-size:13px;border-radius:20px" onclick="wtOpen('feed')">📰 Feed</button>
       <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')">▶️ Watch</button>
-      <button id="wtb-chans" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('chans')">📺 Channels</button>
+      
     </div>
     <div id="wtcatbar" style="display:flex;gap:6px;padding:8px 12px 0;overflow-x:auto;white-space:nowrap;position:sticky;top:46px;background:#fff;z-index:5"></div>
     <div id="wtfeed" style="padding:10px 12px 20px"></div>
@@ -303,6 +303,10 @@ footer a{color:#64748B}
   </div>
 
   <div id="view-status" class="view hide">
+    <div style="padding:6px 0 4px;border-bottom:1px solid #E2E8F0;margin-bottom:4px">
+      <div style="font-weight:700;font-size:15px;padding:6px 14px 2px;color:#0F172A">Status</div>
+      <div id="statusStrip" style="display:flex;gap:12px;overflow-x:auto;padding:6px 12px 10px"></div>
+    </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="position:relative;flex:0 0 60px">
@@ -1317,7 +1321,7 @@ function showTab(t){
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="watch"){wtBoot();}
-  if(t==="status"){refreshStories();renderStatusScreen();}
+  if(t==="status"){refreshStories();renderStoryStrip();renderStatusScreen();}
   const _sf=$("stFab");if(_sf)_sf.className=t==="status"?"":"hide";
   if(t==="settings"){renderPlan();ensureQR();renderArchived();liteBoot();walRefresh();}
   if(t==="watch"){if(typeof WT_CH_PAGE==="string"&&WT_CH_PAGE){}}
@@ -1350,7 +1354,7 @@ function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtCats();wtOpen("feed");}else wt
 function wtRefresh(){if(WT_SCOPE==="chans")wtChannels();else wtLoad();}
 function wtOpen(sc){
   WT_SCOPE=sc;
-  for(const x of["feed","watch","chans"]){const b=$("wtb-"+x);b.style.background=x===sc?"#00A884":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
+  for(const x of["feed","watch"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#00A884":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
   if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";}
   else{$("wtfeed").className="";$("wtchans").className="hide";$("wtcatbar").className="";WT_CH_PAGE=null;wtCats();wtLoad();}
 }
@@ -1833,13 +1837,16 @@ function storyCircle(pic,letter,ring,label,onclick){
   return d;
 }
 function renderStoryStrip(){
-  const el=$("storystrip");if(!el)return;
-  el.innerHTML="";
+  const targets=[$("storystrip"),$("statusStrip")].filter(Boolean);
+  if(!targets.length)return;
   const myStory=STORIES.find(s=>s.num===ME);
-  el.appendChild(storyCircle(myStory?myStory.pic:PIC_CACHE[ME],myStory?"✓":"+",!!(myStory&&!STORY_SEEN[myStory.id]),"My status",()=>{if(myStory)openStatusViewer(ME);else document.getElementById("storyinput").click();}));
-  for(const s of STORIES){
-    if(s.num===ME)continue;
-    el.appendChild(storyCircle((String(s.pic).indexOf("data:image")===0)?s.pic:"",String(s.name).charAt(0).toUpperCase(),!STORY_SEEN[s.id],String(s.name),()=>viewStoryById(s.id)));
+  for(const el of targets){
+    el.innerHTML="";
+    el.appendChild(storyCircle(myStory?myStory.pic:PIC_CACHE[ME],myStory?"✓":"+",!!(myStory&&!STORY_SEEN[myStory.id]),"My status",()=>{if(myStory)openStatusViewer(ME);else document.getElementById("storyinput").click();}));
+    for(const s of STORIES){
+      if(s.num===ME)continue;
+      el.appendChild(storyCircle((String(s.pic).indexOf("data:image")===0)?s.pic:"",String(s.name).charAt(0).toUpperCase(),!STORY_SEEN[s.id],String(s.name),()=>viewStoryById(s.id)));
+    }
   }
 }
 function viewStoryById(id){const s=STORIES.find(x=>x.id===id);if(s)openStatusViewer(s.num);}
