@@ -1069,7 +1069,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=67');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=68');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -2569,6 +2569,7 @@ function renderBubbles(){
     }
     if(String(m.text||"").startsWith("rr:"))continue;
     const d=document.createElement("div");
+    try{d.setAttribute("data-ts",m.ts);}catch(x){} /* v67: reply quotes scroll here */
     if(m.img){
       d.className="bub out";
       const im=document.createElement("img");im.src=m.img;im.style.cssText="max-width:100%;border-radius:6px;display:block";
@@ -2621,7 +2622,23 @@ function renderBubbles(){
   renderChips();
 }
 function renderTextBubble(d,m){
-  const txt=m.text||"";
+  let txt=String(m.text||"");
+  /* v67: WhatsApp-style quoted reply — "r:<id>|<preview>|<text>" renders as a
+     tappable quoted block, not raw wire format. */
+  let rq=null;
+  if(txt.indexOf("r:")===0){
+    const p1=txt.indexOf("|"),p2=txt.indexOf("|",p1+1);
+    if(p1>2&&p2>p1){const rid=txt.slice(2,p1);const rp=txt.slice(p1+1,p2);txt=txt.slice(p2+1);
+      rq={id:rid,p:rp};}
+  }
+  if(rq){
+    const q=document.createElement("div");
+    const out=d.className.indexOf("out")>=0;
+    q.style.cssText="border-left:4px solid "+(out?"#25D366":"#00A884")+";background:"+(out?"rgba(255,255,255,0.18)":"#E8F5F1")+";border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12.5px;color:"+(out?"#E7FFF3":"#12554A")+";max-width:100%;overflow:hidden;cursor:pointer";
+    q.textContent=rq.p.length>90?rq.p.slice(0,90)+"…":rq.p;
+    q.onclick=function(){try{const el=document.querySelector('[data-ts="'+rq.id+'"]');if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.style.transition="background .3s";el.style.background="#FEF3C7";setTimeout(()=>{el.style.background="";},900);}}catch(x){}};
+    d.appendChild(q);
+  }
   if(txt.indexOf("stk:")===0&&txt.length<=10){
     d.style.cssText="background:transparent;box-shadow:none;padding:2px 6px";
     d.innerHTML='<span style="font-size:52px;line-height:1.2">'+esc(txt.slice(4))+"</span>";
@@ -3860,6 +3877,7 @@ async function poll(){
         continue;
       }
       if(rawTxt.startsWith("kq:")){try{pubkeyPush(3);}catch(x){}continue;} /* silent key re-sync request */
+      if((CHATS[from]||[]).some(b=>b.ts===m.id))continue; /* v67: chat-open history + poll race delivered the same message twice */
       const fm=rawTxt.match(/^\[file:([a-z0-9]+)\]$/i);
       const f2m=rawTxt.match(/^\[f2:([a-z0-9]+):([^\]]{0,80}):(\d+)\]$/);
       if(f2m)(CHATS[from]=CHATS[from]||[]).push({who:"them",f2:{fid:f2m[1],name:f2m[2]},ts:m.id});
@@ -4490,7 +4508,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=67;
+const AC_V=68;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
