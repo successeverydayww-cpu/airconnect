@@ -1061,7 +1061,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=66');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=67');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1347,7 +1347,8 @@ function fabSend(){const v=$("fabPeer").value.trim();if(!v){toast("Type a number
 let WT_SCOPE="feed",WT_POSTS=[],WT_CHANS=[],WT_CH_PAGE=null,WT_LOADED=false,WT_VID=null,WT_CPID=null,WT_IO=null;
 try{WT_SEEN=JSON.parse(localStorage.getItem("ac_wt_seen"))||{};}catch(e){}var WT_SEEN={};
 var WT_CAT="all";
-const WT_CATS=[["all","All"],["shorts","Shorts"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
+/* v67 skylar directive: Feed = written posts only · Shorts = videos under 5 min · Watch = long videos 5 min+ */
+const WT_CATS=[["shorts","Shorts"],["long","Long · 5 min+"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
 function wtCats(){
   const bar=$("wtcatbar");if(!bar)return;
   bar.innerHTML="";
@@ -1365,7 +1366,10 @@ function wtOpen(sc){
   WT_SCOPE=sc;
   for(const x of["feed","watch"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#00A884":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
   if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";wtChannels();}
-  else{$("wtfeed").className="";$("wtchans").className="hide";WT_CH_PAGE=null;$("wtcatbar").className="";wtCats();wtLoad();}
+  else{$("wtfeed").className="";$("wtchans").className="hide";WT_CH_PAGE=null;
+    if(sc==="feed"){$("wtcatbar").className="hide";} /* v67: written-post feed — no video categories */
+    else{$("wtcatbar").className="";if(WT_CAT!=="shorts"&&WT_CAT!=="long")WT_CAT="shorts";}
+    wtCats();wtLoad();}
 }
 async function wtLoad(){
   if(!ME)return;
@@ -1373,10 +1377,11 @@ async function wtLoad(){
   try{
     let scope="feed";
     if(WT_CH_PAGE)scope="ch";
-    else if(WT_CAT==="shorts")scope="shorts";
-    else if(WT_CAT!=="all")scope="cat";
-    else scope=WT_SCOPE;
-    const d=await api("posts",{node:ME,scope,ch:WT_CH_PAGE||"",cat:(WT_CAT==="all"||WT_CAT==="shorts")?"":WT_CAT});
+    else if(WT_SCOPE==="feed")scope="feed";           /* written posts only */
+    else if(WT_CAT==="shorts")scope="shorts";          /* videos under 5 min */
+    else if(WT_CAT==="long")scope="watch";             /* long videos 5 min+ */
+    else scope="catv";                                 /* topic cats filter videos */
+    const d=await api("posts",{node:ME,scope,ch:WT_CH_PAGE||"",cat:(WT_CAT==="shorts"||WT_CAT==="long")?"":WT_CAT});
     WT_POSTS=(d&&d.posts)||[];WT_POSTS.forEach(function(p){if(p.ch)WT_SUBCACHE[p.ch]=!!p.mysub;});wtSubSave();
     wtRender();
     /* count my view once per post */
@@ -1389,7 +1394,7 @@ function wtRender(){
     el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#00A884;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
-  const big=(WT_SCOPE==="watch"||WT_CAT==="shorts")&&!WT_CH_PAGE;
+  const big=WT_SCOPE!=="feed"&&!WT_CH_PAGE; /* v67: any video view (shorts + long) = full-screen autoplay */
   for(const p of WT_POSTS)el.appendChild(wtCard(p,big));
   wtObserveVideos();
 }
@@ -3280,8 +3285,16 @@ async function gJoin(gid,initiator){
 async function sfuJoin(gid){
   try{
     SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false,vOn:false,vmid:null,vtrack:null,tiles:{},pendVidNode:null};
-    const r=await api("sfusess",{from:ME});
-    if(!r||!r.ok||!r.sid){await log("GC-SFU: no session ("+((r&&r.err)||"?")+")");return;}
+    /* v67: a failed session/publish used to leave a SILENT call — roster showed
+       everyone but no audio ever flowed. Now we retry visibly up to 3 times. */
+    let r=null,att=0;
+    for(att=0;att<3;att++){
+      r=await api("sfusess",{from:ME});
+      if(r&&r.ok&&r.sid)break;
+      await log("GC-SFU: session attempt "+(att+1)+" failed ("+((r&&r.err)||"?")+")");
+      if(att<2){toast("Group call connecting…");await new Promise(z=>setTimeout(z,2500));}
+    }
+    if(!r||!r.ok||!r.sid){toast("Group call audio could not connect — check network and rejoin");await log("GC-SFU: no session after 3 attempts");return;}
     SF.sid=r.sid;
     SF.pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.cloudflare.com:3478","stun:stun.l.google.com:19302"]}]});
     SF.pc.ontrack=async e=>{
@@ -3290,14 +3303,15 @@ async function sfuJoin(gid){
           const node=SF.pendVidNode||"?";SF.pendVidNode=null;
           let tile=SF.tiles[node];
           if(!tile){tile=document.createElement("video");tile.autoplay=true;tile.playsInline=true;tile.muted=true;tile.style.cssText="width:110px;height:150px;object-fit:cover;border-radius:10px;background:#000";tile.setAttribute("playsinline","true");SF.tiles[node]=tile;}
-          tile.srcObject=e.streams[0];tile.play().catch(()=>{});
+          tile.srcObject=e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]);tile.play().catch(()=>{});
           gcVideoLayout();
           await log("GC-SFU: video tile for +"+node);
         }else{
           const key=e.streams[0]?e.streams[0].id:("gcs"+Math.random().toString(36).slice(2));
           let a=document.getElementById("sfua-"+key);
           if(!a){a=document.createElement("audio");a.id="sfua-"+key;a.autoplay=true;a.setAttribute("playsinline","true");a.style.display="none";document.body.appendChild(a);}
-          a.srcObject=e.streams[0];a.play().catch(()=>{});
+          const ms=e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]); /* v67: msid fallback — fixes silent audio */
+          a.srcObject=ms;a.play().catch(()=>{});
           await log("GC-SFU: remote audio attached");
         }
       }catch(x){}
@@ -3311,8 +3325,15 @@ async function sfuJoin(gid){
     await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,2500);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
     const mid=(SF.pc.getTransceivers().filter(t=>t.sender.track===track)[0]||{}).mid||"0";
     const pub=await api("sfupub",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
-    if(!pub||!pub.ok){await log("GC-SFU: publish failed ("+((pub&&pub.err)||"?")+")");sfuLeave(true);return;}
-    await SF.pc.setRemoteDescription({type:"answer",sdp:pub.sdp});
+    if(!pub||!pub.ok){
+      await log("GC-SFU: publish failed ("+((pub&&pub.err)||"?")+")");
+      toast("Group call audio connecting… retrying");
+      await new Promise(z=>setTimeout(z,2500));
+      const pub2=await api("sfupub",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
+      if(!pub2||!pub2.ok){await log("GC-SFU: publish retry failed — leaving");toast("Group call audio failed — please rejoin");sfuLeave(true);return;}
+      await SF.pc.setRemoteDescription({type:"answer",sdp:pub2.sdp});
+    } else
+    if(pub&&pub.ok)await SF.pc.setRemoteDescription({type:"answer",sdp:pub.sdp});
     await api("sfureg",{from:ME,gid,sid:SF.sid});
     await log("GC-SFU: joined (sid "+SF.sid.slice(0,8)+"…)");
     SF.poll=setInterval(()=>sfuTick(gid),3000);
@@ -3330,35 +3351,55 @@ async function sfuTick(gid){
     gcUI();gcVideoLayout();
     for(const node of Object.keys(SF.mems)){
       const rsid=SF.mems[node].s;
+      /* v67: retry dead audio subs — a failed renegotiation used to leave a stuck
+         'pending' sub that was NEVER retried, so the whole call went silently mute. */
+      if(SF.subs[rsid]&&SF.subs[rsid].failedAt){
+        if(Date.now()-SF.subs[rsid].failedAt<8000)continue; /* backoff before retry */
+        delete SF.subs[rsid];
+        await log("GC-SFU: retrying audio from +"+node);
+      }
       if(!SF.subs[rsid]){
         SF.subs[rsid]={n:node,pending:true};
         const sub=await api("sfusub",{from:ME,sid:SF.sid,rsid,gid});
         if(!sub||!sub.ok){delete SF.subs[rsid];continue;}
-        await SF.pc.setRemoteDescription({type:"offer",sdp:sub.sdp});
-        const ans=await SF.pc.createAnswer();
-        await SF.pc.setLocalDescription(ans);
-        const ren=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans.sdp});
-        if(!ren||!ren.ok){await log("GC-SFU: reneg failed for +"+node+" ("+((ren&&ren.err)||"?")+")");}
-        else{SF.subs[rsid].pending=false;await log("GC-SFU: subscribed to +"+node);}
+        await sfuCritical(async()=>{
+          await SF.pc.setRemoteDescription({type:"offer",sdp:sub.sdp});
+          const ans=await SF.pc.createAnswer();
+          await SF.pc.setLocalDescription(ans);
+          const ren=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans.sdp});
+          if(!ren||!ren.ok){
+            SF.subs[rsid].failedAt=Date.now();
+            await log("GC-SFU: reneg failed for +"+node+" ("+((ren&&ren.err)||"?")+") — will retry");
+          }else{SF.subs[rsid].pending=false;await log("GC-SFU: subscribed to +"+node);}
+        });
       }
-      if(SF.mems[node].v&&!SF.subs[rsid].vid&&!SF.subs[rsid].vidBusy){
+      /* v34: subscribe their video once they turn the camera on (v67: backoff + critical section) */
+      if(SF.mems[node].v&&SF.subs[rsid]&&!SF.subs[rsid].vid&&!SF.subs[rsid].vidBusy&&(Date.now()-(SF.subs[rsid].vidFailAt||0)>8000)){
         SF.subs[rsid].vidBusy=true;
         SF.pendVidNode=node;
         const sub2=await api("sfusub",{from:ME,sid:SF.sid,rsid,gid,track:"video"});
         if(sub2&&sub2.ok){
-          await SF.pc.setRemoteDescription({type:"offer",sdp:sub2.sdp});
-          const ans2=await SF.pc.createAnswer();
-          await SF.pc.setLocalDescription(ans2);
-          await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans2.sdp});
-          SF.subs[rsid].vid=true;
-          await log("GC-SFU: video subscribed from +"+node);
-        }
+          const ok2=await sfuCritical(async()=>{
+            await SF.pc.setRemoteDescription({type:"offer",sdp:sub2.sdp});
+            const ans2=await SF.pc.createAnswer();
+            await SF.pc.setLocalDescription(ans2);
+            const ren2=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans2.sdp});
+            return ren2&&ren2.ok;
+          }).catch(()=>false);
+          if(ok2){SF.subs[rsid].vid=true;await log("GC-SFU: video subscribed from +"+node);}
+          else SF.subs[rsid].vidFailAt=Date.now();
+        }else SF.subs[rsid].vidFailAt=Date.now();
         SF.subs[rsid].vidBusy=false;
       }
     }
   }catch(e){}
   SF.busy=false;
 }
+/* v67: one-at-a-time SDP negotiation lock — the publish PC is shared by audio subs,
+   video subs and the camera toggle; overlapping setRemoteDescription calls threw and
+   killed subscriptions. Every SDP change now runs inside sfuCritical. */
+var SF_LOCK=Promise.resolve();
+function sfuCritical(fn){const p=SF_LOCK.then(fn).catch(function(){});SF_LOCK=p;return p;}
 
 async function sfuLeave(silent){
   try{clearInterval(SF.poll);}catch(e){}
@@ -3392,16 +3433,21 @@ async function gcVideoToggle(){
   catch(e){toast("Camera blocked — cannot turn on video");return;}
   try{
     SF.vtrack=vs.getVideoTracks()[0];
-    SF.pc.addTrack(SF.vtrack,vs);
-    const off=await SF.pc.createOffer();
-    await SF.pc.setLocalDescription(off);
-    await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,1800);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
-    const tr=SF.pc.getTransceivers().filter(t=>t.sender.track===SF.vtrack)[0];
-    const mid=tr&&tr.mid;
-    if(!mid){toast("Could not start camera");return;}
-    const r=await api("sfuvid",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
-    if(!r||!r.ok){toast("Camera failed ("+((r&&r.err)||"?")+")");try{SF.pc.removeTrack(SF.pc.getSenders().find(x=>x.track===SF.vtrack));}catch(e){}try{SF.vtrack.stop();}catch(e){}SF.vtrack=null;return;}
-    await SF.pc.setRemoteDescription({type:"answer",sdp:r.sdp});
+    const r=await sfuCritical(async()=>{ /* v67: never overlap this SDP dance with a member subscription */
+      SF.pc.addTrack(SF.vtrack,vs);
+      const off=await SF.pc.createOffer();
+      await SF.pc.setLocalDescription(off);
+      await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,1800);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
+      const tr=SF.pc.getTransceivers().filter(t=>t.sender.track===SF.vtrack)[0];
+      const mid=tr&&tr.mid;
+      if(!mid)return {err:"no mid"};
+      const rr=await api("sfuvid",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
+      if(!rr||!rr.ok){try{SF.pc.removeTrack(SF.pc.getSenders().find(x=>x.track===SF.vtrack));}catch(e){}try{SF.vtrack.stop();}catch(e){}SF.vtrack=null;return {err:(rr&&rr.err)||"?"};}
+      await SF.pc.setRemoteDescription({type:"answer",sdp:rr.sdp});
+      return {mid};
+    });
+    if(!r||r.err){toast("Camera failed ("+((r&&r.err)||"?")+")");try{SF.vtrack&&SF.vtrack.stop();}catch(x){}SF.vtrack=null;return;}
+    const mid=r.mid;
     SF.vmid=mid;SF.vOn=true;
     await api("sfureg",{from:ME,gid:GC.g,sid:SF.sid,v:1});
     gcVideoLayout();gcUI();
@@ -4348,7 +4394,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=66;
+const AC_V=67;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4371,7 +4417,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=66").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=67").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){

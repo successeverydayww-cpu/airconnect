@@ -99,7 +99,11 @@ button.big.blue{background:#1F2937;color:#fff}
 #fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#00A884;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
 #fab:active{transform:scale(.93)}
 .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
-.rchip{display:inline-flex;align-items:center;gap:3px;background:#E2E8F0;border:1px solid #CBD5E1;border-radius:10px;padding:2px 8px;font-size:12px;margin-top:4px;margin-right:4px}
+.bub{position:relative}
+.rchip{position:absolute;top:-11px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:999px;padding:2px 8px;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.18);z-index:3;white-space:nowrap}
+.rchip.mine{border-color:#00A884}
+.bub.in .rchip{left:-6px}
+.bub.out .rchip{right:-6px}
 .rchip.mine{border-color:#00A884}
 .qbox{border-left:3px solid #00A884;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
 #fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
@@ -1065,7 +1069,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=66');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=67');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1356,7 +1360,8 @@ function fabSend(){const v=$("fabPeer").value.trim();if(!v){toast("Type a number
 let WT_SCOPE="feed",WT_POSTS=[],WT_CHANS=[],WT_CH_PAGE=null,WT_LOADED=false,WT_VID=null,WT_CPID=null,WT_IO=null;
 try{WT_SEEN=JSON.parse(localStorage.getItem("ac_wt_seen"))||{};}catch(e){}var WT_SEEN={};
 var WT_CAT="all";
-const WT_CATS=[["all","All"],["shorts","Shorts"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
+/* v67 skylar directive: Feed = written posts only · Shorts = videos under 5 min · Watch = long videos 5 min+ */
+const WT_CATS=[["shorts","Shorts"],["long","Long · 5 min+"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
 function wtCats(){
   const bar=$("wtcatbar");if(!bar)return;
   bar.innerHTML="";
@@ -1374,7 +1379,10 @@ function wtOpen(sc){
   WT_SCOPE=sc;
   for(const x of["feed","watch"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#00A884":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
   if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";}
-  else{$("wtfeed").className="";$("wtchans").className="hide";$("wtcatbar").className="";WT_CH_PAGE=null;wtCats();wtLoad();}
+  else{$("wtfeed").className="";$("wtchans").className="hide";
+    if(sc==="feed"){$("wtcatbar").className="hide";} /* v67: written-post feed — no video categories */
+    else{$("wtcatbar").className="";if(WT_CAT!=="shorts"&&WT_CAT!=="long"&&WT_SCOPE!=="watch")WT_CAT="shorts";}
+    WT_CH_PAGE=null;wtCats();wtLoad();}
 }
 async function wtLoad(){
   if(!ME)return;
@@ -1382,10 +1390,11 @@ async function wtLoad(){
   try{
     let scope="feed";
     if(WT_CH_PAGE)scope="ch";
-    else if(WT_CAT==="shorts")scope="shorts";
-    else if(WT_CAT!=="all")scope="cat";
-    else scope=WT_SCOPE;
-    const d=await api("posts",{node:ME,scope,ch:WT_CH_PAGE||"",cat:(WT_CAT==="all"||WT_CAT==="shorts")?"":WT_CAT});
+    else if(WT_SCOPE==="feed")scope="feed";           /* written posts only */
+    else if(WT_CAT==="shorts")scope="shorts";          /* videos under 5 min */
+    else if(WT_CAT==="long")scope="watch";             /* long videos 5 min+ */
+    else scope="catv";                                 /* topic cats filter videos */
+    const d=await api("posts",{node:ME,scope,ch:WT_CH_PAGE||"",cat:(WT_CAT==="shorts"||WT_CAT==="long")?"":WT_CAT});
     WT_POSTS=(d&&d.posts)||[];WT_POSTS.forEach(function(p){if(p.ch)WT_SUBCACHE[p.ch]=!!p.mysub;});wtSubSave();
     wtRender();
     /* count my view once per post */
@@ -1398,7 +1407,7 @@ function wtRender(){
     el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#00A884;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
-  const big=(WT_SCOPE==="watch"||WT_CAT==="shorts")&&!WT_CH_PAGE;
+  const big=WT_SCOPE!=="feed"&&!WT_CH_PAGE; /* v67: any video view (shorts + long) = full-screen autoplay */
   for(const p of WT_POSTS)el.appendChild(wtCard(p,big));
   wtObserveVideos();
 }
@@ -3035,7 +3044,13 @@ async function newPC(){
     }
   };
   pc.ontrack=e=>{
-    if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];setVLayout("live");log("receiving video");}
+    if(e.track.kind==="video"){
+      /* v67: stream fallback (unified-plan msid edge case), forced play, unmute recovery — fixes black-screen one-way video */
+      const rv=e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]);
+      const rvel=$("remotev");rvel.srcObject=rv;try{rvel.play().catch(()=>{});}catch(x){}
+      e.track.addEventListener("unmute",()=>{try{rvel.srcObject=rv;rvel.play().catch(()=>{});}catch(x){}});
+      setVLayout("live");log("receiving video");
+    }
     else{
       // Play via a real <audio> element -> routes to loudspeaker on Android/iOS.
       // (Raw AudioContext.destination silently routes to the earpiece on many phones.)
@@ -3080,15 +3095,18 @@ async function newPC(){
   }
   return pc;
 }
-let PENDING_RENEG=false;
+let PENDING_RENEG=false,MAKING_OFFER=false;
 async function renegSend(){
   PENDING_RENEG=false;
   if(!pc||!PEER||state!=="live")return;
+  if(MAKING_OFFER)return; /* v67: never stack two offers — glare protection */
+  MAKING_OFFER=true;
   try{
     const o=await pc.createOffer();await pc.setLocalDescription(o);
     await api("sig",{from:ME,to:PEER,type:"offer",payload:await zipDesc(o)});
     await log("camera renegotiation sent");
   }catch(e){}
+  MAKING_OFFER=false;
 }
 function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
   const w=$("vwrap");
@@ -3348,8 +3366,16 @@ async function gJoin(gid,initiator){
 async function sfuJoin(gid){
   try{
     SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false,vOn:false,vmid:null,vtrack:null,tiles:{},pendVidNode:null};
-    const r=await api("sfusess",{from:ME});
-    if(!r||!r.ok||!r.sid){await log("GC-SFU: no session ("+((r&&r.err)||"?")+")");return;}
+    /* v67: a failed session/publish used to leave a SILENT call — roster showed
+       everyone but no audio ever flowed. Now we retry visibly up to 3 times. */
+    let r=null,att=0;
+    for(att=0;att<3;att++){
+      r=await api("sfusess",{from:ME});
+      if(r&&r.ok&&r.sid)break;
+      await log("GC-SFU: session attempt "+(att+1)+" failed ("+((r&&r.err)||"?")+")");
+      if(att<2){toast("Group call connecting…");await new Promise(z=>setTimeout(z,2500));}
+    }
+    if(!r||!r.ok||!r.sid){toast("Group call audio could not connect — check network and rejoin");await log("GC-SFU: no session after 3 attempts");return;}
     SF.sid=r.sid;
     SF.pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.cloudflare.com:3478","stun:stun.l.google.com:19302"]}]});
     SF.pc.ontrack=async e=>{
@@ -3359,14 +3385,15 @@ async function sfuJoin(gid){
           SF.pendVidNode=null;
           let tile=SF.tiles[node];
           if(!tile){tile=document.createElement("video");tile.autoplay=true;tile.playsInline=true;tile.muted=true;tile.style.cssText="width:110px;height:150px;object-fit:cover;border-radius:10px;background:#000";tile.setAttribute("playsinline","true");SF.tiles[node]=tile;}
-          tile.srcObject=e.streams[0];tile.play().catch(()=>{});
+          tile.srcObject=e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]);tile.play().catch(()=>{});
           gcVideoLayout();
           await log("GC-SFU: video tile for +"+node);
         }else{
           const key=e.streams[0]?e.streams[0].id:("gcs"+Math.random().toString(36).slice(2));
           let a=document.getElementById("sfua-"+key);
           if(!a){a=document.createElement("audio");a.id="sfua-"+key;a.autoplay=true;a.setAttribute("playsinline","true");a.style.display="none";document.body.appendChild(a);}
-          a.srcObject=e.streams[0];a.play().catch(()=>{});
+          const ms=e.streams&&e.streams[0]?e.streams[0]:new MediaStream([e.track]); /* v67: msid fallback — fixes silent audio */
+          a.srcObject=ms;a.play().catch(()=>{});
           await log("GC-SFU: remote audio attached");
         }
       }catch(x){}
@@ -3380,8 +3407,15 @@ async function sfuJoin(gid){
     await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,2500);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
     const mid=(SF.pc.getTransceivers().filter(t=>t.sender.track===track)[0]||{}).mid||"0";
     const pub=await api("sfupub",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
-    if(!pub||!pub.ok){await log("GC-SFU: publish failed ("+((pub&&pub.err)||"?")+")");sfuLeave(true);return;}
-    await SF.pc.setRemoteDescription({type:"answer",sdp:pub.sdp});
+    if(!pub||!pub.ok){
+      await log("GC-SFU: publish failed ("+((pub&&pub.err)||"?")+")");
+      toast("Group call audio connecting… retrying");
+      await new Promise(z=>setTimeout(z,2500));
+      const pub2=await api("sfupub",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
+      if(!pub2||!pub2.ok){await log("GC-SFU: publish retry failed — leaving");toast("Group call audio failed — please rejoin");sfuLeave(true);return;}
+      await SF.pc.setRemoteDescription({type:"answer",sdp:pub2.sdp});
+    } else
+    if(pub&&pub.ok)await SF.pc.setRemoteDescription({type:"answer",sdp:pub.sdp});
     await api("sfureg",{from:ME,gid,sid:SF.sid});
     await log("GC-SFU: joined (sid "+SF.sid.slice(0,8)+"…)");
     SF.poll=setInterval(()=>sfuTick(gid),3000);
@@ -3399,36 +3433,55 @@ async function sfuTick(gid){
     gcUI();gcVideoLayout();
     for(const node of Object.keys(SF.mems)){
       const rsid=SF.mems[node].s;
+      /* v67: retry dead audio subs — a failed renegotiation used to leave a stuck
+         'pending' sub that was NEVER retried, so the whole call went silently mute. */
+      if(SF.subs[rsid]&&SF.subs[rsid].failedAt){
+        if(Date.now()-SF.subs[rsid].failedAt<8000)continue; /* backoff before retry */
+        delete SF.subs[rsid];
+        await log("GC-SFU: retrying audio from +"+node);
+      }
       if(!SF.subs[rsid]){
         SF.subs[rsid]={n:node,pending:true};
         const sub=await api("sfusub",{from:ME,sid:SF.sid,rsid,gid});
         if(!sub||!sub.ok){delete SF.subs[rsid];continue;}
-        await SF.pc.setRemoteDescription({type:"offer",sdp:sub.sdp});
-        const ans=await SF.pc.createAnswer();
-        await SF.pc.setLocalDescription(ans);
-        const ren=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans.sdp});
-        if(!ren||!ren.ok){await log("GC-SFU: reneg failed for +"+node+" ("+((ren&&ren.err)||"?")+")");}
-        else{SF.subs[rsid].pending=false;await log("GC-SFU: subscribed to +"+node);}
+        await sfuCritical(async()=>{
+          await SF.pc.setRemoteDescription({type:"offer",sdp:sub.sdp});
+          const ans=await SF.pc.createAnswer();
+          await SF.pc.setLocalDescription(ans);
+          const ren=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans.sdp});
+          if(!ren||!ren.ok){
+            SF.subs[rsid].failedAt=Date.now();
+            await log("GC-SFU: reneg failed for +"+node+" ("+((ren&&ren.err)||"?")+") — will retry");
+          }else{SF.subs[rsid].pending=false;await log("GC-SFU: subscribed to +"+node);}
+        });
       }
-      /* v34: subscribe their video once they turn the camera on */
-      if(SF.mems[node].v&&!SF.subs[rsid].vid&&!SF.subs[rsid].vidBusy){
+      /* v34: subscribe their video once they turn the camera on (v67: backoff + critical section) */
+      if(SF.mems[node].v&&SF.subs[rsid]&&!SF.subs[rsid].vid&&!SF.subs[rsid].vidBusy&&(Date.now()-(SF.subs[rsid].vidFailAt||0)>8000)){
         SF.subs[rsid].vidBusy=true;
         SF.pendVidNode=node;
         const sub2=await api("sfusub",{from:ME,sid:SF.sid,rsid,gid,track:"video"});
         if(sub2&&sub2.ok){
-          await SF.pc.setRemoteDescription({type:"offer",sdp:sub2.sdp});
-          const ans2=await SF.pc.createAnswer();
-          await SF.pc.setLocalDescription(ans2);
-          await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans2.sdp});
-          SF.subs[rsid].vid=true;
-          await log("GC-SFU: video subscribed from +"+node);
-        }
+          const ok2=await sfuCritical(async()=>{
+            await SF.pc.setRemoteDescription({type:"offer",sdp:sub2.sdp});
+            const ans2=await SF.pc.createAnswer();
+            await SF.pc.setLocalDescription(ans2);
+            const ren2=await api("sfureneg",{from:ME,sid:SF.sid,sdp:ans2.sdp});
+            return ren2&&ren2.ok;
+          }).catch(()=>false);
+          if(ok2){SF.subs[rsid].vid=true;await log("GC-SFU: video subscribed from +"+node);}
+          else SF.subs[rsid].vidFailAt=Date.now();
+        }else SF.subs[rsid].vidFailAt=Date.now();
         SF.subs[rsid].vidBusy=false;
       }
     }
   }catch(e){}
   SF.busy=false;
 }
+/* v67: one-at-a-time SDP negotiation lock — the publish PC is shared by audio subs,
+   video subs and the camera toggle; overlapping setRemoteDescription calls threw and
+   killed subscriptions. Every SDP change now runs inside sfuCritical. */
+var SF_LOCK=Promise.resolve();
+function sfuCritical(fn){const p=SF_LOCK.then(fn).catch(function(){});SF_LOCK=p;return p;}
 async function sfuLeave(silent){
   try{clearInterval(SF.poll);}catch(e){}
   try{
@@ -3460,16 +3513,21 @@ async function gcVideoToggle(){
   catch(e){toast("Camera blocked — cannot turn on video");return;}
   try{
     SF.vtrack=vs.getVideoTracks()[0];
-    SF.pc.addTrack(SF.vtrack,vs);
-    const off=await SF.pc.createOffer();
-    await SF.pc.setLocalDescription(off);
-    await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,1800);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
-    const tr=SF.pc.getTransceivers().filter(t=>t.sender.track===SF.vtrack)[0];
-    const mid=tr&&tr.mid;
-    if(!mid){toast("Could not start camera");return;}
-    const r=await api("sfuvid",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
-    if(!r||!r.ok){toast("Camera failed ("+((r&&r.err)||"?")+")");try{SF.pc.removeTrack(SF.pc.getSenders().find(x=>x.track===SF.vtrack));}catch(e){}try{SF.vtrack.stop();}catch(e){}SF.vtrack=null;return;}
-    await SF.pc.setRemoteDescription({type:"answer",sdp:r.sdp});
+    const r=await sfuCritical(async()=>{ /* v67: never overlap this SDP dance with a member subscription */
+      SF.pc.addTrack(SF.vtrack,vs);
+      const off=await SF.pc.createOffer();
+      await SF.pc.setLocalDescription(off);
+      await new Promise(res=>{if(SF.pc.iceGatheringState==="complete")res();else{const t=setTimeout(res,1800);SF.pc.addEventListener("icegatheringstatechange",()=>{if(SF.pc.iceGatheringState==="complete"){clearTimeout(t);res();}},{once:true});}});
+      const tr=SF.pc.getTransceivers().filter(t=>t.sender.track===SF.vtrack)[0];
+      const mid=tr&&tr.mid;
+      if(!mid)return {err:"no mid"};
+      const rr=await api("sfuvid",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
+      if(!rr||!rr.ok){try{SF.pc.removeTrack(SF.pc.getSenders().find(x=>x.track===SF.vtrack));}catch(e){}try{SF.vtrack.stop();}catch(e){}SF.vtrack=null;return {err:(rr&&rr.err)||"?"};}
+      await SF.pc.setRemoteDescription({type:"answer",sdp:rr.sdp});
+      return {mid};
+    });
+    if(!r||r.err){toast("Camera failed ("+((r&&r.err)||"?")+")");try{SF.vtrack&&SF.vtrack.stop();}catch(x){}SF.vtrack=null;return;}
+    const mid=r.mid;
     SF.vmid=mid;SF.vOn=true;
     await api("sfureg",{from:ME,gid:GC.g,sid:SF.sid,v:1});
     gcVideoLayout();gcUI();
@@ -3687,6 +3745,11 @@ for(const m of msgs){
         await log("busy — 2nd call from +"+m.from+" while LIVE with +"+PEER);
         continue;
       }
+      /* v67 perfect negotiation: if both sides flip camera at once, the polite side rolls back */
+      const collision=MAKING_OFFER||pc.signalingState!=="stable";
+      const polite=String(ME)<String(m.from);
+      if(collision&&!polite){await log("reneg collision — holding our offer");continue;}
+      if(collision){try{await pc.setLocalDescription({type:"rollback"});MAKING_OFFER=false;}catch(e3){}}
       await pc.setRemoteDescription(m.payload);await flushIce();
       const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
       await api("sig",{from:ME,to:m.from,type:"answer",payload:await zipDesc(ans)});
@@ -3707,11 +3770,16 @@ for(const m of msgs){
       await log("incoming call from +"+m.from);
     }
   }
-  else if(m.type==="answer"&&state==="dialing"){
+  else if(m.type==="answer"&&(state==="dialing"||(state==="live"&&pc&&pc.signalingState==="have-local-offer"))){
     m.payload=await unzipDesc(m.payload);await pc.setRemoteDescription(m.payload);await flushIce();
-    state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
-    setStatus("LIVE","live");
-    await log("call answered by +"+PEER+" — LIVE");
+    MAKING_OFFER=false;
+    if(state==="dialing"){
+      state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
+      setStatus("LIVE","live");
+      await log("call answered by +"+PEER+" — LIVE");
+    }else{
+      await log("camera negotiation complete — your video is live");
+    }
   }
   else if(m.type==="ringing"&&state==="dialing"){
     if(!RING_ACKED){RING_ACKED=true;$("callStat").textContent="Ringing…";setStatus("Ringing +"+PEER,"ringing");startRing("dial");await log("ringing ACK from +"+PEER);}
@@ -4153,6 +4221,7 @@ function attachMsgEvents(el,m){
   if(rs&&rs.length){
     const byE={};
     for(const r of rs)byE[r.e]=(byE[r.e]||0)+1;
+    el.style.marginTop="13px"; /* room for the WhatsApp-style chip above the bubble */
     const chip=document.createElement("div");
     chip.innerHTML=Object.keys(byE).map(e=>'<span class="rchip'+(rs.some(r=>r.e===e&&r.by===ME)?' mine':'')+'">'+esc(e)+(byE[e]>1?byE[e]:"")+"</span>").join("");
     el.appendChild(chip);
@@ -4160,7 +4229,22 @@ function attachMsgEvents(el,m){
 }
 function openMs(m,el){
   MS_MSG=m;
-  $("msReacts").innerHTML=["❤️","😂","👍","😮","😢","🙏"].map(e=>'<span style="cursor:pointer" onclick="msReact(\''+e+'\')">'+e+"</span>").join("");
+  /* v67 WhatsApp-style: quick-reaction pill floats right above the pressed message */
+  try{
+    let fb=$("msFloat");
+    if(!fb){fb=document.createElement("div");fb.id="msFloat";fb.style.cssText="position:fixed;z-index:90;display:flex;gap:10px;align-items:center;background:#1F2937;border-radius:24px;padding:8px 14px;font-size:24px;box-shadow:0 6px 18px rgba(0,0,0,.35)";
+      document.body.appendChild(fb);
+      const mo=document.createElement("style");mo.textContent="#msFloat span{cursor:pointer;transition:transform .1s}#msFloat span:active{transform:scale(1.4)}#msFloat .more{font-size:18px;color:#94A3B8;cursor:pointer;padding-left:4px}";
+      document.head.appendChild(mo);
+    }
+    fb.innerHTML=["❤️","😂","👍","😮","😢","🙏"].map(e=>'<span onclick="msReact(\''+e+'\')">'+e+"</span>").join("")+'<span class="more" onclick="closeMsFloat();openMsSheet()">⋮</span>';
+    const r=el.getBoundingClientRect();
+    fb.style.display="flex";
+    const fw=fb.offsetWidth||260,fh=fb.offsetHeight||48;
+    let top=r.top-fh-8;if(top<10)top=Math.min(window.innerHeight-fh-10,r.bottom+8);
+    let left=Math.max(10,Math.min(r.left+r.width/2-fw/2,window.innerWidth-fw-10));
+    fb.style.top=top+"px";fb.style.left=left+"px";
+  }catch(e){}
   const mine=m.who==="me";
   $("msReply").style.display="";
   const fresh=mine&&Date.now()-new Date(m.ts).getTime()<24*3600*1000;
@@ -4168,8 +4252,12 @@ function openMs(m,el){
   $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeMs(){$("msheet").className="ovl hide";}
+function closeMsFloat(){const fb=$("msFloat");if(fb)fb.style.display="none";}
+function openMsSheet(){closeMsFloat();$("msheet").className="ovl";}
+document.addEventListener("click",e=>{const fb=$("msFloat");if(fb&&fb.style.display!=="none"&&!fb.contains(e.target)&&e.target.closest&&e.target.closest(".bub")===null)closeMsFloat();},true);
+document.addEventListener("scroll",()=>closeMsFloat(),true);
 async function msReact(e){
-  closeMs();
+  closeMs();closeMsFloat();
   if(!MS_MSG||!CHAT_OPEN)return;
   const cur=(REACTS[MS_MSG.ts]||[]).find(r=>r.by===ME);
   const r=await api("react",{by:ME,id:MS_MSG.ts,e:cur&&cur.e===e?"":e});
@@ -4402,7 +4490,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=66;
+const AC_V=67;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4425,7 +4513,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=66").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=67").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
