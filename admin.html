@@ -95,13 +95,19 @@ async function waLoad(){
 async function waRcp(img){
   try{
     const fid=img.getAttribute("data-fid");
-    const m=await waApi({act:"fget",from:"234100000001",fid,ci:-1});
-    if(!m||!m.ok||!m.n){return;}
     let b64="";
-    for(let i=0;i<m.n;i++){
-      const c=await waApi({act:"fget",from:"234100000001",fid,ci:i});
-      if(!c||!c.ok){return;}
-      b64+=c.v;
+    try{ /* v65: one-request bulk fetch */
+      const r=await waApi({act:"fgetall",from:"234100000001",fid});
+      if(r&&r.ok&&r.v)b64=r.v;
+    }catch(e){}
+    if(!b64){ /* fallback: legacy per-chunk */
+      const m=await waApi({act:"fget",from:"234100000001",fid,ci:-1});
+      if(!m||!m.ok||!m.n){return;}
+      for(let i=0;i<m.n;i++){
+        const c=await waApi({act:"fget",from:"234100000001",fid,ci:i});
+        if(!c||!c.ok){return;}
+        b64+=c.v;
+      }
     }
     img.src="data:image/jpeg;base64,"+b64;
     img.style.display="block";
