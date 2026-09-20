@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AirConnect Redesign — Proposal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:#111827;color:#111827;padding:16px 10px 60px}
+h1{color:#fff;font-size:18px;text-align:center;margin-bottom:4px}
+p.sub{color:#94A3B8;font-size:12px;text-align:center;margin-bottom:18px}
+.phone{max-width:360px;margin:0 auto 26px;border-radius:34px;border:10px solid #1F2937;background:#fff;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.bar{background:#00A884;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+.bar .ttl{flex:1;font-weight:600;font-size:16px}
+.icon{opacity:.9;font-size:18px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #F1F5F9}
+.row:active{background:#F5F3F0}
+.av{width:46px;height:46px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:17px;flex:0 0 46px}
+.nm{font-weight:600;font-size:14.5px;color:#111827}
+.pv{font-size:12.5px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+.rt{margin-left:auto;text-align:right;font-size:10.5px;color:#94A3B8}
+.badge{background:#00A884;color:#fff;border-radius:10px;font-size:10.5px;padding:1px 6px;display:inline-block;margin-top:3px}
+.tabs{display:flex;border-top:1px solid #E2E8F0;background:#fff}
+.tabs div{flex:1;text-align:center;padding:9px 0;font-size:10px;color:#64748B}
+.tabs div b{display:block;font-size:17px;margin-bottom:2px}
+.tabs .on{color:#00A884;font-weight:600}
+.chatbody{background:#ECE5DD;padding:14px 12px;min-height:330px;display:flex;flex-direction:column;gap:8px}
+.bub{max-width:78%;border-radius:10px;padding:8px 11px;font-size:13.5px;line-height:1.45;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.12)}
+.in{background:#fff;align-self:flex-start}
+.out{background:#D6F5C9;align-self:flex-end}
+.bub .tm{display:block;text-align:right;font-size:10px;color:#64748B;margin-top:3px}
+.ctr{text-align:center;font-size:10.5px;color:#78909C}
+.composer{display:flex;gap:8px;padding:8px 10px;background:#F0F2F5;align-items:center}
+.pill{flex:1;background:#fff;border-radius:20px;padding:10px 14px;font-size:13px;color:#94A3B8}
+.send{width:42px;height:42px;border-radius:50%;background:#00A884;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px}
+h2{color:#fff;font-size:14px;margin:26px 0 8px;max-width:360px;margin-left:auto;margin-right:auto}
+.note{color:#CBD5E1;font-size:12px;line-height:1.6;max-width:360px;margin:0 auto}
+</style></head><body>
+<h1>AirConnect — Redesign Proposal (v53 direction)</h1>
+<p class="sub">WhatsApp-class layout · one green · clean neutrals · your OS pinned on top</p>
+
+<div class="phone">
+<div class="bar"><span class="icon">⌂</span><span class="ttl">AirConnect</span><span class="icon">📷</span><span class="icon">⋮</span></div>
+<div class="row"><div class="av" style="background:linear-gradient(135deg,#00A884,#005C4B)">🤖</div><div><div class="nm">Premium User · OS</div><div class="pv">Morning, Samuel — the nightly run settled 30/36…</div></div><div class="rt">now<br><span class="badge">2</span></div></div>
+<div class="row"><div class="av" style="background:#0C4A6E">D</div><div><div class="nm">Daisy 📌</div><div class="pv">You: I'll send the file tonight ✓✓</div></div><div class="rt">09:12</div></div>
+<div class="row"><div class="av" style="background:#7C3AED">J</div><div><div class="nm">Citizen One</div><div class="pv">The bridge accepted your request. Welcome!</div></div><div class="rt">08:55</div></div>
+<div class="row"><div class="av" style="background:#EA580C">T</div><div><div class="nm">Test Node 26</div><div class="pv">Audio call · 2m 14s</div></div><div class="rt">Yest.</div></div>
+<div class="tabs"><div class="on"><b>💬</b>Chats</div><div><b>▶️</b>Watch</div><div><b>📞</b>Calls</div><div><b>☰</b>Menu</div></div>
+</div>
+
+<h2>Conversation — same green, calm beige canvas, read receipts</h2>
+<div class="phone">
+<div class="bar"><span class="icon">‹</span><div class="av" style="width:34px;height:34px;font-size:14px;flex:0 0 34px;background:#7C3AED">C</div><div style="flex:1"><div style="font-weight:600;font-size:15px">Citizen One</div><div style="font-size:11px;opacity:.85">online</div></div><span class="icon">📞</span><span class="icon">⋮</span></div>
+<div class="chatbody">
+<div class="ctr">Today</div>
+<div class="bub in">Good morning Samuel 🌅 anything for the house today?<span class="tm">08:55</span></div>
+<div class="bub out">Yes — pull the nightly results and settle my slip.<span class="tm">08:57 ✓✓</span></div>
+<div class="bub in">Done — 30 of 36 verified. Two legs landing exactly on the line survived again.<span class="tm">09:02</span></div>
+<div class="ctr">Citizen One is typing…</div>
+</div>
+<div class="composer"><div class="pill">Message</div><div class="send">➤</div></div>
+</div>
+
+<p class="note">What changes from today's app: single brand green (no navy+teal mix), chat list rows lighter and tighter, OS pinned with its own badge, one header style everywhere, beige chat canvas like WhatsApp (wallpaper-able), sent/delivered/read ticks, typing line inside the thread, bottom tabs consistent. Dark mode later via a single CSS variable set.</p>
+</body></html>
