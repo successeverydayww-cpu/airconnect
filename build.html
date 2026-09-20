@@ -367,6 +367,7 @@ async function send(){
   t.remove();
   if(r.err){toast(r.err,1);return;}
   addBubble("a",r.reply||"(no reply)",r.executed||[]);
+  if(r.executed&&r.executed.length)api({act:"cont.push",key:KEY}).then(()=>{}).catch(()=>{});
   if(r.credits){document.getElementById("credt").textContent=r.credits.used+" / "+r.credits.limit;document.getElementById("credbar").style.width=Math.min(100,(r.credits.used/r.credits.limit)*100)+"%";}
   refreshPreview();
 }
@@ -516,7 +517,7 @@ async function renderSettings(){
   el.innerHTML=`
     <div class="pgtitle">Settings</div>
     <div class="pgsub">Customize your app's experience, authentication and visibility.</div>
-    <div class="tabsbar"><span class="tb on" id="st-app" onclick="settingsTab('app')">App settings</span><span class="tb" id="st-auth" onclick="settingsTab('auth')">Authentication</span></div>
+    <div class="tabsbar"><span class="tb on" id="st-app" onclick="settingsTab('app')">App settings</span><span class="tb" id="st-auth" onclick="settingsTab('auth')">Authentication</span><span class="tb" id="st-conn" onclick="settingsTab('conn')">Connections</span></div>
     <div id="setbody"><div class="skel"></div></div>`;
   const m=await api({act:"app.meta.get",key:KEY});
   META=(m.meta||{});RLS=m.rls||0;
@@ -526,6 +527,8 @@ async function settingsTab(t){
   curSettingsTab=t;
   document.getElementById("st-app").classList.toggle("on",t==="app");
   document.getElementById("st-auth").classList.toggle("on",t==="auth");
+  document.getElementById("st-conn").classList.toggle("on",t==="conn");
+  if(t==="conn")return renderConn(b);
   const b=document.getElementById("setbody");
   if(t==="app"){
     b.innerHTML=`
@@ -555,6 +558,69 @@ async function settingsTab(t){
       ${(users.users||[]).length?'<table class="data"><tr><th>Email</th><th>Role</th><th>Joined</th></tr>'+users.users.map(u=>`<tr><td>${esc(u.email)}</td><td>${fmtCell(u.role)}</td><td class="idcell">${esc(String(u.created_at||"").slice(0,10))}</td></tr>`).join("")+'</table>':'<div class="dash"><div class="t">No app users yet</div>People appear here when they sign up in your published app.</div>'}
     </div>`;
   }
+}
+async function renderConn(b){
+  const st=await api({act:"bridge.status",key:KEY});
+  const br=st.bridge, ct=st.cont;
+  let airCard, contCard;
+  if(br&&br.agent_num){
+    airCard=`<div class="card"><h3>🛰 AirConnect agent — linked</h3><div class="csub">Your workspace builder is live on AirConnect as a chat contact.</div>
+      <div class="fieldrow"><label>Agent number</label><input readonly value="${esc(br.agent_num)}" style="font-family:monospace"></div>
+      <div class="fieldrow"><label>Agent recovery phrase (keep this safe)</label><input readonly value="${esc(br.agent_phrase||"")}" style="font-family:monospace"></div>
+      <div class="formnote">1. Open AirConnect and accept the friend request from your agent.<br>2. Chat with it like any contact — your messages build this app directly.<br>3. Agent replies use your workspace builder credits.</div>
+      <button class="btn ghost sm" onclick="unlinkBridge()">Unlink agent</button></div>`;
+  } else {
+    airCard=`<div class="card"><h3>🛰 AirConnect agent</h3><div class="csub">Give your workspace its own agent on AirConnect. Register on AirConnect first, then link it here — you'll chat with your builder like a contact.</div>
+      <div class="fieldrow"><label>Your AirConnect number</label><input id="ac-num" placeholder="e.g. 2341000000123"></div>
+      <div class="fieldrow"><label>Your AIR ID</label><input id="ac-aid" placeholder="From your AirConnect profile"></div>
+      <button class="btn sm" onclick="linkBridge()">Create my AirConnect agent</button>
+      <div class="formnote">New here? Register free at ${esc("https://successeverydayww-cpu.github.io/airconnect")}</div></div>`;
+  }
+  if(ct&&ct.email){
+    contCard=`<div class="card"><h3>🔄 Continuity Layer — synced</h3><div class="csub">Your relationship with this agent is backed up to your Continuity account after every change. Your beacon stays portable — take it out anytime.</div>
+      <div class="fieldrow"><label>Continuity account</label><input readonly value="${esc(ct.email)}"></div>
+      <div class="fieldrow"><label>Last sync</label><input readonly value="${esc(ct.last?new Date(ct.last).toLocaleString():"syncing…")}"></div>
+      <button class="btn sm" onclick="contSyncNow()">Sync now</button>
+      <div class="formnote">Restore anywhere: Backup & Restore → Export beacon, or use your Continuity app key on a new workspace.</div></div>`;
+  } else {
+    contCard=`<div class="card"><h3>🔄 Continuity Layer</h3><div class="csub">Sync everything — memory, chats, data, the whole relationship — to your Continuity Layer account. Never lose your agent.</div>
+      <div class="fieldrow"><label>Continuity email</label><input id="ct-email" placeholder="you@example.com"></div>
+      <div class="fieldrow"><label>App sync key</label><input id="ct-key" placeholder="ck-…" style="font-family:monospace"></div>
+      <button class="btn sm" onclick="linkCont()">Link & sync</button>
+      <div class="formnote">Get your key: open ${esc("https://successeverydayww-cpu.github.io/continuity-layer/app.html")} → Sync tab → Generate app sync key.</div></div>`;
+  }
+  b.innerHTML=airCard+contCard;
+}
+async function linkBridge(){
+  const num=document.getElementById("ac-num").value.trim(), aid=document.getElementById("ac-aid").value.trim();
+  if(!num||!aid)return toast("Enter your AirConnect number and AIR ID",1);
+  toast("Creating your agent on AirConnect…");
+  const r=await api({act:"bridge.claim",key:KEY,num,aid});
+  if(r.err)return toast(r.err,1);
+  toast("Agent created — accept its friend request in AirConnect");
+  settingsTab("conn");
+}
+async function unlinkBridge(){
+  const r=await api({act:"bridge.unlink",key:KEY});
+  if(r.err)return toast(r.err,1);
+  toast("Agent unlinked");
+  settingsTab("conn");
+}
+async function linkCont(){
+  const email=document.getElementById("ct-email").value.trim(), skey=document.getElementById("ct-key").value.trim();
+  if(!email||!skey)return toast("Enter your Continuity email and app sync key",1);
+  toast("Linking to Continuity…");
+  const r=await api({act:"cont.link",key:KEY,email,skey});
+  if(r.err)return toast(r.err,1);
+  toast("Linked — first sync done");
+  settingsTab("conn");
+}
+async function contSyncNow(){
+  toast("Syncing your relationship…");
+  const r=await api({act:"cont.push",key:KEY});
+  if(r.err)return toast(r.err,1);
+  toast("Synced to Continuity");
+  settingsTab("conn");
 }
 async function saveMeta(){
   const r=await api({act:"app.meta.set",key:KEY,data:{title:document.getElementById("m-title").value.trim(),description:document.getElementById("m-desc").value.trim()}});
@@ -614,7 +680,7 @@ function plansModal(){
   <button class="btn ghost" onclick="closeModal()">Close</button>`);
 }
 function paywall(t,d){plansModal();}
-/* ================= LIVE FEATURES v0.7 ================= */
+/* ================= LIVE FEATURES v0.8 ================= */
 function filterRail(q){
   q=(q||"").toLowerCase();
   document.querySelectorAll(".ritem").forEach(x=>{const t=x.textContent.toLowerCase();x.style.display=!q||t.includes(q)?"flex":"none";});
@@ -649,9 +715,9 @@ function renderBackup(){
   document.getElementById("tables-tools").style.display="none";
   const el=document.querySelector("#page .grid2, #page .dash");
   const host=document.getElementById("page");
-  const html=`<div class="card"><h3>Backup</h3><div class="csub">Download all your tables and records as one JSON file.</div>
+  const html=`<div class="card"><h3>Relationship beacon</h3><div class="csub">Download everything — tables, records, chat memory and connections — as one portable file. Restore it anywhere to continue with your agent, nothing missed.</div>
     <button class="btn sm" onclick="exportBackup()">⬇ Export backup</button></div>
-    <div class="card"><h3>Restore</h3><div class="csub">Import a backup file. Tables that don't exist yet are created; all records are added.</div>
+    <div class="card"><h3>Restore</h3><div class="csub">Import a beacon or backup file. Tables that don't exist yet are created; records, memories and connections are added.</div>
     <input type="file" id="bkp-file" accept="application/json" style="display:none" onchange="importBackup(this)">
     <button class="btn sm" onclick="document.getElementById('bkp-file').click()">⬆ Import backup</button>
     <div class="formnote">Import adds records — it never deletes your current data.</div></div>`;
@@ -659,7 +725,18 @@ function renderBackup(){
   else{host.insertAdjacentHTML("beforeend",html);}
 }
 async function exportBackup(){
-  toast("Preparing backup…");
+  toast("Preparing your relationship beacon…");
+  const bc=await api({act:"beacon.get",key:KEY});
+  if(bc.err)return toast(bc.err,1);
+  bc.owner=EMAIL;
+  const blob=new Blob([JSON.stringify(bc,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="forge-beacon-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+  toast("Beacon downloaded — take your whole relationship with you");
+}
+async function exportBackupOld(){
   const out={app:EMAIL,exported_at:new Date().toISOString(),schemas:SCHEMAS,records:{}};
   for(const sc of SCHEMAS){
     const r=await api({act:"rec.list",key:KEY,entity:sc.entity,limit:500});
@@ -676,6 +753,15 @@ async function importBackup(inp){
   const f=inp.files[0];if(!f)return;
   try{
     const data=JSON.parse(await f.text());
+    if(data.kind==="skylar-forge-beacon"){
+      toast("Restoring relationship beacon…");
+      const r=await api({act:"beacon.restore",key:KEY,beacon:data});
+      if(r.err)return toast(r.err,1);
+      await refreshPreview();
+      toast("Relationship restored — "+r.restored.length+" items, "+r.chats+" memories");
+      settingsTab("conn");
+      return;
+    }
     let added=0,tables=0;
     for(const sc of (data.schemas||[])){
       if(!SCHEMAS.find(x=>x.entity===sc.entity)){await api({act:"schema.create",key:KEY,entity:sc.entity,fields:sc.fields||{}});tables++;}
