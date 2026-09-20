@@ -51,7 +51,7 @@ button.big.blue{background:#1F2937;color:#fff}
 .ohdr .st{font-size:12px;color:rgba(255,255,255,.75)}
 .bubbles{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:6px}
 .bub{max-width:80%;padding:8px 11px;border-radius:10px;font-size:14.5px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
-.bub.out{align-self:flex-end;background:#D6F5C9;color:#111827;border-top-right-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.bub.out{align-self:flex-end;background:#E0F2FE;color:#111827;border-top-right-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
 .bub.in{align-self:flex-start;background:#FFFFFF;border:1px solid #E9E9E7;border-top-left-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
 .bub.sys{align-self:center;background:#E7F4EF;color:#0B6B57;font-size:12.5px}
 .cinput{display:flex;gap:8px;padding:8px 10px;background:#F0F2F5;border-top:0;flex-shrink:0}
@@ -126,6 +126,13 @@ footer a{color:#64748B}
 #menuView{position:fixed;top:0;right:0;bottom:0;width:min(92%,400px);background:#F8FAFC;z-index:71;transform:translateX(105%);transition:transform .2s;overflow-y:auto;border-left:1px solid #E2E8F0;box-shadow:-6px 0 24px rgba(2,6,23,.18)}
 #menuView.on{transform:translateX(0)}
 </style>
+<style>
+#vtTrim input[type=range]{-webkit-appearance:none;appearance:none;height:26px;background:transparent;pointer-events:none;position:absolute;left:0;right:0;top:0;width:100%;margin:0}
+#vtTrim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#00A884;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);margin-top:1px;cursor:pointer}
+#vtTrim input[type=range]::-moz-range-thumb{pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#00A884;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer}
+#vtTrim input[type=range]::-moz-range-track{background:transparent}
+#vtTrim input[type=range]::-webkit-slider-runnable-track{background:transparent}
+</style>
 
 <script src="qrcode.min.js"></script>
 <script src="jsQR.min.js"></script>
@@ -186,17 +193,21 @@ footer a{color:#64748B}
     <input type="file" id="stCamIn" class="hide" accept="image/*" capture="environment" onchange="stPhotoChosen(this)">
     <input type="file" id="stPhotoIn" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
     <input type="file" id="stVidIn" class="hide" accept="video/*" onchange="stVideoChosen(this)">
-    <div id="stTrim" class="ovl hide" style="z-index:60" onclick="if(event.target===this)stTrimCancel()">
+    <div id="vtTrim" class="ovl hide" style="z-index:60" onclick="if(event.target===this)vtCancel()">
       <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:14px;border-top:1px solid #CBD5E1">
-        <div style="font-weight:600;margin-bottom:8px">✂ Choose the 60 seconds to post</div>
-        <video id="stTrimVid" playsinline controls style="width:100%;max-height:38vh;background:#000;border-radius:8px"></video>
-        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;font-size:13px">
-          <span id="stTrimStart" style="min-width:92px;color:#2563EB">0:00 → 1:00</span>
-          <input type="range" id="stTrimSl" min="0" max="30" value="0" oninput="stTrimLabel()" style="flex:1">
+        <div style="font-weight:600;margin-bottom:8px" id="vtTitle">✂ Trim your video</div>
+        <video id="vtVid" playsinline muted style="width:100%;max-height:36vh;background:#000;border-radius:8px"></video>
+        <div style="font-size:11.5px;color:#64748B;margin-top:6px;text-align:center" id="vtHint">Drag either handle — the video previews where you land</div>
+        <div style="position:relative;height:26px;margin-top:10px">
+          <div style="position:absolute;left:0;right:0;top:11px;height:5px;background:#CBD5E1;border-radius:4px"></div>
+          <div id="vtBar" style="position:absolute;top:11px;height:5px;background:#00A884;border-radius:4px"></div>
+          <input type="range" id="vtS" min="0" max="1000" value="0" oninput="vtDrag('s')">
+          <input type="range" id="vtE" min="0" max="1000" value="1000" oninput="vtDrag('e')">
         </div>
+        <div style="text-align:center;font-size:13.5px;color:#0F172A;font-weight:700;margin-top:2px" id="vtLabel">0:00 → 0:00</div>
         <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="big" style="flex:1;background:#CBD5E1" onclick="stTrimCancel()">Cancel</button>
-          <button class="big blue" style="flex:1" onclick="stTrimPost()">✂ Post these 60s</button>
+          <button class="big" style="flex:1;background:#CBD5E1" onclick="vtCancel()">Cancel</button>
+          <button class="big blue" style="flex:1" id="vtConfirmBtn" onclick="vtConfirm()">✔ Use this clip</button>
         </div>
       </div>
     </div>
@@ -247,6 +258,23 @@ footer a{color:#64748B}
       <button class="big" style="width:100%;padding:8px;margin-top:6px;border-radius:12px;background:#E2E8F0;color:#334155;font-size:12px" onclick="wtChSendCode()">Resend code</button>
     </div>
     <button class="big" style="width:100%;padding:8px;margin-top:10px;border-radius:12px;background:#E2E8F0;color:#334155" onclick="$('wtChSheet').className='ovl hide'">Cancel</button>
+  </div>
+</div>
+<div id="admView" class="ovl hide" style="z-index:65;background:#F8FAFC" onclick="if(event.target===this)admClose()">
+  <div class="card" style="position:absolute;top:0;left:0;right:0;bottom:0;margin:0;border-radius:0;overflow-y:auto;max-width:600px;margin:0 auto">
+    <div style="position:sticky;top:0;background:#00A884;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
+      <button onclick="admClose()" style="background:none;border:0;color:#fff;font-size:20px;padding:0 4px">‹</button>
+      <div style="font-weight:700;font-size:16px;flex:1">🛡️ Admin — Payments</div>
+      <button onclick="admLoad()" style="background:none;border:0;color:#fff;font-size:18px">↻</button>
+    </div>
+    <div style="padding:14px 16px">
+      <div style="font-weight:700;font-size:13.5px;color:#92400E;margin-bottom:8px">⏳ Pending — needs your activation</div>
+      <div id="admPending" style="margin-bottom:20px"><div style="color:#94A3B8;font-size:13px">Loading…</div></div>
+      <div style="font-weight:700;font-size:13.5px;color:#0F172A;margin-bottom:8px">✅ Activated</div>
+      <div id="admActivated" style="margin-bottom:20px"></div>
+      <div style="font-weight:700;font-size:13.5px;color:#94A3B8;margin-bottom:8px">❌ Rejected</div>
+      <div id="admRejected" style="margin-bottom:20px"></div>
+    </div>
   </div>
 </div>
 <div id="wtComposer" class="ovl hide" style="z-index:60" onclick="if(event.target===this)wtComposeClose()">
@@ -999,7 +1027,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=55');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=56');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1357,7 +1385,14 @@ async function wtPlay(pid,fid,n){
     const mime=bin.slice(5,bin.indexOf(";"))||"video/mp4";
     const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
     const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
-    box.innerHTML='<video controls autoplay playsinline style="width:100%;max-height:420px;background:#000" src="'+url+'"></video>';
+    const p=WT_POSTS.find(x=>x.id===pid);
+    const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
+    box.innerHTML='<video id="wtv-'+pid+'" controls autoplay playsinline style="width:100%;max-height:420px;background:#000" src="'+url+'"></video>';
+    if(te>ts){
+      const vv=document.getElementById("wtv-"+pid);
+      vv.addEventListener("loadedmetadata",function(){try{vv.currentTime=ts;}catch(e){}});
+      vv.addEventListener("timeupdate",function(){if(vv.currentTime>=te){vv.pause();vv.currentTime=ts;}});
+    }
   }catch(e){box.innerHTML='<div style="color:#f15c6d;text-align:center;padding:14px;font-size:13px">Could not load video.</div>';}
 }
 async function wtReact(pid,r){
@@ -1408,14 +1443,26 @@ function wtVidChosen(){
   const fi=$("wtVidIn");const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
   if(f.size>100*1024*1024){toast("Please keep videos under 100MB");return;}
-  WT_VID=f;WT_VIDDUR=0;
-  $("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB)";
+  WT_VIDPICK=f;WT_TS=0;WT_TE=0;
   try{
     const u=URL.createObjectURL(f);const v=document.createElement("video");v.preload="metadata";v.src=u;
-    v.onloadedmetadata=()=>{if(v.duration&&isFinite(v.duration)){WT_VIDDUR=Math.round(v.duration);$("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB · "+WT_VIDDUR+"s"+(WT_VIDDUR<=60?" · short":"")+")";}URL.revokeObjectURL(u);};
-  }catch(e){}
+    v.onloadedmetadata=()=>{
+      const d=(v.duration&&isFinite(v.duration))?v.duration:0;
+      URL.revokeObjectURL(u);
+      if(!d){toast("Could not read that video — try another file");return;}
+      /* v56: same WhatsApp-style trim sheet as status — pick the window before posting.
+         Watch keeps full quality (no re-encode); the chosen window is stored and the
+         player jumps straight to it, so trimming here never risks the upload. */
+      vtOpen({src:URL.createObjectURL(f),dur:d,maxWin:0,mode:"watch",title:"✂ Trim your post (optional)"});
+    };
+  }catch(e){toast("Could not read that video");}
 }
-var WT_PCAT="general",WT_VIDDUR=0;
+function wtVidTrimmed(s,e){
+  const f=WT_VIDPICK;if(!f)return;
+  WT_VID=f;WT_TS=Math.round(s);WT_TE=Math.round(e);WT_VIDDUR=Math.round(e-s);
+  $("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB · "+vtFmt(s)+" → "+vtFmt(e)+")";
+}
+var WT_PCAT="general",WT_VIDDUR=0,WT_VIDPICK=null,WT_TS=0,WT_TE=0;
 async function wtPost(){
   const text=$("wtText").value.trim();
   if(!text&&!WT_VID){toast("Write something or add a video");return;}
@@ -1437,9 +1484,9 @@ async function wtPost(){
         $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
       }
     }
-    const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR});
+    const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR,ts:WT_TS,te:WT_TE});
     if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
-    WT_VID=null;$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
+    WT_VID=null;WT_VIDPICK=null;WT_TS=0;WT_TE=0;$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
     toast("Posted to your channel ✓");
     WT_SEEN[r.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}
     wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();
@@ -1937,16 +1984,6 @@ async function stVideoChosen(fi){
   const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
   if(!window.MediaRecorder){toast("Video status needs Chrome — try the 🖼️ photo option");return;}
-  /* v34 fast path: small clips post AS-IS — original picture + original sound, zero re-encode */
-  try{
-    if(f.size<=880000&&/^video\/(mp4|webm|ogg|quicktime)$/.test(f.type||"")){
-      toast("Posting video status…");
-      const du=await readDataUrl(f);
-      const r0=await api("story",{node:ME,pic:du});
-      if(r0&&r0.ok){toast("Video status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();return;}
-      toast((r0&&r0.err)||"Could not post — trying compress path…");
-    }
-  }catch(e){}
   toast("Reading video…");
   try{
     const dataUrl=await readDataUrl(f);
@@ -1955,40 +1992,103 @@ async function stVideoChosen(fi){
     await new Promise(function(res,rej){pv.onloadedmetadata=res;pv.onerror=rej;});
     const dur=pv.duration||0;
     if(!dur||!isFinite(dur)||dur<1){toast("Could not read that video — try another file");return;}
-    if(dur<=61){await stVideoPost(dataUrl,0,dur);return;}
-    STV_DATA=dataUrl;STV_DUR=dur;
-    $("stTrim").className="ovl";
-    const tpv=$("stTrimVid");tpv.src=dataUrl;
-    const sl=$("stTrimSl");sl.min="0";sl.max=String(Math.floor(dur-60));sl.value="0";
-    stTrimLabel();
-    toast("Longer than 60s — slide to choose which 60 seconds");
+    /* v56: ALWAYS show the trim/scrub sheet (WhatsApp-style) so the user can
+       crop before posting, even for short clips — not just when over 60s. */
+    vtOpen({src:dataUrl,dur:dur,maxWin:60,mode:"status",rawFile:f,title:"✂ Trim your status (max 60s)"});
   }catch(e){toast("Could not process that video — try a different file");}
 }
-function stTrimLabel(){
-  const s=Number($("stTrimSl").value)||0;
-  $("stTrimStart").textContent=fmtT(s)+" → "+fmtT(s+60);
+/* ================= v56: shared WhatsApp-style dual-handle trim sheet ================= */
+var VT={dur:0,maxWin:0,mode:"",rawFile:null,onDone:null,drag:false};
+function vtFmt(s){s=Math.max(0,s||0);return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");}
+function vtOpen(o){
+  VT.dur=o.dur||0;VT.maxWin=o.maxWin||0;VT.mode=o.mode||"";VT.rawFile=o.rawFile||null;VT.onDone=o.onDone||null;
+  const v=$("vtVid");v.src=o.src;v.currentTime=0;
+  $("vtTitle").textContent=o.title||"✂ Trim your video";
+  const RES=1000;
+  const sEl=$("vtS"),eEl=$("vtE");
+  sEl.min="0";sEl.max=String(RES);sEl.value="0";
+  eEl.min="0";eEl.max=String(RES);
+  const initWin=VT.maxWin&&VT.maxWin<VT.dur?VT.maxWin:VT.dur;
+  eEl.value=String(Math.round((initWin/Math.max(VT.dur,0.001))*RES));
+  $("vtHint").textContent=VT.maxWin&&VT.dur>VT.maxWin?("Window is capped at "+VT.maxWin+"s — drag to pick which part"):"Drag either handle to trim — full clip is selected by default";
+  vtRefreshBar();
+  $("vtTrim").className="ovl";
+  try{history.pushState({ac:1},"");}catch(e){}
 }
-function stTrimCancel(){try{$("stTrimVid").pause();$("stTrimVid").removeAttribute("src");$("stTrimVid").load();}catch(e){}$("stTrim").className="ovl hide";}
-function stTrimPost(){
-  const start=Number($("stTrimSl").value)||0;
-  stTrimCancel();
-  stVideoPost(STV_DATA,start,60);
+function vtVals(){
+  const RES=1000;
+  let s=Number($("vtS").value)/RES*VT.dur;
+  let e=Number($("vtE").value)/RES*VT.dur;
+  if(e<s+1)e=Math.min(VT.dur,s+1);
+  if(VT.maxWin&&(e-s)>VT.maxWin){
+    /* keep whichever edge the user is actively dragging fixed, pull the other one in */
+    if(VT._active==="s")e=Math.min(VT.dur,s+VT.maxWin);
+    else s=Math.max(0,e-VT.maxWin);
+  }
+  return {s:s,e:e};
 }
-async function stVideoPost(dataUrl,start,dur){
-  toast("Processing "+Math.round(Math.min(dur,60))+"s video…");
+function vtRefreshBar(){
+  const {s,e}=vtVals();
+  const pS=VT.dur?(s/VT.dur*100):0, pE=VT.dur?(e/VT.dur*100):100;
+  $("vtBar").style.left=pS+"%";$("vtBar").style.width=Math.max(0,pE-pS)+"%";
+  $("vtLabel").textContent=vtFmt(s)+" → "+vtFmt(e)+"  ("+vtFmt(e-s)+")";
+}
+function vtDrag(which){
+  VT._active=which;
+  const {s,e}=vtVals();
+  const RES=1000;
+  /* write back clamped values so the maxWin cap is visually enforced */
+  $("vtS").value=String(Math.round(s/Math.max(VT.dur,0.001)*RES));
+  $("vtE").value=String(Math.round(e/Math.max(VT.dur,0.001)*RES));
+  vtRefreshBar();
+  try{$("vtVid").pause();$("vtVid").currentTime=which==="s"?s:e;}catch(ex){}
+}
+function vtCancel(){try{$("vtVid").pause();$("vtVid").removeAttribute("src");$("vtVid").load();}catch(e){}$("vtTrim").className="ovl hide";}
+function vtConfirm(){
+  const {s,e}=vtVals();
+  const mode=VT.mode,rawFile=VT.rawFile;
+  vtCancel();
+  if(mode==="status")stVideoPost(rawFile,s,e-s);
+  else if(mode==="watch")wtVidTrimmed(s,e);
+}
+async function stVideoPost(f,start,dur){
+  dur=Math.min(dur,60);
+  toast("Processing "+Math.round(dur)+"s video…");
+  let wakeLock=null;
+  try{if(navigator.wakeLock)wakeLock=await navigator.wakeLock.request("screen");}catch(e){}
+  try{
+    /* v34 fast path kept: whole clip selected + already tiny -> post as-is, zero re-encode */
+    if(start<0.3&&f&&f.size&&f.size<=880000&&/^video\/(mp4|webm|ogg|quicktime)$/.test(f.type||"")){
+      const wholeDurCheck=await new Promise(function(res){const t=document.createElement("video");t.muted=true;t.src=URL.createObjectURL(f);t.onloadedmetadata=function(){const d=t.duration||0;URL.revokeObjectURL(t.src);res(d);};t.onerror=function(){res(0);};});
+      if(wholeDurCheck&&dur>=wholeDurCheck-0.6){
+        const du=await readDataUrl(f);
+        const r0=await api("story",{node:ME,pic:du});
+        if(r0&&r0.ok){toast("Video status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();if(wakeLock)wakeLock.release().catch(()=>{});return;}
+      }
+    }
+  }catch(e){}
+  const dataUrl=await readDataUrl(f);
   const v2=document.createElement("video");
-  v2.playsInline=true;v2.src=dataUrl;
-  await new Promise(function(res,rej){v2.oncanplay=res;v2.onerror=rej;});
-  try{v2.currentTime=start||0;await new Promise(function(res){v2.onseeked=res;setTimeout(res,2000);});}catch(e){}
+  v2.playsInline=true;v2.muted=false;v2.src=dataUrl;
+  /* v56 fix: the record video MUST be attached to the DOM (hidden) — several
+     mobile browsers freeze frame decode / captureStream on detached elements,
+     which is why posted clips were showing a single stale frame ("1 second,
+     wrong starting point") instead of the real content. */
+  v2.style.cssText="position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none";
+  document.body.appendChild(v2);
+  await new Promise(function(res,rej){v2.oncanplay=res;v2.onerror=rej;setTimeout(res,4000);});
+  try{v2.currentTime=start||0;await new Promise(function(res){v2.onseeked=res;setTimeout(res,1500);});}catch(e){}
   let attempt=0,b64="";
-  const cfgs=[{w:384,br:120000},{w:320,br:80000},{w:288,br:55000},{w:240,br:35000}];
+  const cfgs=[{w:384,br:150000},{w:320,br:100000},{w:288,br:65000},{w:240,br:40000}];
   while(attempt<4){
-    b64=await stVideoRec(v2,Math.min(dur,60),cfgs[attempt].w,cfgs[attempt].br);
-    if(b64&&b64.length<=880000)break;
+    toast("Encoding… attempt "+(attempt+1)+"/4");
+    b64=await stVideoRec(v2,dur,cfgs[attempt].w,cfgs[attempt].br);
+    if(b64&&b64.length<=1150000)break;
     b64="";attempt++;
   }
-  try{v2.pause();}catch(e){}
-  if(!b64){toast("Could not compress the video — try the 🖼️ photo option");return;}
+  try{v2.pause();v2.remove();}catch(e){}
+  if(wakeLock)wakeLock.release().catch(()=>{});
+  if(!b64){toast("Could not record that clip cleanly — try a shorter window or the 🖼️ photo option");return;}
   toast("Posting video status…");
   const r=await api("story",{node:ME,pic:b64});
   if(r&&r.ok){toast("Video status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();}
@@ -2000,14 +2100,15 @@ async function stVideoRec(v2,dur,maxW,br){
     if(w>maxW){const s2=maxW/w;w=maxW;h=Math.round(h*s2);}
     if(h>640){const s2=640/h;h=640;w=Math.round(w*s2);}
     let stream=null,audioOk=false,acx=null,elStream=null;
-    /* v34: native element captureStream FIRST — carries video+audio together, keeps sound */
     try{
       elStream=(v2.captureStream||v2.mozCaptureStream).call(v2);
       if(elStream&&elStream.getVideoTracks&&elStream.getVideoTracks().length){stream=elStream;audioOk=elStream.getAudioTracks().length>0;}
     }catch(e){}
+    let cv=null,ctx=null,useCanvas=false;
     if(!stream){
-      const cv=document.createElement("canvas");cv.width=Math.max(2,w);cv.height=Math.max(2,h);
-      const ctx=cv.getContext("2d");
+      useCanvas=true;
+      cv=document.createElement("canvas");cv.width=Math.max(2,w);cv.height=Math.max(2,h);
+      ctx=cv.getContext("2d");
       stream=cv.captureStream(15);
       try{
         const AC=window.AudioContext||window.webkitAudioContext;
@@ -2027,35 +2128,117 @@ async function stVideoRec(v2,dur,maxW,br){
           if(at2.length){at2.forEach(function(t){stream.addTrack(t);});audioOk=true;}
         }catch(e){}
       }
-      const _draw=setInterval(function(){try{ctx.drawImage(v2,0,0,cv.width,cv.height);}catch(e){}},66);
-      setTimeout(function(){clearInterval(_draw);},(dur+2)*1000);
     }
     let played=false;
     try{await v2.play();played=true;}catch(e){}
     if(!played)return "";
+    /* v56: give the decoder a couple of real frames before we start trusting
+       captured output — avoids recording a blank/stale first frame */
+    await new Promise(function(res){
+      let n=0;
+      function step(){n++;if(n>=3)res();else if(v2.requestVideoFrameCallback)v2.requestVideoFrameCallback(step);else setTimeout(step,80);}
+      if(v2.requestVideoFrameCallback)v2.requestVideoFrameCallback(step);else setTimeout(step,150);
+    });
     const mimes=audioOk?["video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm","video/mp4"]:["video/webm;codecs=vp8","video/webm","video/mp4"];
     let mime="";
     for(const m of mimes){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
     if(!mime)return "";
     const chunks=[];
-    const mr=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:br,audioBitsPerSecond:24000});
+    const mr=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:br,audioBitsPerSecond:32000});
     mr.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
     const stopped=new Promise(function(res){mr.onstop=res;});
     mr.start(250);
     const t0=Date.now();
+    let lastFrame=Date.now(),stalled=false;
+    if(useCanvas){
+      const drawTick=function(){
+        try{ctx.drawImage(v2,0,0,cv.width,cv.height);lastFrame=Date.now();}catch(e){}
+      };
+      if(v2.requestVideoFrameCallback){
+        const rvfcLoop=function(){if(mr.state!=="recording")return;drawTick();v2.requestVideoFrameCallback(rvfcLoop);};
+        v2.requestVideoFrameCallback(rvfcLoop);
+      } else {
+        var _draw=setInterval(drawTick,66);
+      }
+    }
     await new Promise(function(res){
       const tick=setInterval(function(){
-        if(v2.ended||Date.now()-t0>dur*1000){clearInterval(tick);res();return;}
-        try{ctx.drawImage(v2,0,0,cv.width,cv.height);}catch(e){}
-      },66);
+        if(useCanvas&&Date.now()-lastFrame>2500)stalled=true;
+        if(v2.ended||stalled||Date.now()-t0>dur*1000){clearInterval(tick);if(typeof _draw!=="undefined")clearInterval(_draw);res();return;}
+      },80);
     });
     mr.stop();
     await stopped;
     try{if(acx)acx.close();}catch(e){}
     try{v2.pause();}catch(e){}
+    if(stalled)return "";
     const blob=new Blob(chunks,{type:mime.split(";")[0]});
+    if(blob.size<2000)return "";
     return await new Promise(function(res){const r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(blob);});
   }catch(e){return "";}
+}
+
+/* ================= v56: owner Admin dashboard — activate/reject wallet claims by hand ================= */
+var ADM_CLAIMS=[];
+function admOpen(){$("admView").className="ovl";admLoad();}
+function admClose(){$("admView").className="ovl hide";}
+async function admLoad(){
+  $("admPending").innerHTML='<div style="color:#94A3B8;font-size:13px">Loading…</div>';
+  try{
+    const d=await api("wclaims",{by:ME});
+    if(!d||!d.ok){$("admPending").innerHTML='<div style="color:#f15c6d;font-size:13px">Could not load — '+((d&&d.err)||"check connection")+'</div>';return;}
+    ADM_CLAIMS=d.claims||[];
+    const pend=ADM_CLAIMS.filter(c=>!c.activated&&!c.rejected);
+    const act=ADM_CLAIMS.filter(c=>c.activated);
+    const rej=ADM_CLAIMS.filter(c=>c.rejected);
+    $("admPending").innerHTML=pend.length?pend.map(admCard).join(""):'<div style="color:#64748B;font-size:13px">Nothing waiting — you\'re all caught up.</div>';
+    $("admActivated").innerHTML=act.length?act.map(admCard).join(""):'<div style="color:#94A3B8;font-size:12.5px">None yet.</div>';
+    $("admRejected").innerHTML=rej.length?rej.map(admCard).join(""):'<div style="color:#94A3B8;font-size:12.5px">None.</div>';
+  }catch(e){$("admPending").innerHTML='<div style="color:#f15c6d;font-size:13px">Could not load claims.</div>';}
+}
+function admCard(c){
+  const status=c.activated?'<span style="color:#00A884;font-weight:700">✅ Activated</span>':c.rejected?'<span style="color:#94A3B8;font-weight:700">❌ Rejected</span>':'<span style="color:#D97706;font-weight:700">⏳ Pending</span>';
+  const when=c.doneAt?new Date(c.doneAt).toLocaleString():new Date(c.at).toLocaleString();
+  const rcpBtn=c.fid?'<button onclick="admViewReceipt(\''+c.fid+'\',this)" style="border:1px solid #CBD5E1;background:#fff;border-radius:8px;padding:5px 10px;font-size:11.5px;margin-top:6px">🖼 View receipt</button>':'<div style="font-size:11px;color:#94A3B8;margin-top:4px">No receipt uploaded yet</div>';
+  const actions=(!c.activated&&!c.rejected)?('<div style="display:flex;gap:8px;margin-top:8px">'+
+    '<button onclick="admActivate(\''+c.k+'\',\''+c.num+'\','+c.amt+',\''+esc(c.ref||"")+'\')" style="flex:1;background:#00A884;color:#fff;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">✅ Activate</button>'+
+    '<button onclick="admReject(\''+c.k+'\')" style="flex:1;background:#F1F5F9;color:#334155;border:0;border-radius:8px;padding:8px;font-size:12.5px">❌ Reject</button>'+
+    '</div>'):"";
+  return '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">'+
+    '<div style="display:flex;justify-content:space-between"><div style="font-weight:700;font-size:14px">'+esc(c.name||("+"+c.num))+'</div>'+status+'</div>'+
+    '<div style="font-size:13px;color:#334155;margin-top:2px">+'+esc(c.num)+' · ₦'+Number(c.amt||0).toLocaleString()+' · ref '+esc(c.ref||"—")+'</div>'+
+    '<div style="font-size:11px;color:#94A3B8;margin-top:2px">'+when+'</div>'+
+    rcpBtn+actions+
+    '<div id="admRcp-'+c.k.replace(/[^a-zA-Z0-9]/g,"")+'"></div>'+
+    '</div>';
+}
+async function admViewReceipt(fid,btn){
+  const box=btn.parentElement.querySelector("[id^=admRcp-]")||btn.nextElementSibling;
+  btn.textContent="Loading…";btn.disabled=true;
+  try{
+    let bin="",i=0;
+    while(true){const r=await api("fget",{from:ME,fid,ci:i});if(!r||!r.v)break;bin+=r.v;i++;if(i>40)break;}
+    const b64=bin.startsWith("data:")?bin.split(",")[1]:bin;
+    const mime=bin.slice(5,bin.indexOf(";"))||"image/jpeg";
+    const url="data:"+mime+";base64,"+b64;
+    const img=document.createElement("img");img.src=url;img.style.cssText="max-width:100%;border-radius:8px;margin-top:8px;display:block";
+    btn.replaceWith(img);
+  }catch(e){btn.textContent="Could not load";btn.disabled=false;}
+}
+async function admActivate(k,num,amt,ref){
+  if(!confirm("Activate this payment?\n₦"+Number(amt).toLocaleString()+" will be credited to +"+num+" and they'll be notified."))return;
+  toast("Activating…");
+  try{
+    const r1=await api("wconfirm",{by:ME,to:num,amt,note:"Wallet top-up "+(ref||"")+" activated by admin"});
+    if(!r1||!r1.ok){toast((r1&&r1.err)||"Could not credit wallet");return;}
+    await api("wconfirm",{by:ME,claim:k});
+    toast("Activated ✓ — "+num+" notified");
+    admLoad();
+  }catch(e){toast("Could not activate — try again");}
+}
+async function admReject(k){
+  if(!confirm("Reject this claim? No money will be credited."))return;
+  try{await api("wconfirm",{by:ME,claim:k,reject:true});toast("Rejected");admLoad();}catch(e){toast("Could not reject");}
 }
 /* ---------------- voice status ---------------- */
 function stVoiceSheet(){
@@ -4131,6 +4314,10 @@ function menuOpen(){
       fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:#F1F5F9;color:#111827;font-size:15px";
       fgb.textContent="🔨 Skylar Forge — Builder";fgb.onclick=function(){menuClose();location.href="forge.html";};
       mv.appendChild(fgb);
+      const adb=document.createElement("button");
+      adb.className="big";adb.style.cssText="margin:12px;margin-top:0;background:#FEF3C7;color:#92400E;font-size:15px";
+      adb.textContent="🛡️ Admin — Payments";adb.onclick=function(){menuClose();admOpen();};
+      mv.appendChild(adb);
     }
   }
   document.getElementById("menuWrap").className="on";
