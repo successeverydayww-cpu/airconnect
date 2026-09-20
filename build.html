@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Skylar Forge — Build your app</title>
   <link rel="manifest" href="manifest-forge.json">
-  <meta name="theme-color" content="#F47B20">
+  <meta name="theme-color" content="#00A884">
   <link rel="apple-touch-icon" href="forge-icon-192.png">
 <style>
 /* ==== BASE44 LAYOUT PARITY + AIRCONNECT COLORS (v54 theme, spec forge_ui_spec.md) ==== */
@@ -184,9 +184,9 @@ tr:hover td{background:var(--panel2)}
 
 <!-- ======== AUTH ======== -->
 <div id="auth">
-  <div class="mark">⚡</div>
+  <div class="mark" style="background:none"><img src="logo.svg" style="width:48px;height:48px" alt=""></div>
   <h1>Skylar <b>Forge</b></h1>
-  <p class="sub">Describe your app in plain words. The AI builds it — data tables, records, live preview, and a public link you can publish.</p>
+  <p class="sub">Your words become apps. Chat, build, go live — everything on your own infrastructure.</p>
   <div class="div"></div>
   <input id="f_name" placeholder="Your name">
   <input id="f_email" type="email" placeholder="Email">
@@ -205,7 +205,7 @@ tr:hover td{background:var(--panel2)}
     <button class="x" onclick="this.parentElement.style.display='none'">✕</button>
   </div>
   <div id="topbar">
-    <span class="brand"><span class="mk">⚡</span> Skylar <b>Forge</b></span>
+    <span class="brand"><span class="mk" style="background:none;padding:0"><img src="logo.svg" style="width:24px;height:24px;border-radius:7px" alt=""></span> Skylar <b>Forge</b></span>
     <span class="branch" style="position:relative"><span onclick="branchMenu(event)">Main ▾</span><div id="bmenu" style="display:none;position:absolute;top:110%;left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:210px;z-index:40;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.45)"><div class="bmi" onclick="copyAPI()">Copy API endpoint</div><div class="bmi" onclick="copyKey()">Copy workspace key</div><div class="bmi" onclick="closeBranch();refreshPreview();refreshCredits();toast('Refreshed')">Refresh data</div></div></span>
     <span class="who" id="whoami">workspace</span>
     <div id="creditwrap">
@@ -355,7 +355,7 @@ async function loadChat(){
   const r=await api({act:"build.chat",key:KEY});
   const m=document.getElementById("msgs");m.innerHTML="";
   (r.chat||[]).forEach(c=>{ const txt=c.text||c.msg||c.reply||""; if(c.role==="user")addBubble("u",txt); else addBubble("a",txt,c.executed); });
-  if(!(r.chat||[]).length)addBubble("a","Welcome to your workspace 👋\nTell me what app you want and I will build it right here — you'll see it take shape in the live preview. Try one of the suggestions below.");
+  if(!(r.chat||[]).length)addBubble("a","Welcome to the Forge 🔥\nYour words become working apps. Tell me what to build — data, pages, people, all of it — and watch it take shape in the live view. Try a suggestion below.");
   m.scrollTop=m.scrollHeight;
 }
 function addBubble(cls,text,ops){
@@ -417,7 +417,7 @@ async function renderOverview(){
       <h3>${SCHEMAS.length?SCHEMAS.length+" data table"+(SCHEMAS.length===1?"":"s"):"Your workspace"} <span style="color:var(--dim);font-weight:500;font-size:13px">· workspace of ${esc(EMAIL)}</span></h3>
       <div class="csub">Describe new features in the builder chat and watch them appear live.</div>
       <div class="toolbar">
-        <button class="btn sm" onclick="doPublish()">🚀 Publish</button>
+        <button class="btn sm" onclick="doPublish()">🚀 Go Live</button>
         <button class="btn ghost sm" onclick="location.href='app.html?k='+encodeURIComponent(KEY)">Open app</button>
       </div>
     </div>
@@ -509,7 +509,7 @@ function renderDomains(){
         <div id="qrc" style="background:#fff;padding:8px;border-radius:10px;width:fit-content"></div>
         <div style="font-size:12px;color:var(--dim)">Scan to open the app on any phone.</div>
       </div>
-      ${PUBURL?"":'<div class="formnote">Publish from Overview first, then the QR code appears here.</div>'}
+      ${PUBURL?"":'<div class="formnote">Take your app live from Overview first, then the QR appears here.</div>'}
     </div>
     <div class="card"><h3>Custom domain</h3>
       <div class="csub">Your own domain (e.g. app.yourbrand.com) on your published app. Included with the <b>Builder plan</b> — you can also just ask the AI in chat: "add my domain yourdomain.com".</div>
@@ -591,26 +591,26 @@ async function renderConn(b){
   const br=st.bridge, ct=st.cont;
   let airCard, contCard;
   if(br&&br.agent_num){
-    airCard=`<div class="card"><h3>🛰 AirConnect agent — linked</h3><div class="csub">Your workspace builder is live on AirConnect as a chat contact.</div>
+    airCard=`<div class="card"><h3>📡 Mesh — linked</h3><div class="csub">Your workspace builder is live on AirConnect as a chat contact.</div>
       <div class="fieldrow"><label>Agent number</label><input readonly value="${esc(br.agent_num)}" style="font-family:monospace"></div>
       <div class="fieldrow"><label>Agent recovery phrase (keep this safe)</label><input readonly value="${esc(br.agent_phrase||"")}" style="font-family:monospace"></div>
       <div class="formnote">1. Open AirConnect and accept the friend request from your agent.<br>2. Chat with it like any contact — your messages build this app directly.<br>3. Agent replies use your workspace builder credits.</div>
       <button class="btn ghost sm" onclick="unlinkBridge()">Unlink agent</button></div>`;
   } else {
-    airCard=`<div class="card"><h3>🛰 AirConnect agent</h3><div class="csub">Give your workspace its own agent on AirConnect. Register on AirConnect first, then link it here — you'll chat with your builder like a contact.</div>
+    airCard=`<div class="card"><h3>📡 Mesh — your AirConnect agent</h3><div class="csub">Give your workspace its own agent on AirConnect. Register on AirConnect first, then link it here — you'll chat with your builder like a contact.</div>
       <div class="fieldrow"><label>Your AirConnect number</label><input id="ac-num" placeholder="e.g. 2341000000123"></div>
       <div class="fieldrow"><label>Your AIR ID</label><input id="ac-aid" placeholder="From your AirConnect profile"></div>
       <button class="btn sm" onclick="linkBridge()">Create my AirConnect agent</button>
       <div class="formnote">New here? Register free at ${esc("https://successeverydayww-cpu.github.io/airconnect")}</div></div>`;
   }
   if(ct&&ct.email){
-    contCard=`<div class="card"><h3>🔄 Continuity Layer — synced</h3><div class="csub">Your relationship with this agent is backed up to your Continuity account after every change. Your beacon stays portable — take it out anytime.</div>
+    contCard=`<div class="card"><h3>🛰 Beacon — Continuity synced</h3><div class="csub">Your relationship with this agent is backed up to your Continuity account after every change. Your beacon stays portable — take it out anytime.</div>
       <div class="fieldrow"><label>Continuity account</label><input readonly value="${esc(ct.email)}"></div>
       <div class="fieldrow"><label>Last sync</label><input readonly value="${esc(ct.last?new Date(ct.last).toLocaleString():"syncing…")}"></div>
       <button class="btn sm" onclick="contSyncNow()">Sync now</button>
       <div class="formnote">Restore anywhere: Backup & Restore → Export beacon, or use your Continuity app key on a new workspace.</div></div>`;
   } else {
-    contCard=`<div class="card"><h3>🔄 Continuity Layer</h3><div class="csub">Sync everything — memory, chats, data, the whole relationship — to your Continuity Layer account. Never lose your agent.</div>
+    contCard=`<div class="card"><h3>🛰 Beacon — Continuity Layer sync</h3><div class="csub">Sync everything — memory, chats, data, the whole relationship — to your Continuity Layer account. Never lose your agent.</div>
       <div class="fieldrow"><label>Continuity email</label><input id="ct-email" placeholder="you@example.com"></div>
       <div class="fieldrow"><label>App sync key</label><input id="ct-key" placeholder="ck-…" style="font-family:monospace"></div>
       <button class="btn sm" onclick="linkCont()">Link & sync</button>
@@ -678,9 +678,9 @@ async function doPublish(){
   PUBURL=r.url;localStorage.setItem("forge_pub_"+EMAIL,PUBURL);
   document.getElementById("purl").textContent=PUBURL;document.getElementById("urlstrip").style.display="flex";
   try{await navigator.clipboard.writeText(r.url);}catch(e){}
-  toast("Published! Link copied: "+r.url);
+  toast("Your app is LIVE 🔥 Link copied");
 }
-function copyPub(){ if(!PUBURL)return toast("Publish your app first"); try{navigator.clipboard.writeText(PUBURL);}catch(e){} toast("Link copied"); }
+function copyPub(){ if(!PUBURL)return toast("Take your app live first"); try{navigator.clipboard.writeText(PUBURL);}catch(e){} toast("Link copied"); }
 /* modal helpers */
 function openModal(html){document.getElementById("modal-body").innerHTML=html;document.getElementById("overlay").style.display="flex";}
 function closeModal(){document.getElementById("overlay").style.display="none";}
@@ -876,7 +876,7 @@ async function toggleAuto(id,en){
 }
 /* ---- Share ---- */
 async function sendInvites(){
-  if(!PUBURL)return toast("Publish your app first");
+  if(!PUBURL)return toast("Take your app live first");
   const text="Come try my app: "+PUBURL;
   if(navigator.share){try{await navigator.share({title:document.title,text:"Come try my app",url:PUBURL});return;}catch(e){if(e.name==="AbortError")return;}}
   window.open("https://wa.me/?text="+encodeURIComponent(text));

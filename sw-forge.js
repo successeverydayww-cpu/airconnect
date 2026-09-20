@@ -9,7 +9,7 @@ self.addEventListener('activate', (e) => {
 });
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.pathname.includes('workers.dev')) return; // never cache the live API
+  if (e.request.method !== 'GET' || url.pathname.startsWith('/api') || url.pathname.startsWith('/s/')) return; // never cache the live API or published apps
   if (url.origin !== location.origin) return;
   e.respondWith(
     fetch(e.request).then((r) => {

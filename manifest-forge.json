@@ -1,16 +1,29 @@
 {
-  "name": "Skylar Forge — Build apps with AI",
+  "name": "Skylar Forge \u2014 Build apps with AI",
   "short_name": "Skylar Forge",
-  "description": "Your own AI app builder. Chat to build, publish live apps, all on your infrastructure.",
-  "start_url": "build.html",
+  "description": "Your words become apps. Build, publish and own your apps on your own infrastructure.",
+  "start_url": "./build.html",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F7F4F0",
-  "theme_color": "#F47B20",
+  "background_color": "#111f29",
+  "theme_color": "#00A884",
   "icons": [
-    { "src": "forge-icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "forge-icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "forge-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "forge-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "forge-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "forge-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
