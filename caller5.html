@@ -116,7 +116,7 @@ footer a{color:#64748B}
 #sharelink{font-size:12px}
 .stseg{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;max-width:44px}
 .stseg.done,.stseg.on{background:#fff}
-.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#DC2626;font-weight:700}.tick.on{color:#16A34A}
+.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#94A3B8;font-weight:700}.tick.on{color:#00A884;font-weight:700}
 </style>
 </head>
 <body>
@@ -999,7 +999,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=53');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=54');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1330,9 +1330,9 @@ function wtRender(){
 }
 function wtCard(p,big){
   const d=document.createElement("div");
-  d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:10px";
+  d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)";
   const t=new Date(p.at||Date.now());
-  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#00A884;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div><button class="big" style="padding:5px 10px;font-size:11px;border-radius:14px;background:'+(p.mysub?"#E2E8F0":"#00A884")+';color:'+(p.mysub?"#334155":"#fff")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
+  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#00A884;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14.5px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#00A884;font-size:10px">✓</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div><button class="big" style="padding:6px 14px;font-size:12px;border-radius:18px;background:'+(p.mysub?"#E2E8F0":"#00A884")+';color:'+(p.mysub?"#64748B":"#fff")+';font-weight:600" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed":"Subscribe")+'</button></div>';
   let body="";
   if(p.rs)body+='<div style="font-size:11px;color:#00A884;margin-top:6px">🔁 reshared post</div>';
   if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
@@ -1341,7 +1341,7 @@ function wtCard(p,big){
   let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
   for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
   rrow+='</div>';
-  const acts='<div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:#64748B"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right">👁 '+(p.vcnt||0)+' views</span></div>';
+  const acts='<div style="display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#64748B;font-weight:500"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' Comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right;color:#94A3B8;font-weight:400">👁 '+(p.vcnt||0)+'</span></div>';
   d.innerHTML=head+body+rrow+acts;
   return d;
 }
@@ -1531,7 +1531,7 @@ function renderLists(){
   allFr.sort((a,b)=>{const pa=PINS.includes(a.id)?1:0,pb=PINS.includes(b.id)?1:0;if(pa!==pb)return pb-pa;const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
   for(const f of allFr){
     const n=(WIN_NAMES[f.id]||"friend")+(PINS.includes(f.id)?" 📌":""),l=lastOf(f.id);
-    const rawPrev=l?(l.img?"📷 Photo":(l.aud?"🎙️ Voice note":(l.vid?"🎬 Video":(l.fileId?"📎 Attachment":(l.f2?("📎 "+(l.f2.name||"Attachment")):esc(l.text).slice(0,40)))))):"Tap to message";
+    const rawPrev=l?(l.img?"📷 Photo":(l.aud?"🎙️ Voice note":(l.vid?"🎬 Video":(l.fileId?"📎 Attachment":(l.f2?("📎 "+(l.f2.name||"Attachment")):esc(l.text).slice(0,40)))))):"No messages yet";
     const prev=(ARCHS.includes(f.id)?rawPrev+" · archived":rawPrev);
     const row=document.createElement("div");row.className="row";
     row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
@@ -4111,16 +4111,16 @@ function menuOpen(){
     mv.appendChild(back);
     if(vs)mv.appendChild(vs); /* settings content lives here now — single copy, no dup ids */
     const wal=document.createElement("button");
-    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#00806F;color:#fff;font-size:15px";
+    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#F1F5F9;color:#111827;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
     mv.appendChild(wal);
     if(String(ME)==="234100000001"){ /* v49: owner-only door to our OS */
       const osb=document.createElement("button");
-      osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#00a884,#005c4b);color:#fff;font-size:15px";
+      osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:#E7F4EF;color:#0B6B57;font-size:15px";
       osb.textContent="🤖 Premium User — Our OS";osb.onclick=function(){menuClose();location.href="skylar.html";};
       mv.appendChild(osb);
       const fgb=document.createElement("button");
-      fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#1e3a8a,#0ea5e9);color:#fff;font-size:15px";
+      fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:#F1F5F9;color:#111827;font-size:15px";
       fgb.textContent="🔨 Skylar Forge — Builder";fgb.onclick=function(){menuClose();location.href="forge.html";};
       mv.appendChild(fgb);
     }
