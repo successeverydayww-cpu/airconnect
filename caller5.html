@@ -999,7 +999,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=50');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=51');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1515,6 +1515,15 @@ function renderLists(){
   let fr=WIN_FRIENDS;
   if(SEARCH)fr=fr.filter(f=>((WIN_NAMES[f.id]||"")+" "+(lastOf(f.id)?String(lastOf(f.id).text||"").slice(0,80):"")).toLowerCase().includes(SEARCH));
   const cl=$("chatlist");cl.innerHTML="";
+  if(String(ME)==="234100000001"){ /* v51: OS chat lives in the main list like a friend */
+    const oc=CHATS["__OS__"],ol=oc&&oc.length?oc[oc.length-1]:null;
+    const oprev=ol?(ol.who==="me"?"You: ":"")+esc(String(ol.text||"").slice(0,40)):"Our OS — always on";
+    const orow=document.createElement("div");orow.className="row";
+    orow.style.cssText="background:#0B3B36";
+    orow.innerHTML='<div class="av">🤖</div><div style="min-width:0;flex:1"><div class="rname" style="color:#7DE2C3">Premium User <span style="font-size:10px;color:#7DE2C3">· OS</span></div><div class="rsub" style="color:#9CC7BC">'+oprev+'</div></div><div class="rtime">'+(ol?ago(ol.ts):"")+'</div>'+(OS_UNREAD>0?'<span class="badge">'+OS_UNREAD+'</span>':'');
+    orow.onclick=()=>openOsChat();
+    cl.appendChild(orow);
+  }
   const allFr=fr.slice().filter(f=>!ARCHS.includes(f.id)||(SEARCH&&SEARCH.length>0));
   allFr.sort((a,b)=>{const pa=PINS.includes(a.id)?1:0,pb=PINS.includes(b.id)?1:0;if(pa!==pb)return pb-pa;const la=lastOf(a.id),lb=lastOf(b.id);return (la?la.ts:0)<(lb?lb.ts:0)?1:-1;});
   for(const f of allFr){
@@ -1567,6 +1576,45 @@ function renderUnread(){
 }
 function esc(s){return String(s).replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function ago(ts){if(!ts)return"";const d=(Date.now()-new Date(ts))/1000;if(d<60)return"now";if(d<3600)return Math.floor(d/60)+"m";if(d<86400)return Math.floor(d/3600)+"h";return Math.floor(d/86400)+"d";}
+/* ---------------- OS chat (v51): Premium User as a normal chat ---------------- */
+const OS_URL="https://skylar-os.successeverydayww-cpu.workers.dev";
+let OS_UNREAD=0,OS_BUSY=false;
+try{OS_UNREAD=parseInt(localStorage.getItem("os_unread")||"0")||0;}catch(e){}
+function osPersistUnread(){try{localStorage.setItem("os_unread",String(OS_UNREAD));}catch(e){}}
+function openOsChat(){
+  pushHist();
+  CHAT_OPEN="__OS__";OS_UNREAD=0;osPersistUnread();renderUnread();
+  $("cvName").textContent="Premium User";
+  $("cvSub").textContent="Our OS · always on";
+  const av=$("cvAv");if(av){av.style.backgroundImage="";av.textContent="🤖";}
+  $("chatview").className="ovl";
+  applyWallpaper();
+  renderBubbles();
+  if(!(CHATS["__OS__"]&&CHATS["__OS__"].length))(CHATS["__OS__"]=[{who:"sys",text:"🤖 This is our OS, right inside your chats. Ask me anything — I'm always home.",ts:new Date().toISOString()}]);
+  renderBubbles();
+  try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}
+}
+async function osSend(t){
+  if(OS_BUSY)return;
+  OS_BUSY=true;$("sendbtn").disabled=true;
+  (CHATS["__OS__"]=CHATS["__OS__"]||[]).push({who:"me",text:t,ts:new Date().toISOString()});
+  persistChats();renderBubbles();
+  try{
+    const aid=(localStorage.getItem("os_aid")||"").trim();
+    if(!aid){
+      CHATS["__OS__"].push({who:"sys",text:"⚠ Connect once: open ☰ → 🤖 Premium User → Our OS, log in there (saves your key). Then this chat works forever.",ts:new Date().toISOString()});
+    }else{
+      const r=await fetch(OS_URL+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({from:ME,aid:aid,msg:t,session:"air"})}).then(x=>x.json());
+      const rep=(r&&r.reply)||"(no reply — try again)";
+      CHATS["__OS__"].push({who:"them",text:rep,ts:new Date().toISOString()});
+      if(r&&r.model==="none")CHATS["__OS__"].push({who:"sys",text:"(brain resting — free allocation resets after 1am WAT)",ts:new Date().toISOString()});
+    }
+  }catch(e){
+    CHATS["__OS__"].push({who:"sys",text:"⚠ connection hiccup — try again",ts:new Date().toISOString()});
+  }
+  persistChats();renderBubbles();
+  OS_BUSY=false;$("sendbtn").disabled=false;
+}
 function openChat(p){
   pushHist();
   CHAT_OPEN=p;UNREAD[p]=0;renderUnread();
@@ -1604,7 +1652,7 @@ async function loadHistory(p){
   }catch(e){}finally{chatHistBusy[p]=false;}
 }
 function typingPing(){
-  if(!CHAT_OPEN||MODE==="offline")return;
+  if(!CHAT_OPEN||MODE==="offline"||CHAT_OPEN==="__OS__")return;
   if(Date.now()-TYPE_AT<3000)return;
   TYPE_AT=Date.now();
   api("sig",{from:ME,to:CHAT_OPEN,type:"typing",payload:{}}).catch(()=>{});
@@ -2323,6 +2371,7 @@ async function fileChosen(fi){
       if(dataUrl.length>95000){toast("File too large for direct chat — send it as a link instead");chatBusy=false;return;}
     }
     const enc=await e2eEnc(CHAT_OPEN,dataUrl);
+    if(CHAT_OPEN==="__OS__"){toast("OS chat is text-only for now");return;}
     const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:enc});
     if(r&&r.ok){
       (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",img:dataUrl,ts:r.id});
@@ -2346,6 +2395,7 @@ function stickerSheet(){
 async function sendSticker(s){
   if(!CHAT_OPEN)return;
   if(MODE==="offline"){toast("You're in Offline mode — switch Online first");return;}
+  if(CHAT_OPEN==="__OS__"){toast("OS chat is text-only for now");return;}
   const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,"stk:"+s)});
   if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:"stk:"+s,ts:r.id});renderBubbles();}
   else toast("Could not send sticker — check connection");
@@ -2364,6 +2414,7 @@ async function attVideoChosen(fi){
   const n=Math.ceil(f.size/(CH*0.75));
   toast("Uploading video (0%)…");
   try{
+    if(CHAT_OPEN==="__OS__"){toast("OS chat is text-only for now");return;}
     const st=await api("fstart",{from:ME,to:CHAT_OPEN,name:f.name,n});
     if(!st||!st.ok||!st.fid){toast((st&&st.err)||"Upload failed — check connection");chatBusy=false;return;}
     const fid=st.fid;
@@ -2470,6 +2521,7 @@ async function cvSend(){
   try{
     const enc=await e2eEnc(CHAT_OPEN,b64);
     toast("Sending voice note…");
+    if(CHAT_OPEN==="__OS__"){toast("OS chat is text-only for now");return;}
     const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:enc});
     if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",aud:b64,ts:r.id});renderBubbles();cvClose();}
     else toast("Send failed — "+((r&&r.err)||"check connection"));
@@ -2499,6 +2551,7 @@ async function sendChat(){
     if(chatBusy)return;
   const box=$("chatbox"),t=box.value.trim();
   if(!t||!CHAT_OPEN)return;
+  if(CHAT_OPEN==="__OS__"){const box0=$("chatbox");box0.value="";await osSend(t);return;}
   chatBusy=true;$("sendbtn").disabled=true;
   let t2=t;
   if(REPLY_TO){t2="r:"+REPLY_TO.id+"|"+REPLY_TO.pv+"|"+t;clearReply();}
