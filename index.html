@@ -18,7 +18,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 a.btn{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0;padding:16px;border-radius:14px;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,.08);transition:transform .15s}
 a.btn:active{transform:scale(.97)}
 a.primary{background:#00A884}
-a.secondary{background:#1F2937}
+a.aicard{display:flex;align-items:center;gap:13px;margin:14px 0 0;padding:14px 16px;border-radius:16px;background:#fff;border:1px solid #E2E8F0;text-decoration:none;box-shadow:0 4px 14px rgba(15,23,42,.05);transition:transform .15s}
+a.aicard:active{transform:scale(.97)}
+.aiico{width:46px;height:46px;flex:0 0 46px;border-radius:13px;background:linear-gradient(135deg,#7C3AED,#4C1D95);display:flex;align-items:center;justify-content:center;font-size:22px}
+.aitxt{flex:1;text-align:left}
+.aitxt b{display:block;color:#111827;font-size:14.5px;font-weight:700}
+.aitxt span{display:block;color:#64748B;font-size:12px;margin-top:2px}
+.aiarrow{color:#94A3B8;font-size:18px}
 .trust{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:24px}
 .trust span{background:#F1F5F9;color:#475569;font-size:11px;font-weight:600;padding:6px 11px;border-radius:20px}
 </style></head><body>
@@ -35,7 +41,11 @@ a.secondary{background:#1F2937}
     <div><span>&#128274;</span>Private</div>
   </div>
   <a class="btn primary" href="caller5.html">&#128241; Open my node (get a number)</a>
-  <a class="btn secondary" href="agent.html">&#129302; Create an AI node</a>
+  <a class="aicard" href="agent.html">
+    <div class="aiico">&#129302;</div>
+    <div class="aitxt"><b>Create an AI node</b><span>Give it a number and a voice — it answers and chats for you</span></div>
+    <div class="aiarrow">&#8250;</div>
+  </a>
   <div class="trust">
     <span>Numbers persist</span>
     <span>Peer-to-peer calls</span>
