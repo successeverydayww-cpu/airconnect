@@ -160,8 +160,22 @@ tr:hover td{background:var(--panel2)}
 }
 @media(min-width:901px){#mtabs{display:none}}
 @media(max-width:640px){#topbar .branch,#topbar .who{display:none}}
-</style>
-</head>
+
+.bmi{padding:8px 10px;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:8px}
+.bmi:hover{background:var(--panel2)}
+.mrow{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.metric{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.metric .mv{font-size:24px;font-weight:800;margin-top:2px}
+.metric .ml{font-size:11.5px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.chart{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.cbar{display:flex;align-items:center;gap:10px;font-size:12px}
+.cbar .lbl{width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.cbar .track{flex:1;height:14px;border-radius:7px;background:var(--line);overflow:hidden}
+.cbar .fill{height:14px;border-radius:7px;background:var(--brand)}
+.cbar .n{width:70px;color:var(--dim);font-weight:700}
+/* end css */
+<script src="qrcode.min.js"></script>
+<script src="qrcode.min.js"></script>\n</head>
 <body>
 
 <!-- ======== AUTH ======== -->
@@ -188,16 +202,16 @@ tr:hover td{background:var(--panel2)}
   </div>
   <div id="topbar">
     <span class="brand"><span class="mk">⚡</span> Skylar <b>Forge</b></span>
-    <span class="branch">Main ▾</span>
+    <span class="branch" style="position:relative"><span onclick="branchMenu(event)">Main ▾</span><div id="bmenu" style="display:none;position:absolute;top:110%;left:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:210px;z-index:40;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.45)"><div class="bmi" onclick="copyAPI()">Copy API endpoint</div><div class="bmi" onclick="copyKey()">Copy workspace key</div><div class="bmi" onclick="closeBranch();refreshPreview();refreshCredits();toast('Refreshed')">Refresh data</div></div></span>
     <span class="who" id="whoami">workspace</span>
     <div id="creditwrap">
-      <div id="cred"><span class="t">Credits <b id="credt">—</b></span><span class="bar"><i id="credbar" style="width:0%"></i></span></div>
+      <div id="cred" onclick="creditsModal()" style="cursor:pointer"><span class="t">Credits <b id="credt">—</b></span><span class="bar"><i id="credbar" style="width:0%"></i></span></div>
     </div>
     <div class="seg">
       <button id="seg-prev" onclick="setMode('preview')">Preview</button>
       <button id="seg-dash" class="on" onclick="setMode('dashboard')">Dashboard</button>
     </div>
-    <button class="up" onclick="paywall('Pro plan','Skylar Forge Pro expands your daily message credits, unlocks custom domains and unlimited published apps. Launching soon — your workspace will be upgraded automatically.')">Upgrade</button>
+    <button class="up" onclick="plansModal()">Plans</button>
     <button class="btn ghost sm" onclick="logout()">Sign out</button>
   </div>
   <div id="mtabs">
@@ -223,20 +237,20 @@ tr:hover td{background:var(--panel2)}
     </div>
     <!-- col 2: nav rail -->
     <div id="rail">
-      <div class="search"><input placeholder="Search…" onkeydown="if(event.key==='Enter'){toast('Search coming to the rail soon');}"></div>
+      <div class="search"><input id="railsearch" placeholder="Search…" oninput="filterRail(this.value)"></div>
       <div class="menu">
         <div class="ritem on" data-pg="overview" onclick="nav('overview')"><span class="ic">◱</span> Overview</div>
         <div class="ritem" data-pg="data" onclick="nav('data')"><span class="ic">▦</span> Data <span style="margin-left:auto;color:var(--dim2);font-size:10px" id="entcount"></span></div>
         <div id="rail-ents" class="rsub"></div>
-        <div class="ritem" onclick="paywall('Analytics','Traffic and usage analytics are part of the Pro plan. Upgrade to see visits, unique visitors and session recordings for your app.')"><span class="ic">◔</span> Analytics</div>
+        <div class="ritem" data-pg="analytics" onclick="nav('analytics')"><span class="ic">◔</span> Analytics</div>
         <div class="ritem" data-pg="domains" onclick="nav('domains')"><span class="ic">🌐</span> Domains</div>
-        <div class="ritem" onclick="paywall('Workflows','Automations and scheduled workflows are part of the Pro plan. Upgrade to run your app on autopilot.')"><span class="ic">⟳</span> Workflows <span class="new">New</span></div>
+        <div class="ritem" data-pg="workflows" onclick="nav('workflows')"><span class="ic">⟳</span> Workflows <span class="new">New</span></div>
         <div class="ritem" data-pg="settings" onclick="nav('settings')"><span class="ic">⚙</span> Settings</div>
       </div>
       <div class="upgrade">
         <div class="t">Upgrade your plan</div>
         <div class="s">Get more out of your apps</div>
-        <button onclick="paywall('Pro plan','Skylar Forge Pro expands your daily message credits, unlocks custom domains and unlimited published apps. Launching soon — your workspace will be upgraded automatically.')">View plans</button>
+        <button onclick="plansModal()">View plans</button>
       </div>
     </div>
     <!-- col 3: content -->
@@ -317,12 +331,13 @@ async function refreshCredits(){
     document.getElementById("creditwrap").style.display="flex";
     document.getElementById("credt").textContent=r.credits.used+" / "+r.credits.limit;
     document.getElementById("credbar").style.width=Math.min(100,(r.credits.used/r.credits.limit)*100)+"%";
+    window._lastCredits=r.credits;
   }
 }
 async function loadChat(){
   const r=await api({act:"build.chat",key:KEY});
   const m=document.getElementById("msgs");m.innerHTML="";
-  (r.chat||[]).forEach(c=>{ if(c.role==="user")addBubble("u",c.msg); else addBubble("a",c.reply,c.executed); });
+  (r.chat||[]).forEach(c=>{ const txt=c.text||c.msg||c.reply||""; if(c.role==="user")addBubble("u",txt); else addBubble("a",txt,c.executed); });
   if(!(r.chat||[]).length)addBubble("a","Welcome to your workspace 👋\nTell me what app you want and I will build it right here — you'll see it take shape in the live preview. Try one of the suggestions below.");
   m.scrollTop=m.scrollHeight;
 }
@@ -363,6 +378,8 @@ function nav(pg){
   else if(pg==="data"){if(CURENT)renderEntity(CURENT);else renderData();}
   else if(pg==="domains")renderDomains();
   else if(pg==="settings")renderSettings();
+  else if(pg==="analytics")renderAnalytics();
+  else if(pg==="workflows")renderWorkflows();
 }
 function navEntity(e){CURENT=e;nav("data");renderEntity(e);}
 async function refreshPreview(){
@@ -373,7 +390,7 @@ async function refreshPreview(){
   if(PAGE==="data"&&CURENT)renderEntity(CURENT);
   else if(PAGE==="data")renderData();
 }
-function renderOverview(){
+async function renderOverview(){
   const el=document.getElementById("page");
   el.innerHTML=`
     <div class="pgtitle">Overview</div>
@@ -387,19 +404,24 @@ function renderOverview(){
       </div>
     </div>
     <div class="grid2">
-      <div class="card"><h3>App visibility</h3><div class="csub">Control who can access your application.</div>
-        <div class="toolbar"><select style="max-width:180px"><option>Public</option><option>Private (Pro)</option></select></div></div>
+      <div class="card"><h3>App visibility</h3><div class="csub">Control who can access your published app. Private apps show "not found" to visitors.</div>
+        <div class="toolbar"><select id="vis-sel" style="max-width:180px" onchange="setVisibility(this.value)"><option value="1">Public</option><option value="0">Private</option></select></div></div>
       <div class="card"><h3>Invite users</h3><div class="csub">Share your app so people can start using it.</div>
-        <div class="toolbar"><button class="btn sm" onclick="copyPub()">Copy link</button><button class="btn ghost sm" onclick="toast('Invite emails coming with Pro')">Send invites</button></div></div>
-    </div>`;
+        <div class="toolbar"><button class="btn sm" onclick="copyPub()">Copy link</button><button class="btn ghost sm" onclick="sendInvites()">Send invites</button></div></div>
+    </div>
+    <div class="card"><h3>Records snapshot</h3><div class="csub" id="ov-stats">Loading…</div></div>`;
+  const m=await api({act:"app.meta.get",key:KEY});
+  if(m.meta)document.getElementById("vis-sel").value=String(m.meta.visibility===0?0:1);
+  const counts=await Promise.all(SCHEMAS.map(x=>api({act:"rec.stats",key:KEY,entity:x.entity,q:{}})));
+  document.getElementById("ov-stats").innerHTML=SCHEMAS.length?SCHEMAS.map((x,i)=>"<b>"+esc(x.entity)+"</b>: "+(counts[i].count||0)+" records").join(" · "):"No tables yet — build something in the chat first.";
 }
 function renderData(){
   const el=document.getElementById("page");
   el.innerHTML=`
     <div class="pgtitle">Data</div>
     <div class="pgsub">View and manage the data stored in your app.</div>
-    <div class="tabsbar"><span class="tb on">Tables</span><span class="tb" onclick="paywall('Backup &amp; Restore','Automatic backups and one-click restore are part of the Pro plan. Upgrade to protect your data.')">Backup &amp; Restore 👑</span></div>
-    <div class="toolbar"><input placeholder="Search tables…"><span class="grow"></span><select style="max-width:130px"><option>A-Z</option></select></div>
+    <div class="tabsbar"><span class="tb on" id="tb-tables" onclick="dataTab('tables')">Tables</span><span class="tb" id="tb-backup" onclick="dataTab('backup')">Backup &amp; Restore</span></div>
+    <div class="toolbar" id="tables-tools"><input placeholder="Search tables…" oninput="filterTables(this.value)"><span class="grow"></span><select style="max-width:130px" onchange="sortTables(this.value)"><option value="az">A-Z</option><option value="za">Z-A</option></select></div>
     ${SCHEMAS.length? '<div class="grid2">'+SCHEMAS.map(x=>`<div class="card" style="cursor:pointer" onclick="navEntity('${esc(x.entity)}')"><div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:9px;background:var(--tag-blue);display:flex;align-items:center;justify-content:center;font-size:16px">▦</span><b>${esc(x.entity)}</b></div></div>`).join("")+'</div>'
       : '<div class="dash"><div class="t">No tables yet</div>Describe your app in the builder chat and your first table appears here.</div>'}`;
 }
@@ -458,31 +480,103 @@ function renderDomains(){
   const el=document.getElementById("page");
   el.innerHTML=`
     <div class="pgtitle">Domains</div>
-    <div class="pgsub">Manage the domains and URLs for your app.</div>
-    <div class="card"><h3>Free URL</h3><div class="csub">Every published app gets a free link.</div>
+    <div class="pgsub">Manage the link and domain for your app.</div>
+    <div class="card"><h3>Free URL</h3><div class="csub">Every published app gets a free link on the Skylar network.</div>
       <div class="toolbar">
-        <input readonly value="${esc(PUBURL||"publish your app to get a link")}">
+        <input id="puburl-in" readonly value="${esc(PUBURL||"not published yet")}">
         <button class="btn sm" onclick="copyPub()">Copy</button>
-      </div></div>
-    <div class="card"><h3>Custom domains</h3>
-      <div class="csub">Want to use your own domain?</div>
-      <div class="dash">Custom domains are available on the Pro plan.<br>
-        <button class="btn" onclick="paywall('Custom domains','Use your own domain (e.g. app.yourbrand.com) on your published apps. Part of the Pro plan — launching soon.')">View Plans</button></div>
+        ${PUBURL?'<button class="btn ghost sm" onclick="sendInvites()">Share</button>':""}
+      </div>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:10px">
+        <div id="qrc" style="background:#fff;padding:8px;border-radius:10px;width:fit-content"></div>
+        <div style="font-size:12px;color:var(--dim)">Scan to open the app on any phone.</div>
+      </div>
+      ${PUBURL?"":'<div class="formnote">Publish from Overview first, then the QR code appears here.</div>'}
+    </div>
+    <div class="card"><h3>Custom domain</h3>
+      <div class="csub">Use your own domain (e.g. app.yourbrand.com) on your published app.</div>
+      <div class="toolbar"><input id="cd-in" placeholder="yourdomain.com"></div>
+      <button class="btn sm" onclick="requestDomain()">Request domain setup</button>
+      <div class="formnote">Drafts an email to the platform owner, who attaches the domain to the network.</div>
     </div>`;
+  if(PUBURL&&window.QRCode){try{new QRCode(document.getElementById("qrc"),{text:PUBURL,width:132,height:132,colorDark:"#0b141a",colorLight:"#ffffff"});}catch(e){}}
 }
-function renderSettings(){
+function requestDomain(){
+  const d=document.getElementById("cd-in").value.trim();
+  if(!d)return toast("Type the domain first");
+  const body=encodeURIComponent("Custom domain request\n\nDomain: "+d+"\nApp: "+(PUBURL||"unpublished")+"\nWorkspace: "+EMAIL);
+  window.open("mailto:successeverydayww@gmail.com?subject="+encodeURIComponent("Forge domain request: "+d)+"&body="+body);
+  toast("Request drafted — hit send in your mail app");
+}
+let META={}, RLS=0, curSettingsTab="app";
+async function renderSettings(){
   const el=document.getElementById("page");
   el.innerHTML=`
     <div class="pgtitle">Settings</div>
     <div class="pgsub">Customize your app's experience, authentication and visibility.</div>
-    <div class="tabsbar"><span class="tb on">App settings</span><span class="tb" onclick="paywall('Custom OAuth','Bring your own Google OAuth client for sign-in. Available on the Pro plan.')">Authentication</span></div>
-    <div class="card"><h3>App info</h3><div class="csub">How your app appears to users.</div>
-      <div class="toolbar"><span style="width:44px;height:44px;border-radius:11px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:20px">⚡</span>
-      <input value="My Forge App"></div>
-      <div class="fieldrow"><label>Description</label><textarea rows="2"></textarea></div></div>
-    <div class="card"><h3>Social image</h3><div class="csub">Recommended size: 1200×630 pixels.</div>
-      <div class="dash">Click or drag an image to upload</div></div>`;
+    <div class="tabsbar"><span class="tb on" id="st-app" onclick="settingsTab('app')">App settings</span><span class="tb" id="st-auth" onclick="settingsTab('auth')">Authentication</span></div>
+    <div id="setbody"><div class="skel"></div></div>`;
+  const m=await api({act:"app.meta.get",key:KEY});
+  META=(m.meta||{});RLS=m.rls||0;
+  settingsTab(curSettingsTab);
 }
+async function settingsTab(t){
+  curSettingsTab=t;
+  document.getElementById("st-app").classList.toggle("on",t==="app");
+  document.getElementById("st-auth").classList.toggle("on",t==="auth");
+  const b=document.getElementById("setbody");
+  if(t==="app"){
+    b.innerHTML=`
+    <div class="card"><h3>App info</h3><div class="csub">How your published app appears to visitors. Changes go live immediately.</div>
+      <div class="toolbar"><div id="logoprev" style="width:52px;height:52px;border-radius:12px;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;overflow:hidden">${META.logo?"<img src=\""+esc(META.logo)+"\" style=\"width:100%;height:100%;object-fit:cover\">":"⚡"}</div>
+      <div><label style="font-size:11.5px;color:var(--dim);font-weight:600">Logo</label><br>
+      <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="uploadLogo(this)">
+      <button class="btn ghost sm" onclick="document.getElementById('logo-file').click()">${META.logo?"Replace":"Upload"} logo</button>
+      ${META.logo?'<button class="btn ghost sm" onclick="clearLogo()">Remove</button>':""}</div></div>
+      <div class="fieldrow"><label>App title</label><input id="m-title" value="${esc(META.title||"")}" placeholder="My App"></div>
+      <div class="fieldrow"><label>Description</label><textarea id="m-desc" rows="2" placeholder="What your app does">${esc(META.description||"")}</textarea></div>
+      <button class="btn sm" onclick="saveMeta()">Save changes</button></div>`;
+  } else {
+    b.innerHTML='<div class="skel"></div>';
+    const users=await api({act:"au.list",key:KEY});
+    b.innerHTML=`
+    <div class="card"><h3>Access control</h3><div class="csub">Really enforced on your published app, live.</div>
+      <div class="fieldrow"><label>Public submissions — visitors can add records without an account</label>
+        <select onchange="setAllowPub(this.value)"><option value="1" ${META.allow_pub===0?"":"selected"}>Allowed</option><option value="0" ${META.allow_pub===0?"selected":""}>Read-only app</option></select></div>
+      <div class="fieldrow"><label>App visibility — private apps are hidden from visitors</label>
+        <select onchange="setVisibility(this.value)"><option value="1" ${META.visibility===0?"":"selected"}>Public</option><option value="0" ${META.visibility===0?"selected":""}>Private</option></select></div>
+      <div class="fieldrow"><label>Row-level security — users only see records they created</label>
+        <select onchange="setRLS(this.value)"><option value="0" ${RLS?"":"selected"}>Off (everyone shares data)</option><option value="1" ${RLS?"selected":""}>On (per-user data)</option></select></div>
+    </div>
+    <div class="card"><h3>App users (${(users.users||[]).length})</h3>
+      <div class="csub">People who signed up inside your published app.</div>
+      ${(users.users||[]).length?'<table class="data"><tr><th>Email</th><th>Role</th><th>Joined</th></tr>'+users.users.map(u=>`<tr><td>${esc(u.email)}</td><td>${fmtCell(u.role)}</td><td class="idcell">${esc(String(u.created_at||"").slice(0,10))}</td></tr>`).join("")+'</table>':'<div class="dash"><div class="t">No app users yet</div>People appear here when they sign up in your published app.</div>'}
+    </div>`;
+  }
+}
+async function saveMeta(){
+  const r=await api({act:"app.meta.set",key:KEY,data:{title:document.getElementById("m-title").value.trim(),description:document.getElementById("m-desc").value.trim()}});
+  if(r.err)return toast(r.err,1);
+  META=r.meta;toast("Saved — live on your published app");
+}
+async function uploadLogo(inp){
+  const f=inp.files[0];if(!f)return;
+  if(f.size>480000)return toast("Image too large (max ~450KB)");
+  const buf=await f.arrayBuffer();let bin="";const bytes=new Uint8Array(buf);const chunk=8000;
+  for(let i=0;i<bytes.length;i+=chunk)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));
+  const r=await api({act:"f.put",key:KEY,name:f.name,mime:f.type,data:btoa(bin)});
+  if(r.err)return toast(r.err,1);
+  const r2=await api({act:"app.meta.set",key:KEY,data:{logo:r.url}});
+  if(r2.err)return toast(r2.err,1);
+  META=r2.meta;toast("Logo live on your app");renderSettings();
+}
+async function clearLogo(){
+  const r=await api({act:"app.meta.set",key:KEY,data:{logo:""}});
+  META=r.meta||{};toast("Logo removed");renderSettings();
+}
+async function setAllowPub(v){const r=await api({act:"app.meta.set",key:KEY,data:{allow_pub:parseInt(v)}});if(r.err)return toast(r.err,1);META=r.meta;toast(v==="1"?"Visitors can add records":"App is read-only for visitors");}
+async function setVisibility(v){const r=await api({act:"app.meta.set",key:KEY,data:{visibility:parseInt(v)}});if(r.err)return toast(r.err,1);META=r.meta;toast(v==="1"?"App is public":"App is private — hidden from visitors");}
+async function setRLS(v){const r=await api({act:"app.rls",key:KEY,on:v==="1"});if(r.err)return toast(r.err,1);RLS=r.rls;toast(v==="1"?"Row-level security on":"Row-level security off");}
 async function doPublish(){
   const r=await api({act:"app.publish",key:KEY});
   if(r.err){toast(r.err,1);return;}
@@ -495,12 +589,179 @@ function copyPub(){ if(!PUBURL)return toast("Publish your app first"); try{navig
 /* modal helpers */
 function openModal(html){document.getElementById("modal-body").innerHTML=html;document.getElementById("overlay").style.display="flex";}
 function closeModal(){document.getElementById("overlay").style.display="none";}
-function paywall(title,desc){
-  openModal(`<div class="dia">◆</div><h3>Unlock ${title}</h3>
-  <div class="ms">${desc}</div>
-  <button class="btn" onclick="closeModal();toast('Noted — Pro plan launching soon')">Upgrade</button>
-  <div class="formnote" style="margin-top:10px">You're on the Free plan. Credits refresh daily.</div>`);
+function creditsModal(){
+  const r=window._lastCredits||{used:0,limit:30};
+  openModal(`<div class="dia">⚡</div><h3>Credits</h3>
+  <div class="ms">You've used <b>${r.used} / ${r.limit}</b> builder messages today. Credits refresh every day at midnight UTC.</div>
+  <div style="height:8px;border-radius:6px;background:var(--line);margin:12px 0"><div style="height:8px;border-radius:6px;background:var(--brand);width:${Math.min(100,(r.used/r.limit)*100)}%"></div></div>
+  <button class="btn" onclick="closeModal()">Close</button>`);
 }
+function plansModal(){
+  const r=window._lastCredits||{used:0,limit:30};
+  openModal(`<div class="dia">◆</div><h3>Plans</h3>
+  <div class="ms" style="text-align:left">
+    <b>Free</b> — current plan<br>
+    · ${r.limit} builder messages per day<br>
+    · Unlimited published apps<br>
+    · Your own Cloudflare engine, your data<br><br>
+    <b>Pro</b><br>
+    · More daily messages + priority brain<br>
+    · To activate, contact the platform owner
+  </div>
+  <button class="btn" onclick="closeModal();window.open('mailto:successeverydayww@gmail.com?subject='+encodeURIComponent('Forge Pro upgrade request')+'&body='+encodeURIComponent('Workspace: '+EMAIL))">Request Pro</button>
+  <button class="btn ghost" onclick="closeModal()">Close</button>`);
+}
+function paywall(t,d){plansModal();}
+/* ================= LIVE FEATURES v0.7 ================= */
+function filterRail(q){
+  q=(q||"").toLowerCase();
+  document.querySelectorAll(".ritem").forEach(x=>{const t=x.textContent.toLowerCase();x.style.display=!q||t.includes(q)?"flex":"none";});
+}
+function branchMenu(e){
+  e&&e.stopPropagation();
+  const m=document.getElementById("bmenu");
+  m.style.display=m.style.display==="none"?"block":"none";
+}
+function closeBranch(){document.getElementById("bmenu").style.display="none";}
+document.addEventListener("click",e=>{const b=document.getElementById("bmenu");if(b&&!e.target.closest(".branch"))b.style.display="none";});
+function copyAPI(){closeBranch();const u="https://skylar-forge.successeverydayww-cpu.workers.dev/api";try{navigator.clipboard.writeText(u);}catch(e){}toast("API endpoint copied");}
+function copyKey(){closeBranch();try{navigator.clipboard.writeText(KEY);}catch(e){}toast("Workspace key copied — keep it secret");}
+function dataTab(t){
+  document.getElementById("tb-tables").classList.toggle("on",t==="tables");
+  document.getElementById("tb-backup").classList.toggle("on",t==="backup");
+  if(t==="tables"){renderData();}else{renderBackup();}
+}
+function filterTables(q){
+  q=(q||"").toLowerCase();
+  document.querySelectorAll("#page .grid2 .card").forEach(c=>{const t=c.textContent.toLowerCase();c.style.display=!q||t.includes(q)?"":"none";});
+}
+function sortTables(dir){
+  const g=document.querySelector("#page .grid2");
+  if(!g)return;
+  const cards=[...g.querySelectorAll(".card")];
+  cards.sort((a,b)=>dir==="za"?b.textContent.localeCompare(a.textContent):a.textContent.localeCompare(b.textContent));
+  cards.forEach(c=>g.appendChild(c));
+}
+/* ---- Backup & Restore (real) ---- */
+function renderBackup(){
+  document.getElementById("tables-tools").style.display="none";
+  const el=document.querySelector("#page .grid2, #page .dash");
+  const host=document.getElementById("page");
+  const html=`<div class="card"><h3>Backup</h3><div class="csub">Download all your tables and records as one JSON file.</div>
+    <button class="btn sm" onclick="exportBackup()">⬇ Export backup</button></div>
+    <div class="card"><h3>Restore</h3><div class="csub">Import a backup file. Tables that don't exist yet are created; all records are added.</div>
+    <input type="file" id="bkp-file" accept="application/json" style="display:none" onchange="importBackup(this)">
+    <button class="btn sm" onclick="document.getElementById('bkp-file').click()">⬆ Import backup</button>
+    <div class="formnote">Import adds records — it never deletes your current data.</div></div>`;
+  if(el){el.insertAdjacentHTML("beforebegin",html);}
+  else{host.insertAdjacentHTML("beforeend",html);}
+}
+async function exportBackup(){
+  toast("Preparing backup…");
+  const out={app:EMAIL,exported_at:new Date().toISOString(),schemas:SCHEMAS,records:{}};
+  for(const sc of SCHEMAS){
+    const r=await api({act:"rec.list",key:KEY,entity:sc.entity,limit:500});
+    out.records[sc.entity]=r.records||[];
+  }
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="forge-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+  toast("Backup downloaded");
+}
+async function importBackup(inp){
+  const f=inp.files[0];if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    let added=0,tables=0;
+    for(const sc of (data.schemas||[])){
+      if(!SCHEMAS.find(x=>x.entity===sc.entity)){await api({act:"schema.create",key:KEY,entity:sc.entity,fields:sc.fields||{}});tables++;}
+    }
+    for(const [ent,recs] of Object.entries(data.records||{})){
+      for(const rec of recs){
+        const d={...rec};delete d.id;delete d.created_at;delete d.updated_at;delete d.created_by;
+        const r=await api({act:"rec.create",key:KEY,entity:ent,data:d});
+        if(!r.err)added++;
+      }
+    }
+    await refreshPreview();
+    toast("Restored: "+added+" records"+(tables?", "+tables+" new tables":""));
+    dataTab("tables");
+  }catch(e){toast("Invalid backup file",1);}
+}
+/* ---- Analytics (real data) ---- */
+async function renderAnalytics(){
+  const el=document.getElementById("page");
+  el.innerHTML='<div class="pgtitle">Analytics</div><div class="pgsub">Live numbers from your app — no estimates.</div><div class="skel"></div>';
+  const counts=await Promise.all(SCHEMAS.map(x=>api({act:"rec.stats",key:KEY,entity:x.entity,q:{}})));
+  const creds=await api({act:"credits",key:KEY});
+  const fns=await api({act:"fn.list",key:KEY});
+  const runs=await api({act:"runs",key:KEY});
+  const total=counts.reduce((a,c)=>a+(c.count||0),0);
+  const maxC=Math.max(1,...counts.map(c=>c.count||0));
+  window._lastCredits=creds.credits||{used:0,limit:30};
+  el.innerHTML=`
+    <div class="pgtitle">Analytics</div>
+    <div class="pgsub">Live numbers from your app — no estimates.</div>
+    <div class="mrow">
+      <div class="metric"><div class="ml">Records</div><div class="mv">${total}</div></div>
+      <div class="metric"><div class="ml">Data tables</div><div class="mv">${SCHEMAS.length}</div></div>
+      <div class="metric"><div class="ml">Builder messages today</div><div class="mv">${(creds.credits||{}).used||0}<span style="font-size:13px;color:var(--dim)"> / ${(creds.credits||{}).limit||30}</span></div></div>
+      <div class="metric"><div class="ml">Functions</div><div class="mv">${(fns.fns||[]).length}</div></div>
+      <div class="metric"><div class="ml">Recent runs</div><div class="mv">${(runs.runs||[]).length}</div></div>
+    </div>
+    <div class="card"><h3>Records per table</h3>
+      ${SCHEMAS.length?'<div class="chart">'+SCHEMAS.map((x,i)=>{const c=counts[i].count||0;return `<div class="cbar"><div class="lbl">${esc(x.entity)}</div><div class="track"><div class="fill" style="width:${(c/maxC)*100}%"></div></div><div class="n">${c} records</div></div>`;}).join("")+'</div>':'<div class="dash"><div class="t">No tables yet</div>Build something in the chat and analytics will appear here.</div>'}
+    </div>`;
+}
+/* ---- Workflows (real functions + automations) ---- */
+async function renderWorkflows(){
+  const el=document.getElementById("page");
+  el.innerHTML='<div class="pgtitle">Workflows</div><div class="pgsub">Functions and automations that run your app.</div><div class="skel"></div>';
+  const fns=await api({act:"fn.list",key:KEY});
+  const autos=await api({act:"auto.list",key:KEY});
+  const runs=await api({act:"runs",key:KEY});
+  el.innerHTML=`
+    <div class="pgtitle">Workflows</div>
+    <div class="pgsub">Functions and automations that run your app — create them by asking the builder chat.</div>
+    <div class="card"><h3>Functions (${(fns.fns||[]).length})</h3>
+      ${(fns.fns||[]).length?'<table class="data"><tr><th>Name</th><th>Created</th><th></th></tr>'+fns.fns.map(f=>`<tr><td><b>${esc(f.name)}</b></td><td class="idcell">${esc(String(f.created_at||"").slice(0,10))}</td><td style="text-align:right"><button class="btn ghost sm" onclick="runFnModal('${esc(f.name)}')">Run</button></td></tr>`).join("")+'</table>':'<div class="dash"><div class="t">No functions yet</div>Ask the builder chat: "create a function named dailyReport that lists all records and writes a summary".</div>'}
+    </div>
+    <div class="card"><h3>Automations (${(autos.autos||[]).length})</h3>
+      ${(autos.autos||[]).length?'<table class="data"><tr><th>Kind</th><th>Trigger</th><th>Runs</th><th>Enabled</th></tr>'+autos.autos.map(a=>`<tr><td><b>${esc(a.kind)}</b></td><td>${esc(a.kind==="sched"?"every "+a.every_min+" min":"on "+esc(String(a.event||"create"))+" in "+esc(String(a.entity||"")))} → ${esc(String(a.fn||""))}</td><td class="idcell">${esc(String(a.last_run||"—").slice(0,16).replace("T"," "))}</td><td><button class="btn ghost sm" onclick="toggleAuto(${a.id},${a.enabled?0:1})">${a.enabled?"On":"Off"}</button></td></tr>`).join("")+'</table>':'<div class="dash"><div class="t">No automations yet</div>Ask the builder chat to wire a function to a table event.</div>'}
+    </div>
+    <div class="card"><h3>Recent runs</h3>
+      ${(runs.runs||[]).length?'<table class="data"><tr><th>Function</th><th>When</th><th>Result</th></tr>'+runs.runs.slice(0,12).map(r=>`<tr><td><b>${esc(String(r.fn||""))}</b></td><td class="idcell">${esc(String(r.created_at||"").slice(0,16).replace("T"," "))}</td><td>${r.err?'<span style="color:#e06c75">error</span>':'<span style="color:#2ecc71">ok</span>'}</td></tr>`).join("")+'</table>':'<div class="dash"><div class="t">No runs yet</div>Run a function and its history appears here.</div>'}
+    </div>`;
+}
+function runFnModal(name){
+  openModal(`<div class="dia">▶</div><h3>Run ${esc(name)}</h3>
+  <div class="fieldrow"><label>Arguments (JSON, optional)</label><textarea id="fnargs" rows="3" placeholder="{}"></textarea></div>
+  <button class="btn" onclick="doRunFn('${esc(name)}')">Run now</button>
+  <button class="btn ghost" onclick="closeModal()">Cancel</button>
+  <div class="formnote" id="fnout" style="margin-top:10px"></div>`);
+}
+async function doRunFn(name){
+  let args={};
+  try{const t=document.getElementById("fnargs").value.trim();if(t)args=JSON.parse(t);}catch(e){return toast("Arguments must be valid JSON",1);}
+  document.getElementById("fnout").textContent="Running…";
+  const r=await api({act:"fn.run",key:KEY,fn:name,args});
+  document.getElementById("fnout").textContent=r.err?("Error: "+r.err):("Done: "+JSON.stringify(r).slice(0,300));
+}
+async function toggleAuto(id,en){
+  const r=await api({act:"auto.toggle",key:KEY,id,enabled:!!en});
+  if(r.err)return toast(r.err,1);
+  renderWorkflows();
+}
+/* ---- Share ---- */
+async function sendInvites(){
+  if(!PUBURL)return toast("Publish your app first");
+  const text="Come try my app: "+PUBURL;
+  if(navigator.share){try{await navigator.share({title:document.title,text:"Come try my app",url:PUBURL});return;}catch(e){if(e.name==="AbortError")return;}}
+  window.open("https://wa.me/?text="+encodeURIComponent(text));
+}
+
 document.getElementById("msg").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}});
 </script>
 </body>
