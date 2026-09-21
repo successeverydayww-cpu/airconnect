@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v102</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v103</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -3784,7 +3784,10 @@ var GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
 /* v33: SFU group-call state (Cloudflare Realtime) */
 var SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false,vOn:false,vmid:null,vtrack:null,tiles:{},pendVidNode:null};
 async function gCall(){
+  /* v103 (skylar): group-call hardening — never start a group call in offline mode or while a 1:1 call is live */
   if(GC.on){toast("Already in a group call");return;}
+  if(typeof MODE!=="undefined"&&MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+  if(typeof state!=="undefined"&&(state==="live"||state==="dialing"||state==="incoming")){toast("End your current call first");return;}
   if(!GROUP_OPEN)return;
   /* v93: old-engine group (server has never heard of it) — calls could never connect. Upgrade it first, then call. */
   const g=GROUPS.find(function(x){return x.id===GROUP_OPEN;});
@@ -3806,6 +3809,8 @@ async function gJoin(gid,initiator){
   try{startRing("dial");}catch(e){}
   gcUI();
   GC.gcTick=setInterval(()=>{const el=document.getElementById("gcstat");if(el){const s=Math.floor((Date.now()-GC.t0)/1000);el.textContent="Group call · "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}},1000);
+  /* v103 (skylar): no-answer timeout — if nobody joins within 75s the call ends cleanly instead of ringing forever */
+  GC.noJoin=setTimeout(function(){if(GC.on&&!Object.keys(SF.mems||{}).length){toast("No one joined the call — ended");try{gLeave();}catch(e){}}},75000);
   try{xlGcStart(gid);}catch(e){}
   sfuJoin(gid);
 }
@@ -3822,7 +3827,7 @@ async function sfuJoin(gid){
       await log("GC-SFU: session attempt "+(att+1)+" failed ("+((r&&r.err)||"?")+")");
       if(att<2){toast("Group call connecting…");await new Promise(z=>setTimeout(z,2500));}
     }
-    if(!r||!r.ok||!r.sid){toast("Group call audio could not connect — check network and rejoin");await log("GC-SFU: no session after 3 attempts");return;}
+    if(!r||!r.ok||!r.sid){toast("Group call audio could not connect — call ended");await log("GC-SFU: no session after 3 attempts");try{gLeave();}catch(e){}return;}
     SF.sid=r.sid;
     SF.pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.cloudflare.com:3478","stun:stun.l.google.com:19302"]}]});
     SF.pc.ontrack=async e=>{
@@ -3859,7 +3864,7 @@ async function sfuJoin(gid){
       toast("Group call audio connecting… retrying");
       await new Promise(z=>setTimeout(z,2500));
       const pub2=await api("sfupub",{from:ME,sid:SF.sid,sdp:SF.pc.localDescription.sdp,mid});
-      if(!pub2||!pub2.ok){await log("GC-SFU: publish retry failed — leaving");toast("Group call audio failed — please rejoin");sfuLeave(true);return;}
+      if(!pub2||!pub2.ok){await log("GC-SFU: publish retry failed — leaving");toast("Group call audio failed — call ended");try{gLeave();}catch(e){}return;}
       await SF.pc.setRemoteDescription({type:"answer",sdp:pub2.sdp});
     } else
     if(pub&&pub.ok)await SF.pc.setRemoteDescription({type:"answer",sdp:pub.sdp});
@@ -4008,46 +4013,64 @@ function gcVideoLayout(){
 }
 function gcName(p){return WIN_NAMES[p]||("+"+p);}
 function gcUI(){
+  /* v103 (skylar): diff-render — the call screen is built ONCE; the 3-second roster poll now
+     only updates names/status/buttons. Rebuilding innerHTML every tick flickered and
+     constantly recreated the video tiles. */
   let el=document.getElementById("gcview");
-  if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#D7EEE0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
   const g=GROUPS.find(x=>x.id===GC.g);
   const peers=Object.keys(SF.mems||{});
+  if(!el){
+    el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#D7EEE0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";
+    el.innerHTML='<div style="font-size:30px">👥📞</div><div id="gcname" style="font-weight:700;font-size:17px"></div>'+
+    '<div id="gcstat" style="font-size:13px;opacity:.85">Ringing — waiting for members to connect…</div>'+
+    '<div id="gcvids" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px"></div>'+
+    '<div id="gcconn" style="font-size:12px;opacity:.7"></div><div id="gcchips"></div>'+
+    '<div style="display:flex;gap:14px;margin-top:10px">'+
+    '<button id="gcbtnMute" onclick="gMute()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px"></button>'+
+    '<button id="gcbtnVid" onclick="gcVideoToggle()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px"></button>'+
+    '<button onclick="gLeave()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:#DC2626;color:#fff">✖</button></div>';
+    document.body.appendChild(el);
+  }
+  const s=Math.floor((Date.now()-GC.t0)/1000);
+  const dur=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  try{$("gcname").textContent=g?g.name:"Group call";}catch(e){}
+  try{$("gcstat").textContent=peers.length?("Group call · "+dur):"Ringing — waiting for members to connect…";}catch(e){}
+  try{$("gcconn").textContent=(peers.length+1)+" connected";}catch(e){}
   let chips='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px">';
   chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(ME))+' (you)</span>';
   for(const p of peers)chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(p))+'</span>';
   chips+="</div>";
-  el.innerHTML='<div style="font-size:30px">👥📞</div><div style="font-weight:700;font-size:17px">'+esc(g?g.name:"Group call")+'</div>'+
-  '<div id="gcstat" style="font-size:13px;opacity:.85">'+(peers.length?"Group call · 0:00":"Ringing — waiting for members to connect…")+'</div>'+
-  '<div id="gcvids" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px"></div>'+
-  '<div style="font-size:12px;opacity:.7">'+(peers.length+1)+" connected</div>"+chips+
-  '<div style="display:flex;gap:14px;margin-top:10px">'+
-  '<button onclick="gMute()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(GC.muted?"#fff":"rgba(255,255,255,.25)")+';color:'+(GC.muted?"#00806F":"#fff")+'">'+(GC.muted?"🔇":"🎙️")+"</button>"+
-  '<button onclick="gcVideoToggle()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:'+(SF.vOn?"#FDE047":"rgba(255,255,255,.25)")+';color:'+(SF.vOn?"#00806F":"#fff")+'">'+(SF.vOn?"📷":"🎥")+"</button>"+
-  '<button onclick="gLeave()" style="border:0;border-radius:50%;width:54px;height:54px;font-size:22px;background:#DC2626;color:#fff">✖</button></div>';
+  try{$("gcchips").innerHTML=chips;}catch(e){}
+  if(peers.length&&GC.noJoin){clearTimeout(GC.noJoin);GC.noJoin=null;}
+  const mb=document.getElementById("gcbtnMute");if(mb){mb.textContent=GC.muted?"🔇":"🎙️";mb.style.background=GC.muted?"#fff":"rgba(255,255,255,.25)";mb.style.color=GC.muted?"#00806F":"#fff";}
+  const vb=document.getElementById("gcbtnVid");if(vb){vb.textContent=SF.vOn?"📷":"🎥";vb.style.background=SF.vOn?"#FDE047":"rgba(255,255,255,.25)";vb.style.color=SF.vOn?"#00806F":"#fff";}
   gcVideoLayout();
 }
 function gMute(){GC.muted=!GC.muted;if(GC.stream)for(const t of GC.stream.getTracks())t.enabled=!GC.muted;gcUI();}
 function gLeave(){
-  /* v55 fix: was gated on GC.on -- if that flag ever went stale (peer left,
-     signaling race, etc) the exit button + Android back both silently did
-     nothing, stranding the user on a full-screen call overlay until a hard
-     refresh. Now the DOM/media teardown always runs; only the "tell peers
-     I'm leaving" signal is skipped when there's truly no active call. */
+  /* v103 (skylar): hardened exit — notifies the FULL group member list (invitees not yet in the SFU
+     roster were never told the call ended and kept ringing forever), clears the no-answer timer,
+     full media teardown */
   const wasOn=GC.on;
   if(wasOn){
-    for(const p of Object.keys(SF.mems||{})){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(()=>{});}
+    const gAll=GROUPS.find(x=>x.id===GC.g);
+    const list=Array.from(new Set(Object.keys(SF.mems||{}).concat(((gAll&&gAll.members)||[])))).filter(function(x){return x!==ME;});
+    for(const p of list){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(function(){});}
     try{sfuLeave(true);}catch(e){}
   }
+  if(GC.noJoin){try{clearTimeout(GC.noJoin);}catch(e){}}
   if(GC.stream)for(const t of GC.stream.getTracks())t.stop();
   if(GC.gcTick)clearInterval(GC.gcTick);
-  GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
+  GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null,noJoin:null};
   const el=document.getElementById("gcview");if(el)el.remove();
-  document.querySelectorAll("[id^='gca-']").forEach(a=>{try{a.remove();}catch(e){}});
+  document.querySelectorAll("[id^='gca-']").forEach(function(a){try{a.remove();}catch(e){}});
   const bar=document.getElementById("callbar");if(bar)bar.remove();
 }
 var GCI=null;
 function gcInvite(from,gid){
+  /* v103 (skylar): no invite banner while a 1:1 call is active — prevents overlapping calls */
   if(GC.on||GCI)return;
+  if(typeof state!=="undefined"&&(state==="live"||state==="dialing"||state==="incoming"))return;
   const g=GROUPS.find(x=>x.id===gid);
   GCI={from,gid};
   let el=document.getElementById("gcinv");
@@ -4060,10 +4083,13 @@ function gcInvite(from,gid){
   document.body.appendChild(el);
   try{navigator.vibrate&&navigator.vibrate([400,200,400]);}catch(e){}
   try{startRing("in");}catch(e){}
-  /* v78: the invite keeps ringing until the user answers — a group call stays joinable while it rings */
+  /* v78: the invite stays joinable — but v103: the RING itself stops after 45s (no endless ringing) */
+  try{clearTimeout(GCI_RING);}catch(e){}
+  GCI_RING=setTimeout(function(){try{stopRing();}catch(e){}},45000);
 }
-function gcAccept(){const i=GCI;gcDecline();if(i)gJoin(i.gid,false);}
-function gcDecline(){GCI=null;const el=document.getElementById("gcinv");if(el)el.remove();try{stopRing();}catch(e){}}
+function gcAccept(){if(typeof state!=="undefined"&&(state==="live"||state==="dialing"||state==="incoming")){toast("End your current call first");return;}const i=GCI;gcDecline();if(i)gJoin(i.gid,false);}
+var GCI_RING=null;
+function gcDecline(){try{clearTimeout(GCI_RING);GCI_RING=null;}catch(e){}GCI=null;const el=document.getElementById("gcinv");if(el)el.remove();try{stopRing();}catch(e){}}
 
 /* ---- v30: group voice notes + call ringbar ---- */
 var GV={b64:null,ch:[],rec:null,stream:null,t0:0,timer:null};
@@ -4225,7 +4251,7 @@ async function handleSigs(msgs){
     if(m.type==="goffer"){continue;} /* v33: SFU mode — legacy mesh sigs ignored */
     if(m.type==="ganswer"){continue;}
     if(m.type==="gice"){continue;}
-    if(m.type==="gbye"){if(GC.on){gcUI();}continue;} /* member list refreshes via poll */
+    if(m.type==="gbye"){if(GCI&&m.payload&&GCI.gid===m.payload.g){gcDecline();}if(GC.on){gcUI();}continue;} /* member list refreshes via poll */
   }
 
   if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
@@ -5210,6 +5236,78 @@ async function planPayGo(i){
     toast("Submission failed — check connection and tap Submit again");
   }
 }
+/* ---- v103 (skylar): Group Language Plan payment page — T1 number, 30-min countdown, receipt + transaction number ---- */
+let _TR_T0=null,_TR_TICK=null;
+function translationPayClose(){let el=$("trPaySheet");if(el)el.remove();if(_TR_TICK){clearInterval(_TR_TICK);_TR_TICK=null;}}
+function translationPay(){
+  translationPayClose();
+  let el=document.createElement("div");el.id="trPaySheet";el.className="ovl";
+  const wal="4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa";
+  el.innerHTML='<div class="sheet" style="max-width:480px">'+
+  '<div style="font-weight:700;font-size:16px;margin-bottom:2px">🌍 Group Language Plan</div>'+
+  '<div style="font-size:12px;color:#64748B;margin-bottom:12px">Live voice-call translation for your group — 21 languages, real-time captions.</div>'+
+  '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
+  '<div style="flex:1"><div style="font-size:11px;font-weight:700;color:#92400E">TRANSLATION NUMBER</div><div style="font-family:monospace;font-size:15px;font-weight:800;color:#78350F">T1 · LANGUAGE PLAN</div></div>'+
+  '<button class="big" style="width:auto;padding:8px 12px;margin:0;background:#D7EEE0;color:#075E46;font-size:12px" onclick="acCopy(\'T1 Language Plan $3 / NGN 4800\');toast(\'Translation number copied ✓\')">📋 Copy</button></div>'+
+  '<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:10px;margin-bottom:10px;text-align:center">'+
+  '<div style="font-size:11px;font-weight:700;color:#B91C1C">PAY WITHIN</div>'+
+  '<div id="trTimer" style="font-family:monospace;font-size:26px;font-weight:800;color:#DC2626">30:00</div></div>'+
+  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:12px;margin-bottom:10px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#075E46;margin-bottom:6px">1 · Pay $3 / ₦4,800</div>'+
+  '<div style="font-size:12.5px;color:#075E46;line-height:1.55"><b>Outside Nigeria:</b> USDC on Solana<br><span style="font-family:monospace;word-break:break-all">'+wal+'</span>'+
+  '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\''+wal+'\');toast(\'Wallet address copied ✓\')">📋 Copy USDC wallet</button></div>'+
+  '<div style="font-size:12.5px;color:#075E46;line-height:1.55;margin-top:8px"><b>In Nigeria:</b> Rubies MFB · Success Friday · 8881724009'+
+  '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\'Rubies MFB · Success Friday · 8881724009\');toast(\'Bank details copied ✓\')">📋 Copy bank details</button></div></div>'+
+  '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:10px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">2 · Upload receipt + transaction number</div>'+
+  '<input type="file" id="trRcpIn" class="hide" accept="image/*" onchange="trRcpChosen(this)">'+
+  '<button class="big" style="width:100%;background:#fff;border:1px solid #075E46;color:#075E46" onclick="document.getElementById(\'trRcpIn\').click()">📷 Choose receipt photo</button>'+
+  '<div id="trRcpPrev" style="margin-top:8px;font-size:12.5px;color:#64748B"></div>'+
+  '<input id="trTxn" placeholder="Transaction number / reference from your payment" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:13px;margin-top:8px"></div>'+
+  '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:4px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">3 · Submit</div>'+
+  '<div style="font-size:12px;color:#64748B;margin-bottom:8px">Agent verification runs automatically — if your transaction number and receipt match within the time, the plan activates on its own.</div>'+
+  '<button id="trPayBtn" class="big" style="width:100%;background:#16A34A;color:#fff;font-size:15px;padding:14px" onclick="trPayGo()">✅ Submit payment (T1)</button></div>'+
+  '<button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="translationPayClose()">Close</button></div>';
+  document.body.appendChild(el);
+  _TR_T0=Date.now()+30*60*1000;
+  _TR_TICK=setInterval(function(){
+    const t=$("trTimer");
+    if(!t){if(_TR_TICK){clearInterval(_TR_TICK);_TR_TICK=null;}return;}
+    const left=Math.max(0,_TR_T0-Date.now());
+    t.textContent=Math.floor(left/60000)+":"+String(Math.floor(left/1000)%60).padStart(2,"0");
+    if(left<=0){t.textContent="expired — tap Submit to restart";const b=$("trPayBtn");if(b&&b.textContent.indexOf("Submit payment")>=0)b.textContent="⏱ Timer expired — tap Submit to restart the 30 minutes";}
+  },1000);
+}
+async function trRcpChosen(inp){
+  try{
+    if(!inp.files||!inp.files[0]){toast("Choose a photo");return;}
+    $("trRcpPrev").textContent="Reading…";
+    _PLAN_RCP=await walRcpShrink(inp.files[0]);
+    $("trRcpPrev").innerHTML="📷 "+esc(_PLAN_RCP.name||"receipt")+" ready ✓";
+  }catch(e){toast("Could not read that photo");_PLAN_RCP=null;}
+}
+async function trPayGo(){
+  const txn=(($("trTxn")&&$("trTxn").value)||"").trim();
+  if(!_PLAN_RCP){toast("Upload your payment receipt first (step 2)");return;}
+  if(!txn){toast("Type your transaction number (step 2)");return;}
+  const btn=$("trPayBtn");btn.disabled=true;btn.textContent="Submitting…";
+  try{
+    const d=await api("wtopup",{node:ME,amt:4800});
+    if(!d||!d.ok)throw 0;
+    const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
+    const st=await api("fstart",{from:ME,to:ME,name:"translation-receipt.jpg",n,pub:1});
+    if(!st||!st.fid)throw 0;
+    await fputParallel(st.fid,n,function(k){return _PLAN_RCP.b64.slice(k*CH,(k+1)*CH);},null);
+    const r2=await api("wrcpt",{node:ME,fid:st.fid,rcp:"PLAN T1 Translation $3 "+txn.slice(0,15)});
+    if(!r2||!r2.ok)throw 0;
+    translationPayClose();
+    toast("Submitted ✓ T1 — verification within 30 minutes");
+  }catch(e){
+    btn.disabled=false;btn.textContent="✅ Submit payment (T1)";
+    toast("Submission failed — check connection and tap Submit again");
+  }
+}
 function plansSheet(){
   let el=$("plansSheet");if(el)el.remove();
   el=document.createElement("div");el.id="plansSheet";el.className="ovl";
@@ -5222,6 +5320,11 @@ function plansSheet(){
     '<div style="font-size:12.5px;color:#64748B;margin-top:6px">'+p.d+'</div>'+
     '<button class="big" style="width:100%;margin-top:8px;background:#D7EEE0;color:#075E46;font-size:13px" onclick="planPay('+pi+')">Choose this plan — Pay & submit receipt</button></div>';
   }
+  cards+='<div style="background:#fff;border:1px solid #99F6E4;border-radius:12px;padding:12px;margin-bottom:8px">'+
+  '<div style="display:flex;align-items:center"><div style="flex:1"><span style="font-weight:700;font-size:15px">🌍 Group Language Plan</span></div>'+
+  '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#075E46">$3</div><div style="font-size:11px;color:#64748B">₦4,800 /month</div></div></div>'+
+  '<div style="font-size:12.5px;color:#64748B;margin-top:6px">Live voice-call translation for your group — 21 languages, real-time captions.</div>'+
+  '<button class="big" style="width:100%;margin-top:8px;background:#D7EEE0;color:#075E46;font-size:13px" onclick="planPayClose();translationPay()">Choose this plan — Pay & submit receipt</button></div>';
   el.innerHTML='<div class="sheet" style="max-width:480px">'+
   '<div style="font-weight:700;font-size:16px;margin-bottom:2px">💎 AirConnect Premium plans</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:12px">Monthly · cancel anytime · same value in dollars or Naira</div>'+
@@ -5295,11 +5398,10 @@ async function payPostsSheet(){
 function giClose(){gMenuClose();}
 
 function gPayTranslate(){
-  /* v98 (skylar): pay-for-translation row in Group options -> redirect to the app menu where plans are paid */
+  /* v103 (skylar): straight to the translation payment page — T1 number, 30-minute countdown, receipt + transaction number */
   try{giClose();}catch(e){}
   try{closeGroup();}catch(e){}
-  try{menuOpen();}catch(e){}
-  try{toast("Tap 💎 My Plans to pay for the 🌍 Group Language Plan");}catch(e){}
+  translationPay();
 }
 function gmsg2(num){
   giClose();
@@ -5582,7 +5684,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=102;
+const AC_V=103;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5792,12 +5894,14 @@ function menuOpen(){
   if(!mv._owned){mv._owned=1;
     const vs=document.getElementById("view-settings");
     /* v81: profile lives top-right in the header now, not in the menu (his directive) */
-    /* v102 (skylar): top Close-menu button removed — small round "close" button instead, always reachable */
+    /* v103 (skylar): pinned to the VIEWPORT (document.body), not inside the scrolling menu —
+       a transformed/scrolling ancestor made position:fixed scroll with the content before */
     const cb=document.createElement("div");
+    cb.id="menuCloseBtn";
     cb.style.cssText="position:fixed;right:14px;bottom:18px;width:64px;height:64px;border-radius:50%;background:#0D6E52;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.3);cursor:pointer;z-index:99";
     cb.textContent="close";
     cb.onclick=menuClose;
-    mv.appendChild(cb);
+    document.body.appendChild(cb);
     /* v85: WhatsApp-style profile row FIRST in the menu — photo+name, tap opens full profile (his directive: photo comes first) */
     const prow=document.createElement("div");
     prow.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer";
@@ -5855,6 +5959,7 @@ function menuOpen(){
   }
   document.getElementById("menuWrap").className="on";
   document.getElementById("menuView").className="on";
+  try{const c=document.getElementById("menuCloseBtn");if(c)c.style.display="flex";}catch(e){}
   try{
     const mp=(typeof PIC_CACHE!=="undefined"&&PIC_CACHE[ME])||null;
     const pel=document.getElementById("menuProfPic");if(pel)pel.innerHTML=mp?'<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover">':esc(String((typeof ME_NAME!=="undefined"&&ME_NAME)||"?").charAt(0).toUpperCase());
@@ -5865,6 +5970,7 @@ function menuOpen(){
 function menuClose(){
   document.getElementById("menuWrap").className="";
   document.getElementById("menuView").className="";
+  try{const c=document.getElementById("menuCloseBtn");if(c)c.style.display="none";}catch(e){}
 }
 </script>
 </body>
