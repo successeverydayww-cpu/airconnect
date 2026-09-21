@@ -184,7 +184,7 @@ footer a{color:#64748B}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="menuBtn" aria-label="Menu" onclick="menuOpen()" style="background:none;border:0;padding:6px;cursor:pointer;display:inline-flex;flex-direction:column;justify-content:center;gap:4px"><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span></button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="My profile" onclick="openProfileSheet()" style="background:#fff;border:0;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#075E46;flex:0 0 30px">?</button><button id="menuBtn" aria-label="Menu" onclick="menuOpen()" style="background:none;border:0;padding:6px;cursor:pointer;display:inline-flex;flex-direction:column;justify-content:center;gap:4px"><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span></button></div>
   </div>
 
   <div id="view-chats" class="view">
@@ -1125,7 +1125,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=80');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=81');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1833,6 +1833,7 @@ function wtMyChannel(){
 /* ---------------- chats ---------------- */
 function lastOf(p){const c=CHATS[p];return c&&c.length?c[c.length-1]:null;}
 function renderLists(){
+  try{meBtnPaint();}catch(e){}
   let fr=WIN_FRIENDS;
   if(SEARCH)fr=fr.filter(f=>((WIN_NAMES[f.id]||"")+" "+(lastOf(f.id)?String(lastOf(f.id).text||"").slice(0,80):"")).toLowerCase().includes(SEARCH));
   const cl=$("chatlist");cl.innerHTML="";
@@ -5076,7 +5077,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=80;
+const AC_V=81;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5103,7 +5104,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=80").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=81").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -5167,24 +5168,50 @@ window.addEventListener("unhandledrejection",e=>{
 
 <div id="menuWrap" onclick="menuClose()"></div>
 <div id="menuView"></div>
+<style>#menuView{overflow-x:hidden;width:100%;max-width:100%;box-sizing:border-box}#menuView .big{width:calc(100% - 24px);box-sizing:border-box}#menuView .card,#menuView input,#menuView textarea,#menuView select{max-width:100%;box-sizing:border-box}</style>
 <script>
+function meBtnPaint(){
+  try{
+    const b=document.getElementById("meBtn");if(!b)return;
+    const mp=PIC_CACHE[ME];
+    b.innerHTML=mp?'<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover">':esc(String(ME_NAME||"?").charAt(0).toUpperCase());
+  }catch(e){}
+}
+function openProfileSheet(){
+  const c=document.getElementById("profCard");
+  if(!c){menuOpen();return;}
+  let el=document.getElementById("profSheet");if(el)el.remove();
+  el=document.createElement("div");el.id="profSheet";
+  el.style.cssText="position:fixed;inset:0;z-index:70;background:#F1F5F9;display:flex;flex-direction:column;";
+  el.innerHTML='<div class="ohdr" style="background:#075E46"><button class="bk" onclick="closeProfileSheet()">‹</button><div class="nm" style="flex:1;color:#fff">My profile</div><div style="width:30px"></div></div>'+
+  '<div id="profSheetBody" style="flex:1;overflow:auto;padding:12px"></div>';
+  document.body.appendChild(el);
+  document.getElementById("profSheetBody").appendChild(c);
+  c.style.display="block";
+}
+function closeProfileSheet(){
+  const el=document.getElementById("profSheet");if(!el)return;
+  const c=document.getElementById("profCard");
+  try{
+    if(c){
+      const mv=document.getElementById("menuView");
+      const inMenu=mv&&mv.contains(document.getElementById("view-settings"));
+      if(inMenu){c.style.display="none";mv.appendChild(c);}
+      else{const vs=document.getElementById("view-settings");if(vs)vs.insertBefore(c,vs.firstChild);else mv.appendChild(c);}
+    }
+  }catch(e){}
+  el.remove();
+}
 function menuOpen(){
   const mv=document.getElementById("menuView");
   if(!mv._owned){mv._owned=1;
     const vs=document.getElementById("view-settings");
-    const prof=document.createElement("div");
-    prof.style.cssText="background:#D7EEE0;color:#075E46;border-radius:14px;padding:14px;margin:12px;display:flex;gap:12px;align-items:center";
-    prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#075E46">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
-      '<div><div style="font-size:16px;font-weight:700">'+esc(ME_NAME||"Me")+'</div>'+
-      '<div style="font-size:12px;opacity:.85">+'+ME+' · my profile</div></div>';
-    prof.onclick=function(){try{const c=document.getElementById("profCard");if(c){c.scrollIntoView({behavior:"smooth",block:"center"});return;}}catch(e){}document.getElementById("picinput")&&document.getElementById("picinput").click();};
-    mv.appendChild(prof);
-    try{const mp=PIC_CACHE[ME];if(mp){prof.querySelector("#menuProfAv").innerHTML='<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}}catch(e){}
+    /* v81: profile lives top-right in the header now, not in the menu (his directive) */
     const back=document.createElement("button");
     back.className="big blue";back.style.cssText="margin:12px;width:calc(100% - 24px)";
     back.textContent="✕ Close menu";back.onclick=menuClose;
     mv.appendChild(back);
-    if(vs){vs.className="view";mv.appendChild(vs);} /* v78 FIX: hide class kept the whole settings/profile block invisible in the menu */
+    if(vs){vs.className="view";mv.appendChild(vs);try{const pc=document.getElementById("profCard");if(pc)pc.style.display="none";}catch(e){}} /* v81: settings stay in the menu, the profile card is owned by the top-right avatar sheet */
     const pay=document.createElement("button");
     pay.className="big";pay.style.cssText="margin:12px;background:#D7EEE0;color:#075E46;font-size:14px";
     pay.innerHTML="💰 Pay posts — channel earnings";pay.onclick=function(){menuClose();payPostsSheet();};
