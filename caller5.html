@@ -1769,8 +1769,14 @@ async function fputParallel(fid,n,getV,prog){
     const idx=[];for(let i=b;i<Math.min(n,b+PAR);i++)idx.push(i);
     await Promise.all(idx.map(async function(i){
       const v=await getV(i);
-      const r=await api("fput",{from:ME,fid:fid,ci:i,v:v});
-      if(!r||!r.ok)throw 0;
+      /* v111 (skylar): one flaky mobile-signal moment used to kill the whole upload —
+         every chunk now gets 3 attempts with a short backoff before giving up. */
+      let ok=false;
+      for(let t=0;t<3&&!ok;t++){
+        try{const r=await api("fput",{from:ME,fid:fid,ci:i,v:v});if(r&&r.ok)ok=true;}catch(e){}
+        if(!ok)await new Promise(res=>setTimeout(res,800*(t+1)));
+      }
+      if(!ok)throw 0;
       done++;if(prog)try{prog(Math.round(done/n*100));}catch(e){}
     }));
   }
@@ -1800,13 +1806,18 @@ async function wtPost(){
       await fputParallel(fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},function(p){wtProg(p);});
     } else if(WT_VID){
       name=WT_VID.name||"video";
-      const CH=300000; /* v110: 4x bigger chunks + 6-lane parallel — a full 100MB video posts in seconds, not minutes */
-      const n=Math.min(900,Math.ceil(WT_VID.size/CH));
+      /* v111 FIX (the video-post killer): this sliced 300,000 BYTES per chunk, but
+         each slice becomes a ~400,000-CHAR base64 string — over the server's 310,000
+         cap — so the first chunk was rejected and EVERY video post failed at "Posting…".
+         Photos worked because they slice base64 chars directly. Correct math: 225,000
+         bytes per chunk = 300,000 b64 chars, safely under the cap. */
+      const CH=300000, BYTES=Math.round(CH*0.75);
+      const n=Math.min(900,Math.ceil(WT_VID.size/BYTES));
       const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
       if(!s||!s.fid)throw 0;
       fid=s.fid;
       await fputParallel(fid,n,async function(i){
-        const sl=WT_VID.slice(i*CH,(i+1)*CH);
+        const sl=WT_VID.slice(i*BYTES,(i+1)*BYTES);
         return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.readAsDataURL(sl);});
       },function(p){wtProg(p);});
     }
@@ -1818,9 +1829,11 @@ async function wtPost(){
     /* v109 (skylar): posting from his CHANNEL PAGE used to dump him on the text feed —
        the new video was NOT visible there, so it looked like the post vanished until
        he left and came back. Land him back on the exact page he posted from. */
-    if(wasCh){WT_CH_PAGE=wasCh;wtChanPage(wasCh);}
-    else{wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();}
-  }catch(e){toast("Post failed — check connection and try again");$("wtVidStat").textContent="";try{$("wtPostBtn").style.display="";$("wtVidPick").style.display="flex";}catch(e2){}} /* v110: Post button returns the moment anything fails */
+    /* v111 (skylar flow): after auto-posting, ALWAYS land him on HIS OWN channel —
+       clean and ready, so he can immediately create another post; each new post also
+       appears in Watch/Shorts for everyone right away. */
+    wtChanPage(ME);
+  }catch(e){toast("Upload failed — tap Post to retry");$("wtVidStat").textContent="";try{$("wtPostBtn").style.display="";$("wtVidPick").style.display="flex";}catch(e2){}} /* v110: Post button returns the moment anything fails */
 }
 async function wtChannels(){
   const el=$("wtchans");
@@ -5872,7 +5885,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=110;
+const AC_V=111;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
