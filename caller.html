@@ -200,6 +200,7 @@ footer a{color:#64748B}
         <div style="font-weight:600;margin-bottom:8px" id="vtTitle">✂ Trim your video</div>
         <video id="vtVid" playsinline muted style="width:100%;max-height:36vh;background:#000;border-radius:8px"></video>
         <div style="font-size:11.5px;color:#64748B;margin-top:6px;text-align:center" id="vtHint">Drag either handle — the video previews where you land</div>
+        <div style="position:relative;height:56px;margin-top:10px;background:#0F172A;border-radius:8px;overflow:hidden"><div id="vtStrip" style="display:flex;height:100%;width:100%"></div><div id="vtBar2" style="position:absolute;top:0;bottom:0;border:3px solid #10B981;border-radius:6px;pointer-events:none;box-sizing:border-box"></div></div>
         <div style="position:relative;height:26px;margin-top:10px">
           <div style="position:absolute;left:0;right:0;top:11px;height:5px;background:#CBD5E1;border-radius:4px"></div>
           <div id="vtBar" style="position:absolute;top:11px;height:5px;background:#D7EEE0;border-radius:4px"></div>
@@ -230,7 +231,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v108</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v109</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -1542,10 +1543,12 @@ async function wtAutoPlayVid(pid,fid,n,box){
     const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
-    box.innerHTML='<video preload="metadata" id="wtv-'+pid+'" playsinline muted'+(snd?' loop autoplay':' controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
+    box.innerHTML='<video preload="metadata" id="wtv-'+pid+'" playsinline'+(snd?' loop autoplay':' muted controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
     const vv=document.getElementById("wtv-"+pid);
-    /* v72: shorts autoplay MUTED (tap 🔊 for sound); long videos wait for the play button */
-    if(snd){ vv.play().catch(function(){}); }
+    /* v109 (skylar): videos under 5 minutes autoplay WITH SOUND as users scroll —
+       only 5min+ longs stay muted behind the tap. If the browser blocks sound until a
+       tap, we fall back to muted + the 🔊 tap overlay (never a dead video). */
+    if(snd){ vv.play().catch(function(){ vv.muted=true; const mb=document.getElementById("wtmute-"+pid); if(mb)mb.textContent="🔇"; vv.play().catch(function(){}); }); }
     if(te>ts){
       vv.addEventListener("loadedmetadata",function(){try{vv.currentTime=ts;}catch(e){}});
       vv.addEventListener("timeupdate",function(){if(vv.currentTime>=te){vv.currentTime=ts;}});
@@ -1640,28 +1643,29 @@ function wtPCats(){
 }
 function wtComposeClose(){$("wtComposer").className="ovl hide";}
 function wtVidChosen(){
+  /* v109 (skylar): in the CHANNEL composer the selected video must be VISIBLE immediately —
+     no trim sheet, no detour. (Trim stays available as an optional link on the preview.)
+     Also: 8s watchdog on metadata so a stubborn file can never silently hang the picker. */
   const fi=$("wtVidIn");const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
   if(f.size>100*1024*1024){toast("Please keep videos under 100MB");return;}
-  WT_VIDPICK=f;WT_TS=0;WT_TE=0;
+  toast("Reading video…");
+  WT_VIDPICK=f;
   try{
-    const u=URL.createObjectURL(f);const v=document.createElement("video");v.preload="metadata";v.src=u;
-    v.onloadedmetadata=()=>{
-      const d=(v.duration&&isFinite(v.duration))?v.duration:0;
-      URL.revokeObjectURL(u);
+    const u=URL.createObjectURL(f);const v=document.createElement("video");v.preload="metadata";v.muted=true;v.src=u;
+    let fin=false;
+    const finish=(d)=>{
+      if(fin)return;fin=true;
+      try{URL.revokeObjectURL(u);}catch(e){}
       if(!d){toast("Could not read that video — try another file");return;}
-      if(d>=300){
-        /* v77: videos 5 minutes and longer are NEVER cropped — straight preview + post to Watch */
-        WT_VID=f;WT_VIDPICK=f;WT_TS=0;WT_TE=Math.round(d);WT_VIDDUR=Math.round(d);WT_PIC="";
-        try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);}WT_VID_URL=URL.createObjectURL(f);}catch(e){WT_VID_URL="";}
-        wtShowPrev();
-        return;
-      }
-      /* v56: same WhatsApp-style trim sheet as status — pick the window before posting.
-         Watch keeps full quality (no re-encode); the chosen window is stored and the
-         player jumps straight to it, so trimming here never risks the upload. */
-      vtOpen({src:URL.createObjectURL(f),dur:d,maxWin:0,mode:"watch",title:"✂ Trim your post (optional)"});
+      WT_VID=f;WT_VIDPICK=f;WT_TS=0;WT_TE=Math.round(d);WT_VIDDUR=Math.round(d);WT_PIC="";
+      try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);}WT_VID_URL=URL.createObjectURL(f);}catch(e){WT_VID_URL="";}
+      wtShowPrev();
+      try{$("wtVidStat").textContent="📹 "+(f.name||"video")+" ("+Math.round(f.size/1048576)+"MB · "+vtFmt(Math.round(d))+") — tap Post to upload & publish";}catch(e){}
     };
+    v.onloadedmetadata=()=>finish((v.duration&&isFinite(v.duration))?v.duration:0);
+    v.onerror=()=>finish(0);
+    setTimeout(()=>finish((v.duration&&isFinite(v.duration))?v.duration:0),8000);
   }catch(e){toast("Could not read that video");}
 }
 function wtVidTrimmed(s,e){
@@ -1722,7 +1726,12 @@ async function fputParallel(fid,n,getV,prog){
     }));
   }
 }
+function wtProg(p){
+  /* v109 (skylar): bold upload progress — 0 to 100% in plain sight, auto-posts when it hits 100 */
+  try{$("wtVidStat").innerHTML='<div style="font-weight:700;color:#075E46">Uploading… '+p+'%</div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:#10B981;border-radius:6px;transition:width .2s"></div></div>';}catch(e){}
+}
 async function wtPost(){
+  const wasCh=WT_CH_PAGE,wasScope=WT_SCOPE; /* v109: after posting, land back on the page he posted from */
   const text=$("wtText").value.trim();
   if(!text&&!WT_VID&&!WT_PIC){toast("Write something or add a photo or video");return;}
   $("wtVidStat").textContent="Posting…";
@@ -1736,7 +1745,7 @@ async function wtPost(){
       const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
       if(!s||!s.fid)throw 0;
       fid=s.fid;
-      await fputParallel(fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},function(p){$("wtVidStat").textContent="Uploading… "+p+"%";});
+      await fputParallel(fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},function(p){wtProg(p);});
     } else if(WT_VID){
       name=WT_VID.name||"video";
       const CH=75000;
@@ -1747,14 +1756,18 @@ async function wtPost(){
       await fputParallel(fid,n,async function(i){
         const sl=WT_VID.slice(i*CH,(i+1)*CH);
         return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.readAsDataURL(sl);});
-      },function(p){$("wtVidStat").textContent="Uploading… "+p+"%";});
+      },function(p){wtProg(p);});
     }
     const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR,ts:WT_TS,te:WT_TE,pic:(WT_PIC?1:0)});
     if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
     WT_VID=null;WT_VIDPICK=null;WT_PIC="";WT_PICNAME="";WT_TS=0;WT_TE=0;try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);WT_VID_URL="";}}catch(e){}wtShowPrev();$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
-    toast("Posted to your channel ✓");
+    toast("Posted to your channel ✓ — see it in Watch");
     WT_SEEN[r.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}
-    wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();
+    /* v109 (skylar): posting from his CHANNEL PAGE used to dump him on the text feed —
+       the new video was NOT visible there, so it looked like the post vanished until
+       he left and came back. Land him back on the exact page he posted from. */
+    if(wasCh){WT_CH_PAGE=wasCh;wtChanPage(wasCh);}
+    else{wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();}
   }catch(e){toast("Post failed — check connection and try again");$("wtVidStat").textContent="";}
 }
 async function wtChannels(){
@@ -2303,16 +2316,22 @@ async function stVideoChosen(fi){
   if(!f)return;
   if(!window.MediaRecorder){toast("Video status needs Chrome — try the 🖼️ photo option");return;}
   toast("Reading video…");
+  /* v109 (skylar): the old flow read the WHOLE file as a dataURL before even checking
+     its length — on a phone a 50-100MB gallery video froze the page right after selection,
+     so the video "never came up". Object URL + an 8s watchdog instead. */
   try{
-    const dataUrl=await readDataUrl(f);
+    const src=URL.createObjectURL(f);
     const pv=document.createElement("video");
-    pv.playsInline=true;pv.muted=true;pv.src=dataUrl;
-    await new Promise(function(res,rej){pv.onloadedmetadata=res;pv.onerror=rej;});
-    const dur=pv.duration||0;
-    if(!dur||!isFinite(dur)||dur<1){toast("Could not read that video — try another file");return;}
-    /* v56: ALWAYS show the trim/scrub sheet (WhatsApp-style) so the user can
-       crop before posting, even for short clips — not just when over 60s. */
-    vtOpen({src:dataUrl,dur:dur,maxWin:60,mode:"status",rawFile:f,title:"✂ Trim your status (max 60s)"});
+    pv.playsInline=true;pv.muted=true;pv.preload="metadata";pv.src=src;
+    const dur=await new Promise(function(res){
+      let fin=false;const end=function(d){if(!fin){fin=true;res(d);}};
+      pv.onloadedmetadata=function(){end((pv.duration&&isFinite(pv.duration))?pv.duration:0);};
+      pv.onerror=function(){end(0);};
+      setTimeout(function(){end((pv.duration&&isFinite(pv.duration))?pv.duration:0);},8000);
+    });
+    const d2=(dur&&isFinite(dur))?dur:0;
+    if(!d2||d2<1){try{URL.revokeObjectURL(src);}catch(e){}toast("Could not read that video — try another file");return;}
+    vtOpen({src:src,dur:d2,maxWin:60,mode:"status",rawFile:f,title:d2>60?("✂ Your video is "+vtFmt(d2)+" — over 1 minute. Drag the handles to crop it to fit 60s, then post"):"✂ Crop your status (drag the frames), then post"});
   }catch(e){toast("Could not process that video — try a different file");}
 }
 /* ================= v56: shared WhatsApp-style dual-handle trim sheet ================= */
@@ -2322,6 +2341,7 @@ function vtOpen(o){
   VT.dur=o.dur||0;VT.maxWin=o.maxWin||0;VT.mode=o.mode||"";VT.rawFile=o.rawFile||null;VT.onDone=o.onDone||null;
   const v=$("vtVid");v.src=o.src;v.currentTime=0;
   $("vtTitle").textContent=o.title||"✂ Trim your video";
+  try{vtStripBuild();}catch(e){} /* v109: filmstrip of frames, left to right */
   const RES=1000;
   const sEl=$("vtS"),eEl=$("vtE");
   sEl.min="0";sEl.max=String(RES);sEl.value="0";
@@ -2332,6 +2352,29 @@ function vtOpen(o){
   vtRefreshBar();
   $("vtTrim").className="ovl";
   try{history.pushState({ac:1},"");}catch(e){}
+}
+async function vtStripBuild(){
+  /* v109 (skylar): WhatsApp-style filmstrip — the video drawn as a series of frames
+     moving left to right, with the crop window highlighted over it */
+  const holder=$("vtStrip");if(!holder)return;
+  const v=$("vtVid");const N=8;
+  holder.innerHTML="";
+  const cels=[];
+  for(let i=0;i<N;i++){
+    const c=document.createElement("canvas");
+    c.width=90;c.height=60;c.style.cssText="width:"+(100/N)+"%;height:100%;object-fit:cover;display:block";
+    holder.appendChild(c);cels.push(c);
+  }
+  for(let i=0;i<N;i++){
+    const t=(i+0.5)/N*VT.dur;
+    await new Promise(function(res){
+      let fin=false;const end=function(){if(!fin){fin=true;res();}};
+      v.onseeked=end;setTimeout(end,800);
+      try{v.currentTime=Math.min(t,Math.max(0,VT.dur-0.05));}catch(e){end();}
+    });
+    try{cels[i].getContext("2d").drawImage(v,0,0,cels[i].width,cels[i].height);}catch(e){}
+  }
+  try{v.onseeked=null;v.currentTime=0;}catch(e){}
 }
 function vtVals(){
   const RES=1000;
@@ -2349,6 +2392,7 @@ function vtRefreshBar(){
   const {s,e}=vtVals();
   const pS=VT.dur?(s/VT.dur*100):0, pE=VT.dur?(e/VT.dur*100):100;
   $("vtBar").style.left=pS+"%";$("vtBar").style.width=Math.max(0,pE-pS)+"%";
+  const b2=$("vtBar2");if(b2){b2.style.left=pS+"%";b2.style.width=Math.max(0,pE-pS)+"%";} /* v109: window overlay on the frame strip */
   $("vtLabel").textContent=vtFmt(s)+" → "+vtFmt(e)+"  ("+vtFmt(e-s)+")";
 }
 function vtDrag(which){
@@ -2385,7 +2429,9 @@ async function stVideoPost(f,start,dur){
       }
     }
   }catch(e){}
-  const dataUrl=await readDataUrl(f);
+  /* v109: encode from the object URL — reading a big gallery file as a dataURL here
+     froze phones (same hang as selection). Blob playback is instant and light. */
+  const dataUrl=URL.createObjectURL(f);
   const v2=document.createElement("video");
   v2.playsInline=true;v2.muted=false;v2.src=dataUrl;
   /* v56 fix: the record video MUST be attached to the DOM (hidden) — several
@@ -2405,6 +2451,7 @@ async function stVideoPost(f,start,dur){
     b64="";attempt++;
   }
   try{v2.pause();v2.remove();}catch(e){}
+  try{URL.revokeObjectURL(dataUrl);}catch(e){}
   if(wakeLock)wakeLock.release().catch(()=>{});
   if(!b64){toast("Could not record that clip cleanly — try a shorter window or the 🖼️ photo option");return;}
   toast("Posting video status…");
@@ -5716,7 +5763,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=108;
+const AC_V=109;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
