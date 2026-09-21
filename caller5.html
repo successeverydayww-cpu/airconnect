@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v107</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v108</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -2793,14 +2793,21 @@ function callPill(c){
   return p;
 }
 function gCallRow(c){
+  /* v108 (skylar): ended calls show ENDED + participants and NO join button —
+     a stale "Join" started a fresh call, which is never what anyone wants */
+  const ended=!!c.end||((Date.now()-c.at)>2*3600*1000);
   const p=document.createElement("div");
-  p.style.cssText="display:flex;align-items:center;gap:10px;margin:6px 12px;width:fit-content;background:#F0FDFA;border:1px solid #99F6E4;border-radius:12px;padding:6px 12px;font-size:12.5px;color:#115E59";
-  p.innerHTML='<span>📞</span><span>Group call · '+callT(c.at)+' · '+ago(c.at)+' ago</span>';
-  const j=document.createElement("span");j.textContent="Join";j.style.cssText="background:#10B981;color:#fff;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer";
-  j.onclick=function(ev){ev.stopPropagation();try{gCall();}catch(e){}};
-  p.appendChild(j);
+  p.style.cssText="display:flex;align-items:center;gap:10px;margin:6px 12px;width:fit-content;background:"+(ended?"#F8FAFC":"#F0FDFA")+";border:1px solid "+(ended?"#CBD5E1":"#99F6E4")+";border-radius:12px;padding:6px 12px;font-size:12.5px;color:"+(ended?"#475569":"#115E59");
+  const cnt=c.end?(c.n&&c.n>1?(" · "+c.n+" participants"):" · no one joined"):"";
+  p.innerHTML='<span>📞</span><span>Group call'+(ended?' ended':'')+' · '+callT(c.at)+' · '+ago(c.at)+' ago'+cnt+'</span>';
+  if(!ended){
+    const j=document.createElement("span");j.textContent="Join";j.style.cssText="background:#10B981;color:#fff;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer";
+    j.onclick=function(ev){ev.stopPropagation();try{gCall();}catch(e){}};
+    p.appendChild(j);
+  }
   return p;
 }
+
 function callEventsFor(peer){
   try{return AC_CALLS.filter(function(c){return c.n===String(peer)&&c.d!=="grp";}).sort(function(a,b){return a.at-b.at;});}catch(e){return[];}
 }
@@ -4064,9 +4071,11 @@ function gLeave(){
   try{stopRing();}catch(e){} /* v106 (skylar): the ring must DIE the moment the call ends */
   const wasOn=GC.on;
   if(wasOn){
+    const gN=Object.keys(SF.mems||{}).length+1;
+    try{gcEndLog(GC.g,gN);}catch(e){} /* v108: my own end also marks the row ended */
     const gAll=GROUPS.find(x=>x.id===GC.g);
     const list=Array.from(new Set(Object.keys(SF.mems||{}).concat(((gAll&&gAll.members)||[])))).filter(function(x){return x!==ME;});
-    for(const p of list){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g}}).catch(function(){});}
+    for(const p of list){api("sig",{from:ME,to:p,type:"gbye",payload:{g:GC.g,n:gN}}).catch(function(){});} /* v108: carry participant count so everyone's row shows ENDED */
     try{sfuLeave(true);}catch(e){}
   }
   if(GC.noJoin){try{clearTimeout(GC.noJoin);}catch(e){}}
@@ -4266,7 +4275,7 @@ async function handleSigs(msgs){
     if(m.type==="goffer"){continue;} /* v33: SFU mode — legacy mesh sigs ignored */
     if(m.type==="ganswer"){continue;}
     if(m.type==="gice"){continue;}
-    if(m.type==="gbye"){if(GCI&&m.payload&&GCI.gid===m.payload.g){gcDecline();}if(GC.on){gcUI();}continue;} /* member list refreshes via poll */
+    if(m.type==="gbye"){if(m.payload&&m.payload.g){try{gcEndLog(m.payload.g,(m.payload&&m.payload.n)||1);}catch(e){}try{if(GROUP_OPEN)renderGBubbles();}catch(e){}}if(GCI&&m.payload&&GCI.gid===m.payload.g){gcDecline();}if(GC.on){gcUI();}continue;} /* member list refreshes via poll */
   }
 
   if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
@@ -4934,39 +4943,101 @@ function openGroup(gid){
   $("gvSub").textContent=g.members.length+" members"+((g.admins||[]).length>1?" · "+g.admins.length+" admins":"")+(gAdm?" · you are admin":"");
   try{const gb=$("gbox");if(g.lock&&!gAdm){gb.disabled=true;gb.placeholder="🔒 Only admins can send";}else{gb.disabled=false;gb.placeholder="Message group";}}catch(e){}
   renderGBubbles();
+  try{if(g.server)gBackfill(gid);}catch(e){} /* v108: one-time old-message import so reactions work */
   $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeGroup(){GROUP_OPEN=null;$("gview").className="ovl hide";renderLists();}
 /* v90: upgrade an old-engine (phone-only) group to the server engine — keeps the name, members and chat history */
-async function gMigrateLocal(gid){
-  const g=GROUPS.find(function(x){return x.id===gid;});
-  if(!g)return false;
-  const mems=(g.members||[]).filter(function(m){return m!==ME&&/^\d{9,12}$/.test(String(m));});
-  toast("Upgrading this group to the new engine…");
-  let r=null;
-  try{r=await api("gcreate",{by:ME,name:g.name,members:mems});}catch(e){}
-  if(!r||!r.ok){
-    if(r&&r.err==="unknown member"){
-      for(let i=0;i<mems.length;i++){
-        const sub=mems.slice(0,i).concat(mems.slice(i+1));
-        let rr=null;try{rr=await api("gcreate",{by:ME,name:g.name,members:sub});}catch(e){}
-        if(rr&&rr.ok){r=rr;break;}
-        if(!rr||rr.err!=="unknown member")break;
+async function gBackfill(gid){
+  /* v108 (skylar): old-engine groups kept messages ONLY on the local device — the server had never
+     seen them, so reactions on those messages returned "not found". This one-time import gives every
+     old message a proper server-side id so reactions (and fresh-login history) work like new groups. */
+  try{
+    const flag="ac_gbf_"+gid;
+    if(localStorage.getItem(flag))return;
+    const g=GROUPS.find(function(x){return x.id===gid;});
+    if(!g||!g.server)return;
+    const iso=/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/;
+    const arr=GMS[gid]||[];
+    let changed=false;
+    for(const m of arr){
+      if(!m||m.who==="sys"||!m.text)continue;
+      if(!iso.test(String(m.id||""))){
+        let nid=null;
+        if(typeof m.ts==="number")nid=new Date(m.ts).toISOString();
+        else if(/^\d{13}$/.test(String(m.ts||"")))nid=new Date(Number(m.ts)).toISOString();
+        else if(iso.test(String(m.ts||"")))nid=String(m.ts);
+        else nid=new Date(Date.now()-(arr.length-arr.indexOf(m))*1000).toISOString();
+        m.id=nid;
+        if(!iso.test(String(m.ts||"")))m.ts=nid;
+        changed=true;
       }
     }
+    if(changed)persistV12();
+    const out=[];
+    for(const m of arr){
+      if(!m||m.who==="sys"||!m.text)continue;
+      if(iso.test(String(m.id||"")))out.push({id:m.id,from:String(m.from||ME),text:String(m.text).slice(0,4000)});
+    }
+    if(out.length){
+      const r=await api("gbackfill",{by:ME,g:gid,msgs:out.slice(0,80)});
+      if(!r||!r.ok)return;
+    }
+    localStorage.setItem(flag,"1");
+  }catch(e){}
+}
+function gcEndLog(gid,n){
+  /* v108 (skylar): a group call that ended must NOT keep offering "Join" (a tap would start a fresh
+     call). Marks the last call row ended + records how many people were on it. */
+  try{
+    const evs=AC_CALLS.filter(function(c){return c.d==="grp"&&c.n===String(gid)&&!c.end;});
+    if(!evs.length)return;
+    const ev=evs[evs.length-1];
+    ev.end=1;ev.n=Number(n)||1;
+    localStorage.setItem("ac_calllog",JSON.stringify(AC_CALLS));
+    try{renderCallLog();}catch(e){}
+  }catch(e){}
+}
+async function gMigrateLocal(gid){
+  /* v108 (skylar): old-group upgrade hardened — the server now says WHICH member is unknown
+     (so exactly that one is dropped and retried), the 3-groups/min cooldown is waited out,
+     and old local messages are imported to the server so reactions stop saying "not found". */
+  const g=GROUPS.find(function(x){return x.id===gid;});
+  if(!g)return false;
+  const mems0=(g.members||[]).filter(function(m){return m!==ME&&/^\d{9,12}$/.test(String(m));});
+  toast("Upgrading this group to the new engine…");
+  let mems=mems0.slice();const dropped=[];
+  for(let tries=0;tries<=mems0.length+2&&mems.length;tries++){
+    let r=null;
+    try{r=await api("gcreate",{by:ME,name:g.name,members:mems});}catch(e){}
+    if(r&&r.ok){
+      const oldId=g.id;
+      g.id=r.id;g.members=r.members||([ME].concat(mems));g.by=ME;g.creator=ME;g.admins=[ME];g.server=1;
+      if(GROUP_OPEN===oldId)GROUP_OPEN=r.id;
+      if(GMS[oldId]&&!GMS[r.id])GMS[r.id]=GMS[oldId];
+      persistV12();
+      try{await gBackfill(r.id);}catch(e){}
+      toast("Group upgraded ✓ — try the call again now"+(dropped.length?(" (removed "+dropped.length+" member(s) not registered on the new engine)"):""));
+      return true;
+    }
+    if(r&&String(r.err||"").indexOf("unknown member")===0){
+      const bad=String(r.err).slice(14).trim();
+      const i=mems.indexOf(bad);
+      if(i>=0){mems.splice(i,1);dropped.push(bad);}
+      else if(mems.length)mems.pop();
+      continue;
+    }
+    if(r&&r.err==="too many groups — slow down"){
+      toast("Server cooldown — resuming the group upgrade in about a minute…");
+      await new Promise(function(z){setTimeout(z,63000);});
+      continue;
+    }
+    break;
   }
-  if(r&&r.ok){
-    const oldId=g.id;
-    g.id=r.id;g.members=r.members||([ME].concat(mems));g.by=ME;g.creator=ME;g.admins=[ME];g.server=1;
-    if(GROUP_OPEN===oldId)GROUP_OPEN=r.id;
-    if(GMS[oldId]&&!GMS[r.id])GMS[r.id]=GMS[oldId];
-    persistV12();
-    toast("Group upgraded ✓ — opening group info");
-    return true;
-  }
-  toast("This group was made with an old version and some members are gone. Create a new group with the same friends to unlock all group features.");
+  toast("This group was made with an old version and its members are no longer registered on the new engine. Create a fresh group with your current friends to unlock calls.");
   return false;
 }
+
 
 /* v102 (skylar): Group options = compact popup BESIDE the three dots — no full sheet, nothing at the bottom */
 let GMENU_R=null;
@@ -5713,7 +5784,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=107;
+const AC_V=108;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
