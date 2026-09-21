@@ -390,6 +390,18 @@ footer a{color:#64748B}
       </div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
     </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">👤 My profile</div>
+      <div onclick="editMyName()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #E2E8F0;cursor:pointer">
+        <div style="min-width:0"><div style="font-size:12px;color:#64748B">Name</div><div id="meNameRow" style="font-weight:600;font-size:15px">—</div></div>
+        <div style="color:#00A884;font-size:17px">✏️</div>
+      </div>
+      <div onclick="editMyAbout()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer">
+        <div style="min-width:0"><div style="font-size:12px;color:#64748B">About</div><div id="meAboutRow" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div>
+        <div style="color:#00A884;font-size:17px">✏️</div>
+      </div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap to edit, WhatsApp-style. Your name and about show to friends.</div>
+    </div>
     <div class="card" id="planStatusCard">
       <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
       <div id="planStatus" style="font-size:14px;color:#0F172A">Free — human-to-human calls forever free.</div>
@@ -599,7 +611,7 @@ footer a{color:#64748B}
 <div id="gview" class="ovl hide">
   <div class="ohdr">
     <button class="bk" onclick="closeGroup()">‹</button>
-    <div class="av">👥</div>
+    <div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div>
     <div style="flex:1;min-width:0"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
     <button class="bk" onclick="gCall()" title="Group call">📞</button><button class="bk" onclick="leaveGroup()" title="Leave group">👋</button>
   </div>
@@ -698,6 +710,13 @@ footer a{color:#64748B}
         <button class="big" style="width:100%;background:#CBD5E1;margin-top:12px" onclick="$('stkSheet').className='ovl hide'">Close</button>
       </div>
     </div>
+    <div id="giftSheet" class="ovl hide" style="z-index:60" onclick="if(event.target===this)this.className='ovl hide'">
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#FFF7E0;padding:16px;border-top:1px solid #F2E2B8">
+        <div style="font-weight:600;margin-bottom:10px;text-align:center">🎁 Send a gift</div>
+        <div id="giftGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center"></div>
+        <button class="big" style="width:100%;background:#CBD5E1;margin-top:12px" onclick="$('giftSheet').className='ovl hide'">Close</button>
+      </div>
+    </div>
     <div id="attsheetbg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';"></div>
     <div id="attsheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35)">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px 6px;text-align:center">
@@ -725,9 +744,9 @@ footer a{color:#64748B}
           <div style="width:52px;height:52px;border-radius:50%;background:#f2b53d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">😀</div>
           <div style="font-size:12px;color:#0F172A">Stickers</div>
         </div>
-        <div onclick="toast('Contact sharing — coming soon')" style="cursor:pointer">
-          <div style="width:52px;height:52px;border-radius:50%;background:#4a90e2;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>
-          <div style="font-size:12px;color:#0F172A">Contact</div>
+        <div onclick="giftSheet()" style="cursor:pointer">
+          <div style="width:52px;height:52px;border-radius:50%;background:#f2b53d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎁</div>
+          <div style="font-size:12px;color:#0F172A">Gift</div>
         </div>
       </div>
       <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#64748B;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
@@ -1063,7 +1082,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=69');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=70');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1719,7 +1738,7 @@ function renderLists(){
     if(SEARCH&&!(g.name.toLowerCase().includes(SEARCH)))continue;
     const l=lastG(g);
     const row=document.createElement("div");row.className="row";
-    row.innerHTML='<div class="av">👥</div><div style="min-width:0;flex:1"><div class="rname">'+esc(g.name)+'</div><div class="rsub">'+(l?((l.from===ME?"You: ":""+esc(WIN_NAMES[l.from]||"?")+": ")+esc(String(l.text).slice(0,40))):(g.members.length+" members"))+'</div></div><div class="rtime">'+(l?ago(l.id):"")+'</div>'+(GUNREAD[g.id]?'<span class="badge">'+GUNREAD[g.id]+'</span>':'');
+    row.innerHTML='<div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div><div style="min-width:0;flex:1"><div class="rname">'+esc(g.name)+'</div><div class="rsub">'+(l?((l.from===ME?"You: ":""+esc(WIN_NAMES[l.from]||"?")+": ")+esc(String(l.text).slice(0,40))):(g.members.length+" members"))+'</div></div><div class="rtime">'+(l?ago(l.id):"")+'</div>'+(GUNREAD[g.id]?'<span class="badge">'+GUNREAD[g.id]+'</span>':'');
     row.onclick=()=>openGroup(g.id);
     cl.appendChild(row);
   }
@@ -1816,16 +1835,27 @@ async function unblockPeer(p){
 
 /* ---------------- profile photos ---------------- */
 function savePics(){try{localStorage.setItem("aicall_pics",JSON.stringify(PIC_CACHE));}catch(e){}}
+/* v70: WhatsApp-style avatars — message-bubble blue + soft ash silhouette; one head for friends, three for groups */
+const AV_BG='#E0F2FE';
+const AV_SIL='<svg viewBox="0 0 48 48" style="width:64%;height:64%;opacity:.9"><circle cx="24" cy="17" r="8.5" fill="#A7B7C4"/><path d="M8 44c1.8-9.5 8.2-14 16-14s14.2 4.5 16 14z" fill="#A7B7C4"/></svg>';
+const AV_SIL3='<svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg>';
+function avPerson(){return '<div class="av" style="background:'+AV_BG+';display:flex;align-items:center;justify-content:center;font-size:0">'+AV_SIL+'</div>';}
+function avGroup(){return '<div class="av" style="background:'+AV_BG+';display:flex;align-items:center;justify-content:center;font-size:0">'+AV_SIL3+'</div>';}
 function avatarHTML(num,name){
   const pic=PIC_CACHE[num];
   if(pic)return '<div class="av" style="background-image:url(\''+pic+'\');background-size:cover;background-position:center"></div>';
-  return '<div class="av">'+esc(String(name||"+").charAt(0).toUpperCase())+'</div>';
+  return avPerson();
 }
+let ME_ABOUT="";try{ME_ABOUT=localStorage.getItem("ac_about")||"";}catch(e){}
+function meProfileRefresh(){const a=$("meNameRow"),b=$("meAboutRow");if(a)a.textContent=ME_NAME||"—";if(b)b.textContent=ME_ABOUT||"Hey there! I'm using AirConnect.";}
+async function editMyName(){const v=prompt("Your name:",ME_NAME||"");if(v===null)return;const name=v.trim().slice(0,60);if(!name)return;const r=await api("meset",{from:ME,aid:AID,name:name});if(r&&r.ok){ME_NAME=name;try{localStorage.setItem("ac_name",name);}catch(e){}try{WIN_NAMES[ME]=name;}catch(e){}meProfileRefresh();renderLists();toast("Name updated ✓");}else toast("Could not update name — check connection");}
+async function editMyAbout(){const v=prompt("About you (friends see this):",ME_ABOUT||"");if(v===null)return;const about=v.trim().slice(0,300);const r=await api("meset",{from:ME,aid:AID,about:about});if(r&&r.ok){ME_ABOUT=about;try{localStorage.setItem("ac_about",about);}catch(e){}meProfileRefresh();toast("About updated ✓");}else toast("Could not update — check connection");}
 function refreshMyPic(){
+  try{meProfileRefresh();}catch(e){}
   const el=$("myPic");if(!el)return;
   const pic=PIC_CACHE[ME];
   if(pic){el.textContent="";el.style.backgroundImage="url("+pic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";}
-  else{el.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();el.style.backgroundImage="";}
+  else{el.innerHTML=AV_SIL;el.style.backgroundImage="";el.style.background=AV_BG;}
 }
 function fetchPic(p){
   PIC_FETCHED[p]=1;
@@ -1838,7 +1868,7 @@ function setChatHeaderPic(p){
   const el=$("cvAv");if(!el)return;
   const pic=PIC_CACHE[p];
   if(pic){el.textContent="";el.style.backgroundImage="url("+pic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";}
-  else{el.style.backgroundImage="";el.textContent=esc(String(WIN_NAMES[p]||"+").charAt(0).toUpperCase());}
+  else{el.style.backgroundImage="";el.innerHTML=AV_SIL;el.style.background=AV_BG;}
   if(!PIC_FETCHED[p])fetchPic(p);
 }
 function readDataUrl(f){return new Promise(function(res,rej){const r=new FileReader();r.onload=function(){res(r.result);};r.onerror=function(){rej(new Error("read"));};r.readAsDataURL(f);});}
@@ -2586,6 +2616,14 @@ function renderTextBubble(d,m){
     q.onclick=function(){try{const el=document.querySelector('[data-ts="'+rq.id+'"]');if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.style.transition="background .3s";el.style.background="#FEF3C7";setTimeout(()=>{el.style.background="";},900);}}catch(x){}};
     d.appendChild(q);
   }
+  if(txt.indexOf("gift:")===0){
+    const rest=txt.slice(5);const c1=rest.indexOf(":");
+    const icon=c1<0?"🎁":rest.slice(0,c1);const rest2=c1<0?"":rest.slice(c1+1);
+    const c2=rest2.indexOf("|");const gname=c2<0?rest2:rest2.slice(0,c2);const gnote=c2<0?"":rest2.slice(c2+1);
+    d.style.cssText="align-self:center;background:#FFF7E0;border:1px solid #F2E2B8;border-radius:14px;padding:10px 16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)";
+    d.innerHTML='<div style="font-size:40px;line-height:1.1">'+esc(icon)+'</div><div style="font-size:11px;color:#8a6d1a;font-weight:600;margin-top:2px">Gift — '+esc(gname||"")+'</div>'+(gnote?'<div style="font-size:12px;color:#64748B;margin-top:3px;font-style:italic">'+esc(gnote)+'</div>':'');
+    return;
+  }
   if(txt.indexOf("stk:")===0&&txt.length<=10){
     d.style.cssText="background:transparent;box-shadow:none;padding:2px 6px";
     d.innerHTML='<span style="font-size:52px;line-height:1.2">'+esc(txt.slice(4))+"</span>";
@@ -2715,6 +2753,27 @@ async function sendSticker(s){
   const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,"stk:"+s)});
   if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:"stk:"+s,ts:r.id});renderBubbles();}
   else toast("Could not send sticker — check connection");
+}
+const GIFTS=[["🌹","Rose"],["🎁","Gift"],["🎂","Cake"],["💐","Flowers"],["🍫","Chocolate"],["⚡","Power"],["🏆","Trophy"],["💎","Diamond"]];
+function giftSheet(){
+  const sh=$("giftSheet");if(!sh)return;
+  const g=$("giftGrid");g.innerHTML="";
+  for(const gi of GIFTS){
+    const b=document.createElement("div");
+    b.style.cssText="padding:10px 6px;cursor:pointer;border-radius:10px;text-align:center";
+    b.innerHTML='<div style="font-size:34px">'+gi[0]+'</div><div style="font-size:11.5px;color:#334155">'+gi[1]+'</div>';
+    b.onclick=function(){$("giftSheet").className="ovl hide";const note=prompt("Add a note with your "+gi[1]+" (optional):")||"";sendGift(gi[0],gi[1],note);};
+    g.appendChild(b);
+  }
+  sh.className="ovl";
+}
+async function sendGift(icon,name,note){
+  if(!CHAT_OPEN)return;
+  if(MODE==="offline"){toast("You're in Offline mode — switch Online first");return;}
+  const text="gift:"+icon+":"+name+(note?("|"+String(note).slice(0,120)):"");
+  const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,text)});
+  if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:text,ts:r.id});renderBubbles();}
+  else toast("Could not send gift — check connection");
 }
 function attVideoPick(){closeAttSheet();const el=$("vidinput");if(el)el.click();}
 function closeAttSheet(){$("attsheet").className="hide";$("attsheetbg").className="hide";}
@@ -4520,7 +4579,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=69;
+const AC_V=70;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4543,7 +4602,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=67").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=70").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
