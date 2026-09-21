@@ -230,7 +230,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v97</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v98</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -311,10 +311,7 @@ footer a{color:#64748B}
   </div>
 
   <div id="view-status" class="view hide">
-    <div style="padding:6px 0 4px;border-bottom:1px solid #E2E8F0;margin-bottom:4px">
-      <div style="font-weight:700;font-size:15px;padding:6px 14px 2px;color:#0F172A">Status</div>
-      <div id="statusStrip" style="display:flex;gap:12px;overflow-x:auto;padding:6px 12px 10px"></div>
-    </div>
+    <div style="padding:10px 14px 2px;font-weight:700;font-size:16px;color:#0F172A">Status</div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="position:relative;flex:0 0 60px">
@@ -335,12 +332,12 @@ footer a{color:#64748B}
       <div style="font-size:11.5px;color:#64748B;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
     <div class="card">
-      <div style="font-weight:600;margin-bottom:8px">👁 Recent updates</div>
+      <div style="font-weight:700;font-size:12.5px;color:#0D6E52;padding:2px 2px 6px">Recent updates</div>
       <div id="stFriendsRow"></div>
       <div id="stFriends" style="font-size:14px;color:#64748B">No friend statuses yet.</div>
     </div>
     <div class="card" id="stViewedCard" style="display:none">
-      <div style="font-weight:600;margin-bottom:8px;color:#64748B">👁 Viewed updates</div>
+      <div style="font-weight:700;font-size:12.5px;color:#64748B;padding:2px 2px 6px">Viewed updates</div>
       <div id="stViewed"></div>
     </div>
 
@@ -4857,6 +4854,7 @@ async function openGInfo(){
     '<div style="padding:14px 12px">'+
     '<div style="font-weight:700;font-size:12px;color:#64748B;margin-bottom:6px">MEMBERS ('+r.members.length+') · tap a member to chat privately</div>'+
     '<div class="card">'+rows+'</div>'+
+    '<div class="card" style="padding:4px 12px;margin-top:12px">'+moreRow("🌐","Pay for translation — Group Language Plan","gPayTranslate()")+'</div>'+
     (iAmAdmin&&reqRows?'<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-top:12px"><div style="font-weight:700;font-size:13px;color:#92400E;margin-bottom:4px">🔔 Join requests</div>'+reqRows+'</div>':"")+
     (iAmAdmin?'<div style="font-weight:700;font-size:12px;color:#92400E;margin:14px 0 4px">🛡️ ADMIN TOOLS · only admins see this</div>'+
       '<div class="card" style="padding:4px 12px;margin-bottom:10px">'+
@@ -5076,6 +5074,14 @@ async function payPostsSheet(){
 
 /* ---- group info v2: message member, past members, requests, link, lock, password, delete ---- */
 function giClose(){const el=$("ginfosheet");if(el)el.remove();}
+
+function gPayTranslate(){
+  /* v98 (skylar): pay-for-translation row in Group options -> redirect to the app menu where plans are paid */
+  try{giClose();}catch(e){}
+  try{closeGroup();}catch(e){}
+  try{menuOpen();}catch(e){}
+  try{toast("Tap 💎 My Plans to pay for the 🌍 Group Language Plan");}catch(e){}
+}
 function gmsg2(num){
   giClose();
   if(num===ME)return;
@@ -5352,7 +5358,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=97;
+const AC_V=98;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
