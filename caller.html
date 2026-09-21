@@ -1125,7 +1125,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=79');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=80');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -4749,10 +4749,10 @@ async function acHashConsume(){
 
 /* ---- premium plans ---- */
 const AC_PLANS=[
- {k:"beginner",n:"Beginner",usd:3,ngr:4800,d:"Premium basics — smart replies, gifts, priority chat"},
- {k:"pro",n:"Pro",usd:8,ngr:12800,d:"Everything in Beginner + universal translation in every language"},
- {k:"ultra",n:"Ultra",usd:15,ngr:24000,d:"Everything in Pro + citizen skills marketplace + longer uploads"},
- {k:"premium",n:"Premium",usd:25,ngr:40000,d:"THE COMPLETE PACKAGE — every feature, full agent powers, max everything"}
+ {k:"beginner",n:"Beginner",usd:3,ngr:4800,d:"Your personal AI citizen agent — full text chat, smart replies, gifts & stickers, priority responses"},
+ {k:"pro",n:"Pro",usd:8,ngr:12800,d:"Everything in Beginner + universal translation in every world and local language (text & voice): Yoruba, Igbo, Hausa, Pidgin, Swahili, Twi, Zulu, Efik, Ibibio, Tiv, Kanuri, Fulfulde, Amharic, Somali, French, Chinese, Arabic and all others"},
+ {k:"ultra",n:"Ultra",usd:15,ngr:24000,d:"Everything in Pro + citizen skills marketplace (Homework Tutor, Business Coach, Prayer Partner, Fitness Coach, Language Tutor, Tech Helper) + live web search inside your chats"},
+ {k:"premium",n:"Premium",usd:25,ngr:40000,d:"THE COMPLETE PACKAGE — everything in Ultra + full agent superpowers: AI reads any media (photos, PDFs, documents, voice notes), safe calculator, long-form drafting (letters, reports, emails, business plans), research, maximum response length, top priority, and every future premium feature included automatically"}
 ];
 function plansClose(){const el=$("plansSheet");if(el)el.remove();}
 function plansSheet(){
@@ -5076,7 +5076,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=79;
+const AC_V=80;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5087,11 +5087,15 @@ function installApp(){
 async function checkForcedUpdate(){
   try{
     const v=await api("vcheck",{});
-    if(v&&v.minv&&v.minv>AC_V){
+    const newer=(v&&((v.minv&&v.minv>AC_V)||(v.v&&v.v>AC_V)));
+    if(newer){
       const o=document.createElement("div");
       o.id="fupd";o.style.cssText="position:fixed;inset:0;z-index:99999;background:#0B141A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;font-family:inherit";
-      o.innerHTML='<div style="font-size:40px;margin-bottom:14px">⚡</div><div style="font-size:19px;font-weight:700;margin-bottom:10px">Update required</div><div style="font-size:14px;color:#CBD5E1;max-width:320px;line-height:1.5">A new version of AirConnect is out. Close the app completely and reopen it <b>twice</b> to finish updating. Your account is safe.</div>';
+      o.innerHTML='<div style="font-size:38px;margin-bottom:12px">⚡</div><div style="font-size:18px;font-weight:700;margin-bottom:8px">Updating AirConnect…</div><div style="font-size:13px;color:#CBD5E1">New version installing — one moment, your account is safe</div>';
       document.body.appendChild(o);
+      try{navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:"AC_PURGE"});}catch(e2){}
+      try{const ks=await caches.keys();for(const k of ks){await caches.delete(k);}}catch(e2){}
+      setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now());}catch(e2){location.reload();}},400);
     }
   }catch(e){}
 }
@@ -5099,7 +5103,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=79").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=80").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -5112,6 +5116,7 @@ try{
   }
 }catch(e){}
 
+setInterval(function(){try{checkForcedUpdate();}catch(e){}},45000);
 (async function(){
   checkForcedUpdate();
   let id=readLoginSync();

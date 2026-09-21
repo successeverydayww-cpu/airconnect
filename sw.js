@@ -1,5 +1,5 @@
-/* AirConnect service worker: offline shell + faster loads */
-const CACHE = 'airconnect-v79';
+/* AirConnect service worker v80: ultra-strong auto-update — every app open fetches the TRUE latest shell from origin (cache-bust query kills browser + CDN staleness), offline still works */
+const CACHE = 'airconnect-v80';
 const SHELL = ['./caller.html', './caller5.html', './manifest.json', './icon-192.png', './icon-512.png', './qrcode.min.js'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -7,10 +7,26 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'AC_PURGE') { try { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k))))); } catch (x) {} }
+});
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || (url.pathname.includes('functions/'))) return; // never cache the API
+  if (e.request.method !== 'GET' || url.pathname.includes('functions/')) return; // never cache the API
   if (url.origin !== location.origin) return;                                     // let CDNs be
+  const isNav = e.request.mode === 'navigate' || (e.request.headers.get('accept') || '').includes('text/html');
+  if (isNav) { /* v80: unique URL + no-store => origin always answers with the newest HTML, in seconds */
+    const bust = new URL(e.request.url);
+    bust.searchParams.set('acsw', Date.now());
+    e.respondWith(
+      fetch(bust, { cache: 'no-store' }).then((r) => {
+        const copy = r.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        return r;
+      }).catch(() => caches.match(e.request).then((m) => m || caches.match('./caller.html')))
+    );
+    return;
+  }
   e.respondWith(
     fetch(e.request).then((r) => {
       const copy = r.clone();
