@@ -237,7 +237,7 @@ footer a{color:#64748B}
   <div id="view-watch" class="view hide">
     <div style="display:flex;gap:6px;padding:10px 12px 0;position:sticky;top:0;background:#fff;z-index:5">
       <button id="wtb-feed" class="big blue" style="flex:1;padding:8px;font-size:13px;border-radius:20px" onclick="wtOpen('feed')">📰 Feed</button>
-      <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')">▶️ Watch</button>
+      <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#075E46"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg> Watch</button>
       <button id="wtb-studio" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('studio')">📺 My Channel</button>
       
     </div>
@@ -289,11 +289,14 @@ footer a{color:#64748B}
       <textarea id="wtText" placeholder="Share a word, a lesson, a blessing…" style="width:100%;min-height:80px;border:1px solid #CBD5E1;border-radius:10px;padding:10px;font-size:14px;box-sizing:border-box"></textarea>
       <div id="wtVidPick" style="margin-top:8px;display:flex;gap:8px">
         <button class="big" style="flex:1;background:#E2E8F0;color:#334155;padding:9px;font-size:13px;border-radius:10px" onclick="document.getElementById('wtVidIn').click()">📹 Add video (up to 100MB)</button>
+        <button class="big" style="flex:1;background:#E2E8F0;color:#334155;padding:9px;font-size:13px;border-radius:10px" onclick="document.getElementById('wtPicIn').click()">📷 Add photo</button>
 
       </div>
+      <div id="wtPrev" class="hide" style="margin-top:8px;position:relative;border-radius:10px;overflow:hidden;background:#F1F5F9"></div>
       <div id="wtVidStat" style="font-size:12px;color:#64748B;margin-top:6px"></div>
       <div id="wtPCatBar" style="display:flex;gap:6px;overflow-x:auto;margin-top:8px"></div>
       <input type="file" id="wtVidIn" accept="video/*" class="hide">
+      <input type="file" id="wtPicIn" accept="image/*" class="hide">
       <button class="big blue" style="width:100%;margin-top:10px;padding:12px" onclick="wtPost()">Post</button>
     </div>
   </div>
@@ -584,7 +587,7 @@ footer a{color:#64748B}
   </div>
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
-    <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico">▶️</span>Watch</button>
+    <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#075E46"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg></span>Watch</button>
     <button id="tab-status" aria-label="Status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
     <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
     <button id="tab-settings" aria-label="Settings" onclick="menuOpen()"><span class="ico">⚙️</span>Menu</button>
@@ -1126,7 +1129,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=76');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=77');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1477,7 +1480,8 @@ function wtCard(p,big,sound){
   let body="";
   if(p.rs)body+='<div style="font-size:11px;color:#075E46;margin-top:6px">🔁 reshared post</div>';
   if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
-  if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'" data-sound="'+(sound?"1":"")+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
+  if(p.pic&&p.fid){body+='<div class="wt-imgbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#F1F5F9" id="pi-'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+(p.fidn||0)+'" data-name="'+esc(p.name||"photo.jpg")+'"><div style="padding:26px;text-align:center;color:#94A3B8;font-size:12px">Loading photo…</div></div>';}
+  else if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'" data-sound="'+(sound?"1":"")+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
   const RE=["👍","❤️","😂","😮","🙏","🔥"];
   let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
   for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
@@ -1486,18 +1490,28 @@ function wtCard(p,big,sound){
   d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:7px 18px;font-size:13px;border-radius:18px;background:'+(p.mysub?"#E2E8F0":"#D7EEE0")+';color:'+(p.mysub?"#64748B":"#075E46")+';font-weight:600" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed":"Subscribe")+'</button></div>';
   return d;
 }
+function wtLoadPic(box){
+  if(box.dataset.ld)return;box.dataset.ld=1;
+  const nm=String(box.dataset.name||"photo.jpg").toLowerCase();
+  const mime=nm.indexOf(".png")>=0?"image/png":(nm.indexOf(".webp")>=0?"image/webp":"image/jpeg");
+  api("fgetall",{from:ME,fid:box.dataset.fid}).then(function(r){
+    if(!r||!r.ok||!r.v){box.innerHTML='<div style="padding:20px;text-align:center;color:#94A3B8;font-size:12px">Could not load photo</div>';return;}
+    box.innerHTML='<img src="data:'+mime+';base64,'+r.v+'" style="width:100%;display:block;max-height:520px;object-fit:contain">';
+  }).catch(function(){box.innerHTML='<div style="padding:20px;text-align:center;color:#94A3B8;font-size:12px">Could not load photo</div>';});
+}
 function wtObserveVideos(){
   if(!WT_IO){
     WT_IO=new IntersectionObserver(function(entries){
       for(const en of entries){
         const box=en.target;
         const pid=box.dataset.pid,fid=box.dataset.fid,n=Number(box.dataset.fidn);
-        if(en.isIntersecting&&en.intersectionRatio>=0.4){wtAutoPlayVid(pid,fid,n,box);}
+        if(box.classList.contains("wt-imgbox")){if(en.isIntersecting)wtLoadPic(box);}
+        else if(en.isIntersecting&&en.intersectionRatio>=0.4){wtAutoPlayVid(pid,fid,n,box);}
         else{const v=box.querySelector("video");if(v)try{v.pause();}catch(e){}}
       }
     },{threshold:[0,0.4,0.6,1]});
   }
-  document.querySelectorAll(".wt-vidbox").forEach(function(box){
+  document.querySelectorAll(".wt-vidbox,.wt-imgbox").forEach(function(box){
     if(!box.dataset.observed){box.dataset.observed="1";WT_IO.observe(box);}
   });
 }
@@ -1632,6 +1646,13 @@ function wtVidChosen(){
       const d=(v.duration&&isFinite(v.duration))?v.duration:0;
       URL.revokeObjectURL(u);
       if(!d){toast("Could not read that video — try another file");return;}
+      if(d>=300){
+        /* v77: videos 5 minutes and longer are NEVER cropped — straight preview + post to Watch */
+        WT_VID=f;WT_VIDPICK=f;WT_TS=0;WT_TE=Math.round(d);WT_VIDDUR=Math.round(d);WT_PIC="";
+        try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);}WT_VID_URL=URL.createObjectURL(f);}catch(e){WT_VID_URL="";}
+        wtShowPrev();
+        return;
+      }
       /* v56: same WhatsApp-style trim sheet as status — pick the window before posting.
          Watch keeps full quality (no re-encode); the chosen window is stored and the
          player jumps straight to it, so trimming here never risks the upload. */
@@ -1643,15 +1664,67 @@ function wtVidTrimmed(s,e){
   const f=WT_VIDPICK;if(!f)return;
   WT_VID=f;WT_TS=Math.round(s);WT_TE=Math.round(e);WT_VIDDUR=Math.round(e-s);
   $("wtVidStat").textContent="📹 "+f.name+" ("+Math.round(f.size/1048576)+"MB · "+vtFmt(s)+" → "+vtFmt(e)+")";
+  WT_PIC="";
+  try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);}WT_VID_URL=URL.createObjectURL(f);}catch(e){WT_VID_URL="";}
+  wtShowPrev();
 }
-var WT_PCAT="general",WT_VIDDUR=0,WT_VIDPICK=null,WT_TS=0,WT_TE=0;
+var WT_PCAT="general",WT_VIDDUR=0,WT_VIDPICK=null,WT_TS=0,WT_TE=0,WT_PIC="",WT_PICNAME="",WT_VID_URL="";
+function wtShowPrev(){
+  const pv=$("wtPrev");if(!pv)return;
+  if(WT_PIC){
+    pv.className="";
+    pv.innerHTML='<img src="'+WT_PIC+'" style="width:100%;max-height:280px;object-fit:contain;display:block;background:#000">'+
+    '<button onclick="wtPrevClear()" style="position:absolute;top:6px;right:6px;background:rgba(15,23,42,.72);color:#fff;border:0;border-radius:50%;width:28px;height:28px;font-size:13px;cursor:pointer">✕</button>'+
+    '<div style="padding:6px 10px;font-size:11.5px;color:#64748B">🖼 Photo — will appear in the feed</div>';
+  } else if(WT_VID){
+    pv.className="";
+    pv.innerHTML='<video src="'+WT_VID_URL+'" controls playsinline style="width:100%;max-height:280px;display:block;background:#000"></video>'+
+    '<button onclick="wtPrevClear()" style="position:absolute;top:6px;right:6px;background:rgba(15,23,42,.72);color:#fff;border:0;border-radius:50%;width:28px;height:28px;font-size:13px;cursor:pointer">✕</button>'+
+    '<div style="padding:6px 10px;font-size:11.5px;color:#64748B">'+(WT_VIDDUR>=300?"🎬 Long video — will appear in Watch (long videos), no cropping":"📹 Short — will appear in Shorts")+(WT_VIDDUR<300?' · <span onclick="wtTrimAgain()" style="color:#075E46;font-weight:700;cursor:pointer">✂ Trim again</span>':'')+'</div>';
+  } else {pv.className="hide";pv.innerHTML="";}
+}
+function wtPrevClear(){
+  WT_VID=null;WT_VIDPICK=null;WT_PIC="";WT_PICNAME="";WT_TS=0;WT_TE=0;WT_VIDDUR=0;
+  try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);WT_VID_URL="";}}catch(e){}
+  wtShowPrev();
+}
+function wtTrimAgain(){
+  const f=WT_VIDPICK;if(!f)return;
+  try{
+    const u=URL.createObjectURL(f);const v=document.createElement("video");v.preload="metadata";v.src=u;
+    v.onloadedmetadata=()=>{const d=(v.duration&&isFinite(v.duration))?v.duration:0;URL.revokeObjectURL(u);if(d)vtOpen({src:URL.createObjectURL(f),dur:d,maxWin:0,mode:"watch",title:"✂ Trim your post (optional)"});};
+  }catch(e){toast("Could not reopen the trimmer");}
+}
+async function wtPicChosen(){
+  const fi=$("wtPicIn");const f=fi.files&&fi.files[0];fi.value="";
+  if(!f)return;
+  if(f.size>12*1024*1024){toast("Please keep photos under 12MB");return;}
+  WT_VID=null;WT_VIDPICK=null;WT_TS=0;WT_TE=0;WT_VIDDUR=0;
+  try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);WT_VID_URL="";}}catch(e){}
+  WT_PIC=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result));fr.readAsDataURL(f);});
+  WT_PICNAME=f.name||"photo.jpg";
+  wtShowPrev();
+}
 async function wtPost(){
   const text=$("wtText").value.trim();
-  if(!text&&!WT_VID){toast("Write something or add a video");return;}
+  if(!text&&!WT_VID&&!WT_PIC){toast("Write something or add a photo or video");return;}
   $("wtVidStat").textContent="Posting…";
   try{
     let fid="",name="";
-    if(WT_VID){
+    if(WT_PIC){
+      name=WT_PICNAME||"photo.jpg";
+      const b64=WT_PIC.split(",")[1]||"";
+      const CH=75000;
+      const n=Math.min(900,Math.ceil(b64.length/CH));
+      const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
+      if(!s||!s.fid)throw 0;
+      fid=s.fid;
+      for(let i=0;i<n;i++){
+        const r=await api("fput",{from:ME,fid,ci:i,v:b64.slice(i*CH,(i+1)*CH)});
+        if(!r||!r.ok)throw 0;
+        $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
+      }
+    } else if(WT_VID){
       name=WT_VID.name||"video";
       const CH=75000;
       const n=Math.min(900,Math.ceil(WT_VID.size/CH));
@@ -1666,9 +1739,9 @@ async function wtPost(){
         $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
       }
     }
-    const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR,ts:WT_TS,te:WT_TE});
+    const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR,ts:WT_TS,te:WT_TE,pic:(WT_PIC?1:0)});
     if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
-    WT_VID=null;WT_VIDPICK=null;WT_TS=0;WT_TE=0;$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
+    WT_VID=null;WT_VIDPICK=null;WT_PIC="";WT_PICNAME="";WT_TS=0;WT_TE=0;try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);WT_VID_URL="";}}catch(e){}wtShowPrev();$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
     toast("Posted to your channel ✓");
     WT_SEEN[r.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}
     wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();
@@ -1726,6 +1799,7 @@ function wtChanPage(num){
   wtLoad();
 }
 (function(){var el=document.getElementById("wtVidIn");if(el)el.addEventListener("change",wtVidChosen);})();
+(function(){var el=document.getElementById("wtPicIn");if(el)el.addEventListener("change",wtPicChosen);})();
 function wtChOpen(name,about){
   try{$("wtChName").value=name||"";$("wtChAbout").value=about||"";$("wtChCode").value="";$("wtChCodeRow").style.display="none";}catch(e){}
   $("wtChSheet").className="ovl";
@@ -4732,6 +4806,8 @@ async function loadStudio(){
     const stat=(v,l)=>'<div style="background:#F1F5F9;border-radius:12px;padding:8px 13px;text-align:center"><div style="font-weight:700">'+v+'</div><div style="font-size:11px;color:#64748B">'+l+'</div></div>';
     h+=stat(r.subs||0,"subscribers")+stat(t.views||0,"views")+stat(t.reacts||0,"reactions")+stat(t.comments||0,"comments")+stat(t.posts||0,"posts");
     h+='</div></div>';
+    if(r.mon)h+='<div style="margin-top:10px;background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:10px 12px;font-size:13px;color:#075E46"><b>🎉 Monetized!</b> You earn $1 for every 1,000 views · Estimated earnings so far: <b>$'+(r.earn||0)+'</b></div>';
+    else h+='<div style="margin-top:10px;background:#F1F5F9;border-radius:12px;padding:10px 12px;font-size:12.5px;color:#64748B">💰 Monetization unlocks at 1,000 subscribers — '+Math.max(0,1000-(r.subs||0))+' to go. Once monetized you earn $1 per 1,000 views.</div>';
     h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px">';
     h+='<div style="font-weight:700;font-size:14px;margin-bottom:8px">📣 Broadcast to subscribers</div>';
     h+='<textarea id="bcastBox" placeholder="Send one message to all '+(r.subs||0)+' subscribers…" style="width:100%;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:10px;padding:10px;font-size:14px;min-height:64px;font-family:inherit"></textarea>';
@@ -4809,7 +4885,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=76;
+const AC_V=77;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4832,7 +4908,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=76").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=77").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
