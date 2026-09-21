@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v94</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v95</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -1555,7 +1555,7 @@ async function wtAutoPlayVid(pid,fid,n,box){
     const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
-    box.innerHTML='<video id="wtv-'+pid+'" playsinline muted'+(snd?' loop autoplay':' controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
+    box.innerHTML='<video preload="metadata" id="wtv-'+pid+'" playsinline muted'+(snd?' loop autoplay':' controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
     const vv=document.getElementById("wtv-"+pid);
     /* v72: shorts autoplay MUTED (tap 🔊 for sound); long videos wait for the play button */
     if(snd){ vv.play().catch(function(){}); }
@@ -1600,7 +1600,7 @@ async function wtPlay(pid,fid,n){
     const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
-    box.innerHTML='<video id="wtv-'+pid+'" controls autoplay playsinline style="width:100%;max-height:420px;background:#000" src="'+url+'"></video>';
+    box.innerHTML='<video preload="metadata" id="wtv-'+pid+'" controls autoplay playsinline style="width:100%;max-height:420px;background:#000" src="'+url+'"></video>';
     if(te>ts){
       const vv=document.getElementById("wtv-"+pid);
       vv.addEventListener("loadedmetadata",function(){try{vv.currentTime=ts;}catch(e){}});
@@ -1722,6 +1722,19 @@ async function wtPicChosen(){
   WT_PICNAME=f.name||"photo.jpg";
   wtShowPrev();
 }
+async function fputParallel(fid,n,getV,prog){
+  /* v95: 6 concurrent chunks - ~6x faster uploads (skylar: video posts must finish in under 20s) */
+  const PAR=6;let done=0;
+  for(let b=0;b<n;b+=PAR){
+    const idx=[];for(let i=b;i<Math.min(n,b+PAR);i++)idx.push(i);
+    await Promise.all(idx.map(async function(i){
+      const v=await getV(i);
+      const r=await api("fput",{from:ME,fid:fid,ci:i,v:v});
+      if(!r||!r.ok)throw 0;
+      done++;if(prog)try{prog(Math.round(done/n*100));}catch(e){}
+    }));
+  }
+}
 async function wtPost(){
   const text=$("wtText").value.trim();
   if(!text&&!WT_VID&&!WT_PIC){toast("Write something or add a photo or video");return;}
@@ -1736,11 +1749,7 @@ async function wtPost(){
       const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
       if(!s||!s.fid)throw 0;
       fid=s.fid;
-      for(let i=0;i<n;i++){
-        const r=await api("fput",{from:ME,fid,ci:i,v:b64.slice(i*CH,(i+1)*CH)});
-        if(!r||!r.ok)throw 0;
-        $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
-      }
+      await fputParallel(fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},function(p){$("wtVidStat").textContent="Uploading… "+p+"%";});
     } else if(WT_VID){
       name=WT_VID.name||"video";
       const CH=75000;
@@ -1748,13 +1757,10 @@ async function wtPost(){
       const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
       if(!s||!s.fid)throw 0;
       fid=s.fid;
-      for(let i=0;i<n;i++){
+      await fputParallel(fid,n,async function(i){
         const sl=WT_VID.slice(i*CH,(i+1)*CH);
-        const b64=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.readAsDataURL(sl);});
-        const r=await api("fput",{from:ME,fid,ci:i,v:b64});
-        if(!r||!r.ok)throw 0;
-        $("wtVidStat").textContent="Uploading… "+Math.round((i+1)/n*100)+"%";
-      }
+        return await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.readAsDataURL(sl);});
+      },function(p){$("wtVidStat").textContent="Uploading… "+p+"%";});
     }
     const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR,ts:WT_TS,te:WT_TE,pic:(WT_PIC?1:0)});
     if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
@@ -2470,7 +2476,7 @@ async function stVideoRec(v2,dur,maxW,br){
       function step(){n++;if(n>=3)res();else if(v2.requestVideoFrameCallback)v2.requestVideoFrameCallback(step);else setTimeout(step,80);}
       if(v2.requestVideoFrameCallback)v2.requestVideoFrameCallback(step);else setTimeout(step,150);
     });
-    const mimes=audioOk?["video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm","video/mp4"]:["video/webm;codecs=vp8","video/webm","video/mp4"];
+    const mimes=audioOk?["video/mp4;codecs=\"avc1.42E01E,mp4a.40.2\"","video/mp4","video/webm;codecs=vp8,opus","video/webm;codecs=vp9,opus","video/webm"]:["video/mp4;codecs=\"avc1.42E01E\"","video/mp4","video/webm;codecs=vp8","video/webm"]; /* v95: MP4/H264 first - webm uploads played as black screens with no sound on iPhones */
     let mime="";
     for(const m of mimes){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
     if(!mime)return "";
@@ -3007,16 +3013,13 @@ async function attVideoChosen(fi){
     const st=await api("fstart",{from:ME,to:CHAT_OPEN,name:f.name,n});
     if(!st||!st.ok||!st.fid){toast((st&&st.err)||"Upload failed — check connection");chatBusy=false;return;}
     const fid=st.fid;
-    for(let ci=0;ci<n;ci++){
+    await fputParallel(fid,n,async function(ci){
       const blob=f.slice(ci*CH*0.75,Math.min((ci+1)*CH*0.75,f.size));
       const buf=await blob.arrayBuffer();
       const bytes=new Uint8Array(buf);let bin="";const BC=32768;
       for(let k=0;k<bytes.length;k+=BC)bin+=String.fromCharCode.apply(null,bytes.subarray(k,k+BC));
-      const v=(f.type&&f.type.indexOf("video/")===0?f.type:"video/mp4")+",base64,"+btoa(bin);
-      const r=await api("fput",{from:ME,fid,ci,v});
-      if(!r||!r.ok){toast("Upload interrupted at "+Math.round(ci*100/n)+"% — retrying is safe");chatBusy=false;return;}
-      if(ci%2===0||ci===n-1)toast("Uploading video ("+Math.round((ci+1)*100/n)+"%)…");
-    }
+      return (f.type&&f.type.indexOf("video/")===0?f.type:"video/mp4")+",base64,"+btoa(bin);
+    },function(p){if(p%25===0||p===100)toast("Uploading video ("+p+"%)…");});
     const fin=await api("fend",{from:ME,fid});
     if(fin&&fin.ok){
       (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",f2:{fid,name:f.name},ts:fin.id||Date.now()});
@@ -4545,7 +4548,7 @@ async function walRcpGo(){
     const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:sm.name,n,pub:1});
     if(!st||!st.fid)throw 0;
-    for(let i=0;i<n;i++){const r=await api("fput",{from:ME,fid:st.fid,ci:i,v:sm.b64.slice(i*CH,(i+1)*CH)});if(!r||!r.ok)throw 0;}
+    await fputParallel(st.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
     const r2=await api("wrcpt",{node:ME,fid:st.fid,rcp:sm.name});
     if(!r2||!r2.ok)throw 0;
     $("walRcpPrev").innerHTML='<div style="background:#14532D;color:#BBF7D0;border-radius:10px;padding:12px;font-size:13.5px">✅ Receipt uploaded — verification in progress. Your wallet will be credited shortly.</div>';
@@ -4972,10 +4975,7 @@ async function stPostChannel(){
     const n=Math.min(900,Math.max(1,Math.ceil(b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:dur?"status.mp4":"status.jpg",n,pub:1});
     if(!st||!st.fid)throw 0;
-    for(let i=0;i<n;i++){
-      const r=await api("fput",{from:ME,fid:st.fid,ci:i,v:b64.slice(i*CH,(i+1)*CH)});
-      if(!r||!r.ok)throw 0;
-    }
+    await fputParallel(st.fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},null);
     const r=await api("post",{from:ME,text:"",fid:st.fid,name:dur?"status.mp4":"status.jpg",rs:"",cat:"general",dur:dur,ts:0,te:dur,pic:dur?0:1});
     if(!r||!r.ok){
       const er=String((r&&r.err)||"Could not post");
@@ -5397,7 +5397,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=94;
+const AC_V=95;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
