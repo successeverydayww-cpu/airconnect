@@ -231,7 +231,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v114</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v115</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -1449,8 +1449,15 @@ function wtOpen(sc){
     wtCats();wtLoad();}
   }
 }
+function wtStopWtfeed(){
+  /* v115 (skylar): videos play ONLY while he is looking at the Watch feed.
+     Pause every feed video BEFORE any innerHTML swap detaches them — detached
+     elements keep playing audio, which is exactly what he heard on channel/feed/chats. */
+  try{document.querySelectorAll("#wtfeed video").forEach(function(v){try{v.pause();}catch(e){}});}catch(e){}
+}
 async function wtLoad(){
   if(!ME)return;
+  wtStopWtfeed(); /* v115: kill playback before the feed content is replaced */
   const el=$("wtfeed");el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Loading…</div>';
   try{
     let scope="feed";
@@ -1467,6 +1474,7 @@ async function wtLoad(){
   }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load feed — pull down and try again.</div>';}
 }
 function wtRender(){
+  wtStopWtfeed(); /* v115: kill playback before re-rendering the feed */
   const el=$("wtfeed");
   if(WT_CH_PAGE){
     el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#D7EEE0;color:#075E46;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
@@ -5987,7 +5995,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=114;
+const AC_V=115;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
