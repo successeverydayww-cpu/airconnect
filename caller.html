@@ -13,7 +13,7 @@
 body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#F8FAFC;color:#0F172A;overflow-x:hidden}
 .hide{display:none!important}
 /* header */
-.hdr{position:sticky;top:0;z-index:20;background:#D7EEE0;color:#075E46;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #C9EBDE}
+.hdr{position:sticky;top:0;z-index:20;background:#0D6E52;color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #C9EBDE}
 .hdr .sub{font-size:12px;color:#52796B;font-weight:400}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#667781;margin-right:6px;vertical-align:1px}
 .dot.live{background:#22c55e}.dot.ringing{background:#ffb02e;animation:pulse .8s infinite}
@@ -45,7 +45,7 @@ button.big.red{background:#f15c6d}
 button.big.blue{background:#D7EEE0;color:#075E46}
 /* chat overlay */
 .ovl{position:fixed;inset:0;z-index:30;background:#F8FAFC;display:flex;flex-direction:column}
-.ovl .ohdr{background:#D7EEE0;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ovl .ohdr{background:#0D6E52;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .ohdr .bk{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
 .ohdr .nm{font-weight:600;font-size:16px;color:#fff}
 .ohdr .st{font-size:12px;color:rgba(255,255,255,.75)}
@@ -230,7 +230,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v93</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v94</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -267,7 +267,7 @@ footer a{color:#64748B}
 </div>
 <div id="admView" class="ovl hide" style="z-index:65;background:#F8FAFC" onclick="if(event.target===this)admClose()">
   <div class="card" style="position:absolute;top:0;left:0;right:0;bottom:0;margin:0;border-radius:0;overflow-y:auto;max-width:600px;margin:0 auto">
-    <div style="position:sticky;top:0;background:#D7EEE0;color:#075E46;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
+    <div style="position:sticky;top:0;background:#0D6E52;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
       <button onclick="admClose()" style="background:none;border:0;color:#fff;font-size:20px;padding:0 4px">‹</button>
       <div style="font-weight:700;font-size:16px;flex:1">🛡️ Admin — Payments</div>
       <button onclick="admLoad()" style="background:none;border:0;color:#fff;font-size:18px">↻</button>
@@ -415,7 +415,7 @@ footer a{color:#64748B}
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">About</div><div id="meAboutRow" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div>
         <div style="color:#075E46;font-size:17px">✏️</div>
       </div>
-      <div style="<div onclick="showMyPhrase()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #E2E8F0;cursor:pointer">
+      <div onclick="showMyPhrase()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-weight:600;font-size:14px">🔐 My recovery phrase</div><div style="font-size:11.5px;color:#64748B">Tap to view — it keeps your account if you change phone</div></div>
         <div style="color:#075E46;font-size:17px">›</div>
       </div>
@@ -5329,7 +5329,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=93;
+const AC_V=94;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5444,12 +5444,40 @@ function openProfileSheet(){
   let el=document.getElementById("profSheet");if(el)el.remove();
   el=document.createElement("div");el.id="profSheet";
   el.style.cssText="position:fixed;inset:0;z-index:70;background:#F1F5F9;display:flex;flex-direction:column;";
-  el.innerHTML='<div class="ohdr" style="background:#075E46"><button class="bk" onclick="closeProfileSheet()">‹</button><div class="nm" style="flex:1;color:#fff">My profile</div><div style="width:30px"></div></div>'+
-  '<div id="profSheetBody" style="flex:1;overflow:auto;padding:12px"></div>';
+  el.innerHTML='<div class="ohdr" style="background:#0D6E52"><button class="bk" onclick="closeProfileSheet()">‹</button><div class="nm" style="flex:1;color:#fff">My profile</div><div style="width:30px"></div></div>'+
+  '<div id="profSheetBody" style="flex:1;overflow:auto;padding:0 12px 16px"></div>';
   document.body.appendChild(el);
-  document.getElementById("profSheetBody").appendChild(c);
+  const body=document.getElementById("profSheetBody");
+  const pic=document.getElementById("myPic");
+  const picHTML=pic?pic.innerHTML:"?";
+  let nm="Me";try{const nr=document.getElementById("meNameRow");if(nr&&nr.textContent)nm=nr.textContent;}catch(e){}
+  let fr=0,gr=0;
+  try{if(typeof FRIENDS!=="undefined"&&FRIENDS)fr=FRIENDS.length;}catch(e){}
+  try{if(typeof GROUPS!=="undefined"&&GROUPS)gr=GROUPS.length;}catch(e){}
+  body.innerHTML=
+   '<div style="margin:12px 0 0;background:#0D6E52;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px">'+
+     '<div class="av" style="width:56px;height:56px;font-size:22px;flex:0 0 56px;background:rgba(255,255,255,.18)">'+picHTML+'</div>'+
+     '<div style="flex:1;min-width:0"><div style="color:#fff;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(String(nm))+'</div>'+
+     '<div style="color:#A7F3D0;font-size:12px;margin-top:2px">+'+esc(String(ME))+'</div>'+
+     '<div style="display:inline-block;background:rgba(255,255,255,.16);color:#fff;font-size:10.5px;font-weight:700;border-radius:10px;padding:2px 9px;margin-top:5px">PREMIUM</div></div>'+
+   '</div>'+
+   '<div class="card" style="display:flex;margin-top:12px;text-align:center">'+
+     '<div style="flex:1;padding:10px 0"><div style="font-weight:800;font-size:17px;color:#0D6E52">'+fr+'</div><div style="font-size:10.5px;color:#64748B">Friends</div></div>'+
+     '<div style="flex:1;padding:10px 0;border-left:1px solid #E2E8F0"><div style="font-weight:800;font-size:17px;color:#0D6E52">'+gr+'</div><div style="font-size:10.5px;color:#64748B">Groups</div></div>'+
+     '<div style="flex:1;padding:10px 0;border-left:1px solid #E2E8F0"><div id="pfStatPo" style="font-weight:800;font-size:17px;color:#0D6E52">&hellip;</div><div style="font-size:10.5px;color:#64748B">Posts</div></div>'+
+   '</div>'+
+   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="pfScrollCard()"><div style="font-size:19px">✏️</div><div style="font-weight:700;font-size:12px;margin-top:3px">Edit profile</div></div>'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="plansSheet()"><div style="font-size:19px">💎</div><div style="font-weight:700;font-size:12px;margin-top:3px">My plans</div></div>'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="pfScrollCard()"><div style="font-size:19px">🔐</div><div style="font-weight:700;font-size:12px;margin-top:3px">Security</div></div>'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="openMyLink()"><div style="font-size:19px">🔗</div><div style="font-weight:700;font-size:12px;margin-top:3px">My link</div></div>'+
+   '</div>';
+  body.appendChild(c);
   c.style.display="block";
+  api("studio",{node:ME}).then(function(r){const p=document.getElementById("pfStatPo");if(p)p.textContent=(r&&r.ok&&r.posts)?String(r.posts.length):"0";}).catch(function(){const p=document.getElementById("pfStatPo");if(p)p.textContent="0";});
 }
+function pfScrollCard(){try{const c=document.getElementById("profCard");if(c)c.scrollIntoView({behavior:"smooth"});}catch(e){}}
+
 function closeProfileSheet(){
   const el=document.getElementById("profSheet");if(!el)return;
   const c=document.getElementById("profCard");
@@ -5471,6 +5499,41 @@ async function langSync(){
     if(r&&r.ok)localStorage.setItem("ac_langset","1");
   }catch(e){}
 }
+function doorCard(ic,l,s,col,oc){return '<div onclick="'+oc+'" style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04);margin:12px 12px 0">'+ '<div style="width:42px;height:42px;border-radius:50%;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 42px">'+ic+'</div>'+ '<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15px">'+l+'</div><div style="font-size:11.5px;color:#64748B;margin-top:1px">'+s+'</div></div><div style="color:#94A3B8;font-size:18px">›</div></div>';}
+function moreRow(ic,l,oc){return '<div onclick="'+oc+'" style="display:flex;align-items:center;gap:10px;padding:11px 2px;cursor:pointer;border-bottom:1px solid #F1F5F9"><span style="font-size:16px">'+ic+'</span><span style="flex:1;font-weight:600;font-size:13.5px">'+l+'</span><span style="color:#94A3B8">›</span></div>';}
+function connectSheet(){
+  let el=document.getElementById("cnSheet");if(el)el.remove();
+  el=document.createElement("div");el.id="cnSheet";el.className="ovl";
+  el.innerHTML='<div class="sheet">'+
+   '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:38px;height:38px;border-radius:50%;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">🌍</div><div style="font-weight:700;font-size:16px">Connect</div></div>'+
+   '<button class="big" style="background:#0D6E52;color:#fff;margin:8px 0" onclick="worldCallSheet()">📞 Call any number in the world</button>'+
+   '<button class="big" style="background:#F1F5F9;color:#111827;margin:8px 0" onclick="openMyLink()">🔗 My invite link</button>'+
+   '<div style="font-weight:600;font-size:13px;margin:12px 0 6px">➕ Add a friend</div>'+
+   '<input id="peer" placeholder="Friend number, e.g. 1100000001" inputmode="numeric" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;font-size:13px;box-sizing:border-box">'+
+   '<button class="big blue" id="freq" onclick="sendRequest()" style="margin-top:6px">Send friend request</button>'+
+   '<button class="big" style="background:#CBD5E1;margin-top:12px" onclick="document.getElementById('+"'cnSheet'"+').remove()">Close</button></div>';
+  document.body.appendChild(el);
+}
+function langSheet(){
+  let el=document.getElementById("lgSheet");if(el)el.remove();
+  const opts=[["en","English"],["yo","Yoruba"],["ig","Igbo"],["ha","Hausa"],["pcm","Nigerian Pidgin"],["fr","Francais"],["es","Espanol"],["pt","Portugues"],["ar","Arabic"],["zh","Chinese"],["hi","Hindi"],["sw","Kiswahili"],["de","Deutsch"],["ru","Russian"],["tr","Turkce"],["am","Amharic"],["so","Soomaali"],["tw","Twi"],["zu","isiZulu"],["ef","Efik"],["ib","Ibibio"]];
+  const cur=(localStorage.getItem("ac_lang")||"en");
+  let oh="";for(const o of opts)oh+='<option value="'+o[0]+'"'+(o[0]===cur?" selected":"")+'>'+o[1]+'</option>';
+  el=document.createElement("div");el.id="lgSheet";el.className="ovl";
+  el.innerHTML='<div class="sheet"><div style="font-weight:700;font-size:16px;margin-bottom:8px">🌐 Language</div>'+
+   '<select id="lgSel" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;font-size:13px;background:#fff">'+oh+'</select>'+
+   '<button class="big blue" style="margin-top:10px" onclick="langApply()">Apply</button>'+
+   '<button class="big" style="background:#CBD5E1;margin-top:8px" onclick="document.getElementById('+"'lgSheet'"+').remove()">Close</button></div>';
+  document.body.appendChild(el);
+}
+function langApply(){
+  const v=document.getElementById("lgSel").value;
+  try{localStorage.setItem("ac_lang",v);localStorage.removeItem("ac_langset");}catch(e){}
+  try{langSync();}catch(e){}
+  try{document.getElementById("lgSheet").remove();}catch(e){}
+  toast("Language set");
+}
+
 function menuOpen(){
   const mv=document.getElementById("menuView");
   if(!mv._owned){mv._owned=1;
@@ -5492,50 +5555,47 @@ function menuOpen(){
       if(pel)pel.innerHTML=mp?'<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover">':esc(String((typeof ME_NAME!=="undefined"&&ME_NAME)||"?").charAt(0).toUpperCase());
       const nel=prow.querySelector("#menuProfName");if(nel)nel.textContent=(typeof ME_NAME!=="undefined"&&ME_NAME)||("+"+ME);
     }catch(e){}
-    if(vs){
+      /* v94 Menu B "Hub + More" (skylar approved): three doors + More settings + Owner tools - nothing scattered */
+      const hub=document.createElement("div");
+      hub.style.cssText="margin-bottom:2px";
+      hub.innerHTML=
+       doorCard("💎","My Plans","Free · Pro · Ultra · Premium","#10B981","menuClose();plansSheet();")+
+       doorCard("🎬","Studio","My channel · Videos · Pay posts","#8B5CF6","menuClose();wtOpen('studio');")+
+       doorCard("🌍","Connect","World calling · Invite link · Add friend","#2563EB","menuClose();connectSheet();");
+      mv.appendChild(hub);
+      const more=document.createElement("div");
+      more.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:6px 12px";
+      more.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748B;padding:8px 2px 2px">MORE SETTINGS</div>'+
+       moreRow("➕","Add a friend","menuClose();connectSheet();")+
+       moreRow("🌐","Language","menuClose();langSheet();")+
+       moreRow("🛡️","Privacy & Terms","window.open('privacy.html','_blank')")+
+       moreRow("🔄","Refresh app","manualRefresh()")+
+       moreRow("⬇️","Your data","menuClose();exportData()");
+      mv.appendChild(more);
+      if(String(ME)==="234100000001"){
+        const ot=document.createElement("div");
+        ot.style.cssText="margin:0 12px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:16px;padding:6px 12px";
+        ot.innerHTML='<div style="font-size:11px;font-weight:700;color:#92400E;padding:8px 2px 2px">👑 OWNER TOOLS</div>'+
+         moreRow("🤖","Premium User — Our OS","location.href='skylar.html';")+
+         moreRow("🔨","Skylar Forge — Builder","location.href='forge.html';")+
+         moreRow("🛡️","Admin — Payments","menuClose();admOpen();");
+        mv.appendChild(ot);
+      }
+      if(vs){
       vs.className="view";
       /* v85: "Add a friend" removed from the menu — friends already live on the main page (his directive) */
       try{
         const cards=vs.querySelectorAll(".card");
-        for(const cd of cards){if(cd.textContent&&cd.textContent.indexOf("Add a friend")>=0){cd.remove();break;}}
+        for(const cd of cards){const t=cd.textContent||"";if(t.indexOf("Add a friend")>=0||t.indexOf("Monthly plans")>=0){cd.remove();continue;}}
       }catch(e){}
       mv.appendChild(vs);
       try{const pc=document.getElementById("profCard");if(pc)pc.style.display="none";}catch(e){}
     } /* v81: settings stay in the menu, the profile card is owned by the top-right avatar sheet */
-    if(String(ME)==="234100000001"){ /* v85: owner-only tools moved up, right after the profile row and before every other item (his directive: admin visible to me alone, positioned before the plans) */
-      const osb=document.createElement("button");
-      osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:#E7F4EF;color:#0B6B57;font-size:15px";
-      osb.textContent="🤖 Premium User — Our OS";osb.onclick=function(){menuClose();location.href="skylar.html";};
-      mv.appendChild(osb);
-      const fgb=document.createElement("button");
-      fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:#F1F5F9;color:#111827;font-size:15px";
-      fgb.textContent="🔨 Skylar Forge — Builder";fgb.onclick=function(){menuClose();location.href="forge.html";};
-      mv.appendChild(fgb);
-      const adb=document.createElement("button");
-      adb.className="big";adb.style.cssText="margin:12px;margin-top:0;background:#FEF3C7;color:#92400E;font-size:15px";
-      adb.textContent="🛡️ Admin — Payments";adb.onclick=function(){menuClose();admOpen();};
-      mv.appendChild(adb);
-    }
-    const pay=document.createElement("button");
-    pay.className="big";pay.style.cssText="margin:12px;background:#D7EEE0;color:#075E46;font-size:14px";
-    pay.innerHTML="💰 Pay posts — channel earnings";pay.onclick=function(){menuClose();payPostsSheet();};
-    mv.appendChild(pay);
-    const pl=document.createElement("button");
-    pl.className="big";pl.style.cssText="margin:12px;background:#F1F5F9;color:#111827;font-size:14px";
-    pl.innerHTML="💎 Premium plans";pl.onclick=function(){menuClose();plansSheet();};
-    mv.appendChild(pl);
-    const wc=document.createElement("button");
-    wc.className="big";wc.style.cssText="margin:12px;background:#F1F5F9;color:#111827;font-size:14px";
-    wc.innerHTML="🌍 Call any number in the world";wc.onclick=function(){menuClose();worldCallSheet();};
-    mv.appendChild(wc);
-    const ml=document.createElement("button");
-    ml.className="big";ml.style.cssText="margin:12px;background:#F1F5F9;color:#111827;font-size:14px";
-    ml.innerHTML="🔗 My AirConnect link";ml.onclick=function(){menuClose();acCopy(acLinkBase()+"#u="+ME);toast("Your link copied ✓ — anyone who opens it becomes your friend automatically");};
-    mv.appendChild(ml);
     const wal=document.createElement("button");
     wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#D7EEE0;color:#075E46;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
     mv.appendChild(wal);
+
   }
   document.getElementById("menuWrap").className="on";
   document.getElementById("menuView").className="on";
