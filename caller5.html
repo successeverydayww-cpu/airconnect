@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v104</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v105</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -1052,7 +1052,7 @@ function vmSTT(){
     if(!rs||!rs.getAudioTracks||!rs.getAudioTracks().length){if(vmSTTTries<6){vmSTTTries++;setTimeout(vmSTT,2000);}return;}
     let mime="";for(const m of ["audio/webm;codecs=opus","audio/webm","audio/mp4"]){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
     if(!mime)return;
-    vmRec=new MediaRecorder(rs,{mimeType:mime});
+    vmRec=new MediaRecorder(rs,{mimeType:mime,audioBitsPerSecond:24000});
     vmRec.ondataavailable=async function(e){
       if(!e.data||!e.data.size||!VM_MODE||vmSpeaking)return;
       try{
@@ -3142,7 +3142,7 @@ async function cvDown(e){
   let mime="";
   for(const m of mimes){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e2){}}
   if(!mime){toast("This browser can't record voice — try Chrome");cvClose();return;}
-  try{CVR=new MediaRecorder(CVR_STREAM,{mimeType:mime,audioBitsPerSecond:14000});}catch(e2){CVR=new MediaRecorder(CVR_STREAM);}
+  try{CVR=new MediaRecorder(CVR_STREAM,{mimeType:mime,audioBitsPerSecond:24000});}catch(e2){CVR=new MediaRecorder(CVR_STREAM);}
   CVR.ondataavailable=function(e2){if(e2.data&&e2.data.size)CVR_CH.push(e2.data);};
   CVR.onstop=function(){
     try{CVR_STREAM.getTracks().forEach(function(t){t.stop();});}catch(e2){}
@@ -4126,7 +4126,7 @@ async function gvDown(){
   GV.ch=[];
   const mimes=["audio/webm;codecs=opus","audio/webm","audio/mp4"];let mime="";
   for(const m of mimes){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
-  try{GV.rec=new MediaRecorder(GV.stream,{mimeType:mime||undefined,audioBitsPerSecond:14000});}catch(e2){GV.rec=new MediaRecorder(GV.stream);}
+  try{GV.rec=new MediaRecorder(GV.stream,{mimeType:mime||undefined,audioBitsPerSecond:24000});}catch(e2){GV.rec=new MediaRecorder(GV.stream);}
   GV.rec.ondataavailable=function(e2){if(e2.data&&e2.data.size)GV.ch.push(e2.data);};
   GV.rec.onstop=function(){
     try{GV.stream.getTracks().forEach(function(t){t.stop();});}catch(e2){}
@@ -4167,7 +4167,7 @@ function gvTrash(){
 function gvUp(){if(GV.timer){clearInterval(GV.timer);GV.timer=null;}try{if(GV.rec&&GV.rec.state!=="inactive")GV.rec.stop();}catch(e){}$("gvRec").className="hide";}
 async function gvSend(){
   if(!GV.b64||!GROUP_OPEN)return;
-  if(GV.b64.length>110000){toast("Voice note too long — keep it under 60 seconds");return;}
+  if(GV.b64.length>255000){toast("Voice note too long — keep it under 60 seconds");return;}
   const r=await api("gfile",{from:ME,g:GROUP_OPEN,text:GV.b64});
   if(r&&r.ok){gvClose();toast("Voice note sent ✓");}
   else toast((r&&r.err)||"Could not send voice note");
@@ -4411,6 +4411,7 @@ async function poll(){
     if(d.reacts&&d.reacts.length){
       for(const r of d.reacts){REACTS[r.id]=REACTS[r.id]||[];REACTS[r.id]=REACTS[r.id].filter(x=>x.by!==r.by);if(r.e)REACTS[r.id].push({by:r.by,e:r.e});}
       if(CHAT_OPEN)renderBubbles();
+      if(GROUP_OPEN)renderGBubbles(); /* v105 (skylar): group reactions appear live now */
     }
     if(v12ch){if(GROUP_OPEN)renderGBubbles();renderLists();}
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
@@ -4763,6 +4764,11 @@ function attachMsgEvents(el,m){
   el.addEventListener("click",()=>{if(Date.now()-lastSheet<700)return;openMs(m,el,"pill");}); /* v69: single tap = quick reactions (Telegram-style) */
   el.addEventListener("touchend",()=>clearTimeout(MS_LP));
   el.addEventListener("touchmove",()=>clearTimeout(MS_LP));
+  /* v105 (skylar): WhatsApp-style swipe-right on a message = reply to that message */
+  let swX=0,swY=0,swDx=0;
+  el.addEventListener("touchstart",ev=>{if(ev.touches.length===1){swX=ev.touches[0].clientX;swY=ev.touches[0].clientY;swDx=0;}},{passive:true});
+  el.addEventListener("touchmove",ev=>{if(swX===null)return;const dx=ev.touches[0].clientX-swX,dy=ev.touches[0].clientY-swY;if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy))swDx=dx;},{passive:true});
+  el.addEventListener("touchend",()=>{if(swDx>55){MS_MSG=m;msReply();}swDx=0;},{passive:true});
   el.addEventListener("contextmenu",e=>{e.preventDefault();open();});
   el.style.cursor="pointer";
   const rs=REACTS[m.ts];
@@ -5689,7 +5695,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=104;
+const AC_V=105;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
