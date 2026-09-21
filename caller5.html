@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v92</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v93</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -3714,7 +3714,17 @@ function fmtT(ts){try{const d=new Date(normTs(ts||""));if(isNaN(d.getTime()))ret
 var GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
 /* v33: SFU group-call state (Cloudflare Realtime) */
 var SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false,vOn:false,vmid:null,vtrack:null,tiles:{},pendVidNode:null};
-function gCall(){if(GC.on){toast("Already in a group call");return;}if(!GROUP_OPEN)return;gJoin(GROUP_OPEN,true);}
+async function gCall(){
+  if(GC.on){toast("Already in a group call");return;}
+  if(!GROUP_OPEN)return;
+  /* v93: old-engine group (server has never heard of it) — calls could never connect. Upgrade it first, then call. */
+  const g=GROUPS.find(function(x){return x.id===GROUP_OPEN;});
+  if(g&&!g.server){
+    const ok=await gMigrateLocal(GROUP_OPEN);
+    if(!ok){toast("Group upgraded first — try the call again now");return;}
+  }
+  gJoin(GROUP_OPEN,true);
+}
 async function gJoin(gid,initiator){
   if(GC.on)return;
   let stream;
@@ -5387,7 +5397,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=92;
+const AC_V=93;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
