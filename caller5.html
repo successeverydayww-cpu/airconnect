@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v96</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v97</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -667,7 +667,7 @@ footer a{color:#64748B}
     <button class="bk" onclick="closeGroup()">‹</button>
     <div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0;cursor:pointer" onclick="openGInfo()" title="Tap for group info"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div>
     <div style="flex:1;min-width:0;cursor:pointer" onclick="openGInfo()"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
-    <button class="bk" onclick="openGInfo()" title="Group info (members, admins, link, settings)">ⓘ</button><button class="bk" onclick="gCall()" title="Group call">📞</button><button class="bk" onclick="leaveGroup()" title="Leave group">👋</button>
+    <button class="bk" onclick="openGInfo()" title="Group options">⋮</button><button class="bk" onclick="gCall()" title="Group call">📞</button>
   </div>
   <div class="bubbles" id="gbubbles"></div>
   <div class="cinput">
@@ -4869,15 +4869,18 @@ async function openGInfo(){
   const glink=acLinkBase()+"#g="+GROUP_OPEN;
   let rows="";
   for(const m of r.members){
-    rows+='<div style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #E2E8F0">'+
+    const isMe=m.id===ME;
+    rows+='<div'+(isMe?'':' onclick="gmsg2(\''+m.id+'\')"')+' style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #E2E8F0'+(isMe?'':';cursor:pointer')+'">'+
     '<div style="width:34px;height:34px;border-radius:50%;background:'+memColor(m.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 34px">'+esc((m.name||"?").charAt(0).toUpperCase())+'</div>'+
     '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#0F172A">'+esc(m.name||("+"+m.id))+'</div>'+
-    '<div style="font-size:11px;color:#64748B">+'+esc(m.id)+(m.creator?" · Group creator":(m.admin?" · Admin":""))+'</div></div>'+
-    ((m.id!==ME)?'<button onclick="gmsg2(\''+m.id+'\')" style="border:1px solid #CBD5E1;background:#fff;color:#075E46;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700">Message</button>':"")+
-    ((iAmAdmin&&!m.creator&&m.id!==ME)?'<button onclick="gkick2(\''+m.id+'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:5px 10px;font-size:12px">Remove</button>':"")+
-    ((iAmCreator&&m.id!==ME)?'<button onclick="gadmin2(\''+m.id+'\',\''+(!m.admin)+'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#2563EB;border-radius:8px;padding:5px 10px;font-size:12px">'+(m.admin?"Demote":"Make admin")+"</button>":"")+
+    '<div style="font-size:11px;color:#64748B">+'+esc(m.id)+(m.creator?" · 👑 Group creator":(m.admin?" · 🛡️ Admin":(isMe?" · you":"")))+'</div></div>'+
+    ((isMe)?'':
+      ((iAmAdmin&&!m.creator)?'<button onclick="event.stopPropagation();gkick2(\''+m.id+'\')" style="border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:5px 10px;font-size:12px">Remove</button>':"")+
+      ((iAmCreator)?'<button onclick="event.stopPropagation();gadmin2(\''+m.id+'\',\''+(!m.admin)+'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#2563EB;border-radius:8px;padding:5px 10px;font-size:12px">'+(m.admin?"Demote":"Make admin")+'</button>':"")
+    )+
     "</div>";
   }
+
   let pastRows="";
   if((r.past||[]).length){
     for(const p of r.past){
@@ -4908,22 +4911,35 @@ async function openGInfo(){
     addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Add</button></div>';
   }
   el.innerHTML=
-    '<div class="ohdr"><button class="bk" onclick="giClose()">‹</button><div class="nm" style="flex:1">Group info</div><div style="width:30px"></div></div>'+
-    '<div style="overflow:auto;padding:16px">'+
-    '<div style="text-align:center;padding:6px 0 14px"><div style="font-size:44px">👥</div>'+
-    '<div style="font-weight:700;font-size:18px;color:#0F172A">'+esc(r.name)+'</div>'+
-    '<div style="font-size:12px;color:#64748B">'+r.members.length+' members'+(r.lock?' · 🔒 only admins can send':'')+'</div></div>'+
-    '<div style="display:flex;gap:8px;margin-bottom:12px"><button onclick="acCopy(\''+glink+'\');toast(\'Group link copied ✓\')" class="big" style="flex:1;width:auto;padding:10px;margin:0;background:#D7EEE0;color:#075E46;font-size:13px">🔗 Copy group link</button>'+
-    (iAmAdmin?'<button onclick="glock2()" class="big" style="flex:1;width:auto;padding:10px;margin:0;background:'+(r.lock?'#FEE2E2;color:#B91C1C':'#F1F5F9;color:#111827')+';font-size:13px">'+(r.lock?'🔓 Open chat for all':'🔒 Lock chat')+'</button>':"")+'</div>'+
-    (reqRows?'<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-bottom:12px"><div style="font-weight:700;font-size:13px;color:#92400E;margin-bottom:4px">🔔 Join requests</div>'+reqRows+'</div>':"")+
-    (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>':"")+
-    addRow+
-    '<div style="margin-top:8px">'+rows+'</div>'+
-    (pastRows?'<div style="margin-top:14px"><div style="font-weight:700;font-size:13px;color:#64748B;margin-bottom:4px">Past members</div>'+pastRows+'</div>':"")+
-    (iAmAdmin?'<div style="display:flex;gap:8px;margin-top:16px"><input id="giPass" type="password" placeholder="'+(r.hasPass?'Change group password':'Set group password — needed to delete')+'" maxlength="40" style="flex:1"><button onclick="gpass2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>'+
-      '<button onclick="gdel2()" class="big" style="background:#DC2626;color:#fff;margin-top:8px">🗑 Delete group (permanent)</button>':"")+
+    '<div class="ohdr"><button class="bk" onclick="giClose()">‹</button><div class="nm" style="flex:1">Group options</div><div style="width:30px"></div></div>'+
+    '<div style="overflow:auto">'+
+    '<div style="background:#0D6E52;padding:18px 16px 14px;text-align:center">'+
+      '<div style="font-size:38px">👥</div>'+
+      '<div style="color:#fff;font-weight:800;font-size:18px;margin-top:2px">'+esc(r.name)+'</div>'+
+      '<div style="display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap">'+
+        '<span style="background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px">'+r.members.length+' members</span>'+
+        (r.lock?'<span style="background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px">🔒 admins only</span>':"")+
+        '<span style="background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px">'+(iAmCreator?'👑 creator':(iAmAdmin?'🛡️ admin':'member'))+'</span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="padding:14px 12px">'+
+    '<div style="font-weight:700;font-size:12px;color:#64748B;margin-bottom:6px">MEMBERS ('+r.members.length+') · tap a member to chat privately</div>'+
+    '<div class="card">'+rows+'</div>'+
+    (iAmAdmin&&reqRows?'<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-top:12px"><div style="font-weight:700;font-size:13px;color:#92400E;margin-bottom:4px">🔔 Join requests</div>'+reqRows+'</div>':"")+
+    (iAmAdmin?'<div style="font-weight:700;font-size:12px;color:#92400E;margin:14px 0 4px">🛡️ ADMIN TOOLS · only admins see this</div>'+
+      '<div class="card" style="padding:4px 12px;margin-bottom:10px">'+
+        moreRow("🔗","Copy group link","acCopy(\''+glink+'\');toast(\'Group link copied ✓\')")+
+        moreRow(r.lock?"🔓":"🔒",r.lock?"Open chat for everyone":"Lock chat to admins","glock2()")+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>'+
+      addRow+
+      '<div style="display:flex;gap:8px;margin-top:10px"><input id="giPass" type="password" placeholder="'+(r.hasPass?'Change group password':'Set group password — needed to delete')+'" maxlength="40" style="flex:1"><button onclick="gpass2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>'+
+      '<button onclick="gdel2()" class="big" style="background:#DC2626;color:#fff;margin-top:10px">🗑 Delete group (permanent)</button>':"")+
+    (iAmAdmin&&pastRows?'<div style="margin-top:14px"><div style="font-weight:700;font-size:13px;color:#64748B;margin-bottom:4px">Past members</div>'+pastRows+'</div>':"")+
     '<button onclick="ginfoLeave()" class="big" style="background:#F1F5F9;color:#111827;margin-top:16px">Leave group 👋</button>'+
-    "</div>";
+    "</div></div>";
+
+
   document.body.appendChild(el);
 }
 async function gadd3(node){
@@ -5404,7 +5420,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=96;
+const AC_V=97;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
