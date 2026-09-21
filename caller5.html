@@ -503,10 +503,6 @@ footer a{color:#64748B}
       <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">👥 Your friends</div>
-      <div id="flist" style="font-size:14px;color:#64748B">loading…</div>
-    </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
 
@@ -1893,7 +1889,7 @@ function renderLists(){
   }
   $("nocall").className=fr.length?"empty hide":"empty";
   const fl=$("flist");
-  fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
+  if(fl)fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
   renderUnread();
 }
 function renderUnread(){
@@ -5296,7 +5292,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=85;
+const AC_V=86;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
