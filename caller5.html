@@ -396,7 +396,7 @@ footer a{color:#64748B}
       <input id="peer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
       <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
     </div>
-    <div class="card">
+    <div class="card" id="profCard">
       <div style="font-weight:600;margin-bottom:10px">👤 My Profile</div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
         <div class="av" id="myPic" style="width:64px;height:64px;font-size:24px;flex:0 0 64px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
@@ -645,6 +645,9 @@ footer a{color:#64748B}
   <div style="padding:14px;overflow:auto">
     <input id="gcName" placeholder="Group name, e.g. Family">
     <div id="gcList" style="margin-top:10px"></div>
+    <input id="gcPass" type="password" placeholder="Group password (admins only — needed to delete the group)" maxlength="40" style="margin-top:10px">
+    <label class="row" style="cursor:pointer;margin-top:4px"><input type="checkbox" id="gcLock" style="width:20px;height:20px"> <div class="rname" style="margin-left:10px">Only admins can send</div></label>
+    <label class="row" style="cursor:pointer"><input type="checkbox" id="gcPerm" style="width:20px;height:20px"> <div class="rname" style="margin-left:10px">New members need admin approval</div></label>
     <button class="big blue" style="width:100%;margin-top:10px" onclick="createGroup()">👥 Create group</button>
     <div style="font-size:11px;color:#64748B;margin-top:8px;line-height:1.5">Everyone in the group can read group messages. Keep private things in a one-to-one chat — those are end-to-end encrypted.</div>
   </div>
@@ -693,6 +696,7 @@ footer a{color:#64748B}
   <div class="ohdr" style="background:transparent">
     <button class="bk" onclick="closeStatusViewer()">‹</button>
     <div style="flex:1;min-width:0"><div class="nm" id="stName" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div><div class="st" id="stTime">—</div></div>
+    <button class="bk" onclick="stMenu()" title="Options">⋮</button>
     <button class="bk" onclick="closeStatusViewer()">✕</button>
   </div>
   <div style="position:absolute;top:66px;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
@@ -1129,7 +1133,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=77');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=78');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1376,6 +1380,7 @@ async function finishLogin(d){
   setInterval(function(){if(state==="live"||state==="dialing"||state==="incoming")flushOutIce();},400);setInterval(flushOutIce,700);
   setInterval(tick,1000);setInterval(callBarTick,1000);
   renderLists();
+  acHashHandle();
   if(!localStorage.getItem("ac_ob")){obShow();$("ob").className="ovl";}
 }
 /* ---- Android back button: close overlays, never dump to login ---- */
@@ -1518,6 +1523,7 @@ function wtObserveVideos(){
 async function wtAutoPlayVid(pid,fid,n,box){
   box=box||document.querySelector('.wt-vidbox[data-pid="'+pid+'"]');
   if(!box)return;
+  const snd=box.dataset.sound==="1";
   let v=box.querySelector("video");
   if(v){v.play().catch(function(){});return;}
   if(box.dataset.loading==="1")return;
@@ -1539,7 +1545,6 @@ async function wtAutoPlayVid(pid,fid,n,box){
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
     box.innerHTML='<video id="wtv-'+pid+'" playsinline muted'+(snd?' loop autoplay':' controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
     const vv=document.getElementById("wtv-"+pid);
-    const snd=box.dataset.sound==="1";
     /* v72: shorts autoplay MUTED (tap 🔊 for sound); long videos wait for the play button */
     if(snd){ vv.play().catch(function(){}); }
     if(te>ts){
@@ -3769,7 +3774,7 @@ function gcVideoLayout(){
   const rows=[];
   if(SF.vOn&&SF.vtrack){
     let lt=SF.tiles[ME];
-    if(!lt){lt=document.createElement("video");lt.autoplay=true;lt.playsInline=true;lt.muted=true;lt.style.cssText="width:110px;height:150px;object-fit:cover;border-radius:10px;background:#000";lt.setAttribute("playsinline","true");SF.tiles[ME]=lt;}
+    if(!lt){lt=document.createElement("video");lt.autoplay=true;lt.playsInline=true;lt.muted=true;lt.style.cssText="width:110px;height:150px;object-fit:cover;border-radius:10px;background:transparent";lt.setAttribute("playsinline","true");SF.tiles[ME]=lt;}
     lt.srcObject=new MediaStream([SF.vtrack]);lt.play().catch(()=>{});
     rows.push({t:lt,n:(ME_NAME||ME)+" (you)"});
   }
@@ -3798,7 +3803,7 @@ function gcUI(){
   for(const p of peers)chips+='<span style="background:rgba(255,255,255,.18);border-radius:20px;padding:6px 12px;font-size:13px">'+esc(gcName(p))+'</span>';
   chips+="</div>";
   el.innerHTML='<div style="font-size:30px">👥📞</div><div style="font-weight:700;font-size:17px">'+esc(g?g.name:"Group call")+'</div>'+
-  '<div id="gcstat" style="font-size:13px;opacity:.85">Group call · 0:00</div>'+
+  '<div id="gcstat" style="font-size:13px;opacity:.85">'+(peers.length?"Group call · 0:00":"Ringing — waiting for members to connect…")+'</div>'+
   '<div id="gcvids" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px"></div>'+
   '<div style="font-size:12px;opacity:.7">'+(peers.length+1)+" connected</div>"+chips+
   '<div style="display:flex;gap:14px;margin-top:10px">'+
@@ -3841,7 +3846,7 @@ function gcInvite(from,gid){
   document.body.appendChild(el);
   try{navigator.vibrate&&navigator.vibrate([400,200,400]);}catch(e){}
   try{startRing("in");}catch(e){}
-  setTimeout(()=>{if(GCI&&GCI.from===from&&GCI.gid===gid)gcDecline();},45000);
+  /* v78: the invite keeps ringing until the user answers — a group call stays joinable while it rings */
 }
 function gcAccept(){const i=GCI;gcDecline();if(i)gJoin(i.gid,false);}
 function gcDecline(){GCI=null;const el=document.getElementById("gcinv");if(el)el.remove();try{stopRing();}catch(e){}}
@@ -4154,7 +4159,7 @@ async function poll(){
     let v12ch=false;
     for(const g of (d.groups||[])){
       const ex=GROUPS.find(x=>x.id===g.id);
-      if(!ex){GROUPS.push(g);v12ch=true;}
+      if(!ex){GROUPS.push(g);v12ch=true;} /* v78: full row keeps lock/admins/perms on every device */
       else if(JSON.stringify(ex.members)!==JSON.stringify(g.members)||ex.name!==g.name){Object.assign(ex,g);v12ch=true;}
     }
     for(const g of (d.gmsgs||[])){
@@ -4605,9 +4610,12 @@ async function createGroup(){
   const members=Array.from(document.querySelectorAll("#gcList input:checked")).map(x=>x.value);
   if(!name){toast("Give the group a name");return;}
   if(!members.length){toast("Pick at least one friend");return;}
-  const r=await api("gcreate",{by:ME,name,members});
+  const pass=(($("gcPass")&&$("gcPass").value)||"").trim();
+  const lock=$("gcLock")&&$("gcLock").checked?1:0;
+  const perm=$("gcPerm")&&$("gcPerm").checked?1:0;
+  const r=await api("gcreate",{by:ME,name,members,pass,lock,perm});
   if(r&&r.ok){
-    GROUPS.push({id:r.id,name:r.name,by:ME,members:r.members,created:new Date().toISOString()});
+    GROUPS.push({id:r.id,name:r.name,by:ME,members:r.members,admins:[ME],lock,perm,pass,past:[],reqs:[],created:new Date().toISOString()});
     persistV12();closeGc();renderLists();toast("Group created 🎉");
   }else toast((r&&r.err)||"Could not create group");
 }
@@ -4615,7 +4623,9 @@ function openGroup(gid){
   const g=GROUPS.find(x=>x.id===gid);if(!g)return;
   GROUP_OPEN=gid;GUNREAD[gid]=0;renderLists();
   $("gvName").textContent=g.name;$("gvName").style.cursor="pointer";$("gvName").onclick=openGInfo;$("gvSub").style.cursor="pointer";$("gvSub").onclick=openGInfo;
-  $("gvSub").textContent=g.members.length+" members";
+  const gAdm=(g.admins||[g.by]).indexOf(ME)>=0;
+  $("gvSub").textContent=g.members.length+" members"+((g.admins||[]).length>1?" · "+g.admins.length+" admins":"")+(gAdm?" · you are admin":"");
+  try{const gb=$("gbox");if(g.lock&&!gAdm){gb.disabled=true;gb.placeholder="🔒 Only admins can send";}else{gb.disabled=false;gb.placeholder="Message group";}}catch(e){}
   renderGBubbles();
   $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
@@ -4628,16 +4638,41 @@ async function openGInfo(){
   el=document.createElement("div");el.id="ginfosheet";
   el.style.cssText="position:fixed;inset:0;z-index:70;background:#F8FAFC;display:flex;flex-direction:column;";
   const me=(r.members.find(m=>m.id===ME)||{});
-  const iAmAdmin=!!me.admin,iAmCreator=ME===r.by;
+  const iAmAdmin=(r.iAmAdmin!==undefined)?!!r.iAmAdmin:!!me.admin;
+  const iAmCreator=ME===r.by;
+  const glink=acLinkBase()+"#g="+GROUP_OPEN;
   let rows="";
   for(const m of r.members){
     rows+='<div style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #E2E8F0">'+
     '<div style="width:34px;height:34px;border-radius:50%;background:'+memColor(m.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 34px">'+esc((m.name||"?").charAt(0).toUpperCase())+'</div>'+
-    '<div style="flex:1"><div style="font-weight:600;font-size:13.5px;color:#0F172A">'+esc(m.name||("+"+m.id))+'</div>'+
+    '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#0F172A">'+esc(m.name||("+"+m.id))+'</div>'+
     '<div style="font-size:11px;color:#64748B">+'+esc(m.id)+(m.creator?" · Group creator":(m.admin?" · Admin":""))+'</div></div>'+
-    ((iAmAdmin&&!m.creator&&m.id!==ME)?'<button onclick="gkick2(\'\'+m.id+\'\')" style="border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:5px 10px;font-size:12px">Remove</button>':"")+
+    ((m.id!==ME)?'<button onclick="gmsg2(\''+m.id+'\')" style="border:1px solid #CBD5E1;background:#fff;color:#075E46;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700">Message</button>':"")+
+    ((iAmAdmin&&!m.creator&&m.id!==ME)?'<button onclick="gkick2(\'\'+m.id+\'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:5px 10px;font-size:12px">Remove</button>':"")+
     ((iAmCreator&&m.id!==ME)?'<button onclick="gadmin2(\'\'+m.id+\'\',\'\'+(!m.admin)+\'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#2563EB;border-radius:8px;padding:5px 10px;font-size:12px">'+(m.admin?"Demote":"Make admin")+"</button>":"")+
     "</div>";
+  }
+  let pastRows="";
+  if((r.past||[]).length){
+    for(const p of r.past){
+      pastRows+='<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #F1F5F9">'+
+      '<div style="width:30px;height:30px;border-radius:50%;background:#CBD5E1;color:#64748B;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 30px;font-size:12px">'+esc((p.name||"?").charAt(0).toUpperCase())+'</div>'+
+      '<div style="flex:1"><div style="font-weight:600;font-size:13px;color:#475569">'+esc(p.name||("+"+p.id))+'</div>'+
+      '<div style="font-size:11px;color:#94A3B8">+'+esc(p.id)+' · '+(p.how==="removed"?"removed by admin":"left")+'</div></div>'+
+      ((iAmAdmin)?'<button onclick="gadd3(\''+p.id+'\')" style="border:1px solid #CBD5E1;background:#fff;color:#075E46;border-radius:8px;padding:5px 10px;font-size:12px">Add back</button>':"")+
+      "</div>";
+    }
+  }
+  let reqRows="";
+  if((r.reqs||[]).length){
+    for(const q of r.reqs){
+      reqRows+='<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #F1F5F9">'+
+      '<div style="flex:1"><div style="font-weight:600;font-size:13px;color:#0F172A">'+esc(q.name||("+"+q.id))+'</div>'+
+      '<div style="font-size:11px;color:#64748B">+'+esc(q.id)+' wants to join</div></div>'+
+      '<button onclick="greq2(\'\'+q.id+\'\',true)" style="border:0;background:#16A34A;color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700">✓</button>'+
+      '<button onclick="greq2(\'\'+q.id+\'\',false)" style="border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:6px 12px;font-size:12px">✗</button>'+
+      "</div>";
+    }
   }
   const inG=new Set(r.members.map(m=>m.id));
   const cand=FRIENDS.filter(f=>!inG.has(f.id));
@@ -4647,17 +4682,239 @@ async function openGInfo(){
     addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Add</button></div>';
   }
   el.innerHTML=
-    '<div class="ohdr"><button class="bk" onclick="document.getElementById(\'ginfosheet\').remove()">‹</button><div class="nm" style="flex:1">Group info</div><div style="width:30px"></div></div>'+
+    '<div class="ohdr"><button class="bk" onclick="giClose()">‹</button><div class="nm" style="flex:1">Group info</div><div style="width:30px"></div></div>'+
     '<div style="overflow:auto;padding:16px">'+
     '<div style="text-align:center;padding:6px 0 14px"><div style="font-size:44px">👥</div>'+
     '<div style="font-weight:700;font-size:18px;color:#0F172A">'+esc(r.name)+'</div>'+
-    '<div style="font-size:12px;color:#64748B">'+r.members.length+' members · not end-to-end encrypted</div></div>'+
+    '<div style="font-size:12px;color:#64748B">'+r.members.length+' members'+(r.lock?' · 🔒 only admins can send':'')+'</div></div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:12px"><button onclick="acCopy(\''+glink+'\');toast(\'Group link copied ✓\')" class="big" style="flex:1;width:auto;padding:10px;margin:0;background:#D7EEE0;color:#075E46;font-size:13px">🔗 Copy group link</button>'+
+    (iAmAdmin?'<button onclick="glock2()" class="big" style="flex:1;width:auto;padding:10px;margin:0;background:'+(r.lock?'#FEE2E2;color:#B91C1C':'#F1F5F9;color:#111827')+';font-size:13px">'+(r.lock?'🔓 Open chat for all':'🔒 Lock chat')+'</button>':"")+'</div>'+
+    (reqRows?'<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-bottom:12px"><div style="font-weight:700;font-size:13px;color:#92400E;margin-bottom:4px">🔔 Join requests</div>'+reqRows+'</div>':"")+
     (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>':"")+
     addRow+
     '<div style="margin-top:8px">'+rows+'</div>'+
-    '<button onclick="ginfoLeave()" class="big" style="background:#DC2626;color:#fff;margin-top:16px">Leave group 👋</button>'+
+    (pastRows?'<div style="margin-top:14px"><div style="font-weight:700;font-size:13px;color:#64748B;margin-bottom:4px">Past members</div>'+pastRows+'</div>':"")+
+    (iAmAdmin?'<div style="display:flex;gap:8px;margin-top:16px"><input id="giPass" type="password" placeholder="'+(r.hasPass?'Change group password':'Set group password — needed to delete')+'" maxlength="40" style="flex:1"><button onclick="gpass2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>'+
+      '<button onclick="gdel2()" class="big" style="background:#DC2626;color:#fff;margin-top:8px">🗑 Delete group (permanent)</button>':"")+
+    '<button onclick="ginfoLeave()" class="big" style="background:#F1F5F9;color:#111827;margin-top:16px">Leave group 👋</button>'+
     "</div>";
   document.body.appendChild(el);
+}
+async function gadd3(node){
+  const r=await api("gadd",{by:ME,g:GROUP_OPEN,members:[node]});
+  toast(r&&r.ok?"Added back ✓":(r&&r.err)||"Could not add");
+  openGInfo();
+}
+
+/* ================= v78: copy helpers, hash links, status menu, plans, pay posts, group upgrades ================= */
+function acCopy(t){try{navigator.clipboard&&navigator.clipboard.writeText(t).then(function(){},function(){acCopyFallback(t);});}catch(e){acCopyFallback(t);}}
+function acCopyFallback(t){try{const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}catch(e){}}
+function acLinkBase(){return "https://"+location.host+location.pathname;}
+
+/* ---- status ⋮ menu ---- */
+function stMenuClose(){const el=$("stmSheet");if(el)el.remove();}
+function stMenu(){
+  let g=null;try{g=STV.groups[STV.gi];}catch(e){}
+  if(!g)return;
+  const s=g.items[STV.ii];const mine=g.num===ME;
+  const link=acLinkBase()+"#s="+g.num;
+  let el=$("stmSheet");if(el)el.remove();
+  el=document.createElement("div");el.id="stmSheet";el.className="ovl";
+  el.innerHTML='<div class="sheet" style="text-align:center">'+
+  '<div style="font-weight:600;margin-bottom:12px">'+(mine?"My status":esc(g.name)+"'s status")+'</div>'+
+  '<button class="big" style="width:100%;background:#F1F5F9;color:#111827" onclick="acCopy(\''+link+'\');toast(\'Link copied ✓\');stMenuClose()">🔗 Share — copy link to this status</button>'+
+  (mine?'<button class="big" style="width:100%;background:#F1F5F9;color:#111827;margin-top:8px" onclick="stPostChannel()">📢 Post to my channel</button>':'')+
+  (mine?'<button class="big" style="width:100%;background:#FEE2E2;color:#B91C1C;margin-top:8px" onclick="stMenuDel()">🗑 Delete this status</button>':'')+
+  '<button class="big" style="width:100%;background:#CBD5E1;color:#334155;margin-top:8px" onclick="stMenuClose()">Close</button></div>';
+  document.body.appendChild(el);
+}
+async function stMenuDel(){
+  let g=null;try{g=STV.groups[STV.gi];}catch(e){}
+  if(!g||g.num!==ME)return;
+  const s=g.items[STV.ii];
+  if(s){try{await api("storydel",{node:ME,id:s.id});}catch(e){}}
+  toast("Status deleted");
+  stMenuClose();
+  try{await refreshStories();}catch(e){}
+  closeStatusViewer();
+  try{renderStoryStrip();renderStatusScreen();}catch(e){}
+}
+async function stPostChannel(){
+  let g=null;try{g=STV.groups[STV.gi];}catch(e){}
+  if(!g||g.num!==ME)return;
+  const s=g.items[STV.ii];const pic=s.pic||"";
+  if(!pic){toast("Only photo and video statuses can be posted");return;}
+  if(pic.indexOf("data:audio")===0){toast("Voice statuses cannot be posted to a channel yet");return;}
+  toast("Posting…");
+  try{
+    let dur=0;
+    if(pic.indexOf("data:video")===0){
+      dur=await new Promise(function(res){try{const v=document.createElement("video");v.preload="metadata";v.onloadedmetadata=function(){res(isFinite(v.duration)?Math.round(v.duration):0);};v.onerror=function(){res(0);};v.src=pic;}catch(e){res(0);}});
+    }
+    const b64=pic.split(",")[1]||"";
+    const CH=75000;
+    const n=Math.min(900,Math.max(1,Math.ceil(b64.length/CH)));
+    const st=await api("fstart",{from:ME,to:ME,name:dur?"status.mp4":"status.jpg",n,pub:1});
+    if(!st||!st.fid)throw 0;
+    for(let i=0;i<n;i++){
+      const r=await api("fput",{from:ME,fid:st.fid,ci:i,v:b64.slice(i*CH,(i+1)*CH)});
+      if(!r||!r.ok)throw 0;
+    }
+    const r=await api("post",{from:ME,text:"",fid:st.fid,name:dur?"status.mp4":"status.jpg",rs:"",cat:"general",dur:dur,ts:0,te:dur,pic:dur?0:1});
+    if(!r||!r.ok){
+      const er=String((r&&r.err)||"Could not post");
+      toast(er.indexOf("channel")>=0?"You don't have a channel yet — create one in Watch → My Channel first":er);
+      return;
+    }
+    toast("Posted ✓ — "+(dur?(dur>=300?"long video on Watch":"short video on Shorts"):"photo on the feed"));
+    stMenuClose();closeStatusViewer();
+  }catch(e){toast("Upload failed — check your connection");}
+}
+
+/* ---- group links / user links / hash join ---- */
+async function acHashHandle(){
+  try{
+    const h=location.hash||"";
+    if(h.indexOf("#g=")===0){const gid=h.slice(3).trim();if(gid)localStorage.setItem("ac_pendg",gid);}
+    if(h.indexOf("#u=")===0){const num=h.slice(3).trim();if(num)localStorage.setItem("ac_pendu",num);}
+    if(h.indexOf("#s=")===0){const num=h.slice(3).trim();if(num)localStorage.setItem("ac_pends",num);}
+    try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
+  }catch(e){}
+  setTimeout(acHashConsume,3000);
+}
+async function acHashConsume(){
+  try{
+    let pg=null,pu=null,ps=null;
+    try{pg=localStorage.getItem("ac_pendg")||null;pu=localStorage.getItem("ac_pendu")||null;ps=localStorage.getItem("ac_pends")||null;}catch(e){}
+    if(pg){localStorage.removeItem("ac_pendg");
+      const r=await api("ginfo",{node:ME,g:pg});
+      if(r&&r.ok&&r.peek){
+        if(confirm('"'+r.name+'" — join this group?')){
+          const j=await api("gjoin",{node:ME,g:pg});
+          if(j&&j.ok)toast(j.joined?"Joined the group 🎉":"Request sent to the admins ✓");
+          else toast((j&&j.err)||"Could not join");
+        }
+      } else if(r&&r.ok){toast("You are already in this group");openGroup(pg);}
+      else toast("That group link is no longer valid");
+    }
+    if(pu){localStorage.removeItem("ac_pendu");
+      if(pu===ME){}
+      else if(WIN_FRIENDS.some(function(f){return f.id===pu;})){toast("You are already friends ✓");}
+      else{const r=await api("flink",{from:ME,num:pu});
+        if(r&&r.ok)toast("You are now friends ✓ — open your chats to say hi");
+        else toast((r&&r.err)||"Could not connect");
+      }
+    }
+    if(ps){localStorage.removeItem("ac_pends");
+      try{await refreshStories();}catch(e){}
+      setTimeout(function(){
+        const has=(typeof storyGroups==="function")&&storyGroups().some(function(g){return g.num===ps;});
+        if(has)openStatusViewer(ps);else toast("No statuses available from that link right now");
+      },500);
+    }
+  }catch(e){}
+}
+
+/* ---- premium plans ---- */
+const AC_PLANS=[
+ {k:"beginner",n:"Beginner",usd:3,ngr:4800,d:"Premium basics — smart replies, gifts, priority chat"},
+ {k:"pro",n:"Pro",usd:8,ngr:12800,d:"Everything in Beginner + universal translation in every language"},
+ {k:"ultra",n:"Ultra",usd:15,ngr:24000,d:"Everything in Pro + citizen skills marketplace + longer uploads"},
+ {k:"premium",n:"Premium",usd:25,ngr:40000,d:"THE COMPLETE PACKAGE — every feature, full agent powers, max everything"}
+];
+function plansClose(){const el=$("plansSheet");if(el)el.remove();}
+function plansSheet(){
+  let el=$("plansSheet");if(el)el.remove();
+  el=document.createElement("div");el.id="plansSheet";el.className="ovl";
+  const wal="4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa";
+  let cards="";
+  for(const p of AC_PLANS){
+    cards+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">'+
+    '<div style="display:flex;align-items:center"><div style="flex:1"><span style="font-weight:700;font-size:15px">'+p.n+'</span>'+(p.k==="premium"?' <span style="background:#075E46;color:#fff;border-radius:8px;padding:2px 8px;font-size:10.5px;font-weight:700">COMPLETE</span>':'')+'</div>'+
+    '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#075E46">$'+p.usd+'</div><div style="font-size:11px;color:#64748B">₦'+p.ngr.toLocaleString()+' /month</div></div></div>'+
+    '<div style="font-size:12.5px;color:#64748B;margin-top:6px">'+p.d+'</div></div>';
+  }
+  el.innerHTML='<div class="sheet" style="max-width:480px">'+
+  '<div style="font-weight:700;font-size:16px;margin-bottom:2px">💎 AirConnect Premium plans</div>'+
+  '<div style="font-size:12px;color:#64748B;margin-bottom:12px">Monthly · cancel anytime · same value in dollars or Naira</div>'+
+  cards+
+  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:12px;margin-top:4px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#075E46;margin-bottom:6px">How to pay</div>'+
+  '<div style="font-size:12.5px;color:#075E46;line-height:1.55"><b>Outside Nigeria:</b> send USDC on Solana<br>'+
+  '<span style="font-family:monospace;word-break:break-all">'+wal+'</span><br>'+
+  '<button class="big" style="width:100%;margin-top:6px;padding:9px" onclick="acCopy(\''+wal+'\');toast(\'Wallet address copied ✓\')">📋 Copy USDC wallet address</button></div>'+
+  '<div style="font-size:12.5px;color:#075E46;line-height:1.55;margin-top:10px"><b>In Nigeria:</b> Naira transfer<br>Bank: <b>Rubies MFB</b> · Account: <b>Success Friday</b> · Number: <b>8881724009</b><br>'+
+  '<button class="big" style="width:100%;margin-top:6px;padding:9px" onclick="acCopy(\'Rubies MFB · Success Friday · 8881724009\');toast(\'Bank details copied ✓\')">📋 Copy Naira bank details</button></div>'+
+  '<div style="font-size:11.5px;color:#075E46;margin-top:10px">After paying, send your receipt to SkylarOS to get your activation code. Rubies MFB in-app payment connect is coming soon.</div></div>'+
+  '<button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="plansClose()">Close</button></div>';
+  document.body.appendChild(el);
+}
+
+/* ---- pay posts sheet (menu) ---- */
+function payPostsClose(){const el=$("paySheet");if(el)el.remove();}
+async function payPostsSheet(){
+  let el=$("paySheet");if(el)el.remove();
+  el=document.createElement("div");el.id="paySheet";el.className="ovl";
+  el.innerHTML='<div class="sheet"><div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 Pay posts</div><div style="font-size:12px;color:#64748B;margin-bottom:10px">Every post that reaches 1,000 views pays you $1 — again at every new 1,000. Credited straight to your channel earnings.</div><div style="text-align:center;color:#64748B;font-size:13px;padding:20px">Loading…</div><button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="payPostsClose()">Close</button></div>';
+  document.body.appendChild(el);
+  const r=await api("studio",{node:ME});
+  const box=el.querySelector(".sheet");
+  if(!r||!r.ok){box.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 Pay posts</div><div style="font-size:12px;color:#64748B;margin-bottom:10px">Every post that reaches 1,000 views pays you $1.</div><div style="text-align:center;color:#64748B;font-size:13px;padding:20px">'+esc((r&&r.err)||"Could not load")+'</div><button class="big" style="width:100%;background:#CBD5E1" onclick="payPostsClose()">Close</button>';return;}
+  let rows="";
+  const ps=(r.posts||[]).filter(function(p){return (p.vcnt||0)>=1000;});
+  if(!ps.length)rows='<div style="text-align:center;color:#64748B;font-size:13px;padding:14px">No pay posts yet — the first post to cross 1,000 views pays instantly.</div>';
+  else for(const p of ps){
+    rows+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin-bottom:6px">'+
+    '<div style="display:flex;align-items:center"><span style="flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.text||"Post")+'</span>'+
+    '<span style="font-weight:800;color:#075E46;font-size:13px">💰 $'+(p.earn||0).toFixed(1)+'</span></div>'+
+    '<div style="font-size:11.5px;color:#64748B;margin-top:3px">👁 '+(p.vcnt||0).toLocaleString()+' views · earns $1 at every new 1,000</div></div>';
+  }
+  box.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 Pay posts</div>'+
+  '<div style="font-size:12px;color:#64748B;margin-bottom:10px">Every post that reaches 1,000 views pays $1 — again at every new 1,000. Credited to your channel earnings the moment it happens.</div>'+
+  (r.mon?'<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:10px;font-size:13.5px;color:#075E46;margin-bottom:10px">🎉 Monetized · Pay posts earnings: <b>$'+(r.earn||0)+'</b></div>':'<div style="background:#F1F5F9;border-radius:12px;padding:10px;font-size:12.5px;color:#64748B;margin-bottom:10px">Monetization unlocks at 1,000 subscribers — '+Math.max(0,1000-(r.subs||0))+' to go. Then every 1,000 views on any post pays $1.</div>')+
+  '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Your pay posts ('+ps.length+')</div>'+rows+
+  '<button class="big" style="width:100%;background:#D7EEE0;color:#075E46;margin-top:8px" onclick="payPostsClose();try{wtOpen(\'watch\');wtMyChannel();}catch(e){}">Open My Channel Studio</button>'+
+  '<button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="payPostsClose()">Close</button>';
+}
+
+/* ---- group info v2: message member, past members, requests, link, lock, password, delete ---- */
+function giClose(){const el=$("ginfosheet");if(el)el.remove();}
+function gmsg2(num){
+  giClose();
+  if(num===ME)return;
+  if(WIN_FRIENDS.some(function(f){return f.id===num;})){openChat(num);return;}
+  toast("Connecting…");
+  setTimeout(function(){if(WIN_FRIENDS.some(function(f){return f.id===num;}))openChat(num);else toast("Almost friends — open their chat in a moment");},3000);
+}
+async function greq2(node,ok){
+  const r=await api("grq",{by:ME,g:GROUP_OPEN,node:node,ok:!!ok});
+  toast(r&&r.ok?(ok?"Approved ✓":"Declined"):(r&&r.err)||"Failed");
+  openGInfo();
+}
+async function glock2(){
+  const g=GROUPS.find(function(x){return x.id===GROUP_OPEN;});
+  const cur=g&&g.lock;
+  const r=await api("gset",{by:ME,g:GROUP_OPEN,lock:cur?0:1});
+  if(r&&r.ok){toast(cur?"Chat open for everyone ✓":"Chat locked to admins 🔒");const g2=GROUPS.find(function(x){return x.id===GROUP_OPEN;});if(g2)g2.lock=cur?0:1;persistV12();openGInfo();try{openGroup(GROUP_OPEN);}catch(e){}}
+  else toast((r&&r.err)||"Failed");
+}
+async function gpass2(){
+  const v=($("giPass")&&$("giPass").value||"").trim();
+  if(!v){toast("Type a password first");return;}
+  const r=await api("gset",{by:ME,g:GROUP_OPEN,pass:v});
+  if(r&&r.ok){toast("Group password saved ✓");openGInfo();}
+  else toast((r&&r.err)||"Failed");
+}
+async function gdel2(){
+  const p=prompt("To delete this group permanently, type the group password:");
+  if(p===null)return;
+  const r=await api("gdel",{by:ME,g:GROUP_OPEN,pass:p});
+  if(r&&r.ok){
+    toast("Group deleted");
+    giClose();try{closeGroup();}catch(e){}
+    for(let i=GROUPS.length-1;i>=0;i--)if(GROUPS[i].id===GROUP_OPEN)GROUPS.splice(i,1);
+    persistV12();renderLists();
+  } else toast((r&&r.err)||"Could not delete");
 }
 async function gadd2(){
   const sel=$("giAdd");if(!sel||!sel.value)return;
@@ -4703,6 +4960,8 @@ function renderGBubbles(){
 async function gsend(){
   const box=$("gbox"),txt=box.value.trim();
   if(!txt||!GROUP_OPEN)return;
+  const g0=GROUPS.find(x=>x.id===GROUP_OPEN);
+  if(g0&&g0.lock&&(g0.admins||[g0.by]).indexOf(ME)<0){toast("🔒 The admin has locked this group — only admins can send");box.value="";return;}
   box.value="";
   const r=await api("gmsg",{from:ME,g:GROUP_OPEN,text:txt});
   if(r&&r.ok){
@@ -4804,7 +5063,7 @@ async function loadStudio(){
     if(r.chan&&r.chan.about)h+='<div style="font-size:13px;color:#64748B;margin-top:4px">'+esc(r.chan.about)+'</div>';
     h+='<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">';
     const stat=(v,l)=>'<div style="background:#F1F5F9;border-radius:12px;padding:8px 13px;text-align:center"><div style="font-weight:700">'+v+'</div><div style="font-size:11px;color:#64748B">'+l+'</div></div>';
-    h+=stat(r.subs||0,"subscribers")+stat(t.views||0,"views")+stat(t.reacts||0,"reactions")+stat(t.comments||0,"comments")+stat(t.posts||0,"posts");
+    h+=stat(r.subs||0,"subscribers")+stat(t.views||0,"views")+stat(t.reacts||0,"reactions")+stat(t.comments||0,"comments")+stat(t.posts||0,"posts");h+=stat("$"+(r.earn||0),"pay-post $");
     h+='</div></div>';
     if(r.mon)h+='<div style="margin-top:10px;background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:10px 12px;font-size:13px;color:#075E46"><b>🎉 Monetized!</b> You earn $1 for every 1,000 views · Estimated earnings so far: <b>$'+(r.earn||0)+'</b></div>';
     else h+='<div style="margin-top:10px;background:#F1F5F9;border-radius:12px;padding:10px 12px;font-size:12.5px;color:#64748B">💰 Monetization unlocks at 1,000 subscribers — '+Math.max(0,1000-(r.subs||0))+' to go. Once monetized you earn $1 per 1,000 views.</div>';
@@ -4816,10 +5075,10 @@ async function loadStudio(){
     const ps=r.posts||[];
     if(!ps.length)h+='<div style="color:#64748B;text-align:center;padding:16px;font-size:13px">No posts yet — everything you post and its stats appear here.</div>';
     else for(const p of ps){
-      const ic=p.kind==="text"?"📝":(p.kind==="long"?"🎬":"📹");
+      const ic=p.kind==="text"?"📝":(p.kind==="photo"?"🖼":(p.kind==="long"?"🎬":"📹"));
       h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">';
       h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+ic+'</span><span style="flex:1;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.text||((p.kind==="text")?"Post":"Video post"))+'</span><span style="font-size:11px;color:#94A3B8">'+fmtWT(p.at)+'</span></div>';
-      h+='<div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#64748B"><span>👁 '+(p.vcnt||0)+' views</span><span>❤️ '+(p.rcnt||0)+' reactions</span><span>💬 '+(p.ccnt||0)+' comments</span></div>';
+      h+='<div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#64748B"><span>👁 '+(p.vcnt||0)+' views</span><span>❤️ '+(p.rcnt||0)+' reactions</span><span>💬 '+(p.ccnt||0)+' comments</span>'+(((p.vcnt||0)>=1000)?'<span style="color:#075E46;font-weight:700">💰 pay post · $'+Number(p.earn||0).toFixed(1)+'</span>':'')+'</div>';
       h+='</div>';
     }
     el.innerHTML=h;
@@ -4885,7 +5144,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=77;
+const AC_V=78;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4908,7 +5167,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=77").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=78").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -4981,14 +5240,26 @@ function menuOpen(){
     prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#075E46">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
       '<div><div style="font-size:16px;font-weight:700">'+esc(ME_NAME||"Me")+'</div>'+
       '<div style="font-size:12px;opacity:.85">+'+ME+' · my profile</div></div>';
-    prof.onclick=function(){menuClose();document.getElementById("picinput")&&document.getElementById("picinput").click();};
+    prof.onclick=function(){try{const c=document.getElementById("profCard");if(c){c.scrollIntoView({behavior:"smooth",block:"center"});return;}}catch(e){}document.getElementById("picinput")&&document.getElementById("picinput").click();};
     mv.appendChild(prof);
     try{const mp=PIC_CACHE[ME];if(mp){prof.querySelector("#menuProfAv").innerHTML='<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}}catch(e){}
     const back=document.createElement("button");
     back.className="big blue";back.style.cssText="margin:12px;width:calc(100% - 24px)";
     back.textContent="✕ Close menu";back.onclick=menuClose;
     mv.appendChild(back);
-    if(vs)mv.appendChild(vs); /* settings content lives here now — single copy, no dup ids */
+    if(vs){vs.className="view";mv.appendChild(vs);} /* v78 FIX: hide class kept the whole settings/profile block invisible in the menu */
+    const pay=document.createElement("button");
+    pay.className="big";pay.style.cssText="margin:12px;background:#D7EEE0;color:#075E46;font-size:14px";
+    pay.innerHTML="💰 Pay posts — channel earnings";pay.onclick=function(){menuClose();payPostsSheet();};
+    mv.appendChild(pay);
+    const pl=document.createElement("button");
+    pl.className="big";pl.style.cssText="margin:12px;background:#F1F5F9;color:#111827;font-size:14px";
+    pl.innerHTML="💎 Premium plans";pl.onclick=function(){menuClose();plansSheet();};
+    mv.appendChild(pl);
+    const ml=document.createElement("button");
+    ml.className="big";ml.style.cssText="margin:12px;background:#F1F5F9;color:#111827;font-size:14px";
+    ml.innerHTML="🔗 My AirConnect link";ml.onclick=function(){menuClose();acCopy(acLinkBase()+"#u="+ME);toast("Your link copied ✓ — anyone who opens it becomes your friend automatically");};
+    mv.appendChild(ml);
     const wal=document.createElement("button");
     wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#F1F5F9;color:#111827;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
