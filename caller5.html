@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v106</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v107</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -4833,14 +4833,17 @@ document.addEventListener("click",e=>{const fb=$("msFloat");if(fb&&fb.style.disp
 document.addEventListener("scroll",()=>closeMsFloat(),true);
 async function msReact(e){
   closeMs();closeMsFloat();
-  if(!MS_MSG||!CHAT_OPEN)return;
+  /* v107 (skylar): GROUP reactions were dead — the guard required an open 1:1 chat
+     (CHAT_OPEN is null in groups), so every emoji tap in a group silently returned.
+     Now groups react too. */
+  if(!MS_MSG||(!CHAT_OPEN&&!GROUP_OPEN))return;
   const cur=(REACTS[MS_MSG.ts]||[]).find(r=>r.by===ME);
   const r=await api("react",{by:ME,id:MS_MSG.ts,e:cur&&cur.e===e?"":e});
   if(r&&r.ok){
     REACTS[MS_MSG.ts]=REACTS[MS_MSG.ts]||[];
     REACTS[MS_MSG.ts]=REACTS[MS_MSG.ts].filter(x=>x.by!==ME);
     if(!(cur&&cur.e===e))REACTS[MS_MSG.ts].push({by:ME,e});
-    renderBubbles();
+    if(GROUP_OPEN)renderGBubbles();else renderBubbles();
   }else toast((r&&r.err)||"Could not react");
 }
 function msReply(){
@@ -5710,7 +5713,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=106;
+const AC_V=107;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
