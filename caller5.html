@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v98</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v99</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -374,7 +374,7 @@ footer a{color:#64748B}
 
   <div id="view-calls" class="view hide">
     <div id="calllist"></div>
-    <div id="nocall" class="empty">Friends will appear here with one-tap call buttons.</div>
+    <div id="nocall" class="empty">Calls you make and receive appear here. Missed calls stay until seen, everything auto-deletes after 7 days.</div>
   </div>
 
   <div id="view-settings" class="view hide">
@@ -1908,17 +1908,48 @@ function renderLists(){
     }
   }
   $("nochat").className=(allFr.length||WIN_BLOCKS.length)?"empty hide":"empty";
-  const ll=$("calllist");ll.innerHTML="";
-  for(const f of fr){
-    const n=(WIN_NAMES[f.id]||"friend");
-    const row=document.createElement("div");row.className="row";
-    row.innerHTML='<div class="av">'+n.charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">+ '+f.id+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();dial(\''+f.id+'\')">📞</button><button class="cb2" onclick="event.stopPropagation();dialVideo(\''+f.id+'\')">🎥</button></div>';
-    ll.appendChild(row);
-  }
-  $("nocall").className=fr.length?"empty hide":"empty";
+  renderCallLog();
   const fl=$("flist");
   if(fl)fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
   renderUnread();
+}
+
+/* ---- v99 call log (skylar): Calls tab = missed + last 7 days only, auto-delete after 7 days ---- */
+let AC_CALLS=[];try{AC_CALLS=JSON.parse(localStorage.getItem("ac_calllog"))||[];}catch(e){}
+function clAdd(n,d,miss){
+  try{
+    const cut=Date.now()-7*86400*1000;
+    AC_CALLS=AC_CALLS.filter(function(c){return c.at>=cut;});
+    const dup=AC_CALLS.some(function(c){return c.n===String(n)&&c.d===d&&Date.now()-c.at<12000;});
+    if(!dup)AC_CALLS.push({n:String(n),d:d,miss:miss?1:0,at:Date.now()});
+    localStorage.setItem("ac_calllog",JSON.stringify(AC_CALLS));
+  }catch(e){}
+  renderCallLog();
+}
+function renderCallLog(){
+  const ll=$("calllist");if(!ll)return;
+  const cut=Date.now()-7*86400*1000;
+  AC_CALLS=AC_CALLS.filter(function(c){return c.at>=cut;});
+  try{localStorage.setItem("ac_calllog",JSON.stringify(AC_CALLS));}catch(e){}
+  ll.innerHTML="";
+  const missed=AC_CALLS.filter(function(c){return c.miss;}).reverse();
+  const recent=AC_CALLS.filter(function(c){return !c.miss;}).reverse();
+  const row=function(c,label){
+    const nm=WIN_NAMES[c.n]||("+"+c.n);
+    const r=document.createElement("div");r.className="row";r.style.cursor="pointer";
+    r.innerHTML='<div class="av" style="background:'+(c.miss?"#FEE2E2":memColor(c.n))+';color:'+(c.miss?"#B91C1C":"#fff")+'">'+esc(nm.charAt(0).toUpperCase())+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(c.n)+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+' · + '+esc(c.n)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();dial(\''+c.n+'\')">📞</button></div>';
+    r.onclick=function(){dial(c.n);};
+    ll.appendChild(r);
+  };
+  const sec=function(t,col){
+    const h=document.createElement("div");h.textContent=t;
+    h.style.cssText="font-size:11px;font-weight:700;color:"+col+";padding:10px 14px 4px";
+    ll.appendChild(h);
+  };
+  if(missed.length){sec("MISSED CALLS","#DC2626");for(const c of missed)row(c,"Missed call");}
+  if(recent.length){sec("RECENT · LAST 7 DAYS","#64748B");for(const c of recent)row(c,c.d==="out"?"Outgoing":"Incoming");}
+  const nc=$("nocall");
+  if(nc){nc.className=AC_CALLS.length?"empty hide":"empty";if(!AC_CALLS.length)nc.textContent="Calls you make and receive appear here. Missed calls stay until seen, everything auto-deletes after 7 days.";}
 }
 function renderUnread(){
   let tot=0;for(const k in UNREAD)tot+=UNREAD[k];
@@ -3395,7 +3426,7 @@ function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
 }
 async function dial(p){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
-    PEER=p;CALL_ROLE="offerer";RING_ACKED=false;
+    PEER=p;CALL_ROLE="offerer";RING_ACKED=false;clAdd(p,"out",0);
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
@@ -3524,6 +3555,7 @@ function acceptCall(){
   const m=pendingOffer;pendingOffer=null;
   $("incoming").className="ovl hide";
   if(!m)return;
+  try{clAdd(m.from,"in",0);}catch(e){}
   answer(m);
   try{xlCallStart();}catch(e){}
   try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}
@@ -3533,7 +3565,7 @@ async function declineCall(){
   stopRing();
   const m=pendingOffer;pendingOffer=null;
   $("incoming").className="ovl hide";
-  if(m&&m.from){try{await api("sig",{from:ME,to:m.from,type:"bye",payload:{}});}catch(e){}}
+  if(m&&m.from){try{clAdd(m.from,"in",1);}catch(e){}try{await api("sig",{from:ME,to:m.from,type:"bye",payload:{}});}catch(e){}}
   callCleanup();toast("Call declined");
   await log("declined call from +"+(m?m.from:"?"));
 }
@@ -4224,6 +4256,7 @@ for(const m of msgs){
   }
   else if(m.type==="typing"&&CHAT_OPEN===m.from){TYPING_UNTIL=Date.now()+3200;$("cvSub").textContent="typing…";}
   else if(m.type==="bye"&&(state==="live"||state==="dialing"||state==="incoming")){
+    if(state==="incoming"){try{clAdd(m.from,"in",1);}catch(e){}}
     callCleanup();toast("Call ended by +"+m.from);await log("call ended by +"+m.from);
   }
   else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
@@ -4849,17 +4882,26 @@ async function gMigrateLocal(gid){
   return false;
 }
 async function openGInfo(){
+  /* v99 (skylar: "the three dots did not open"): the sheet now opens IMMEDIATELY with a loading state,
+     then fills — a failed load shows an error + Retry INSIDE the sheet instead of a silent toast */
   if(!GROUP_OPEN)return;
-  let r=await api("ginfo",{node:ME,g:GROUP_OPEN});
-  if(!r||!r.ok){
-    /* v90: groups made by the OLD engine exist only in this phone's storage — the server has never heard of them, so info/messages could never open. Auto-upgrade, then retry. */
-    const mig=await gMigrateLocal(GROUP_OPEN);
-    if(mig) r=await api("ginfo",{node:ME,g:GROUP_OPEN});
-    if(!r||!r.ok){toast((r&&r.err)||"Could not load group");return;}
-  }
   let el=$("ginfosheet");if(el)el.remove();
   el=document.createElement("div");el.id="ginfosheet";
   el.style.cssText="position:fixed;inset:0;z-index:70;background:#F8FAFC;display:flex;flex-direction:column;";
+  const gHead='<div class="ohdr"><button class="bk" onclick="giClose()">‹</button><div class="nm" style="flex:1">Group options</div><div style="width:30px"></div></div>';
+  el.innerHTML=gHead+'<div style="padding:28px;text-align:center;color:#64748B;font-size:14px">Loading group…</div>';
+  document.body.appendChild(el);
+  let r=await api("ginfo",{node:ME,g:GROUP_OPEN});
+  if(!r||!r.ok){
+    /* v90: OLD-engine groups live only in this phone's storage — auto-upgrade, then retry */
+    el.innerHTML=gHead+'<div style="padding:28px;text-align:center;color:#64748B;font-size:13.5px">Upgrading this group to the new engine…</div>';
+    const mig=await gMigrateLocal(GROUP_OPEN);
+    if(mig) r=await api("ginfo",{node:ME,g:GROUP_OPEN});
+    if(!r||!r.ok){
+      el.innerHTML=gHead+'<div style="padding:28px;text-align:center"><div style="font-size:38px">👥</div><div style="color:#64748B;font-size:14px;margin:8px 0">Could not load this group'+(r&&r.err?" — "+esc(String(r.err)):"")+'</div><button class="big" style="background:#D7EEE0;color:#075E46" onclick="openGInfo()">Retry</button></div>';
+      return;
+    }
+  }
   const me=(r.members.find(m=>m.id===ME)||{});
   const iAmAdmin=(r.iAmAdmin!==undefined)?!!r.iAmAdmin:!!me.admin;
   const iAmCreator=ME===r.by;
@@ -4938,7 +4980,6 @@ async function openGInfo(){
     "</div></div>";
 
 
-  document.body.appendChild(el);
 }
 async function gadd3(node){
   const r=await api("gadd",{by:ME,g:GROUP_OPEN,members:[node]});
@@ -4952,20 +4993,27 @@ function acCopyFallback(t){try{const ta=document.createElement("textarea");ta.va
 function acLinkBase(){return "https://"+location.host+location.pathname;}
 
 /* ---- status ⋮ menu ---- */
-function stMenuClose(){const el=$("stmSheet");if(el)el.remove();}
+function stMenuClose(){try{$("stmPop").remove();}catch(e){}try{$("stmShield").remove();}catch(e){}}
 function stMenu(){
+  /* v99 (skylar): options listed right beside the three dots, WhatsApp-style — no bottom sheet */
   let g=null;try{g=STV.groups[STV.gi];}catch(e){}
   if(!g)return;
-  const s=g.items[STV.ii];const mine=g.num===ME;
+  const mine=g.num===ME;
   const link=acLinkBase()+"#s="+g.num;
-  let el=$("stmSheet");if(el)el.remove();
-  el=document.createElement("div");el.id="stmSheet";el.className="ovl";
-  el.innerHTML='<div class="sheet" style="text-align:center">'+
-  '<div style="font-weight:600;margin-bottom:12px">'+(mine?"My status":esc(g.name)+"'s status")+'</div>'+
-  '<button class="big" style="width:100%;background:#F1F5F9;color:#111827" onclick="acCopy(\''+link+'\');toast(\'Link copied ✓\');stMenuClose()">🔗 Share — copy link to this status</button>'+
-  (mine?'<button class="big" style="width:100%;background:#F1F5F9;color:#111827;margin-top:8px" onclick="stPostChannel()">📢 Post to my channel</button>':'')+
-  (mine?'<button class="big" style="width:100%;background:#FEE2E2;color:#B91C1C;margin-top:8px" onclick="stMenuDel()">🗑 Delete this status</button>':'')+
-  '<button class="big" style="width:100%;background:#CBD5E1;color:#334155;margin-top:8px" onclick="stMenuClose()">Close</button></div>';
+  stMenuClose();
+  const sh=document.createElement("div");sh.id="stmShield";sh.style.cssText="position:fixed;inset:0;z-index:9998";sh.onclick=stMenuClose;document.body.appendChild(sh);
+  const el=document.createElement("div");el.id="stmPop";
+  el.style.cssText="position:fixed;top:60px;right:10px;z-index:9999;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.28);padding:6px 0;min-width:236px";
+  const row=function(ic,lab,fn,col){
+    const b=document.createElement("div");
+    b.style.cssText="display:flex;align-items:center;gap:12px;padding:12px 16px;font-size:14px;cursor:pointer;color:"+(col||"#111827");
+    b.innerHTML='<span style="font-size:16px;width:20px;text-align:center">'+ic+'</span><span style="font-weight:500">'+lab+'</span>';
+    b.onclick=fn;el.appendChild(b);
+  };
+  row("🔗","Copy link to this status",function(){acCopy(link);toast("Link copied ✓ — paste anywhere to share");stMenuClose();});
+  row("📤","Share…",function(){stMenuClose();const txt=(mine?"My status":esc(g.name)+"'s status")+" — via AirConnect";if(navigator.share){try{navigator.share({title:"AirConnect status",text:txt,url:link});}catch(e){}}else{acCopy(txt+" "+link);toast("Copied — paste anywhere to share");}});
+  if(mine)row("📢","Post to my channel",function(){stMenuClose();stPostChannel();});
+  if(mine)row("🗑","Delete this status",function(){stMenuClose();stMenuDel();},"#DC2626");
   document.body.appendChild(el);
 }
 async function stMenuDel(){
@@ -5060,16 +5108,81 @@ const AC_PLANS=[
  {k:"premium",n:"Premium",usd:25,ngr:40000,d:"THE COMPLETE PACKAGE — everything in Ultra + 60 FREE MINUTES of world calling every month (call any number in the world, users and non-users; the app times every call and asks for a top-up when the hour finishes) + unlimited auto-posting + full promotion engine + full agent superpowers: AI reads any media (photos, PDFs, documents, voice notes), video generation & movies of any length, long-form drafting, research, maximum response length, top priority + 🛡 Account Guardian + every future premium feature included automatically"}
 ];
 function plansClose(){const el=$("plansSheet");if(el)el.remove();}
+
+/* ---- v99 plan purchase inside My Plans (skylar): plan number + receipt + submit -> admin dashboard ---- */
+function planPayClose(){const el=$("planPaySheet");if(el)el.remove();}
+let _PLAN_RCP=null;
+function planPay(i){
+  const p=AC_PLANS[i];if(!p)return;
+  const pn="P"+(i+1);
+  _PLAN_RCP=null;
+  let el=$("planPaySheet");if(el)el.remove();
+  el=document.createElement("div");el.id="planPaySheet";el.className="ovl";
+  const wal="4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa";
+  el.innerHTML='<div class="sheet" style="max-width:480px">'+
+  '<div style="font-weight:700;font-size:16px;margin-bottom:2px">💎 '+p.n+' plan</div>'+
+  '<div style="font-size:12px;color:#64748B;margin-bottom:12px">'+p.usd+' USD / ₦'+p.ngr.toLocaleString()+' per month</div>'+
+  '<div style="background:#F1F5F9;border-radius:12px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
+  '<div style="flex:1"><div style="font-size:11px;font-weight:700;color:#64748B">PLAN NUMBER</div><div style="font-family:monospace;font-size:15px;font-weight:800;color:#0F172A">'+pn+' · '+p.n.toUpperCase()+'</div></div>'+
+  '<button class="big" style="width:auto;padding:8px 12px;margin:0;background:#D7EEE0;color:#075E46;font-size:12px" onclick="acCopy(\''+pn+' '+p.n+' $'+p.usd+' NGN '+p.ngr+'\');toast(\'Plan number copied ✓\')">📋 Copy</button></div>'+
+  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:12px;margin-bottom:10px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#075E46;margin-bottom:6px">1 · Pay</div>'+
+  '<div style="font-size:12.5px;color:#075E46;line-height:1.55"><b>Outside Nigeria:</b> USDC on Solana<br><span style="font-family:monospace;word-break:break-all">'+wal+'</span>'+
+  '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\''+wal+'\');toast(\'Wallet address copied ✓\')">📋 Copy USDC wallet</button></div>'+
+  '<div style="font-size:12.5px;color:#075E46;line-height:1.55;margin-top:8px"><b>In Nigeria:</b> Rubies MFB · Success Friday · 8881724009'+
+  '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\'Rubies MFB · Success Friday · 8881724009\');toast(\'Bank details copied ✓\')">📋 Copy bank details</button></div></div>'+
+  '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:10px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">2 · Upload your receipt</div>'+
+  '<input type="file" id="planRcpIn" class="hide" accept="image/*" onchange="planRcpChosen(this)">'+
+  '<button class="big" style="width:100%;background:#fff;border:1px solid #075E46;color:#075E46" onclick="document.getElementById(\'planRcpIn\').click()">📷 Choose receipt photo</button>'+
+  '<div id="planRcpPrev" style="margin-top:8px;font-size:12.5px;color:#64748B"></div></div>'+
+  '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:4px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">3 · Submit</div>'+
+  '<div style="font-size:12px;color:#64748B;margin-bottom:8px">Plan number <b>'+pn+'</b> goes in with your receipt. Verification within 30 minutes, then auto-activation.</div>'+
+  '<button id="planPayBtn" class="big" style="width:100%;background:#16A34A;color:#fff;font-size:15px;padding:14px" onclick="planPayGo('+i+')">✅ Submit payment for '+p.n+' ('+pn+')</button></div>'+
+  '<button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="planPayClose()">Close</button></div>';
+  document.body.appendChild(el);
+}
+async function planRcpChosen(inp){
+  try{
+    if(!inp.files||!inp.files[0]){toast("Choose a photo");return;}
+    $("planRcpPrev").textContent="Reading…";
+    _PLAN_RCP=await walRcpShrink(inp.files[0]);
+    $("planRcpPrev").innerHTML="📷 "+esc(_PLAN_RCP.name||"receipt")+" ready ✓";
+  }catch(e){toast("Could not read that photo");_PLAN_RCP=null;}
+}
+async function planPayGo(i){
+  const p=AC_PLANS[i];if(!p)return;
+  const pn="P"+(i+1);
+  if(!_PLAN_RCP){toast("Upload your payment receipt first (step 2)");return;}
+  const btn=$("planPayBtn");btn.disabled=true;btn.textContent="Submitting…";
+  try{
+    const d=await api("wtopup",{node:ME,amt:p.ngr});
+    if(!d||!d.ok)throw 0;
+    const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
+    const st=await api("fstart",{from:ME,to:ME,name:"plan-receipt.jpg",n,pub:1});
+    if(!st||!st.fid)throw 0;
+    await fputParallel(st.fid,n,function(k){return _PLAN_RCP.b64.slice(k*CH,(k+1)*CH);},null);
+    const r2=await api("wrcpt",{node:ME,fid:st.fid,rcp:"PLAN "+pn+" "+p.n+" $"+p.usd});
+    if(!r2||!r2.ok)throw 0;
+    planPayClose();
+    toast("Submitted ✓ "+pn+" "+p.n+" — verification within 30 minutes");
+  }catch(e){
+    btn.disabled=false;btn.textContent="✅ Submit payment for "+p.n+" ("+pn+")";
+    toast("Submission failed — check connection and tap Submit again");
+  }
+}
 function plansSheet(){
   let el=$("plansSheet");if(el)el.remove();
   el=document.createElement("div");el.id="plansSheet";el.className="ovl";
   const wal="4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa";
   let cards="";
-  for(const p of AC_PLANS){
+  for(let pi=0;pi<AC_PLANS.length;pi++){const p=AC_PLANS[pi];
     cards+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">'+
     '<div style="display:flex;align-items:center"><div style="flex:1"><span style="font-weight:700;font-size:15px">'+p.n+'</span>'+(p.k==="premium"?' <span style="background:#075E46;color:#fff;border-radius:8px;padding:2px 8px;font-size:10.5px;font-weight:700">COMPLETE</span>':'')+'</div>'+
     '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#075E46">$'+p.usd+'</div><div style="font-size:11px;color:#64748B">₦'+p.ngr.toLocaleString()+' /month</div></div></div>'+
-    '<div style="font-size:12.5px;color:#64748B;margin-top:6px">'+p.d+'</div></div>';
+    '<div style="font-size:12.5px;color:#64748B;margin-top:6px">'+p.d+'</div>'+
+    '<button class="big" style="width:100%;margin-top:8px;background:#D7EEE0;color:#075E46;font-size:13px" onclick="planPay('+pi+')">Choose this plan — Pay & submit receipt</button></div>';
   }
   el.innerHTML='<div class="sheet" style="max-width:480px">'+
   '<div style="font-weight:700;font-size:16px;margin-bottom:2px">💎 AirConnect Premium plans</div>'+
@@ -5426,7 +5539,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=98;
+const AC_V=99;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5656,6 +5769,7 @@ function menuOpen(){
       const hub=document.createElement("div");
       hub.style.cssText="margin-bottom:2px";
       hub.innerHTML=
+       doorCard("💰","My Wallet","Balance · Send · Top up · Receipts","#D97706","menuClose();walShow();")+
        doorCard("💎","My Plans","Free · Pro · Ultra · Premium","#10B981","menuClose();plansSheet();")+
        doorCard("🎬","Studio","My channel · Videos · Pay posts","#8B5CF6","menuClose();wtOpen('studio');")+
        doorCard("🌍","Connect","World calling · Invite link · Add friend","#2563EB","menuClose();connectSheet();");
