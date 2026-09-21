@@ -1127,7 +1127,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=83');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=84');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -3306,7 +3306,99 @@ document.addEventListener("click",e=>{
   else if(e.target===$("localv")&&cls.includes("swap")){setVLayout("live");}
   else if(e.target===$("remotev")&&cls.includes("swap")){setVLayout("live");toast("Their video full screen");}
 });
+
+/* ---------- v84: LIVE VOICE TRANSLATION (1:1 + group calls) — skylar build 21 Sep ---------- */
+var XL={on:0,rec:null,run:0,peer:null,gid:null,hint:0,last:0,wdT:null};
+var XL_BC={yo:"yo-NG",ig:"ig-NG",ha:"ha-NG",pcm:"en-NG",tw:"tw-GH",zu:"zu-ZA",ef:"en-NG",ib:"en-NG",fr:"fr-FR",es:"es-ES",pt:"pt-PT",ar:"ar-SA",zh:"zh-CN",hi:"hi-IN",sw:"sw-KE",de:"de-DE",ru:"ru-RU",tr:"tr-TR",am:"am-ET",so:"so-SO"};
+function xlBC(l){return XL_BC[l]||"en-US";}
+function xlMyLang(){return (localStorage.getItem("ac_lang")||"en");}
+function xlCap(txt,who,tr){
+  try{
+    let c=document.getElementById("xlcap");
+    if(!c){c=document.createElement("div");c.id="xlcap";c.style.cssText="position:fixed;left:8px;right:8px;bottom:14px;z-index:220;background:rgba(0,0,0,.72);color:#fff;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.45;max-height:104px;overflow:auto";document.body.appendChild(c);}
+    c.innerHTML=(who?'<b style="color:#A7F3D0">'+esc(who)+':</b> ':'')+esc(txt)+(tr?'<div style="color:#A7F3D0;margin-top:3px">'+esc(tr)+'</div>':'');
+    clearTimeout(XL.capT);XL.capT=setTimeout(function(){try{c.remove();}catch(e){}},7000);
+  }catch(e){}
+}
+function xlSpeak(txt,lang){
+  try{
+    if(!window.speechSynthesis)return;
+    var u=new SpeechSynthesisUtterance(String(txt).slice(0,300));
+    u.lang=xlBC(lang);
+    var vs=speechSynthesis.getVoices();
+    for(var i=0;i<vs.length;i++){if(vs[i].lang&&vs[i].lang.slice(0,2)===u.lang.slice(0,2)){u.voice=vs[i];break;}}
+    u.rate=1.06;speechSynthesis.speak(u);
+  }catch(e){}
+}
+function xlSend(txt){
+  try{
+    var now=Date.now();
+    if(now-XL.last<1200||!txt||txt.length<2)return;
+    XL.last=now;
+    var pay={t:String(txt).slice(0,300),l:xlMyLang()};
+    if(XL.gid){
+      pay.g=XL.gid;
+      if(typeof SF!=="undefined"&&SF&&SF.mems){for(const k of Object.keys(SF.mems)){if(k!==ME)api("sig",{from:ME,to:k,type:"xl",payload:pay}).catch(function(){});}}
+    }else if(XL.peer){api("sig",{from:ME,to:XL.peer,type:"xl",payload:pay}).catch(function(){});}
+  }catch(e){}
+}
+function xlRecv(m){
+  try{
+    if(!XL.on)return;
+    var p=(m&&m.payload)||{},t=String(p.t||"");if(!t)return;
+    var my=xlMyLang(),who=(WIN_NAMES[m.from]||("+"+m.from));
+    if(String(p.l||"en")===my){xlCap(t,who,"");return;}
+    var body={from:ME,text:t,to:my};
+    if(typeof AID!=="undefined"&&AID)body.aid=AID;
+    if(p.g)body.g=p.g;
+    api("translate",body).then(function(r){
+      if(r&&r.text){xlCap(t,who,r.text);xlSpeak(r.text,my);}
+      else if(r&&r.err&&!XL.hint){XL.hint=1;toast("🌍 "+r.err);xlCap(t,who,"");}
+      else xlCap(t,who,"");
+    }).catch(function(){xlCap(t,who,"");});
+  }catch(e){}
+}
+function xlRecStart(){
+  try{
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR||XL.rec)return;
+    var r=new SR();
+    r.lang=xlBC(xlMyLang());
+    r.continuous=true;r.interimResults=false;
+    r.onresult=function(e){try{var t="";for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)t+=e.results[i][0].transcript+" ";}t=t.trim();if(t)xlSend(t);}catch(x){}};
+    r.onend=function(){if(XL.run){try{XL.rec=null;xlRecStart();}catch(x){}}};
+    r.start();XL.rec=r;
+  }catch(e){}
+}
+function xlBtn(){
+  try{
+    if(document.getElementById("xlbtn"))return;
+    var b=document.createElement("button");b.id="xlbtn";
+    b.textContent="🌐";b.title="Live translation on/off";
+    b.style.cssText="position:fixed;top:12px;right:12px;z-index:230;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:22px;padding:9px 13px;font-size:17px";
+    b.onclick=function(){XL.on=XL.on?0:1;b.style.opacity=XL.on?1:.45;toast(XL.on?"🌍 Live translation on":"Live translation off");};
+    document.body.appendChild(b);
+  }catch(e){}
+}
+function xlWatch(){
+  var inCall=(typeof state!=="undefined"&&(state==="live"||state==="dialing"||state==="incoming"))||(typeof GC!=="undefined"&&GC.on);
+  if(XL.run&&!inCall){xlStopAll();return;}
+  if(XL.run&&XL.on&&!XL.rec)xlRecStart();
+  if(XL.run)XL.wdT=setTimeout(xlWatch,2500);
+}
+function xlCallStart(){try{XL.gid=null;XL.peer=PEER;XL.on=1;XL.run=1;xlBtn();xlWatch();}catch(e){}}
+function xlGcStart(gid){try{XL.peer=null;XL.gid=gid;XL.on=1;XL.run=1;xlBtn();xlWatch();}catch(e){}}
+function xlStopAll(){
+  try{if(XL.rec){try{XL.rec.stop();}catch(e){}XL.rec=null;}}catch(e){}
+  clearTimeout(XL.wdT);
+  XL.run=0;XL.on=0;XL.gid=null;XL.peer=null;
+  try{var b=document.getElementById("xlbtn");if(b)b.remove();}catch(e){}
+  try{var c=document.getElementById("xlcap");if(c)c.remove();}catch(e){}
+  try{if(window.speechSynthesis)speechSynthesis.cancel();}catch(e){}
+}
+
 function showCall(txt){
+  try{xlCallStart();}catch(e){}
   pushHist();
   $("aiBanner").className=PEER===AI_NUM?"cstat":"cstat hide";
   $("callName").textContent=(WIN_NAMES[PEER]||"+"+PEER);
@@ -3322,6 +3414,7 @@ function acceptCall(){
   $("incoming").className="ovl hide";
   if(!m)return;
   answer(m);
+  try{xlCallStart();}catch(e){}
   try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}
 }
 async function declineCall(){
@@ -3527,6 +3620,7 @@ async function gJoin(gid,initiator){
   try{startRing("dial");}catch(e){}
   gcUI();
   GC.gcTick=setInterval(()=>{const el=document.getElementById("gcstat");if(el){const s=Math.floor((Date.now()-GC.t0)/1000);el.textContent="Group call · "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}},1000);
+  try{xlGcStart(gid);}catch(e){}
   sfuJoin(gid);
 }
 
@@ -3937,6 +4031,7 @@ async function handleSigs(msgs){
   /* v29: group call signaling (mesh audio) */
   for(const m of msgs){
     if(!m||!m.type)continue;
+    if(m.type==="xl"){try{xlRecv(m);}catch(e){}continue;}
     const gp=(m.payload&&m.payload.g)||null;
     if(m.type==="gcallo"){if(!GC.on)gcInvite(m.from,gp);continue;}
     if(m.type==="gcj"){
@@ -5120,7 +5215,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=83;
+const AC_V=84;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5147,7 +5242,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=83").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=84").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
