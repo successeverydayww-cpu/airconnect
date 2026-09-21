@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v95</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v96</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -2116,15 +2116,19 @@ function refreshStories(){
   if(!ME)return;
   api("stories",{node:ME}).then(d=>{if(d&&d.stories){STORIES=d.stories;renderStoryStrip();const sv=document.getElementById("view-status");if(sv&&sv.className.indexOf("hide")<0)renderStatusScreen();}}).catch(()=>{});
 }
-function storyCircle(pic,letter,ring,label,onclick){
+function storyCircle(pic,letter,ring,label,onclick,badge){
+  /* v96 Story Circles (skylar approved Option B): one big ring per person, + badge on yours */
   const d=document.createElement("div");d.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
+  const w=document.createElement("div");w.style.cssText="position:relative;width:66px;margin:0 auto";
   const c=document.createElement("div");
-  c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#00A884":"#CBD5E1")+";padding:2px;margin:0 auto;box-sizing:border-box";
+  c.style.cssText="width:66px;height:66px;border-radius:50%;border:3px solid "+(ring?"#10B981":"#CBD5E1")+";padding:3px;margin:0 auto;box-sizing:border-box";
   const inner=document.createElement("div");
-  if(pic){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
-  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
-  c.appendChild(inner);d.appendChild(c);
-  const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#64748B;margin-top:3px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+  if(pic&&String(pic).indexOf("data:image")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
+  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700";inner.textContent=letter;}
+  c.appendChild(inner);w.appendChild(c);
+  if(badge){const b=document.createElement("div");b.style.cssText="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#10B981;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff";b.textContent="+";w.appendChild(b);}
+  d.appendChild(w);
+  const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#475569;margin-top:4px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   d.appendChild(t);
   d.onclick=onclick;
   return d;
@@ -2132,13 +2136,16 @@ function storyCircle(pic,letter,ring,label,onclick){
 function renderStoryStrip(){
   const targets=[$("storystrip"),$("statusStrip")].filter(Boolean);
   if(!targets.length)return;
-  const myStory=STORIES.find(s=>s.num===ME);
+  const gs=storyGroups();
+  const mine=gs.find(g=>g.num===ME);
+  const fr=gs.filter(g=>g.num!==ME);
+  const unseen=function(g){return g.items.some(s=>!STORY_SEEN[s.id]);};
   for(const el of targets){
     el.innerHTML="";
-    el.appendChild(storyCircle(myStory?myStory.pic:PIC_CACHE[ME],myStory?"✓":"+",!!(myStory&&!STORY_SEEN[myStory.id]),"My status",()=>{if(myStory)openStatusViewer(ME);else document.getElementById("storyinput").click();}));
-    for(const s of STORIES){
-      if(s.num===ME)continue;
-      el.appendChild(storyCircle((String(s.pic).indexOf("data:image")===0)?s.pic:"",String(s.name).charAt(0).toUpperCase(),!STORY_SEEN[s.id],String(s.name),()=>viewStoryById(s.id)));
+    el.appendChild(storyCircle(mine?mine.items[mine.items.length-1].pic:PIC_CACHE[ME],String(ME_NAME||"?").charAt(0).toUpperCase(),!!(mine&&unseen(mine)),"My status",function(){if(mine)openStatusViewer(ME);else stAddOpen();},true));
+    for(const g of fr){
+      const last=g.items[g.items.length-1];
+      el.appendChild(storyCircle(String(last.pic).indexOf("data:image")===0?last.pic:"",String(g.name||"?").charAt(0).toUpperCase(),unseen(g),String(g.name||"?"),function(){openStatusViewer(g.num);},false));
     }
   }
 }
@@ -5397,7 +5404,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=95;
+const AC_V=96;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
