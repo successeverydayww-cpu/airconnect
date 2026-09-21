@@ -186,7 +186,7 @@ footer a{color:#64748B}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="My profile" onclick="openProfileSheet()" style="background:#fff;border:0;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#075E46;flex:0 0 30px">?</button><button id="menuBtn" aria-label="Menu" onclick="menuOpen()" style="background:none;border:0;padding:6px;cursor:pointer;display:inline-flex;flex-direction:column;justify-content:center;gap:4px"><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span><span style="display:block;width:20px;height:3px;background:#fff;border-radius:2px"></span></button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#075E46;flex:0 0 34px">?</button></div>
   </div>
 
   <div id="view-chats" class="view">
@@ -420,6 +420,9 @@ footer a{color:#64748B}
         <div style="color:#075E46;font-size:17px">›</div>
       </div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap any row to edit, WhatsApp-style.</div>
+      <button class="big" style="margin-top:14px;width:100%;background:#F1F5F9;color:#111827" onclick="logOut()">🚪 Log out</button>
+      <button class="big" style="margin-top:8px;width:100%;background:#e2445c" onclick="delAccount()">🗑 Delete my account</button>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">Deleting is permanent — your number, chats, statuses and photo are erased from our servers. You'll be asked for your passphrase to confirm it's really you.</div>
     </div>
     <div class="card" id="planStatusCard">
       <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
@@ -494,8 +497,7 @@ footer a{color:#64748B}
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
       <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button>
-      <button class="big" style="background:#e2445c;margin-top:8px;width:100%" onclick="delAccount()">🗑 Delete my account</button>
-      <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">Download gives you a JSON file of your profile, friends and full message history. Delete permanently erases your account — number, chats, statuses, photo — from our servers. This cannot be undone.</div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">👥 Your friends</div>
@@ -1127,7 +1129,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=84');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=85');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -5094,9 +5096,10 @@ async function exportData(){
 }
 async function delAccount(){
   if(!confirm("Delete your account permanently?\n\nYour number, chats, statuses and photo will be erased from our servers. This cannot be undone."))return;
-  if(!confirm("Are you absolutely sure? This is the final step."))return;
+  const ph=(prompt("Type your passphrase to confirm — this proves it's really you:")||"").trim();
+  if(!ph){toast("Deletion cancelled — passphrase required");return;}
   toast("Deleting…");
-  const r=await api("account_del",{node:ME,confirm:"DELETE"});
+  const r=await api("account_del",{node:ME,confirm:"DELETE",phrase:ph});
   if(r&&r.ok){
     try{
       for(const k of Object.keys(localStorage))if(k.startsWith("ac_")||k.startsWith("aicall"))localStorage.removeItem(k);
@@ -5107,6 +5110,16 @@ async function delAccount(){
     alert("Your account has been deleted. We are sad to see you go 💙");
     location.replace(location.pathname);
   }else toast((r&&r.err)||"Could not delete — try again");
+}
+function logOut(){
+  if(!confirm("Log out of AirConnect on this device?\n\nYour account, chats and friends stay safe on our servers — sign back in anytime with your number or passphrase."))return;
+  try{
+    for(const k of Object.keys(localStorage))if(k.startsWith("ac_")||k.startsWith("aicall"))localStorage.removeItem(k);
+    for(const k of Object.keys(sessionStorage))if(k.startsWith("ac_")||k.startsWith("aicall"))sessionStorage.removeItem(k);
+    document.cookie.split(";").forEach(function(c){document.cookie=c.replace(/^ +/,"").replace(/=.*/,";expires="+new Date(0).toUTCString());});
+    indexedDB.deleteDatabase("ac_store");
+  }catch(e){}
+  location.replace(location.pathname);
 }
 /* ----- onboarding ----- */
 var OB_STEPS=[
@@ -5215,7 +5228,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=84;
+const AC_V=85;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5242,7 +5255,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=84").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=85").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -5357,7 +5370,42 @@ function menuOpen(){
     back.className="big blue";back.style.cssText="margin:12px;width:calc(100% - 24px)";
     back.textContent="✕ Close menu";back.onclick=menuClose;
     mv.appendChild(back);
-    if(vs){vs.className="view";mv.appendChild(vs);try{const pc=document.getElementById("profCard");if(pc)pc.style.display="none";}catch(e){}} /* v81: settings stay in the menu, the profile card is owned by the top-right avatar sheet */
+    /* v85: WhatsApp-style profile row FIRST in the menu — photo+name, tap opens full profile (his directive: photo comes first) */
+    const prow=document.createElement("div");
+    prow.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer";
+    prow.onclick=function(){menuClose();openProfileSheet();};
+    prow.innerHTML='<div class="av" id="menuProfPic" style="width:52px;height:52px;flex:0 0 52px;font-size:20px">?</div><div style="flex:1;min-width:0"><div id="menuProfName" style="font-weight:700;font-size:16px">—</div><div style="font-size:12px;color:#64748B">View and edit your profile</div></div><div style="color:#075E46;font-size:18px">›</div>';
+    mv.appendChild(prow);
+    try{
+      const mp=(typeof PIC_CACHE!=="undefined"&&PIC_CACHE[ME])||null;
+      const pel=prow.querySelector("#menuProfPic");
+      if(pel)pel.innerHTML=mp?'<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover">':esc(String((typeof ME_NAME!=="undefined"&&ME_NAME)||"?").charAt(0).toUpperCase());
+      const nel=prow.querySelector("#menuProfName");if(nel)nel.textContent=(typeof ME_NAME!=="undefined"&&ME_NAME)||("+"+ME);
+    }catch(e){}
+    if(vs){
+      vs.className="view";
+      /* v85: "Add a friend" removed from the menu — friends already live on the main page (his directive) */
+      try{
+        const cards=vs.querySelectorAll(".card");
+        for(const cd of cards){if(cd.textContent&&cd.textContent.indexOf("Add a friend")>=0){cd.remove();break;}}
+      }catch(e){}
+      mv.appendChild(vs);
+      try{const pc=document.getElementById("profCard");if(pc)pc.style.display="none";}catch(e){}
+    } /* v81: settings stay in the menu, the profile card is owned by the top-right avatar sheet */
+    if(String(ME)==="234100000001"){ /* v85: owner-only tools moved up, right after the profile row and before every other item (his directive: admin visible to me alone, positioned before the plans) */
+      const osb=document.createElement("button");
+      osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:#E7F4EF;color:#0B6B57;font-size:15px";
+      osb.textContent="🤖 Premium User — Our OS";osb.onclick=function(){menuClose();location.href="skylar.html";};
+      mv.appendChild(osb);
+      const fgb=document.createElement("button");
+      fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:#F1F5F9;color:#111827;font-size:15px";
+      fgb.textContent="🔨 Skylar Forge — Builder";fgb.onclick=function(){menuClose();location.href="forge.html";};
+      mv.appendChild(fgb);
+      const adb=document.createElement("button");
+      adb.className="big";adb.style.cssText="margin:12px;margin-top:0;background:#FEF3C7;color:#92400E;font-size:15px";
+      adb.textContent="🛡️ Admin — Payments";adb.onclick=function(){menuClose();admOpen();};
+      mv.appendChild(adb);
+    }
     const pay=document.createElement("button");
     pay.className="big";pay.style.cssText="margin:12px;background:#D7EEE0;color:#075E46;font-size:14px";
     pay.innerHTML="💰 Pay posts — channel earnings";pay.onclick=function(){menuClose();payPostsSheet();};
@@ -5378,23 +5426,14 @@ function menuOpen(){
     wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#D7EEE0;color:#075E46;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
     mv.appendChild(wal);
-    if(String(ME)==="234100000001"){ /* v49: owner-only door to our OS */
-      const osb=document.createElement("button");
-      osb.className="big";osb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#00a884,#005c4b);color:#fff;font-size:15px";
-      osb.textContent="🤖 Premium User — Our OS";osb.onclick=function(){menuClose();location.href="skylar.html";};
-      mv.appendChild(osb);
-      const fgb=document.createElement("button");
-      fgb.className="big";fgb.style.cssText="margin:12px;margin-top:0;background:linear-gradient(135deg,#1e3a8a,#0ea5e9);color:#fff;font-size:15px";
-      fgb.textContent="🔨 Skylar Forge — Builder";fgb.onclick=function(){menuClose();location.href="forge.html";};
-      mv.appendChild(fgb);
-      const adb=document.createElement("button");
-      adb.className="big";adb.style.cssText="margin:12px;margin-top:0;background:#FEF3C7;color:#92400E;font-size:15px";
-      adb.textContent="🛡️ Admin — Payments";adb.onclick=function(){menuClose();admOpen();};
-      mv.appendChild(adb);
-    }
   }
   document.getElementById("menuWrap").className="on";
   document.getElementById("menuView").className="on";
+  try{
+    const mp=(typeof PIC_CACHE!=="undefined"&&PIC_CACHE[ME])||null;
+    const pel=document.getElementById("menuProfPic");if(pel)pel.innerHTML=mp?'<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover">':esc(String((typeof ME_NAME!=="undefined"&&ME_NAME)||"?").charAt(0).toUpperCase());
+    const nel=document.getElementById("menuProfName");if(nel)nel.textContent=(typeof ME_NAME!=="undefined"&&ME_NAME)||("+"+ME);
+  }catch(e){}
   try{walRefresh();liteBoot();}catch(e){}
 }
 function menuClose(){
