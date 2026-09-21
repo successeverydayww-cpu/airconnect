@@ -230,7 +230,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v89</div>
+    <div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v90</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -4702,10 +4702,45 @@ function openGroup(gid){
   $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeGroup(){GROUP_OPEN=null;$("gview").className="ovl hide";renderLists();}
+/* v90: upgrade an old-engine (phone-only) group to the server engine — keeps the name, members and chat history */
+async function gMigrateLocal(gid){
+  const g=GROUPS.find(function(x){return x.id===gid;});
+  if(!g)return false;
+  const mems=(g.members||[]).filter(function(m){return m!==ME&&/^\d{9,12}$/.test(String(m));});
+  toast("Upgrading this group to the new engine…");
+  let r=null;
+  try{r=await api("gcreate",{by:ME,name:g.name,members:mems});}catch(e){}
+  if(!r||!r.ok){
+    if(r&&r.err==="unknown member"){
+      for(let i=0;i<mems.length;i++){
+        const sub=mems.slice(0,i).concat(mems.slice(i+1));
+        let rr=null;try{rr=await api("gcreate",{by:ME,name:g.name,members:sub});}catch(e){}
+        if(rr&&rr.ok){r=rr;break;}
+        if(!rr||rr.err!=="unknown member")break;
+      }
+    }
+  }
+  if(r&&r.ok){
+    const oldId=g.id;
+    g.id=r.id;g.members=r.members||([ME].concat(mems));g.by=ME;g.creator=ME;g.admins=[ME];g.server=1;
+    if(GROUP_OPEN===oldId)GROUP_OPEN=r.id;
+    if(GMS[oldId]&&!GMS[r.id])GMS[r.id]=GMS[oldId];
+    persistV12();
+    toast("Group upgraded ✓ — opening group info");
+    return true;
+  }
+  toast("This group was made with an old version and some members are gone. Create a new group with the same friends to unlock all group features.");
+  return false;
+}
 async function openGInfo(){
   if(!GROUP_OPEN)return;
-  const r=await api("ginfo",{node:ME,g:GROUP_OPEN});
-  if(!r||!r.ok){toast((r&&r.err)||"Could not load group");return;}
+  let r=await api("ginfo",{node:ME,g:GROUP_OPEN});
+  if(!r||!r.ok){
+    /* v90: groups made by the OLD engine exist only in this phone's storage — the server has never heard of them, so info/messages could never open. Auto-upgrade, then retry. */
+    const mig=await gMigrateLocal(GROUP_OPEN);
+    if(mig) r=await api("ginfo",{node:ME,g:GROUP_OPEN});
+    if(!r||!r.ok){toast((r&&r.err)||"Could not load group");return;}
+  }
   let el=$("ginfosheet");if(el)el.remove();
   el=document.createElement("div");el.id="ginfosheet";
   el.style.cssText="position:fixed;inset:0;z-index:70;background:#F8FAFC;display:flex;flex-direction:column;";
@@ -5253,7 +5288,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=89;
+const AC_V=90;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
