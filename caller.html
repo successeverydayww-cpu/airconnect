@@ -231,7 +231,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v109</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v110</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -297,7 +297,7 @@ footer a{color:#64748B}
       <div id="wtPCatBar" style="display:flex;gap:6px;overflow-x:auto;margin-top:8px"></div>
       <input type="file" id="wtVidIn" accept="video/*" class="hide">
       <input type="file" id="wtPicIn" accept="image/*" class="hide">
-      <button class="big blue" style="width:100%;margin-top:10px;padding:12px" onclick="wtPost()">Post</button>
+      <button class="big blue" id="wtPostBtn" style="width:100%;margin-top:10px;padding:12px" onclick="wtPost()">Post</button>
     </div>
   </div>
   <div id="wtComments" class="ovl hide" style="z-index:61" onclick="if(event.target===this)wtCommentsClose()">
@@ -1479,6 +1479,7 @@ var WT_XL={};
 async function wtXlate(pid){try{const el=$("pt-"+pid);if(!el)return;const lg=localStorage.getItem("ac_lang")||"en";const r=await api("translate",{from:ME,text:WT_XL[pid]||el.innerText,to:lg});if(r&&(r.out||r.text)){el.innerHTML=esc(r.out||r.text)+'<div style="font-size:10px;color:#94A3B8;margin-top:2px">translated to your language</div>';}else toast((r&&r.err)||"Could not translate");}catch(e){toast("Could not translate");}}
 function wtCard(p,big,sound){
   const d=document.createElement("div");
+  d.dataset.pid=p.id; /* v110: deep-link scroll target for shareable post links */
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:10px";
   const t=new Date(p.at||Date.now());
   const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.v?' <span style="background:#075E46;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(p.mysub?' <span style="color:#075E46;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
@@ -1618,16 +1619,53 @@ async function wtCPost(){
   try{await api("pcomment",{from:ME,id:WT_CPID,text:v});const p=WT_POSTS.find(x=>x.id===WT_CPID);if(p)p.ccnt=(p.ccnt||0)+1;wtCommentsOpen(WT_CPID);}catch(e){toast("Could not comment");}
 }
 async function wtShare(pid){
+  /* v110 (skylar): every post has its OWN link now — copy or share it anywhere.
+     Anyone who taps it lands in AirConnect directly on THIS post (new users register first,
+     existing users jump straight to it). */
   const p=WT_POSTS.find(x=>x.id===pid);if(!p)return;
-  const resh=confirm("Reshare this post to your channel?\n\nCancel = copy the text instead (share outside)");
-  if(resh){
-    try{await api("post",{from:ME,text:(p.pname?("[via "+p.pname+"] "):"")+(p.text||"Watch this video 📹"),rs:pid});toast("Reshared to your channel ✓");wtRefresh();}catch(e){toast("Could not reshare");}
-  } else {
-    const txt=(p.pname?p.pname+": ":"")+(p.text||"")+" — via AirConnect Watch";
-    if(navigator.share){try{await navigator.share({text:txt});}catch(e){}}
-    else{try{await navigator.clipboard.writeText(txt);toast("Copied — paste anywhere to share");}catch(e){toast("Copy: "+txt.slice(0,80));}}
+  const link=location.origin+location.pathname+"#post="+encodeURIComponent(pid);
+  const txt=(p.pname?p.pname+": ":"")+(p.text||"Watch this 📹")+" — via AirConnect";
+  if(navigator.share){
+    try{await navigator.share({title:"AirConnect post",text:txt,url:link});return;}
+    catch(e){if(e&&e.name==="AbortError")return;}
   }
+  let okc=false;
+  try{await navigator.clipboard.writeText(link);okc=true;}catch(e){}
+  if(!okc){try{const ta=document.createElement("textarea");ta.value=link;ta.style.cssText="position:fixed;left:-9999px";document.body.appendChild(ta);ta.focus();ta.select();document.execCommand("copy");ta.remove();okc=true;}catch(e){}}
+  toast(okc?"🔗 Post link copied — share it anywhere":"Copy this link: "+link);
 }
+var AC_DEEP=0;
+function acDeepLink(){
+  /* v110 (skylar): #post=<id> in the URL opens that exact post — works after login or a
+     fresh registration (the hash simply waits until an account exists). */
+  try{
+    const m=(location.hash||"").match(/^#post=(.+)$/);
+    if(!m||AC_DEEP)return;
+    if(!ME)return;
+    AC_DEEP=1;
+    const pid=decodeURIComponent(m[1]);
+    try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}
+    (async function(){
+      try{
+        const r=await api("pget",{from:ME,id:pid});
+        if(!r||!r.ok||!r.p){toast("That post link is no longer available");return;}
+        const p=r.p;
+        try{showTab("watch");}catch(e){}
+        WT_CH_PAGE=String(p.ch||p.from);
+        wtChanPage(WT_CH_PAGE);
+        let tries=0;
+        const sit=function(){
+          tries++;
+          const el=document.querySelector('[data-pid="'+pid+'"]');
+          if(el){try{el.scrollIntoView({block:"center"});el.style.boxShadow="0 0 0 4px #10B981";setTimeout(function(){try{el.style.boxShadow="";}catch(e2){}},4500);}catch(e){}}
+          else if(tries<30)setTimeout(sit,300);
+        };
+        setTimeout(sit,700);
+      }catch(e){toast("Could not open that post link");}
+    })();
+  }catch(e){}
+}
+setInterval(acDeepLink,1200);
 function wtComposeOpen(){$("wtComposer").className="ovl";$("wtVidStat").textContent="";wtPCats();}
 function wtPCats(){
   const el=$("wtPCatBar");if(!el)return;
@@ -1734,13 +1772,16 @@ async function wtPost(){
   const wasCh=WT_CH_PAGE,wasScope=WT_SCOPE; /* v109: after posting, land back on the page he posted from */
   const text=$("wtText").value.trim();
   if(!text&&!WT_VID&&!WT_PIC){toast("Write something or add a photo or video");return;}
+  /* v110 (skylar): the instant Post is tapped it VANISHES — no double-tap double-posts,
+     no dead button during the run; it comes back only if something fails. */
+  try{$("wtPostBtn").style.display="none";$("wtVidPick").style.display="none";}catch(e){}
   $("wtVidStat").textContent="Posting…";
   try{
     let fid="",name="";
     if(WT_PIC){
       name=WT_PICNAME||"photo.jpg";
       const b64=WT_PIC.split(",")[1]||"";
-      const CH=75000;
+      const CH=300000; /* v110: 4x bigger chunks (worker v60 cap raised) — under-20s image posts */
       const n=Math.min(900,Math.ceil(b64.length/CH));
       const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
       if(!s||!s.fid)throw 0;
@@ -1748,7 +1789,7 @@ async function wtPost(){
       await fputParallel(fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},function(p){wtProg(p);});
     } else if(WT_VID){
       name=WT_VID.name||"video";
-      const CH=75000;
+      const CH=300000; /* v110: 4x bigger chunks + 6-lane parallel — a full 100MB video posts in seconds, not minutes */
       const n=Math.min(900,Math.ceil(WT_VID.size/CH));
       const s=await api("fstart",{from:ME,to:ME,name,n,pub:1});
       if(!s||!s.fid)throw 0;
@@ -1759,7 +1800,7 @@ async function wtPost(){
       },function(p){wtProg(p);});
     }
     const r=await api("post",{from:ME,text,fid,name,rs:"",cat:WT_PCAT,dur:WT_VIDDUR,ts:WT_TS,te:WT_TE,pic:(WT_PIC?1:0)});
-    if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
+    if(!r||!(r.ok||r.id)){ if(r&&r.err==="no channel"){$("wtVidStat").textContent="";try{$("wtPostBtn").style.display="";$("wtVidPick").style.display="flex";}catch(e){}toast("Create your channel first — one quick email step");wtChOpen((WIN_NAMES[ME]||"")+"'s channel","");return;} throw 0; }
     WT_VID=null;WT_VIDPICK=null;WT_PIC="";WT_PICNAME="";WT_TS=0;WT_TE=0;try{if(WT_VID_URL){URL.revokeObjectURL(WT_VID_URL);WT_VID_URL="";}}catch(e){}wtShowPrev();$("wtText").value="";$("wtVidStat").textContent="";wtComposeClose();
     toast("Posted to your channel ✓ — see it in Watch");
     WT_SEEN[r.id]=1;try{localStorage.setItem("ac_wt_seen",JSON.stringify(WT_SEEN));}catch(e){}
@@ -1768,7 +1809,7 @@ async function wtPost(){
        he left and came back. Land him back on the exact page he posted from. */
     if(wasCh){WT_CH_PAGE=wasCh;wtChanPage(wasCh);}
     else{wtOpen(WT_SCOPE==="chans"?"feed":WT_SCOPE);wtLoad();}
-  }catch(e){toast("Post failed — check connection and try again");$("wtVidStat").textContent="";}
+  }catch(e){toast("Post failed — check connection and try again");$("wtVidStat").textContent="";try{$("wtPostBtn").style.display="";$("wtVidPick").style.display="flex";}catch(e2){}} /* v110: Post button returns the moment anything fails */
 }
 async function wtChannels(){
   const el=$("wtchans");
@@ -3066,7 +3107,7 @@ async function attVideoChosen(fi){
   if(f.size>100*1024*1024){toast("Please keep chat videos under 100MB");return;}
   if(f.size>60*1024*1024)toast("Large video — upload may take a few minutes");
   chatBusy=true;
-  const CH=100000; /* b64 chars per chunk (~75KB binary) */
+  const CH=300000; /* v110: 4x bigger chunks (worker cap raised) — fast uploads everywhere */
   const n=Math.ceil(f.size/(CH*0.75));
   toast("Uploading video (0%)…");
   try{
@@ -4645,7 +4686,7 @@ async function walRcpGo(){
   try{
     const sm=await walRcpShrink(f);
     $("walRcpPrev").innerHTML='<img src="data:image/jpeg;base64,'+sm.b64.slice(0,2000)+'" style="display:none"><div style="font-size:12.5px;color:#94A3B8">📷 '+sm.name+' — sending…</div>';
-    const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
+    const CH=300000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:sm.name,n,pub:1});
     if(!st||!st.fid)throw 0;
     await fputParallel(st.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
@@ -5178,7 +5219,7 @@ async function stPostChannel(){
       dur=await new Promise(function(res){try{const v=document.createElement("video");v.preload="metadata";v.onloadedmetadata=function(){res(isFinite(v.duration)?Math.round(v.duration):0);};v.onerror=function(){res(0);};v.src=pic;}catch(e){res(0);}});
     }
     const b64=pic.split(",")[1]||"";
-    const CH=75000;
+    const CH=300000;
     const n=Math.min(900,Math.max(1,Math.ceil(b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:dur?"status.mp4":"status.jpg",n,pub:1});
     if(!st||!st.fid)throw 0;
@@ -5300,7 +5341,7 @@ async function planPayGo(i){
   try{
     const d=await api("wtopup",{node:ME,amt:p.ngr,txn:txn.slice(0,24)});
     if(!d||!d.ok)throw 0;
-    const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
+    const CH=300000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:"plan-receipt.jpg",n,pub:1});
     if(!st||!st.fid)throw 0;
     await fputParallel(st.fid,n,function(k){return _PLAN_RCP.b64.slice(k*CH,(k+1)*CH);},null);
@@ -5373,7 +5414,7 @@ async function trPayGo(){
   try{
     const d=await api("wtopup",{node:ME,amt:4800,gid:_TR_GID||"",txn:txn.slice(0,24)});
     if(!d||!d.ok)throw 0;
-    const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
+    const CH=300000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:"translation-receipt.jpg",n,pub:1});
     if(!st||!st.fid)throw 0;
     await fputParallel(st.fid,n,function(k){return _PLAN_RCP.b64.slice(k*CH,(k+1)*CH);},null);
@@ -5763,7 +5804,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=109;
+const AC_V=110;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
