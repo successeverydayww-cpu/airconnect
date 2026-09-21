@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v99</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v100</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -2780,6 +2780,32 @@ async function applyWallpaper(){
   }catch(e){}
 }
 
+/* ---- v100 (skylar): call events INSIDE chats, WhatsApp-style ---- */
+function callT(at){try{const d=new Date(at);return (d.getHours()%12||12)+":"+String(d.getMinutes()).padStart(2,"0")+" "+(d.getHours()<12?"am":"pm");}catch(e){return"";}}
+function callPill(c){
+  const mine=c.d==="out";
+  const lab=c.miss?(mine?"Cancelled voice call":"Missed voice call"):(mine?"Outgoing voice call":"Incoming voice call");
+  const p=document.createElement("div");
+  p.style.cssText="display:flex;align-items:center;gap:6px;margin:6px auto;width:fit-content;background:"+(c.miss?"#FEE2E2":"#F1F5F9")+";color:"+(c.miss?"#B91C1C":"#475569")+";border-radius:12px;padding:6px 12px;font-size:12.5px;cursor:pointer";
+  p.innerHTML='<span>📞</span><span>'+lab+' · '+callT(c.at)+'</span>';
+  p.onclick=function(){try{dial(c.n);}catch(e){}};
+  return p;
+}
+function gCallRow(c){
+  const p=document.createElement("div");
+  p.style.cssText="display:flex;align-items:center;gap:10px;margin:6px 12px;width:fit-content;background:#F0FDFA;border:1px solid #99F6E4;border-radius:12px;padding:6px 12px;font-size:12.5px;color:#115E59";
+  p.innerHTML='<span>📞</span><span>Group call · '+callT(c.at)+' · '+ago(c.at)+' ago</span>';
+  const j=document.createElement("span");j.textContent="Join";j.style.cssText="background:#10B981;color:#fff;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer";
+  j.onclick=function(ev){ev.stopPropagation();try{gCall();}catch(e){}};
+  p.appendChild(j);
+  return p;
+}
+function callEventsFor(peer){
+  try{return AC_CALLS.filter(function(c){return c.n===String(peer)&&c.d!=="grp";}).sort(function(a,b){return a.at-b.at;});}catch(e){return[];}
+}
+function grpCallEventsFor(gid){
+  try{return AC_CALLS.filter(function(c){return c.d==="grp"&&c.n===String(gid);}).sort(function(a,b){return a.at-b.at;});}catch(e){return[];}
+}
 function renderBubbles(){
   const b=$("bubbles");b.innerHTML="";
   /* v68: display + storage self-heal — drop duplicate bubbles (same ts) so
@@ -2787,7 +2813,9 @@ function renderBubbles(){
   const list=[];{const seen={};for(const m of (CHATS[CHAT_OPEN]||[])){if(m.ts&&seen[m.ts])continue;seen[m.ts]=1;list.push(m);}}
   if(list.length!==(CHATS[CHAT_OPEN]||[]).length)CHATS[CHAT_OPEN]=list;
   let lastDay=null;
+  const cevs=callEventsFor(CHAT_OPEN);let ci=0;
   for(const m of list){
+    while(ci<cevs.length&&cevs[ci].at<=(m.ts||0)){b.appendChild(callPill(cevs[ci]));ci++;}
     const day=tsDay(m.ts);
     if(day&&day!==lastDay){
       lastDay=day;
@@ -2846,6 +2874,7 @@ function renderBubbles(){
     }
     b.appendChild(d);
   }
+  while(ci<cevs.length){b.appendChild(callPill(cevs[ci]));ci++;}
   b.scrollTop=999999;
   persistChats();
   renderChips();
@@ -3762,6 +3791,7 @@ async function gCall(){
     const ok=await gMigrateLocal(GROUP_OPEN);
     if(!ok){toast("Group upgraded first — try the call again now");return;}
   }
+  clAdd(GROUP_OPEN,"grp",0);
   gJoin(GROUP_OPEN,true);
 }
 async function gJoin(gid,initiator){
@@ -4186,7 +4216,7 @@ async function handleSigs(msgs){
     if(!m||!m.type)continue;
     if(m.type==="xl"){try{xlRecv(m);}catch(e){}continue;}
     const gp=(m.payload&&m.payload.g)||null;
-    if(m.type==="gcallo"){if(!GC.on)gcInvite(m.from,gp);continue;}
+    if(m.type==="gcallo"){if(gp){try{clAdd(gp,"grp",0);}catch(e){}}if(!GC.on)gcInvite(m.from,gp);continue;}
     if(m.type==="gcj"){
       /* v33: SFU mode — members are discovered by polling; no mesh dialing */
       continue;
@@ -5324,12 +5354,14 @@ function renderGBubbles(){
   const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(!g)return;
   const b=$("gbubbles");b.innerHTML="";
   const arr=GMS[GROUP_OPEN]||[];
+  const cevs=grpCallEventsFor(GROUP_OPEN);let ci=0;
   const head=document.createElement("div");
   head.style.cssText="text-align:center;color:#94A3B8;font-size:11.5px;padding:6px 0";
   b.appendChild(head);
   const pm=PMSG[GROUP_OPEN];
   if(pm&&pm.ts){const pb=document.createElement("div");pb.style.cssText="margin:6px 12px;background:#F0FDFA;border-left:3px solid #00A884;border-radius:8px;padding:6px 10px;font-size:12px;color:#12554A;cursor:pointer";pb.textContent="📌 "+pm.pv;pb.onclick=function(){if(confirm("Unpin this message?")){delete PMSG[GROUP_OPEN];persistV12();renderGBubbles();}};b.appendChild(pb);}
   for(const m of arr){
+    while(ci<cevs.length&&cevs[ci].at<=(m.ts||m.id||0)){b.appendChild(gCallRow(cevs[ci]));ci++;}
     const d=document.createElement("div");
     d.className="bub "+(m.who==="me"?"out":"in");
     const gft=String(m.text||"").match(/^\[gfile:([a-z0-9]+)\]$/);
@@ -5339,6 +5371,7 @@ function renderGBubbles(){
     attachMsgEvents(d,m);
     b.appendChild(d);
   }
+  while(ci<cevs.length){b.appendChild(gCallRow(cevs[ci]));ci++;}
   b.scrollTop=999999;
 }
 async function gsend(){
@@ -5539,7 +5572,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=99;
+const AC_V=100;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
