@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v100</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v102</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -668,6 +668,7 @@ footer a{color:#64748B}
   </div>
   <div class="bubbles" id="gbubbles"></div>
   <div class="cinput">
+    <div id="greplychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #00A884;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
     <input id="gbox" placeholder="Message group" onkeydown="if(event.key==='Enter')gsend()">
     <button onclick="gVoiceSheet()" title="Voice note" style="border:1px solid #CBD5E1;background:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;flex:0 0 38px;padding:0">🎙️</button>
     <button onclick="gsend()">➤</button>
@@ -2647,7 +2648,7 @@ function stVoiceClose(){
 async function stVoiceDown(e){
   if(SVR_B64)return;
   if(!window.MediaRecorder||!navigator.mediaDevices){toast("Voice status needs Chrome — try photo status");return;}
-  try{SVR_STREAM=await navigator.mediaDevices.getUserMedia({audio:true});}
+  try{SVR_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
   catch(err){toast("Microphone blocked — allow mic access first");return;}
   SVR_CH=[];
   const mimes=["audio/webm;codecs=opus","audio/webm","audio/mp4"];
@@ -3134,7 +3135,7 @@ function cvClose(){cvUp();try{CVR_STREAM.getTracks().forEach(function(t){t.stop(
 async function cvDown(e){
   if(CVR_B64)return;
   if(!window.MediaRecorder||!navigator.mediaDevices){toast("Voice notes need Chrome");return;}
-  try{CVR_STREAM=await navigator.mediaDevices.getUserMedia({audio:true});}
+  try{CVR_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
   catch(err){toast("Microphone blocked — allow mic access first");return;}
   CVR_CH=[];
   const mimes=["audio/webm;codecs=opus","audio/webm","audio/mp4"];
@@ -3419,9 +3420,9 @@ async function newPC(){
   const mixOut=ctx.createMediaStreamDestination();
   txAnalyser=ctx.createAnalyser();
   voiceBus=ctx.createGain();
-  voiceBus.connect(mixOut);voiceBus.connect(txAnalyser);voiceBus.connect(ctx.destination);
+  voiceBus.connect(mixOut);voiceBus.connect(txAnalyser); /* v101 echo fix: destination connect REMOVED - it played own mic back locally (echo before pickup) */
   pc.addTrack(mixOut.stream.getAudioTracks()[0],mixOut.stream);
-  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(stream=>{
     mic=stream;
     const src=ctx.createMediaStreamSource(mic);
     src.connect(voiceBus);
@@ -3459,7 +3460,7 @@ async function dial(p){
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
-  if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){}}
+  if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}catch(e){}}
   if(camOn&&!cam){try{cam=await navigator.mediaDevices.getUserMedia({video:true});}catch(e){cam=null;}}
   if(cam){$("localv").srcObject=cam;setVLayout("ring");}
   await log("dialing +"+PEER+" (friends verified)");
@@ -3797,7 +3798,7 @@ async function gCall(){
 async function gJoin(gid,initiator){
   if(GC.on)return;
   let stream;
-  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){toast("Mic blocked — cannot join call");return;}
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}catch(e){toast("Mic blocked — cannot join call");return;}
   GC.on=true;GC.g=gid;GC.pcs={};GC.stream=stream;GC.muted=false;GC.t0=Date.now();
   const g=GROUPS.find(x=>x.id===gid);
   const members=((g&&g.members)||[]).filter(m=>m!==ME);
@@ -4094,7 +4095,7 @@ function gvDiscard(){GV.b64=null;$("gvBtns").className="hide";$("gvPrev").classN
 async function gvDown(){
   if(GV.b64)return;
   if(!window.MediaRecorder||!navigator.mediaDevices){toast("Voice notes need Chrome");return;}
-  try{GV.stream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  try{GV.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
   catch(err){toast("Microphone blocked — allow mic access first");return;}
   GV.ch=[];
   const mimes=["audio/webm;codecs=opus","audio/webm","audio/mp4"];let mime="";
@@ -4754,7 +4755,7 @@ function openMs(m,el,mode){
     closeMsFloat();
     const g=!!GROUP_OPEN;
     try{$("msReacts").innerHTML=["❤️","😂","👍","😮","😢","🙏"].map(e=>'<span style="cursor:pointer;font-size:26px" onclick="msReact(\''+e+'\')">'+e+"</span>").join("");}catch(x){}
-    $("msReply").style.display=(g||!CHAT_OPEN)?"none":"";
+    $("msReply").style.display=(g||CHAT_OPEN)?"":"none";
     $("msPin").textContent=g?((PMSG[GROUP_OPEN]&&PMSG[GROUP_OPEN].ts===m.ts)?"📌 Unpin message":"📌 Pin message"):((CHAT_OPEN&&PINS.includes(CHAT_OPEN))?"📌 Unpin chat":"📌 Pin chat");
     $("msDel").textContent=g?"🗑 Delete message":"🗑 Delete chat";
     $("msDel").style.display="";
@@ -4797,15 +4798,20 @@ async function msReact(e){
 }
 function msReply(){
   closeMs();
-  if(!MS_MSG||!CHAT_OPEN)return;
+  if(!MS_MSG)return;
+  const inG=!!GROUP_OPEN;
+  if(!inG&&!CHAT_OPEN)return;
   const raw=String(MS_MSG.text||"");
   const rm=raw.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
   const body=(rm?rm[3]:raw).slice(0,90);
-  REPLY_TO={id:MS_MSG.ts,pv:(MS_MSG.who==="me"?"You: ":(WIN_NAMES[CHAT_OPEN]||"Friend")+": ")+body};
-  $("replychip").textContent="↩ "+REPLY_TO.pv+" (tap to cancel)";
-  $("replychip").className="";
-  $("replychip").onclick=clearReply;
-  try{$("chatbox").focus();}catch(e){}
+  const who=MS_MSG.who==="me"?"You":(inG?(WIN_NAMES[MS_MSG.from]||("+"+MS_MSG.from)):(WIN_NAMES[CHAT_OPEN]||"Friend"));
+  REPLY_TO={id:MS_MSG.ts,pv:who+": "+body};
+  const rc=inG?$("greplychip"):$("replychip");
+  if(!rc)return;
+  rc.textContent="↩ "+REPLY_TO.pv+" (tap to cancel)";
+  rc.className="";
+  rc.onclick=clearReply;
+  try{(inG?$("gbox"):$("chatbox")).focus();}catch(e){}
 }
 function msPin(){
   closeMs();
@@ -4835,7 +4841,7 @@ async function msDel(){
   delete CHATS[CHAT_OPEN];delete UNREAD[CHAT_OPEN];
   persistChats();renderLists();closeChat();toast("Chat deleted");
 }
-function clearReply(){REPLY_TO=null;const c=$("replychip");if(c)c.className="hide";}
+function clearReply(){REPLY_TO=null;for(const id of ["replychip","greplychip"]){const c=$(id);if(c){c.className="hide";c.textContent="";}}}
 /* ----- groups ----- */
 function openGc(){
   const l=$("gcList");
@@ -4911,106 +4917,108 @@ async function gMigrateLocal(gid){
   toast("This group was made with an old version and some members are gone. Create a new group with the same friends to unlock all group features.");
   return false;
 }
+
+/* v102 (skylar): Group options = compact popup BESIDE the three dots — no full sheet, nothing at the bottom */
+let GMENU_R=null;
+function gMenuClose(){try{$("gmPop").remove();}catch(e){}try{$("gmShield").remove();}catch(e){}}
+function giClose(){gMenuClose();}
+function gRow(el,ic,lab,sub,fn,col){
+  const b=document.createElement("div");
+  b.style.cssText="display:flex;align-items:center;gap:12px;padding:11px 14px;font-size:13.5px;cursor:"+(fn?"pointer":"default")+";color:"+(col||"#111827");
+  b.innerHTML='<span style="font-size:16px;width:20px;text-align:center">'+ic+'</span><span style="flex:1;min-width:0">'+lab+(sub?'<div style="font-size:11px;color:#64748B;font-weight:400">'+sub+'</div>':'')+'</span>';
+  if(fn)b.onclick=fn;
+  el.appendChild(b);
+  return b;
+}
 async function openGInfo(){
-  /* v99 (skylar: "the three dots did not open"): the sheet now opens IMMEDIATELY with a loading state,
-     then fills — a failed load shows an error + Retry INSIDE the sheet instead of a silent toast */
   if(!GROUP_OPEN)return;
-  let el=$("ginfosheet");if(el)el.remove();
-  el=document.createElement("div");el.id="ginfosheet";
-  el.style.cssText="position:fixed;inset:0;z-index:70;background:#F8FAFC;display:flex;flex-direction:column;";
-  const gHead='<div class="ohdr"><button class="bk" onclick="giClose()">‹</button><div class="nm" style="flex:1">Group options</div><div style="width:30px"></div></div>';
-  el.innerHTML=gHead+'<div style="padding:28px;text-align:center;color:#64748B;font-size:14px">Loading group…</div>';
+  gMenuClose();
+  const sh=document.createElement("div");sh.id="gmShield";sh.style.cssText="position:fixed;inset:0;z-index:9998";sh.onclick=gMenuClose;document.body.appendChild(sh);
+  const el=document.createElement("div");el.id="gmPop";
+  el.style.cssText="position:fixed;top:60px;right:10px;z-index:9999;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.28);padding:6px 0;width:274px;max-height:66vh;overflow:auto";
   document.body.appendChild(el);
+  gRow(el,"⏳","Loading group…",null,null,"#94A3B8");
   let r=await api("ginfo",{node:ME,g:GROUP_OPEN});
   if(!r||!r.ok){
-    /* v90: OLD-engine groups live only in this phone's storage — auto-upgrade, then retry */
-    el.innerHTML=gHead+'<div style="padding:28px;text-align:center;color:#64748B;font-size:13.5px">Upgrading this group to the new engine…</div>';
     const mig=await gMigrateLocal(GROUP_OPEN);
-    if(mig) r=await api("ginfo",{node:ME,g:GROUP_OPEN});
-    if(!r||!r.ok){
-      el.innerHTML=gHead+'<div style="padding:28px;text-align:center"><div style="font-size:38px">👥</div><div style="color:#64748B;font-size:14px;margin:8px 0">Could not load this group'+(r&&r.err?" — "+esc(String(r.err)):"")+'</div><button class="big" style="background:#D7EEE0;color:#075E46" onclick="openGInfo()">Retry</button></div>';
-      return;
-    }
+    if(mig)r=await api("ginfo",{node:ME,g:GROUP_OPEN});
+    if(!r||!r.ok){el.innerHTML="";gRow(el,"⚠","Could not load — tap to retry",null,function(){gMenuClose();openGInfo();},"#DC2626");return;}
   }
-  const me=(r.members.find(m=>m.id===ME)||{});
-  const iAmAdmin=(r.iAmAdmin!==undefined)?!!r.iAmAdmin:!!me.admin;
-  const iAmCreator=ME===r.by;
-  const glink=acLinkBase()+"#g="+GROUP_OPEN;
-  let rows="";
-  for(const m of r.members){
-    const isMe=m.id===ME;
-    rows+='<div'+(isMe?'':' onclick="gmsg2(\''+m.id+'\')"')+' style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid #E2E8F0'+(isMe?'':';cursor:pointer')+'">'+
-    '<div style="width:34px;height:34px;border-radius:50%;background:'+memColor(m.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 34px">'+esc((m.name||"?").charAt(0).toUpperCase())+'</div>'+
-    '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;color:#0F172A">'+esc(m.name||("+"+m.id))+'</div>'+
-    '<div style="font-size:11px;color:#64748B">+'+esc(m.id)+(m.creator?" · 👑 Group creator":(m.admin?" · 🛡️ Admin":(isMe?" · you":"")))+'</div></div>'+
-    ((isMe)?'':
-      ((iAmAdmin&&!m.creator)?'<button onclick="event.stopPropagation();gkick2(\''+m.id+'\')" style="border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:5px 10px;font-size:12px">Remove</button>':"")+
-      ((iAmCreator)?'<button onclick="event.stopPropagation();gadmin2(\''+m.id+'\',\''+(!m.admin)+'\')" style="margin-left:6px;border:1px solid #CBD5E1;background:#fff;color:#2563EB;border-radius:8px;padding:5px 10px;font-size:12px">'+(m.admin?"Demote":"Make admin")+'</button>':"")
-    )+
-    "</div>";
-  }
-
-  let pastRows="";
-  if((r.past||[]).length){
-    for(const p of r.past){
-      pastRows+='<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #F1F5F9">'+
-      '<div style="width:30px;height:30px;border-radius:50%;background:#CBD5E1;color:#64748B;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 30px;font-size:12px">'+esc((p.name||"?").charAt(0).toUpperCase())+'</div>'+
-      '<div style="flex:1"><div style="font-weight:600;font-size:13px;color:#475569">'+esc(p.name||("+"+p.id))+'</div>'+
-      '<div style="font-size:11px;color:#94A3B8">+'+esc(p.id)+' · '+(p.how==="removed"?"removed by admin":"left")+'</div></div>'+
-      ((iAmAdmin)?'<button onclick="gadd3(\''+p.id+'\')" style="border:1px solid #CBD5E1;background:#fff;color:#075E46;border-radius:8px;padding:5px 10px;font-size:12px">Add back</button>':"")+
-      "</div>";
-    }
-  }
-  let reqRows="";
-  if((r.reqs||[]).length){
-    for(const q of r.reqs){
-      reqRows+='<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid #F1F5F9">'+
-      '<div style="flex:1"><div style="font-weight:600;font-size:13px;color:#0F172A">'+esc(q.name||("+"+q.id))+'</div>'+
-      '<div style="font-size:11px;color:#64748B">+'+esc(q.id)+' wants to join</div></div>'+
-      '<button onclick="greq2(\''+q.id+'\',true)" style="border:0;background:#16A34A;color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700">✓</button>'+
-      '<button onclick="greq2(\''+q.id+'\',false)" style="border:1px solid #CBD5E1;background:#fff;color:#DC2626;border-radius:8px;padding:6px 12px;font-size:12px">✗</button>'+
-      "</div>";
-    }
-  }
-  const inG=new Set(r.members.map(m=>m.id));
-  const cand=FRIENDS.filter(f=>!inG.has(f.id));
-  let addRow="";
-  if(iAmAdmin&&cand.length){
-    let opts="";for(const f of cand)opts+='<option value="'+f.id+'">'+esc(f.name||("+"+f.id))+"</option>";
-    addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Add</button></div>';
-  }
-  el.innerHTML=
-    '<div class="ohdr"><button class="bk" onclick="giClose()">‹</button><div class="nm" style="flex:1">Group options</div><div style="width:30px"></div></div>'+
-    '<div style="overflow:auto">'+
-    '<div style="background:#0D6E52;padding:18px 16px 14px;text-align:center">'+
-      '<div style="font-size:38px">👥</div>'+
-      '<div style="color:#fff;font-weight:800;font-size:18px;margin-top:2px">'+esc(r.name)+'</div>'+
-      '<div style="display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap">'+
-        '<span style="background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px">'+r.members.length+' members</span>'+
-        (r.lock?'<span style="background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px">🔒 admins only</span>':"")+
-        '<span style="background:rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:3px 10px;font-size:11px">'+(iAmCreator?'👑 creator':(iAmAdmin?'🛡️ admin':'member'))+'</span>'+
-      '</div>'+
-    '</div>'+
-    '<div style="padding:14px 12px">'+
-    '<div style="font-weight:700;font-size:12px;color:#64748B;margin-bottom:6px">MEMBERS ('+r.members.length+') · tap a member to chat privately</div>'+
-    '<div class="card">'+rows+'</div>'+
-    '<div class="card" style="padding:4px 12px;margin-top:12px">'+moreRow("🌐","Pay for translation — Group Language Plan","gPayTranslate()")+'</div>'+
-    (iAmAdmin&&reqRows?'<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-top:12px"><div style="font-weight:700;font-size:13px;color:#92400E;margin-bottom:4px">🔔 Join requests</div>'+reqRows+'</div>':"")+
-    (iAmAdmin?'<div style="font-weight:700;font-size:12px;color:#92400E;margin:14px 0 4px">🛡️ ADMIN TOOLS · only admins see this</div>'+
-      '<div class="card" style="padding:4px 12px;margin-bottom:10px">'+
-        moreRow("🔗","Copy group link","acCopy(\''+glink+'\');toast(\'Group link copied ✓\')")+
-        moreRow(r.lock?"🔓":"🔒",r.lock?"Open chat for everyone":"Lock chat to admins","glock2()")+
-      '</div>'+
-      '<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>'+
-      addRow+
-      '<div style="display:flex;gap:8px;margin-top:10px"><input id="giPass" type="password" placeholder="'+(r.hasPass?'Change group password':'Set group password — needed to delete')+'" maxlength="40" style="flex:1"><button onclick="gpass2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#D7EEE0;color:#075E46">Save</button></div>'+
-      '<button onclick="gdel2()" class="big" style="background:#DC2626;color:#fff;margin-top:10px">🗑 Delete group (permanent)</button>':"")+
-    (iAmAdmin&&pastRows?'<div style="margin-top:14px"><div style="font-weight:700;font-size:13px;color:#64748B;margin-bottom:4px">Past members</div>'+pastRows+'</div>':"")+
-    '<button onclick="ginfoLeave()" class="big" style="background:#F1F5F9;color:#111827;margin-top:16px">Leave group 👋</button>'+
-    "</div></div>";
-
-
+  GMENU_R=r;
+  gMenuRoot();
 }
+function gMenuRoot(){
+  const el=$("gmPop");if(!el)return;
+  const r=GMENU_R;if(!r)return;
+  const me=(r.members.find(m=>m.id===ME)||{});
+  const admin=(r.iAmAdmin!==undefined)?!!r.iAmAdmin:!!me.admin;
+  const creator=ME===r.by;
+  el.innerHTML="";
+  const hd=document.createElement("div");
+  hd.style.cssText="padding:9px 14px;border-bottom:1px solid #F1F5F9;font-weight:700;font-size:13px;color:#0F172A;display:flex;gap:8px;align-items:center";
+  hd.innerHTML='<span>👥</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.name)+'</span><span style="font-size:10px;color:#64748B">'+(creator?'👑 creator':(admin?'🛡️ admin':'member'))+'</span>';
+  el.appendChild(hd);
+  gRow(el,"👥","Members ("+r.members.length+")","Tap a member to chat privately",function(){gMenuMembers();});
+  gRow(el,"🌐","Pay for translation","Group Language Plan",function(){gMenuClose();gPayTranslate();});
+  if(admin){
+    gRow(el,"🔗","Copy group link",null,function(){acCopy(acLinkBase()+"#g="+GROUP_OPEN);toast("Group link copied ✓");});
+    gRow(el,r.lock?"🔓":"🔒",r.lock?"Open chat for everyone":"Lock chat to admins",null,function(){gMenuClose();glock2();});
+    gRow(el,"✏️","Rename group",null,function(){const v=prompt("New group name:");if(v&&v.trim())gRenameGo(v.trim());});
+    gRow(el,"➕","Add member",null,function(){gMenuAdd();});
+    gRow(el,"🔑","Set group password",null,function(){const v=prompt("Group password (needed to delete the group):");if(v)gPassGo(v);});
+    gRow(el,"🗑","Delete group",null,function(){gMenuClose();gdel2();},"#DC2626");
+  }
+  gRow(el,"👋","Leave group",null,function(){gMenuClose();leaveGroup();});
+}
+function gMenuMembers(){
+  const el=$("gmPop");if(!el)return;
+  const r=GMENU_R;if(!r)return;
+  const me=(r.members.find(m=>m.id===ME)||{});
+  const admin=(r.iAmAdmin!==undefined)?!!r.iAmAdmin:!!me.admin;
+  const creator=ME===r.by;
+  el.innerHTML="";
+  gRow(el,"‹","Members — back",null,function(){gMenuRoot();},"#2563EB");
+  for(const m of r.members){
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;cursor:pointer;border-top:1px solid #F8FAFC";
+    row.innerHTML='<div style="width:30px;height:30px;border-radius:50%;background:'+memColor(m.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 30px">'+esc((m.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(m.name||("+"+m.id))+'</div><div style="font-size:10.5px;color:#64748B">+'+esc(m.id)+(m.creator?" · 👑 creator":(m.admin?" · 🛡️ admin":(m.id===ME?" · you":"")))+'</div></div>';
+    if(m.id!==ME)row.onclick=function(){gMenuClose();gmsg2(m.id);};
+    if(m.id!==ME){
+      if(admin&&!m.creator){const x=document.createElement("div");x.textContent="✕";x.title="Remove from group";x.style.cssText="color:#DC2626;font-weight:700;padding:4px 6px;cursor:pointer";x.onclick=function(ev){ev.stopPropagation();gMenuClose();gkick2(m.id);};row.appendChild(x);}
+      if(creator){const c=document.createElement("div");c.textContent=m.admin?"⬇":"👑";c.title=m.admin?"Demote admin":"Make admin";c.style.cssText="padding:4px 6px;cursor:pointer";c.onclick=function(ev){ev.stopPropagation();gMenuClose();gadmin2(m.id,!m.admin);};row.appendChild(c);}
+    }
+    el.appendChild(row);
+  }
+}
+function gMenuAdd(){
+  const el=$("gmPop");if(!el)return;
+  const r=GMENU_R;if(!r)return;
+  const ids=(r.members||[]).map(m=>String(m.id));
+  const cand=(typeof WIN_FRIENDS!=="undefined"?WIN_FRIENDS:[]).filter(f=>ids.indexOf(String(f.id))<0);
+  el.innerHTML="";
+  gRow(el,"‹","Add member — back",null,function(){gMenuRoot();},"#2563EB");
+  if(!cand.length){const d=document.createElement("div");d.style.cssText="padding:12px 16px;font-size:12px;color:#64748B";d.textContent="All your friends are already members.";el.appendChild(d);}
+  for(const f of cand){
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;cursor:pointer";
+    const nm=(typeof WIN_NAMES!=="undefined"&&WIN_NAMES[f.id])||f.name||("+"+f.id);
+    row.innerHTML='<div style="width:30px;height:30px;border-radius:50%;background:'+memColor(f.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">'+esc(String(nm).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(nm)+'</div><div style="font-size:10.5px;color:#64748B">+'+esc(f.id)+'</div></div><div style="color:#10B981;font-weight:700">Add</div>';
+    row.onclick=function(){gMenuClose();gadd3(f.id);};
+    el.appendChild(row);
+  }
+}
+async function gRenameGo(v){
+  const r=await api("grename",{by:ME,g:GROUP_OPEN,name:v});
+  if(r&&r.ok){const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(g){g.name=v;try{$("gvName").textContent=v;}catch(e){}}toast("Renamed ✓");}
+  else toast((r&&r.err)||"Could not rename");
+  gMenuClose();try{openGInfo();}catch(e){}
+}
+async function gPassGo(v){
+  const r=await api("gset",{by:ME,g:GROUP_OPEN,pass:v});
+  toast(r&&r.ok?"Group password saved ✓":((r&&r.err)||"Failed"));
+  gMenuClose();try{openGInfo();}catch(e){}
+}
+
 async function gadd3(node){
   const r=await api("gadd",{by:ME,g:GROUP_OPEN,members:[node]});
   toast(r&&r.ok?"Added back ✓":(r&&r.err)||"Could not add");
@@ -5284,7 +5292,7 @@ async function payPostsSheet(){
 }
 
 /* ---- group info v2: message member, past members, requests, link, lock, password, delete ---- */
-function giClose(){const el=$("ginfosheet");if(el)el.remove();}
+function giClose(){gMenuClose();}
 
 function gPayTranslate(){
   /* v98 (skylar): pay-for-translation row in Group options -> redirect to the app menu where plans are paid */
@@ -5380,9 +5388,11 @@ async function gsend(){
   const g0=GROUPS.find(x=>x.id===GROUP_OPEN);
   if(g0&&g0.lock&&(g0.admins||[g0.by]).indexOf(ME)<0){toast("🔒 The admin has locked this group — only admins can send");box.value="";return;}
   box.value="";
-  const r=await api("gmsg",{from:ME,g:GROUP_OPEN,text:txt});
+  let out=txt;
+  if(REPLY_TO){out="r:"+REPLY_TO.id+"|"+REPLY_TO.pv+"|"+txt;clearReply();}
+  const r=await api("gmsg",{from:ME,g:GROUP_OPEN,text:out});
   if(r&&r.ok){
-    (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:r.id,who:"me",from:ME,text:txt,ts:r.id});
+    (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:r.id,who:"me",from:ME,text:out,ts:r.id});
     persistV12();renderGBubbles();
   }else{
     (GMS[GROUP_OPEN]=GMS[GROUP_OPEN]||[]).push({id:"sys"+Date.now(),who:"sys",from:ME,text:"⚠ not sent — "+((r&&r.err)||"check connection")});
@@ -5572,7 +5582,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=100;
+const AC_V=102;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5782,10 +5792,12 @@ function menuOpen(){
   if(!mv._owned){mv._owned=1;
     const vs=document.getElementById("view-settings");
     /* v81: profile lives top-right in the header now, not in the menu (his directive) */
-    const back=document.createElement("button");
-    back.className="big blue";back.style.cssText="margin:12px;width:calc(100% - 24px)";
-    back.textContent="✕ Close menu";back.onclick=menuClose;
-    mv.appendChild(back);
+    /* v102 (skylar): top Close-menu button removed — small round "close" button instead, always reachable */
+    const cb=document.createElement("div");
+    cb.style.cssText="position:fixed;right:14px;bottom:18px;width:64px;height:64px;border-radius:50%;background:#0D6E52;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.3);cursor:pointer;z-index:99";
+    cb.textContent="close";
+    cb.onclick=menuClose;
+    mv.appendChild(cb);
     /* v85: WhatsApp-style profile row FIRST in the menu — photo+name, tap opens full profile (his directive: photo comes first) */
     const prow=document.createElement("div");
     prow.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer";
