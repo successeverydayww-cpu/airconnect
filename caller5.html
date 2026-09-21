@@ -235,7 +235,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v115</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v116</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -2261,7 +2261,7 @@ function renderStoryStrip(){
   for(const el of targets){
     el.innerHTML="";
     el.appendChild(storyCircle(mine?mine.items[mine.items.length-1].pic:PIC_CACHE[ME],String(ME_NAME||"?").charAt(0).toUpperCase(),!!(mine&&unseen(mine)),"My status",function(){if(mine)openStatusViewer(ME);else stAddOpen();},true));
-    if(ST_DRAFT&&el.id==="statusStrip")stDraftCircle(el); /* v114: draft circle lives only on the STATUS page */
+    /* v116: the draft shows ONLY as the card on the Status page — no circle in any strip (skylar: "it should not be at the main page") */
     for(const g of fr){
       const last=g.items[g.items.length-1];
       el.appendChild(storyCircle(String(last.pic).indexOf("data:image")===0?last.pic:"",String(g.name||"?").charAt(0).toUpperCase(),unseen(g),String(g.name||"?"),function(){openStatusViewer(g.num);},false));
@@ -2606,8 +2606,10 @@ async function stDraftPost(){
     ST_DRAFT=null;
     stDraftSheetClose();
     stDraftRowRender();
-    toast("Video status posted ✓ — open My status to see it");
-    refreshStories();renderStatusScreen();renderStoryStrip();
+    toast("Video status posted ✓");
+    try{const d2=await api("stories",{node:ME});if(d2&&d2.stories)STORIES=d2.stories;}catch(e){}
+    renderStoryStrip();renderStatusScreen();
+    openStatusViewer(ME); /* v116: the proof moment — his series opens with the new video playing */
   }catch(e){
     toast("Upload failed — check connection and try again");
     const row2=document.getElementById("stDraftBtns");if(row2)row2.style.display="";
@@ -6063,7 +6065,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=115;
+const AC_V=116;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
