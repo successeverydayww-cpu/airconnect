@@ -1082,7 +1082,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=71');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=72');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1423,7 +1423,7 @@ function wtCard(p,big,sound){
   const d=document.createElement("div");
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:10px";
   const t=new Date(p.at||Date.now());
-  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#00A884;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div><button class="big" style="padding:5px 10px;font-size:11px;border-radius:14px;background:'+(p.mysub?"#E2E8F0":"#00A884")+';color:'+(p.mysub?"#334155":"#fff")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
+  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#00A884;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
   let body="";
   if(p.rs)body+='<div style="font-size:11px;color:#00A884;margin-top:6px">🔁 reshared post</div>';
   if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
@@ -1433,7 +1433,7 @@ function wtCard(p,big,sound){
   for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
   rrow+='</div>';
   const acts='<div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:#64748B"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right">👁 '+(p.vcnt||0)+' views</span></div>';
-  d.innerHTML=head+body+rrow+acts;
+  d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:6px 16px;font-size:12px;border-radius:16px;background:'+(p.mysub?"#E2E8F0":"#00A884")+';color:'+(p.mysub?"#334155":"#fff")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
   return d;
 }
 function wtObserveVideos(){
@@ -1473,13 +1473,11 @@ async function wtAutoPlayVid(pid,fid,n,box){
     const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
-    box.innerHTML='<video id="wtv-'+pid+'" playsinline'+((box.dataset.sound==="1")?"":" muted")+' loop autoplay style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video><div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔇</div>';
+    box.innerHTML='<video id="wtv-'+pid+'" playsinline muted'+(snd?' loop autoplay':' controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
     const vv=document.getElementById("wtv-"+pid);
     const snd=box.dataset.sound==="1";
-    if(snd){ /* v69: shorts play sound-on; fall back to muted if the browser refuses */
-      vv.muted=false;
-      vv.play().catch(function(){vv.muted=true;vv.play().catch(function(){});const b2=document.getElementById("wtmute-"+pid);if(b2)b2.textContent="🔇";});
-    } else vv.play().catch(function(){});
+    /* v72: shorts autoplay MUTED (tap 🔊 for sound); long videos wait for the play button */
+    if(snd){ vv.play().catch(function(){}); }
     if(te>ts){
       vv.addEventListener("loadedmetadata",function(){try{vv.currentTime=ts;}catch(e){}});
       vv.addEventListener("timeupdate",function(){if(vv.currentTime>=te){vv.currentTime=ts;}});
@@ -1492,6 +1490,7 @@ async function wtAutoPlayVid(pid,fid,n,box){
   }
   box.dataset.loading="";
 }
+function wtBigPlay(pid){const v=document.getElementById("wtv-"+pid);if(!v)return;const o=document.getElementById("wtplay-"+pid);if(o)o.style.display="none";v.play().catch(function(){});}
 function wtToggleMute(pid){
   const v=document.getElementById("wtv-"+pid);if(!v)return;
   v.muted=!v.muted;
@@ -4592,7 +4591,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=71;
+const AC_V=72;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4615,7 +4614,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=71").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=72").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
