@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v103</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v104</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -5199,7 +5199,8 @@ function planPay(i){
   '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">2 · Upload your receipt</div>'+
   '<input type="file" id="planRcpIn" class="hide" accept="image/*" onchange="planRcpChosen(this)">'+
   '<button class="big" style="width:100%;background:#fff;border:1px solid #075E46;color:#075E46" onclick="document.getElementById(\'planRcpIn\').click()">📷 Choose receipt photo</button>'+
-  '<div id="planRcpPrev" style="margin-top:8px;font-size:12.5px;color:#64748B"></div></div>'+
+  '<div id="planRcpPrev" style="margin-top:8px;font-size:12.5px;color:#64748B"></div>'+
+  '<input id="planTxn" placeholder="Transaction number / reference from your payment" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:13px;margin-top:8px"></div>'+
   '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:4px">'+
   '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">3 · Submit</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:8px">Plan number <b>'+pn+'</b> goes in with your receipt. Verification within 30 minutes, then auto-activation.</div>'+
@@ -5218,10 +5219,12 @@ async function planRcpChosen(inp){
 async function planPayGo(i){
   const p=AC_PLANS[i];if(!p)return;
   const pn="P"+(i+1);
+  const txn=(($("planTxn")&&$("planTxn").value)||"").trim();
   if(!_PLAN_RCP){toast("Upload your payment receipt first (step 2)");return;}
+  if(!txn){toast("Type your transaction number (step 2)");return;}
   const btn=$("planPayBtn");btn.disabled=true;btn.textContent="Submitting…";
   try{
-    const d=await api("wtopup",{node:ME,amt:p.ngr});
+    const d=await api("wtopup",{node:ME,amt:p.ngr,txn:txn.slice(0,24)});
     if(!d||!d.ok)throw 0;
     const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:"plan-receipt.jpg",n,pub:1});
@@ -5237,10 +5240,11 @@ async function planPayGo(i){
   }
 }
 /* ---- v103 (skylar): Group Language Plan payment page — T1 number, 30-min countdown, receipt + transaction number ---- */
-let _TR_T0=null,_TR_TICK=null;
+let _TR_T0=null,_TR_TICK=null,_TR_GID=null;
 function translationPayClose(){let el=$("trPaySheet");if(el)el.remove();if(_TR_TICK){clearInterval(_TR_TICK);_TR_TICK=null;}}
-function translationPay(){
+function translationPay(gid){
   translationPayClose();
+  _TR_GID=(gid===undefined||gid===null)?"":String(gid);
   let el=document.createElement("div");el.id="trPaySheet";el.className="ovl";
   const wal="4UbnqavDCyXwwo1NwxzUcbdDc5j4Ufc3p9hqwwccgkBa";
   el.innerHTML='<div class="sheet" style="max-width:480px">'+
@@ -5293,7 +5297,7 @@ async function trPayGo(){
   if(!txn){toast("Type your transaction number (step 2)");return;}
   const btn=$("trPayBtn");btn.disabled=true;btn.textContent="Submitting…";
   try{
-    const d=await api("wtopup",{node:ME,amt:4800});
+    const d=await api("wtopup",{node:ME,amt:4800,gid:_TR_GID||"",txn:txn.slice(0,24)});
     if(!d||!d.ok)throw 0;
     const CH=75000,n=Math.max(1,Math.min(900,Math.ceil(_PLAN_RCP.b64.length/CH)));
     const st=await api("fstart",{from:ME,to:ME,name:"translation-receipt.jpg",n,pub:1});
@@ -5398,10 +5402,11 @@ async function payPostsSheet(){
 function giClose(){gMenuClose();}
 
 function gPayTranslate(){
-  /* v103 (skylar): straight to the translation payment page — T1 number, 30-minute countdown, receipt + transaction number */
+  /* v104 (skylar): straight to the translation payment page — carries the GROUP id so auto-activation knows which group to switch on */
+  const pg=GROUP_OPEN;
   try{giClose();}catch(e){}
   try{closeGroup();}catch(e){}
-  translationPay();
+  translationPay(pg);
 }
 function gmsg2(num){
   giClose();
@@ -5684,7 +5689,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=103;
+const AC_V=104;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
