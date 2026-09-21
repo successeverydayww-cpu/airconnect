@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#00806F">
+<meta name="theme-color" content="#E9F7F1">
 <meta name="description" content="AirConnect — free voice & video calling and chat with phone-number IDs.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -13,17 +13,17 @@
 body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#F8FAFC;color:#0F172A;overflow-x:hidden}
 .hide{display:none!important}
 /* header */
-.hdr{position:sticky;top:0;z-index:20;background:#00A884;color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.15)}
-.hdr .sub{font-size:12px;color:rgba(255,255,255,.8);font-weight:400}
+.hdr{position:sticky;top:0;z-index:20;background:#E9F7F1;color:#0B7A5E;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #C9EBDE}
+.hdr .sub{font-size:12px;color:#52796B;font-weight:400}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#667781;margin-right:6px;vertical-align:1px}
 .dot.live{background:#22c55e}.dot.ringing{background:#ffb02e;animation:pulse .8s infinite}
 @keyframes pulse{50%{opacity:.25}}
 /* nav */
 nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#FFFFFF;display:flex;border-top:1px solid #E2E8F0;box-shadow:0 -1px 4px rgba(0,0,0,.04);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;color:#64748B;font-size:11px;padding:8px 0 6px;cursor:pointer;font-weight:600}
-nav button.on{color:#00A884}
+nav button.on{color:#0B7A5E}
 nav button .ico{display:block;font-size:20px;position:relative}
-.badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#00A884;color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
+.badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#E9F7F1;color:#0B7A5E;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
 /* lists */
 .view{padding-bottom:64px;min-height:100vh}
 .row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #E2E8F0}
@@ -35,17 +35,17 @@ nav button .ico{display:block;font-size:20px;position:relative}
 .empty{padding:40px 20px;text-align:center;color:#64748B;font-size:14px}
 .callbtns{display:flex;gap:8px;margin-left:auto}
 .callbtns button{border:0;border-radius:50%;width:42px;height:42px;font-size:17px;cursor:pointer;flex-shrink:0}
-.cb1{background:#00A884;color:#fff}.cb2{background:#64748B;color:#fff}
+.cb1{background:#E9F7F1;color:#0B7A5E}.cb2{background:#64748B;color:#fff}
 /* forms */
 .card{margin:12px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:16px}
 input,select{width:100%;padding:13px;border-radius:22px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;font-size:15px;margin-bottom:10px;outline:none}
-button.big{width:100%;padding:14px;font-size:15px;font-weight:700;border:0;border-radius:12px;background:#00A884;color:#fff;cursor:pointer;margin-top:4px}
+button.big{width:100%;padding:14px;font-size:15px;font-weight:700;border:0;border-radius:12px;background:#E9F7F1;color:#0B7A5E;cursor:pointer;margin-top:4px}
 button.big:disabled{opacity:.5}
 button.big.red{background:#f15c6d}
 button.big.blue{background:#1F2937;color:#fff}
 /* chat overlay */
 .ovl{position:fixed;inset:0;z-index:30;background:#F8FAFC;display:flex;flex-direction:column}
-.ovl .ohdr{background:#00A884;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ovl .ohdr{background:#E9F7F1;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .ohdr .bk{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
 .ohdr .nm{font-weight:600;font-size:16px;color:#fff}
 .ohdr .st{font-size:12px;color:rgba(255,255,255,.75)}
@@ -56,7 +56,7 @@ button.big.blue{background:#1F2937;color:#fff}
 .bub.sys{align-self:center;background:#E7F4EF;color:#0B6B57;font-size:12.5px}
 .cinput{display:flex;gap:8px;padding:8px 10px;background:#F0F2F5;border-top:0;flex-shrink:0}
 .cinput input{margin:0;flex:1}
-.cinput button{width:52px;border-radius:50%;border:0;background:#00A884;color:#fff;font-size:19px;cursor:pointer;flex-shrink:0}
+.cinput button{width:52px;border-radius:50%;border:0;background:#E9F7F1;color:#0B7A5E;font-size:19px;cursor:pointer;flex-shrink:0}
 .cinput button:disabled{opacity:.5}
 /* call + incoming overlays */
 #callview .top{padding:24px;text-align:center}
@@ -83,11 +83,11 @@ button.big.blue{background:#1F2937;color:#fff}
 .cctl{position:fixed;bottom:0;left:0;right:0;padding:18px 10px 30px;display:flex;justify-content:center;gap:22px;background:linear-gradient(transparent,#F8FAFC 40%)}
 .cbtn{border:0;border-radius:50%;width:58px;height:58px;font-size:22px;cursor:pointer;color:#fff;background:#CBD5E1}
 .cbtn.end{background:#ea0038}
-.cbtn.on{background:#00A884}
+.cbtn.on{background:#E9F7F1}
 .meters{display:flex;gap:10px;justify-content:center;margin:8px 16px;font-size:11px;color:#64748B}
 .meters .m{flex:1;max-width:160px}
 .meters .bar{height:4px;background:#E2E8F0;border-radius:2px;overflow:hidden}
-.meters .bar>div{height:100%;width:0;background:#00A884;transition:width .3s}
+.meters .bar>div{height:100%;width:0;background:#E9F7F1;transition:width .3s}
 #incoming{align-items:center;justify-content:center;text-align:center}
 #incoming .av{width:110px;height:110px;font-size:44px;margin:0 auto}
 #incoming .iname{font-size:26px;font-weight:600;margin-top:20px}
@@ -96,15 +96,15 @@ button.big.blue{background:#1F2937;color:#fff}
 .ictrl button{border:0;border-radius:50%;width:64px;height:64px;font-size:26px;cursor:pointer}
 .ictrl .acc{background:#16a34a;color:#fff}
 .ictrl .dec{background:#ea0038;color:#fff}
-#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#00A884;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
+#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#E9F7F1;color:#0B7A5E;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
 #fab:active{transform:scale(.93)}
 .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .bub{position:relative}
 .rchip{position:absolute;top:-11px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:999px;padding:2px 8px;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.18);z-index:3;white-space:nowrap}
-.rchip.mine{border-color:#00A884}
+.rchip.mine{border-color:#0B7A5E}
 .bub.in .rchip{left:-6px}
 .bub.out .rchip{right:-6px}
-.rchip.mine{border-color:#00A884}
+.rchip.mine{border-color:#0B7A5E}
 .qbox{border-left:3px solid #00A884;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
 #fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1F2937;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#F8FAFC;box-shadow:0 4px 14px rgba(0,0,0,.4)}
@@ -120,7 +120,7 @@ footer a{color:#64748B}
 #sharelink{font-size:12px}
 .stseg{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;max-width:44px}
 .stseg.done,.stseg.on{background:#fff}
-.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#94A3B8;font-weight:700}.tick.on{color:#00A884;font-weight:700}
+.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#94A3B8;font-weight:700}.tick.on{color:#0B7A5E;font-weight:700}
 </style>
 </head>
 <body>
@@ -132,8 +132,8 @@ footer a{color:#64748B}
 </style>
 <style>
 #vtTrim input[type=range]{-webkit-appearance:none;appearance:none;height:26px;background:transparent;pointer-events:none;position:absolute;left:0;right:0;top:0;width:100%;margin:0}
-#vtTrim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#00A884;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);margin-top:1px;cursor:pointer}
-#vtTrim input[type=range]::-moz-range-thumb{pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#00A884;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer}
+#vtTrim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#0B7A5E;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);margin-top:1px;cursor:pointer}
+#vtTrim input[type=range]::-moz-range-thumb{pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#0B7A5E;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer}
 #vtTrim input[type=range]::-moz-range-track{background:transparent}
 #vtTrim input[type=range]::-webkit-slider-runnable-track{background:transparent}
 </style>
@@ -157,7 +157,7 @@ footer a{color:#64748B}
       <option>Turkey</option><option>Canada</option><option>Australia</option>
     </select>
     <div style="display:flex;margin-bottom:2px">
-      <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#00806F;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
+      <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#E9F7F1;color:#0B7A5E;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
       <button id="tabEmail" onclick="setMethod('email')" style="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px">📧 Email</button>
     </div>
     <input id="phone" placeholder="Your phone number, e.g. 0803 123 4567" inputmode="tel" autocomplete="tel">
@@ -204,7 +204,7 @@ footer a{color:#64748B}
         <div style="font-size:11.5px;color:#64748B;margin-top:6px;text-align:center" id="vtHint">Drag either handle — the video previews where you land</div>
         <div style="position:relative;height:26px;margin-top:10px">
           <div style="position:absolute;left:0;right:0;top:11px;height:5px;background:#CBD5E1;border-radius:4px"></div>
-          <div id="vtBar" style="position:absolute;top:11px;height:5px;background:#00A884;border-radius:4px"></div>
+          <div id="vtBar" style="position:absolute;top:11px;height:5px;background:#E9F7F1;border-radius:4px"></div>
           <input type="range" id="vtS" min="0" max="1000" value="0" oninput="vtDrag('s')">
           <input type="range" id="vtE" min="0" max="1000" value="1000" oninput="vtDrag('e')">
         </div>
@@ -238,11 +238,13 @@ footer a{color:#64748B}
     <div style="display:flex;gap:6px;padding:10px 12px 0;position:sticky;top:0;background:#fff;z-index:5">
       <button id="wtb-feed" class="big blue" style="flex:1;padding:8px;font-size:13px;border-radius:20px" onclick="wtOpen('feed')">📰 Feed</button>
       <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')">▶️ Watch</button>
+      <button id="wtb-studio" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('studio')">📺 My Channel</button>
       
     </div>
     <div id="wtcatbar" style="display:flex;gap:6px;padding:8px 12px 0;overflow-x:auto;white-space:nowrap;position:sticky;top:46px;background:#fff;z-index:5"></div>
     <div id="wtfeed" style="padding:10px 12px 20px"></div>
     <div id="wtchans" class="hide" style="padding:10px 12px 20px"></div>
+    <div id="wtstudio" class="hide" style="padding:10px 12px 20px"></div>
     <div style="display:flex;justify-content:center;padding:0 0 90px">
       <button class="big blue" style="border-radius:24px;padding:12px 22px" onclick="wtComposeOpen()">＋ Create post</button>
     </div>
@@ -256,7 +258,7 @@ footer a{color:#64748B}
     <input id="wtChEmail" placeholder="Your email (we send the code here)" inputmode="email" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:10px;font-size:14px;box-sizing:border-box">
     <button id="wtChSendBtn" class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChSendCode()">Send code 📧</button>
     <div id="wtChCodeRow" style="display:none">
-      <div id="wtChSent" style="font-size:12px;color:#00A884;margin:10px 0 6px"></div>
+      <div id="wtChSent" style="font-size:12px;color:#0B7A5E;margin:10px 0 6px"></div>
       <input id="wtChCode" placeholder="6-digit code" inputmode="numeric" maxlength="6" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;font-size:16px;letter-spacing:4px;text-align:center;box-sizing:border-box">
       <button class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChVerify()">Verify &amp; create channel ✓</button>
       <button class="big" style="width:100%;padding:8px;margin-top:6px;border-radius:12px;background:#E2E8F0;color:#334155;font-size:12px" onclick="wtChSendCode()">Resend code</button>
@@ -266,7 +268,7 @@ footer a{color:#64748B}
 </div>
 <div id="admView" class="ovl hide" style="z-index:65;background:#F8FAFC" onclick="if(event.target===this)admClose()">
   <div class="card" style="position:absolute;top:0;left:0;right:0;bottom:0;margin:0;border-radius:0;overflow-y:auto;max-width:600px;margin:0 auto">
-    <div style="position:sticky;top:0;background:#00A884;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
+    <div style="position:sticky;top:0;background:#E9F7F1;color:#0B7A5E;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
       <button onclick="admClose()" style="background:none;border:0;color:#fff;font-size:20px;padding:0 4px">‹</button>
       <div style="font-weight:700;font-size:16px;flex:1">🛡️ Admin — Payments</div>
       <button onclick="admLoad()" style="background:none;border:0;color:#fff;font-size:18px">↻</button>
@@ -315,7 +317,7 @@ footer a{color:#64748B}
       <div style="display:flex;align-items:center;gap:12px">
         <div style="position:relative;flex:0 0 60px">
           <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">?</div>
-          <div onclick="stAddOpen()" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#00A884;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)">📷</div>
+          <div onclick="stAddOpen()" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#E9F7F1;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)">📷</div>
         </div>
         <div style="flex:1;min-width:0;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">
           <div style="font-weight:600">My status</div>
@@ -331,7 +333,7 @@ footer a{color:#64748B}
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
-  <div id="stFab" class="hide" style="position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:50%;background:#00A884;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29" onclick="stAddOpen()">📷</div>
+  <div id="stFab" class="hide" style="position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:50%;background:#E9F7F1;color:#0B7A5E;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29" onclick="stAddOpen()">📷</div>
   <div id="stAddBg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="stAddClose()"></div>
   <div id="stAddSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
     <div style="font-weight:700;text-align:center;margin-bottom:16px;color:#0F172A">Add to my status</div>
@@ -370,7 +372,7 @@ footer a{color:#64748B}
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🧩 Developer API</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Build on our 102 AI citizens — public API docs.</div>
-      <a href="api.html" style="font-size:14px;color:#00A884">Open API docs →</a>
+      <a href="api.html" style="font-size:14px;color:#0B7A5E">Open API docs →</a>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">📶 Lite mode (data saver)</div>
@@ -398,11 +400,11 @@ footer a{color:#64748B}
       <div style="font-weight:600;margin-bottom:6px">👤 My profile</div>
       <div onclick="editMyName()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">Name</div><div id="meNameRow" style="font-weight:600;font-size:15px">—</div></div>
-        <div style="color:#00A884;font-size:17px">✏️</div>
+        <div style="color:#0B7A5E;font-size:17px">✏️</div>
       </div>
       <div onclick="editMyAbout()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer">
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">About</div><div id="meAboutRow" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div>
-        <div style="color:#00A884;font-size:17px">✏️</div>
+        <div style="color:#0B7A5E;font-size:17px">✏️</div>
       </div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap to edit, WhatsApp-style. Your name and about show to friends.</div>
     </div>
@@ -493,7 +495,7 @@ footer a{color:#64748B}
 <div id="walSheet" class="ovl hide" onclick="if(event.target===this)walClose()">
   <div class="sheet">
     <div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 My Wallet</div>
-    <div style="font-size:26px;font-weight:700;color:#00A884;margin-bottom:10px" id="walBal2">₦0</div>
+    <div style="font-size:26px;font-weight:700;color:#0B7A5E;margin-bottom:10px" id="walBal2">₦0</div>
     <button class="big blue" style="width:100%" onclick="walAdd()">➕ Add money</button>
     <button class="big" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="walSend()">📤 Send money</button>
     <div style="font-weight:600;margin-top:14px;margin-bottom:4px">History</div>
@@ -537,7 +539,7 @@ footer a{color:#64748B}
     </div>
     <div style="text-align:center;margin-bottom:10px">
       <span style="font-size:12px;color:#64748B">Pay before this runs out: </span>
-      <span id="payTimer" style="font-size:18px;font-weight:700;color:#00A884">30:00</span>
+      <span id="payTimer" style="font-size:18px;font-weight:700;color:#0B7A5E">30:00</span>
     </div>
     <div style="font-size:12px;color:#64748B;margin-bottom:10px">After paying, keep your receipt ready — you will send it as a screenshot to Premium AI in chat.</div>
     <button class="big blue" style="width:100%" onclick="paidNow()">✅ I've Paid — Continue</button>
@@ -557,14 +559,14 @@ footer a{color:#64748B}
       <div id="fabList"></div>
       <div style="height:10px"></div>
     </div>
-      <div class="card" style="background:linear-gradient(135deg,#00806F,#00A884);color:#fff;border:0">
+      <div class="card" style="background:linear-gradient(135deg,#E9F7F1,#DDF2E7);color:#0B7A5E;border:1px solid #C9EBDE;border:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:26px">💰</div>
         <div style="flex:1">
           <div style="font-size:12px;opacity:.85">My AirConnect Wallet</div>
           <div style="font-size:22px;font-weight:700" id="walBal">₦0</div>
         </div>
-        <button class="big" style="background:#fff;color:#00806F;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
+        <button class="big" style="background:#fff;color:#0B7A5E;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
       </div>
     </div>
   </div>
@@ -578,6 +580,15 @@ footer a{color:#64748B}
 </div>
 
 <!-- v12: message action sheet -->
+<div id="skillSheet" class="ovl hide" onclick="if(event.target===this)skillClose()">
+  <div class="sheet">
+    <div style="font-weight:700;font-size:16px;margin-bottom:4px">⭐ Citizen skills</div>
+    <div style="font-size:12.5px;color:#64748B;margin-bottom:10px">Pick one skill — this citizen lives fully in that role for you. Premium feature.</div>
+    <div id="skillList"></div>
+    <button class="big" style="width:100%;margin-top:10px;background:#CBD5E1" onclick="skillClose()">Close</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
 <div id="msheet" class="ovl hide" onclick="if(event.target===this)closeMs()">
   <div class="sheet">
     <div id="msReacts" style="display:flex;gap:8px;justify-content:center;font-size:26px;padding:4px 0 10px"></div>
@@ -676,7 +687,7 @@ footer a{color:#64748B}
   <div id="wpg"></div>
   <div class="ohdr">
     <button class="bk" onclick="closeChat()">‹</button>
-    <div class="av" id="cvAv" style="cursor:pointer;flex:0 0 40px;width:40px;height:40px" onclick="if(CHAT_OPEN)viewPic(CHAT_OPEN)">—</div><div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div><button onclick="blockPeer()" title="Block contact" style="background:none;border:0;color:#64748B;font-size:15px;padding:4px 8px;cursor:pointer">🚫</button>
+    <div class="av" id="cvAv" style="cursor:pointer;flex:0 0 40px;width:40px;height:40px" onclick="if(CHAT_OPEN)viewPic(CHAT_OPEN)">—</div><div><div class="nm" id="cvName">—</div><div class="st" id="cvSub">—</div></div><button onclick="blockPeer()" title="Block contact" style="background:none;border:0;color:#64748B;font-size:15px;padding:4px 8px;cursor:pointer">🚫</button><button id="skillBtn" class="bk hide" title="Citizen skills" onclick="skillOpen()">⭐</button>
     <div style="margin-left:auto;display:flex;gap:4px">
       <button class="bk" onclick="if(CHAT_OPEN)dial(CHAT_OPEN)">📞</button>
       <button class="bk" onclick="if(CHAT_OPEN)dialVideo(CHAT_OPEN)">🎥</button>
@@ -685,6 +696,7 @@ footer a{color:#64748B}
   </div>
   <div class="bubbles" id="bubbles"></div>
   <div id="chipsrow" style="display:none;gap:6px;padding:6px 10px 0;overflow-x:auto"></div>
+  <div id="srChips" class="hide" style="display:flex;gap:6px;padding:6px 10px;background:#F0F2F5;overflow-x:auto;white-space:nowrap"></div>
   <div class="cinput">
     <button class="bk" style="background:none;border:0;color:#64748B;font-size:20px;padding:4px 6px" onclick="pickFile()">📎</button>
     <input type="file" id="fileinput" class="hide" accept="image/*,application/pdf,.doc,.docx,.txt,.zip,audio/*" onchange="fileChosen(this)">
@@ -808,7 +820,7 @@ footer a{color:#64748B}
 <div id="lockview" class="ovl hide" style="z-index:80;align-items:center;justify-content:center;text-align:center">
   <div style="font-size:40px">🔒</div>
   <div style="font-size:18px;font-weight:600;margin:10px 0 16px">Enter your PIN</div>
-  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#00A884;margin-bottom:18px;min-height:34px"></div>
+  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#0B7A5E;margin-bottom:18px;min-height:34px"></div>
   <input id="pininput" type="tel" inputmode="numeric" maxlength="6" style="width:160px;text-align:center;font-size:24px;letter-spacing:8px">
   <button class="big" onclick="pinTry()" style="margin-top:12px">Unlock</button>
   <div style="font-size:11px;color:#94A3B8;margin-top:14px;line-height:1.5">Forgot PIN? Reinstalling the app removes the lock<br>and your local data. Your account is safe.</div>
@@ -1090,7 +1102,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=72');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=73');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1183,8 +1195,8 @@ let VERIFY_METHOD="phone",OTP_EMAIL="";
 function setMethod(m){
   VERIFY_METHOD=m;
   const p=$("phone"),e=$("emailin"),tp=$("tabPhone"),te=$("tabEmail");
-  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#00806F;color:#fff;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
-  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#00806F;color:#fff;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
+  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#E9F7F1;color:#0B7A5E;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
+  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#E9F7F1;color:#0B7A5E;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
 }
 async function startSignup(){
   const name=$("myname").value.trim();
@@ -1388,7 +1400,7 @@ function wtCats(){
   bar.innerHTML="";
   for(const [k,lbl] of WT_CATS){
     const b=document.createElement("button");
-    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#00A884":"#E2E8F0")+";background:"+(WT_CAT===k?"#00A884":"#fff")+";color:"+(WT_CAT===k?"#fff":"#334155");
+    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#00A884":"#E2E8F0")+";background:"+(WT_CAT===k?"#E9F7F1":"#fff")+";color:"+(WT_CAT===k?"#0B7A5E":"#334155");
     b.textContent=lbl;
     b.onclick=()=>{WT_CAT=k;wtCats();wtLoad();};
     bar.appendChild(b);
@@ -1398,12 +1410,13 @@ function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtCats();wtOpen("feed");}else wt
 function wtRefresh(){if(WT_SCOPE==="chans")wtChannels();else wtLoad();}
 function wtOpen(sc){
   WT_SCOPE=sc;
-  for(const x of["feed","watch"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#00A884":"#E2E8F0";b.style.color=x===sc?"#fff":"#334155";}
-  if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";}
+  for(const x of["feed","watch","studio"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#E9F7F1":"#E2E8F0";b.style.color=x===sc?"#0B7A5E":"#334155";}
+  if(sc==="studio"){$("wtfeed").className="hide";$("wtchans").className="hide";$("wtcatbar").className="hide";$("wtstudio").className="";loadStudio();}
+  else{$("wtstudio").className="hide";if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";}
   else{$("wtfeed").className="";$("wtchans").className="hide";
     if(sc==="feed"){$("wtcatbar").className="hide";} /* v67: written-post feed — no video categories */
     else{$("wtcatbar").className="";if(WT_CAT!=="shorts"&&WT_CAT!=="long"&&WT_SCOPE!=="watch")WT_CAT="shorts";}
-    WT_CH_PAGE=null;wtCats();wtLoad();}
+    WT_CH_PAGE=null;wtCats();wtLoad();}}
 }
 async function wtLoad(){
   if(!ME)return;
@@ -1425,7 +1438,7 @@ async function wtLoad(){
 function wtRender(){
   const el=$("wtfeed");
   if(WT_CH_PAGE){
-    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#00A884;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
+    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#E9F7F1;color:#0B7A5E;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
   const big=WT_SCOPE!=="feed"&&!WT_CH_PAGE; /* v67: any video view (shorts + long) = full-screen autoplay */
@@ -1436,9 +1449,9 @@ function wtCard(p,big,sound){
   const d=document.createElement("div");
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)";
   const t=new Date(p.at||Date.now());
-  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#00A884;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14.5px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.mysub?' <span style="color:#00A884;font-size:10px">✓</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
+  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#E9F7F1;color:#0B7A5E;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14.5px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.v?' <span style="background:#0B7A5E;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(p.mysub?' <span style="color:#0B7A5E;font-size:10px">✓</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
   let body="";
-  if(p.rs)body+='<div style="font-size:11px;color:#00A884;margin-top:6px">🔁 reshared post</div>';
+  if(p.rs)body+='<div style="font-size:11px;color:#0B7A5E;margin-top:6px">🔁 reshared post</div>';
   if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
   if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'" data-sound="'+(sound?"1":"")+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
   const RE=["👍","❤️","😂","😮","🙏","🔥"];
@@ -1446,7 +1459,7 @@ function wtCard(p,big,sound){
   for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
   rrow+='</div>';
   const acts='<div style="display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#64748B;font-weight:500"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' Comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right;color:#94A3B8;font-weight:400">👁 '+(p.vcnt||0)+'</span></div>';
-  d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:7px 18px;font-size:13px;border-radius:18px;background:'+(p.mysub?"#E2E8F0":"#00A884")+';color:'+(p.mysub?"#64748B":"#fff")+';font-weight:600" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed":"Subscribe")+'</button></div>';
+  d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:7px 18px;font-size:13px;border-radius:18px;background:'+(p.mysub?"#E2E8F0":"#E9F7F1")+';color:'+(p.mysub?"#64748B":"#0B7A5E")+';font-weight:600" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed":"Subscribe")+'</button></div>';
   return d;
 }
 function wtObserveVideos(){
@@ -1577,7 +1590,7 @@ function wtPCats(){
   const cats=[["general","General"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
   for(const [k,lbl] of cats){
     const b=document.createElement("button");
-    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#00A884":"#E2E8F0")+";background:"+(WT_PCAT===k?"#00A884":"#fff")+";color:"+(WT_PCAT===k?"#fff":"#334155");
+    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#E9F7F1":"#E2E8F0")+";background:"+(WT_PCAT===k?"#E9F7F1":"#fff")+";color:"+(WT_PCAT===k?"#0B7A5E":"#334155");
     b.textContent=lbl;
     b.onclick=()=>{WT_PCAT=k;wtPCats();};
     el.appendChild(b);
@@ -1648,7 +1661,7 @@ async function wtChannels(){
     for(const c of WT_CHANS){
       const d2=document.createElement("div");
       d2.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px";
-      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.mine?' <span style="color:#00A884;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#00A884")+';color:'+(c.subscribed?"#334155":"#fff")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
+      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#E9F7F1;color:#0B7A5E;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.v?' <span style="background:#0B7A5E;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(c.mine?' <span style="color:#0B7A5E;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#E9F7F1")+';color:'+(c.subscribed?"#334155":"#0B7A5E")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
       el.appendChild(d2);
     }
   }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load channels.</div>';}
@@ -1661,8 +1674,8 @@ function wtSubFlip(num,on){
     var oc=b.getAttribute("onclick")||"";
     if(oc.indexOf("wtSub('"+num+"')")>-1){
       b.textContent=on?"✓ Subscribed":"Subscribe";
-      b.style.background=on?"#E2E8F0":"#00A884";
-      b.style.color=on?"#334155":"#fff";
+      b.style.background=on?"#E2E8F0":"#E9F7F1";
+      b.style.color=on?"#334155":"#0B7A5E";
     }
   });
   WT_CHANS.forEach(function(c){if(c.num===num)c.subscribed=on;});
@@ -1797,6 +1810,7 @@ function openOsChat(){
   $("cvSub").textContent="Our OS · always on";
   const av=$("cvAv");if(av){av.style.backgroundImage="";av.textContent="🤖";}
   $("chatview").className="ovl";
+  $("skillBtn").className=(String(p).indexOf("11")===0&&p!=="1100000002")?"bk":"bk hide";
   applyWallpaper();
   renderBubbles();
   if(!(CHATS["__OS__"]&&CHATS["__OS__"].length))(CHATS["__OS__"]=[{who:"sys",text:"🤖 This is our OS, right inside your chats. Ask me anything — I'm always home.",ts:new Date().toISOString()}]);
@@ -1977,7 +1991,7 @@ function storyCircle(pic,letter,ring,label,onclick){
   c.style.cssText="width:52px;height:52px;border-radius:50%;border:2.5px solid "+(ring?"#00A884":"#CBD5E1")+";padding:2px;margin:0 auto;box-sizing:border-box";
   const inner=document.createElement("div");
   if(pic){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
-  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
+  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E9F7F1;color:#0B7A5E;display:flex;align-items:center;justify-content:center;font-size:19px";inner.textContent=letter;}
   c.appendChild(inner);d.appendChild(c);
   const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#64748B;margin-top:3px;max-width:58px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   d.appendChild(t);
@@ -2096,8 +2110,8 @@ function renderStatusScreen(){
       c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#00A884":"#CBD5E1")+";padding:2px;flex:0 0 50px;box-sizing:border-box";
       const inner=document.createElement("div");
       const _pk=String(g.items[0].pic);
-      if(_pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
-      else if(_pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#00806F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
+      if(_pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E9F7F1;color:#0B7A5E;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
+      else if(_pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E9F7F1;color:#0B7A5E;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
       else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
       c.appendChild(inner);row.appendChild(c);
       const t=document.createElement("div");
@@ -2376,12 +2390,12 @@ async function admLoad(){
   }catch(e){$("admPending").innerHTML='<div style="color:#f15c6d;font-size:13px">Could not load claims.</div>';}
 }
 function admCard(c){
-  const status=c.activated?'<span style="color:#00A884;font-weight:700">✅ Activated</span>':c.rejected?'<span style="color:#94A3B8;font-weight:700">❌ Rejected</span>':'<span style="color:#D97706;font-weight:700">⏳ Pending</span>';
+  const status=c.activated?'<span style="color:#0B7A5E;font-weight:700">✅ Activated</span>':c.rejected?'<span style="color:#94A3B8;font-weight:700">❌ Rejected</span>':'<span style="color:#D97706;font-weight:700">⏳ Pending</span>';
   const when=c.doneAt?new Date(c.doneAt).toLocaleString():new Date(c.at).toLocaleString();
   const rcpBtn=c.fid?'<button onclick="admViewReceipt(\''+c.fid+'\',this)" style="border:1px solid #CBD5E1;background:#fff;border-radius:8px;padding:5px 10px;font-size:11.5px;margin-top:6px">🖼 View receipt</button>':'<div style="font-size:11px;color:#94A3B8;margin-top:4px">No receipt uploaded yet</div>';
   const actions=(!c.activated&&!c.rejected)?('<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
     (c.fid?'<button onclick="admAutoCheck(\''+c.k+'\',this)" style="flex:1;background:#EFF6FF;color:#1D4ED8;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">🤖 AI check</button>':"")+
-    '<button onclick="admActivate(\''+c.k+'\',\''+c.num+'\','+c.amt+',\''+esc(c.ref||"")+'\')" style="flex:1;background:#00A884;color:#fff;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">✅ Activate</button>'+
+    '<button onclick="admActivate(\''+c.k+'\',\''+c.num+'\','+c.amt+',\''+esc(c.ref||"")+'\')" style="flex:1;background:#E9F7F1;color:#0B7A5E;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">✅ Activate</button>'+
     '<button onclick="admReject(\''+c.k+'\')" style="flex:1;background:#F1F5F9;color:#334155;border:0;border-radius:8px;padding:8px;font-size:12.5px">❌ Reject</button>'+
     '</div>'):"";
   return '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">'+
@@ -2634,7 +2648,7 @@ function renderBubbles(){
       const ic=document.createElement("div");ic.textContent="🎬";ic.style.fontSize="24px";
       const tx=document.createElement("div");
       tx.innerHTML='<div style="font-weight:600">Video</div><div style="font-size:12px;color:#64748B">'+esc((m.f2.name||"video").slice(0,40))+'</div>';
-      const bt=document.createElement("div");bt.textContent="▶";bt.style.cssText="background:#00806F;color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center";
+      const bt=document.createElement("div");bt.textContent="▶";bt.style.cssText="background:#E9F7F1;color:#0B7A5E;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center";
       w.appendChild(ic);w.appendChild(tx);w.appendChild(bt);
       w.onclick=()=>f2Play(m.f2.fid,m.f2.name);
       d.appendChild(w);
@@ -2697,7 +2711,7 @@ function renderTextBubble(d,m){
     card.appendChild(t);
     const a=document.createElement("a");a.href=urlM[0];a.target="_blank";a.rel="noopener";
     a.textContent="⬇ Download";a.className="big blue";
-    a.style.cssText="display:block;width:100%;background:#00A884;color:#fff;text-align:center;text-decoration:none;box-sizing:border-box";
+    a.style.cssText="display:block;width:100%;background:#E9F7F1;color:#0B7A5E;text-align:center;text-decoration:none;box-sizing:border-box";
     card.appendChild(a);
     const hint=document.createElement("div");hint.textContent="Tap Download — it opens in your browser and saves to your phone. If nothing opens, long-press to copy the link below.";
     hint.style.cssText="font-size:11px;color:#64748B;margin-top:6px";
@@ -3681,7 +3695,7 @@ function gcVideoLayout(){
 function gcName(p){return WIN_NAMES[p]||("+"+p);}
 function gcUI(){
   let el=document.getElementById("gcview");
-  if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#00806F;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
+  if(!el){el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#E9F7F1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";document.body.appendChild(el);}
   const g=GROUPS.find(x=>x.id===GC.g);
   const peers=Object.keys(SF.mems||{});
   let chips='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px">';
@@ -4185,8 +4199,8 @@ function saveV12Mute(id){const i=MUTED.indexOf(id);if(i>=0)MUTED.splice(i,1);els
 function saveV12Arch(id){const i=ARCHS.indexOf(id);if(i>=0)ARCHS.splice(i,1);else ARCHS.push(id);persistV12();renderLists();renderArchived();}
 /* ================= v40: WALLET, MARKETPLACE, TRANSLATE, LITE ================= */
 let LITE=(localStorage.getItem("ac_lite")==="1");
-function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#00A884":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
-function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#00A884":"#CBD5E1";$("liteBtn").style.color=LITE?"#fff":"#334155";}}
+function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E9F7F1":"#CBD5E1";$("liteBtn").style.color=LITE?"#0B7A5E":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
+function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E9F7F1":"#CBD5E1";$("liteBtn").style.color=LITE?"#0B7A5E":"#334155";}}
 async function walRefresh(){
   if(!ME)return;
   try{const d=await api("wbal",{node:ME});
@@ -4224,7 +4238,7 @@ async function walAdd(){
   try{await navigator.clipboard.writeText(details);}catch(e){}
   $("walAddTitle").textContent="💳 Add ₦"+amt.toLocaleString();
   $("walAddBody").innerHTML=
-    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#00806F;color:#fff;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
+    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#E9F7F1;color:#0B7A5E;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
     '<button class="big blue" style="width:100%;margin-top:12px;font-size:15px;padding:14px" onclick="walRcpGo()">📷 I have paid — upload my receipt</button>'+
     '<div id="walRcpPrev" style="margin-top:10px"></div>'+
     '<button class="big" style="width:100%;margin-top:8px;background:#1E293B" onclick="walAddClose()">Later — my claim is already saved</button>'+
@@ -4235,7 +4249,7 @@ function walAddClose(){$("walAddSheet").className="ovl hide";}
 async function walRcpGo(){
   const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();}); /* v65: no capture attr -> opens gallery first (skylar directive), camera still reachable from the gallery picker */
   if(!f)return;
-  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#00A884">⏳ Uploading receipt…</div>';
+  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#0B7A5E">⏳ Uploading receipt…</div>';
   try{
     const sm=await walRcpShrink(f);
     $("walRcpPrev").innerHTML='<img src="data:image/jpeg;base64,'+sm.b64.slice(0,2000)+'" style="display:none"><div style="font-size:12.5px;color:#94A3B8">📷 '+sm.name+' — sending…</div>';
@@ -4515,7 +4529,7 @@ async function openGInfo(){
   let addRow="";
   if(iAmAdmin&&cand.length){
     let opts="";for(const f of cand)opts+='<option value="'+f.id+'">'+esc(f.name||("+"+f.id))+"</option>";
-    addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#00A884;color:#fff">Add</button></div>';
+    addRow='<div style="display:flex;gap:8px;margin-top:12px"><select id="giAdd" style="flex:1">'+opts+'</select><button onclick="gadd2()" class="big" style="flex:0 0 auto;width:auto;padding:10px 16px;margin:0;background:#E9F7F1;color:#0B7A5E">Add</button></div>';
   }
   el.innerHTML=
     '<div class="ohdr"><button class="bk" onclick="document.getElementById(\'ginfosheet\').remove()">‹</button><div class="nm" style="flex:1">Group info</div><div style="width:30px"></div></div>'+
@@ -4523,7 +4537,7 @@ async function openGInfo(){
     '<div style="text-align:center;padding:6px 0 14px"><div style="font-size:44px">👥</div>'+
     '<div style="font-weight:700;font-size:18px;color:#0F172A">'+esc(r.name)+'</div>'+
     '<div style="font-size:12px;color:#64748B">'+r.members.length+' members · not end-to-end encrypted</div></div>'+
-    (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#00A884;color:#fff">Save</button></div>':"")+
+    (iAmAdmin?'<div style="display:flex;gap:8px;margin-bottom:10px"><input id="giRename" placeholder="Rename group" maxlength="40" style="flex:1"><button onclick="grename2()" class="big" style="width:auto;padding:10px 16px;margin:0;background:#E9F7F1;color:#0B7A5E">Save</button></div>':"")+
     addRow+
     '<div style="margin-top:8px">'+rows+'</div>'+
     '<button onclick="ginfoLeave()" class="big" style="background:#DC2626;color:#fff;margin-top:16px">Leave group 👋</button>'+
@@ -4661,7 +4675,88 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=72;
+/* ===== v73: Channel Studio + broadcast + skills + smart replies ===== */
+async function loadStudio(){
+  if(!ME)return;
+  const el=$("wtstudio");if(!el)return;
+  el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Loading your channel…</div>';
+  try{
+    const r=await api("studio",{node:ME});
+    if(!r||!r.ok)throw 0;
+    const t=r.totals||{};
+    let h='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:16px;margin-bottom:10px">';
+    h+='<div style="font-weight:700;font-size:17px">'+esc(r.chan?r.chan.name:(r.cname||"My Channel"))+'</div>';
+    if(r.chan&&r.chan.about)h+='<div style="font-size:13px;color:#64748B;margin-top:4px">'+esc(r.chan.about)+'</div>';
+    h+='<div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">';
+    const stat=(v,l)=>'<div style="background:#F1F5F9;border-radius:12px;padding:8px 13px;text-align:center"><div style="font-weight:700">'+v+'</div><div style="font-size:11px;color:#64748B">'+l+'</div></div>';
+    h+=stat(r.subs||0,"subscribers")+stat(t.views||0,"views")+stat(t.reacts||0,"reactions")+stat(t.comments||0,"comments")+stat(t.posts||0,"posts");
+    h+='</div></div>';
+    h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px">';
+    h+='<div style="font-weight:700;font-size:14px;margin-bottom:8px">📣 Broadcast to subscribers</div>';
+    h+='<textarea id="bcastBox" placeholder="Send one message to all '+(r.subs||0)+' subscribers…" style="width:100%;box-sizing:border-box;border:1px solid #E2E8F0;border-radius:10px;padding:10px;font-size:14px;min-height:64px;font-family:inherit"></textarea>';
+    h+='<button class="big" style="margin-top:8px;padding:10px;border-radius:12px" onclick="wtBcastSend()">Send broadcast</button></div>';
+    h+='<div style="font-weight:700;font-size:14px;margin:4px 2px 8px">Your posts — kept forever, with all their views, reactions and comments</div>';
+    const ps=r.posts||[];
+    if(!ps.length)h+='<div style="color:#64748B;text-align:center;padding:16px;font-size:13px">No posts yet — everything you post and its stats appear here.</div>';
+    else for(const p of ps){
+      const ic=p.kind==="text"?"📝":(p.kind==="long"?"🎬":"📹");
+      h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">';
+      h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+ic+'</span><span style="flex:1;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.text||((p.kind==="text")?"Post":"Video post"))+'</span><span style="font-size:11px;color:#94A3B8">'+fmtWT(p.at)+'</span></div>';
+      h+='<div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#64748B"><span>👁 '+(p.vcnt||0)+' views</span><span>❤️ '+(p.rcnt||0)+' reactions</span><span>💬 '+(p.ccnt||0)+' comments</span></div>';
+      h+='</div>';
+    }
+    el.innerHTML=h;
+  }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:20px">Could not load your channel. Tap My Channel again.</div>';}
+}
+async function wtBcastSend(){
+  const ta=$("bcastBox");if(!ta)return;
+  const text=String(ta.value||"").trim();if(!text){toast("Write your broadcast first");return;}
+  toast("Sending…");
+  try{
+    const r=await api("wbcast",{from:ME,text:text.slice(0,800)});
+    if(r&&r.ok){toast("📣 Sent to "+(r.sent||0)+" subscriber"+((r.sent||0)===1?"":"s"));ta.value="";}
+    else toast((r&&r.err)||"Could not send");
+  }catch(e){toast("Could not send");}
+}
+const SKILL_ITEMS=[["Homework Tutor","📚","Step-by-step homework help in any subject"],["Business Coach","💼","Growth, sales, pricing and money guidance"],["Prayer Partner","🙏","Faith-filled encouragement and prayer"],["Fitness Coach","💪","Workouts, nutrition and accountability"],["Language Tutor","🗣️","Learn languages with daily practice"],["Tech Helper","💻","Phones, apps, tools and tech answers"]];
+let SKILL_ACTIVE={};try{SKILL_ACTIVE=JSON.parse(localStorage.getItem("ac_skills"))||{};}catch(e){}
+function skillSave(){try{localStorage.setItem("ac_skills",JSON.stringify(SKILL_ACTIVE));}catch(e){}}
+function skillClose(){$("skillSheet").className="ovl hide";}
+function skillOpen(){
+  const p=CHAT_OPEN;if(!p)return;
+  $("skillList").innerHTML=SKILL_ITEMS.map(function(s){
+    const on=SKILL_ACTIVE[p]===s[0];
+    return '<button class="big" style="width:100%;margin-top:6px;text-align:left;background:'+(on?"#E9F7F1":"#E2E8F0")+';color:'+(on?"#0B7A5E":"#334155")+';border-radius:12px" onclick="skillSet(\''+s[0]+'\')">'+s[1]+' <b>'+s[0]+'</b>'+(on?" · active":"")+'<div style="font-weight:400;font-size:11.5px;opacity:.8">'+s[2]+'</div></button>';
+  }).join("");
+  $("skillSheet").className="ovl";
+}
+async function skillSet(k){
+  const p=CHAT_OPEN;if(!p)return;
+  const on=SKILL_ACTIVE[p]===k;
+  const r=await api("skill",{from:ME,citizen:p,k:on?"":k});
+  if(r&&r.ok){SKILL_ACTIVE[p]=on?"":k;skillSave();toast(on?"Skill removed":"⭐ "+k+" active — send a message and watch");skillOpen();}
+  else toast((r&&r.err)||"Could not set skill");
+}
+function updateSrChips(){
+  const el=$("srChips");if(!el)return;
+  const list=CHATS[CHAT_OPEN]||[];
+  let last=null;
+  for(let i=list.length-1;i>=0;i--){const m=list[i];if(m&&m.who!=="me"&&String(m.text||"")&&!String(m.text||"").startsWith("rr:")){last=m;break;}}
+  if(!last){el.className="hide";el.innerHTML="";return;}
+  const txt=String(last.text||"").toLowerCase();
+  let chips;
+  if(txt.indexOf("?")>=0)chips=["Yes","No","Let me check"];
+  else if(txt.indexOf("thank")>=0)chips=["You're welcome 🙏","Anytime"];
+  else if(/^(hi|hello|hey|good morning|good afternoon|good evening|bawo|how far)/.test(txt))chips=["Hello! 👋","How are you?","I'm good, thanks"];
+  else if(txt.indexOf("sorry")>=0)chips=["It's okay","No problem"];
+  else if(/congrat|well done|nice|great/.test(txt))chips=["Thank you 🙏","God bless"];
+  else chips=["👍","Sounds good","I'll get back to you"];
+  el.className="";
+  el.innerHTML=chips.map(function(c){return '<button style="border:1px solid #C9EBDE;background:#E9F7F1;color:#0B7A5E;border-radius:16px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer" onclick="srSend(this.textContent)">'+esc(c)+'</button>';}).join("");
+}
+function srSend(t){$("chatbox").value=t;sendChat();}
+const _rb73=renderBubbles;renderBubbles=function(){_rb73();try{if(CHAT_OPEN)updateSrChips();}catch(e){}};
+const AC_V=73;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4684,7 +4779,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=72").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=73").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -4753,8 +4848,8 @@ function menuOpen(){
   if(!mv._owned){mv._owned=1;
     const vs=document.getElementById("view-settings");
     const prof=document.createElement("div");
-    prof.style.cssText="background:linear-gradient(135deg,#00806F,#00A884);color:#fff;border-radius:14px;padding:14px;margin:12px;display:flex;gap:12px;align-items:center";
-    prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#00806F">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
+    prof.style.cssText="background:linear-gradient(135deg,#E9F7F1,#DDF2E7);color:#0B7A5E;border:1px solid #C9EBDE;border-radius:14px;padding:14px;margin:12px;display:flex;gap:12px;align-items:center";
+    prof.innerHTML='<div class="av" id="menuProfAv" style="width:52px;height:52px;font-size:19px;flex:0 0 52px;cursor:pointer;background:#fff;color:#0B7A5E">'+(ME_NAME||"?").charAt(0).toUpperCase()+'</div>'+
       '<div><div style="font-size:16px;font-weight:700">'+esc(ME_NAME||"Me")+'</div>'+
       '<div style="font-size:12px;opacity:.85">+'+ME+' · my profile</div></div>';
     prof.onclick=function(){menuClose();document.getElementById("picinput")&&document.getElementById("picinput").click();};
