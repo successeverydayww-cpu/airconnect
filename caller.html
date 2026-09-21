@@ -1082,7 +1082,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=70');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=71');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1852,6 +1852,7 @@ async function editMyName(){const v=prompt("Your name:",ME_NAME||"");if(v===null
 async function editMyAbout(){const v=prompt("About you (friends see this):",ME_ABOUT||"");if(v===null)return;const about=v.trim().slice(0,300);const r=await api("meset",{from:ME,aid:AID,about:about});if(r&&r.ok){ME_ABOUT=about;try{localStorage.setItem("ac_about",about);}catch(e){}meProfileRefresh();toast("About updated ✓");}else toast("Could not update — check connection");}
 function refreshMyPic(){
   try{meProfileRefresh();}catch(e){}
+  try{planServerSync();}catch(e){}
   const el=$("myPic");if(!el)return;
   const pic=PIC_CACHE[ME];
   if(pic){el.textContent="";el.style.backgroundImage="url("+pic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";}
@@ -2972,6 +2973,17 @@ const AI_NUM="1100000001";
 const ACT_SECRET="acX9-premium-v13";
 const PAY_DETAILS="\n\nBANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\n\nTransfer the exact amount, keep your payment receipt.";
 function planLS(){try{return JSON.parse(localStorage.getItem("ac_plan")||"null");}catch(e){return null;}}
+async function planServerSync(){
+  try{
+    const p=planLS();if(!p||!p.exp||new Date(p.exp)<=new Date())return;
+    if(sessionStorage.getItem("ac_psync")&&Date.now()-Number(sessionStorage.getItem("ac_psync"))<86400000)return;
+    sessionStorage.setItem("ac_psync",String(Date.now()));
+    const days=Math.max(1,Math.ceil((new Date(p.exp)-Date.now())/86400000));
+    const kind=p.plan||"Pro";
+    const sig=await sha8(ACT_SECRET+"|"+ME+"|"+kind+"|"+days);
+    await api("premset",{from:ME,aid:AID,kind:kind,days:days,sig:sig});
+  }catch(e){}
+}
 function savePlanLS(p){localStorage.setItem("ac_plan",JSON.stringify(p));}
 async function renderPlan(){
   const p=planLS(),el=$("planStatus");
@@ -3053,6 +3065,7 @@ async function activate(){
     renderPlan();
     toast("⭐ "+kind+" activated! Enjoy premium.");
     try{await api("chat",{from:ME,to:AI_NUM,text:"✅ ACTIVATED "+kind+" until "+exp.slice(0,10)+" — "+ME});}catch(e){}
+    try{const sig=await sha8(ACT_SECRET+"|"+ME+"|"+kind+"|"+days);await api("premset",{from:ME,aid:AID,kind:kind,days:days,sig:sig});}catch(e){}
   }else{toast("Invalid code — copy it again from chat");}
 }
 async function callNum(n){
@@ -4579,7 +4592,7 @@ function obShow(){const s=OB_STEPS[OB_I];$("obIco").textContent=s.i;$("obT").tex
 function obNext(){OB_I++;if(OB_I>=OB_STEPS.length)obSkip();else obShow();}
 function obSkip(){$("ob").className="ovl hide";localStorage.setItem("ac_ob","1");}
 /* ---- v61: client version + forced updates + install prompt ---- */
-const AC_V=70;
+const AC_V=71;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4602,7 +4615,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=70").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=71").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
