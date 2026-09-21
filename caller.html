@@ -231,7 +231,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v112</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v113</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -2184,6 +2184,7 @@ function renderStoryStrip(){
   for(const el of targets){
     el.innerHTML="";
     el.appendChild(storyCircle(mine?mine.items[mine.items.length-1].pic:PIC_CACHE[ME],String(ME_NAME||"?").charAt(0).toUpperCase(),!!(mine&&unseen(mine)),"My status",function(){if(mine)openStatusViewer(ME);else stAddOpen();},true));
+    if(ST_DRAFT)stDraftCircle(el); /* v113: his picked-but-unposted video sits in the series */
     for(const g of fr){
       const last=g.items[g.items.length-1];
       el.appendChild(storyCircle(String(last.pic).indexOf("data:image")===0?last.pic:"",String(g.name||"?").charAt(0).toUpperCase(),unseen(g),String(g.name||"?"),function(){openStatusViewer(g.num);},false));
@@ -2225,6 +2226,35 @@ function showStItem(){
     const pr=$("stProg");pr.innerHTML="";
     g.items.forEach(function(it,i){const b=document.createElement("div");b.className="stseg"+(i<=STV.ii?" on":"");pr.appendChild(b);});
   }catch(e){}
+  if(s.vf){ /* v113: f2-backed video status — fetch on play, play the cropped window */
+    (async function(){
+      try{$("stImg").className="hide";$("stAudWrap").className="hide";try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();}catch(e){}$("stVid").className="";}catch(e){}
+      const v=$("stVid");
+      if(!STV_VC[s.vf]){
+        try{$("stTime").textContent="Loading video…";}catch(e){}
+        try{
+          const r=await api("fgetall",{from:ME,fid:s.vf});
+          if(!r||!r.n)throw 0;
+          let bin="";
+          for(let i=0;i<r.n;i++){const r2=await api("fget",{from:ME,fid:s.vf,ci:i});if(!r2||!r2.v)throw 0;bin+=r2.v;}
+          const bytes=Uint8Array.from(atob(bin),function(c){return c.charCodeAt(0);});
+          STV_VC[s.vf]=URL.createObjectURL(new Blob([bytes],{type:"video/mp4"}));
+        }catch(e){toast("Could not load that video status");nextItem();return;}
+      }
+      try{$("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length;}catch(e){}
+      v.src=STV_VC[s.vf];
+      v.muted=false;
+      const start=(Number(s.ts)||0),end=(Number(s.te)||0);
+      v.onended=function(){nextItem();};
+      v.ontimeupdate=function(){if(end&&v.currentTime>=end){try{v.pause();}catch(e){}nextItem();}};
+      v.onclick=function(){try{v.muted=false;v.play().catch(function(){});}catch(e){}};
+      try{v.currentTime=start;await v.play().catch(function(){});}catch(e){}
+      try{if(v.paused)setTimeout(function(){try{toast("Tap the video to play with sound");}catch(e){}},300);}catch(e){}
+    })();
+    renderStoryStrip();
+    if($("view-status")&&$("view-status").className.indexOf("hide")<0)renderStatusScreen();
+    return;
+  }
   const isVid=String(s.pic).indexOf("data:video")===0;
   const isAud=String(s.pic).indexOf("data:audio")===0;
   clearTimeout(STV.timer);
@@ -2274,7 +2304,7 @@ function renderStatusScreen(){
     const pic=PIC_CACHE[ME];
     if(pic){av.textContent="";av.style.backgroundImage="url("+pic+")";av.style.backgroundSize="cover";av.style.backgroundPosition="center";}
     else{av.style.backgroundImage="";av.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();}
-    $("stMySub").textContent=mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours";
+    $("stMySub").textContent=ST_DRAFT?("🎬 Video draft ready ("+vtFmt(ST_DRAFT.te-ST_DRAFT.ts)+") — tap the 🎬 Draft circle to crop & post"):(mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours");
     $("stDelBtn").style.display=mine.length?"":"none";
     const fr=storyGroups().filter(g=>g.num!==ME);
     fr.sort((x,y)=>{const xa=x.items[x.items.length-1]?x.items[x.items.length-1].at:0,ya=y.items[y.items.length-1]?y.items[y.items.length-1].at:0;return ya-xa;});
@@ -2385,14 +2415,127 @@ async function stVideoChosen(fi){
     });
     const d2=(dur&&isFinite(dur))?dur:0;
     if(!d2||d2<1){try{URL.revokeObjectURL(src);}catch(e){}toast("Could not read that video — try another file");return;}
-    vtOpen({src:src,dur:d2,maxWin:60,mode:"status",rawFile:f,title:d2>60?("✂ Your video is "+vtFmt(d2)+" — over 1 minute. Drag the handles to crop it to fit 60s, then post"):"✂ Crop your status (drag the frames), then post"});
+    if(f.size>100*1024*1024){try{URL.revokeObjectURL(src);}catch(e2){}toast("Please keep videos under 100MB — pick a shorter clip");return;}
+    /* v113 (skylar spec): after the gallery pick he lands on the STATUS PAGE with the
+       selected video as a visible 🎬 Draft circle in the series strip — preview, crop
+       (1-4 min) and post from there; posting loads, auto-posts and returns him here. */
+    ST_DRAFT={f:f,src:src,dur:d2,ts:0,te:Math.min(d2,240)};
+    showTab("status");
+    renderStatusScreen();renderStoryStrip();
+    toast("Video ready — tap the 🎬 Draft circle to crop & post");
   }catch(e){toast("Could not process that video — try a different file");}
 }
+
+/* ============ v113 (skylar spec): VIDEO STATUS — gallery pick -> status page draft
+   (visible in the series strip) -> crop 1-4 min -> Post -> loads -> auto-posts ->
+   lands back on the normal status page. Original quality, up to 100MB, no re-encode. ============ */
+var ST_DRAFT=null,STV_VC={};
+function stDraftCircle(el){
+  const dd=document.createElement("div");dd.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
+  const w2=document.createElement("div");w2.style.cssText="position:relative;width:66px;margin:0 auto";
+  const c2=document.createElement("div");c2.style.cssText="width:66px;height:66px;border-radius:50%;border:3px dashed #10B981;padding:3px;margin:0 auto;box-sizing:border-box";
+  const i2=document.createElement("div");i2.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:24px";i2.textContent="\uD83C\uDFAC";
+  c2.appendChild(i2);w2.appendChild(c2);dd.appendChild(w2);
+  const t2=document.createElement("div");t2.textContent="Draft";t2.style.cssText="font-size:10.5px;color:#075E46;font-weight:700;margin-top:4px";
+  dd.appendChild(t2);
+  dd.onclick=function(){stDraftSheetOpen();};
+  el.appendChild(dd);
+}
+function stDraftSheetOpen(){
+  if(!ST_DRAFT)return;
+  let el=document.getElementById("stDraftSheet");
+  if(!el){
+    el=document.createElement("div");el.id="stDraftSheet";
+    el.style.cssText="position:fixed;inset:0;z-index:600;background:rgba(15,23,42,.88);display:flex;align-items:center;justify-content:center;padding:16px";
+    document.body.appendChild(el);
+  }
+  const d=ST_DRAFT;
+  el.className="";
+  el.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:14px;max-height:92vh;overflow:auto">'+
+   '<div style="font-weight:700;font-size:15px;margin-bottom:8px">\uD83C\uDFAC Your video status</div>'+
+   '<video src="'+d.src+'" controls playsinline style="width:100%;max-height:300px;background:#000;border-radius:10px;display:block"></video>'+
+   '<div id="stDraftWin" style="font-size:12.5px;color:#334155;margin:8px 0;font-weight:600"></div>'+
+   '<div id="stDraftProg" style="display:none;margin:8px 0"><div id="stDraftProgTxt" style="font-weight:700;color:#075E46;font-size:13px"></div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div id="stDraftProgBar" style="height:100%;width:0;background:#10B981;border-radius:6px;transition:width .2s"></div></div></div>'+
+   '<div id="stDraftBtns" style="display:flex;gap:8px;margin-top:6px">'+
+   '<button class="big" style="flex:1;padding:11px;border:none;border-radius:12px;background:#E2E8F0;color:#334155;font-weight:700;font-size:13px" onclick="stDraftCrop()">\u2702 Crop</button>'+
+   '<button class="big" style="flex:1;padding:11px;border:none;border-radius:12px;background:#F1F5F9;color:#64748B;font-weight:700;font-size:13px" onclick="stDraftDiscard()">\uD83D\uDDD1 Discard</button>'+
+   '<button class="big" style="flex:1.4;padding:11px;border:none;border-radius:12px;background:#10B981;color:#fff;font-weight:700;font-size:13px" onclick="stDraftPost()">Post</button>'+
+   '</div>'+
+   '<div style="text-align:center;margin-top:10px"><span style="color:#075E46;font-size:13px;font-weight:700;cursor:pointer" onclick="stDraftSheetClose()">Close</span></div>'+
+   '</div>';
+  stDraftWinRefresh();
+}
+function stDraftSheetClose(){const el=document.getElementById("stDraftSheet");if(el)el.className="hide";}
+function stDraftWinRefresh(){try{const d=ST_DRAFT;document.getElementById("stDraftWin").textContent="Showing "+vtFmt(d.ts)+" \u2192 "+vtFmt(d.te)+" ("+vtFmt(d.te-d.ts)+" of "+vtFmt(d.dur)+") \u00b7 crop window 1-4 minutes";}catch(e){}}
+function stDraftCrop(){
+  if(!ST_DRAFT)return;
+  stDraftSheetClose();
+  vtOpen({src:ST_DRAFT.src,dur:ST_DRAFT.dur,maxWin:240,minWin:60,mode:"stcrop",title:(ST_DRAFT.dur>240?"\u2702 Pick up to 4 minutes of your video (drag the frames)":"\u2702 Crop your video (1-4 minutes) \u2014 drag the frames")});
+}
+function stDraftApply(s,e){
+  if(!ST_DRAFT)return;
+  ST_DRAFT.ts=Math.max(0,Math.round(s));ST_DRAFT.te=Math.min(ST_DRAFT.dur,Math.round(e));
+  if(ST_DRAFT.dur>60&&ST_DRAFT.te-ST_DRAFT.ts<60)ST_DRAFT.te=Math.min(ST_DRAFT.dur,ST_DRAFT.ts+60);
+  stDraftSheetOpen();renderStoryStrip();
+}
+function stDraftDiscard(){
+  if(!ST_DRAFT)return;
+  try{URL.revokeObjectURL(ST_DRAFT.src);}catch(e){}
+  ST_DRAFT=null;
+  stDraftSheetClose();renderStoryStrip();renderStatusScreen();
+  toast("Draft discarded");
+}
+function stDraftProg(p,txt){try{document.getElementById("stDraftProgTxt").textContent=txt+" "+p+"%";document.getElementById("stDraftProgBar").style.width=p+"%";}catch(e){}}
+async function stDraftThumb(){
+  const d=ST_DRAFT;if(!d)return "";
+  try{
+    const v=document.createElement("video");v.muted=true;v.playsInline=true;v.src=d.src;
+    await new Promise(function(res){v.onloadedmetadata=res;setTimeout(res,3000);});
+    try{v.currentTime=Math.min(d.ts+0.2,Math.max(0,d.dur-0.1));}catch(e){}
+    await new Promise(function(res){v.onseeked=res;setTimeout(res,2500);});
+    const cv=document.createElement("canvas");cv.width=160;cv.height=Math.max(60,Math.round(160*((v.videoHeight||90)/(v.videoWidth||160))));
+    cv.getContext("2d").drawImage(v,0,0,cv.width,cv.height);
+    return cv.toDataURL("image/jpeg",0.6);
+  }catch(e){return "";}
+}
+async function stDraftPost(){
+  if(!ST_DRAFT)return;
+  const d=ST_DRAFT;
+  if(d.f.size>100*1024*1024){toast("Please keep videos under 100MB");return;}
+  try{document.getElementById("stDraftBtns").style.display="none";}catch(e){}
+  try{document.getElementById("stDraftProg").style.display="";}catch(e){}
+  stDraftProg(2,"Uploading\u2026");
+  try{
+    const CH=300000,BYTES=Math.round(CH*0.75); /* same proven math as channel videos */
+    const n=Math.min(900,Math.ceil(d.f.size/BYTES));
+    const s=await api("fstart",{from:ME,to:ME,name:d.f.name||"video",n:n,pub:1});
+    if(!s||!s.fid)throw 0;
+    const fid=s.fid;
+    await fputParallel(fid,n,async function(i){
+      const sl=d.f.slice(i*BYTES,(i+1)*BYTES);
+      return await new Promise(function(res){const fr=new FileReader();fr.onload=function(){res(String(fr.result).split(",")[1]);};fr.readAsDataURL(sl);});
+    },function(p){stDraftProg(Math.max(2,Math.round(p*0.97)),"Uploading\u2026");});
+    stDraftProg(99,"Publishing\u2026");
+    const th=await stDraftThumb();
+    const r=await api("story",{node:ME,vf:fid,vd:Math.round(d.te-d.ts),ts:Math.round(d.ts),te:Math.round(d.te),th:th});
+    if(!r||!r.ok)throw 0;
+    try{URL.revokeObjectURL(d.src);}catch(e){}
+    ST_DRAFT=null;
+    stDraftSheetClose();
+    toast("Video status posted \u2713 \u2014 friends see it for 24h");
+    refreshStories();renderStatusScreen();renderStoryStrip();
+  }catch(e){
+    toast("Upload failed \u2014 check connection and try again");
+    try{document.getElementById("stDraftBtns").style.display="";}catch(e2){}
+    try{document.getElementById("stDraftProg").style.display="none";}catch(e2){}
+  }
+}
+
 /* ================= v56: shared WhatsApp-style dual-handle trim sheet ================= */
 var VT={dur:0,maxWin:0,mode:"",rawFile:null,onDone:null,drag:false};
 function vtFmt(s){s=Math.max(0,s||0);return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");}
 function vtOpen(o){
-  VT.dur=o.dur||0;VT.maxWin=o.maxWin||0;VT.mode=o.mode||"";VT.rawFile=o.rawFile||null;VT.onDone=o.onDone||null;
+  VT.dur=o.dur||0;VT.maxWin=o.maxWin||0;VT.minWin=o.minWin||0;VT.mode=o.mode||"";VT.rawFile=o.rawFile||null;VT.onDone=o.onDone||null; /* v113: minWin — status crop is 1-4 min */
   const v=$("vtVid");v.src=o.src;v.currentTime=0;
   $("vtTitle").textContent=o.title||"✂ Trim your video";
   try{vtStripBuild();}catch(e){} /* v109: filmstrip of frames, left to right */
@@ -2400,7 +2543,8 @@ function vtOpen(o){
   const sEl=$("vtS"),eEl=$("vtE");
   sEl.min="0";sEl.max=String(RES);sEl.value="0";
   eEl.min="0";eEl.max=String(RES);
-  const initWin=VT.maxWin&&VT.maxWin<VT.dur?VT.maxWin:VT.dur;
+  let initWin=VT.maxWin&&VT.maxWin<VT.dur?VT.maxWin:VT.dur;
+  if(VT.minWin&&initWin<VT.minWin&&VT.dur>VT.minWin)initWin=VT.minWin; /* v113: open at least the minimum window */
   eEl.value=String(Math.round((initWin/Math.max(VT.dur,0.001))*RES));
   $("vtHint").textContent=VT.maxWin&&VT.dur>VT.maxWin?("Window is capped at "+VT.maxWin+"s — drag to pick which part"):"Drag either handle to trim — full clip is selected by default";
   vtRefreshBar();
@@ -2440,6 +2584,10 @@ function vtVals(){
     if(VT._active==="s")e=Math.min(VT.dur,s+VT.maxWin);
     else s=Math.max(0,e-VT.maxWin);
   }
+  if(VT.minWin&&(e-s)<VT.minWin&&VT.dur>VT.minWin){ /* v113: status crop floor — 1 minute */
+    if(VT._active==="s")e=Math.min(VT.dur,s+VT.minWin);
+    else s=Math.max(0,e-VT.minWin);
+  }
   return {s:s,e:e};
 }
 function vtRefreshBar(){
@@ -2465,6 +2613,7 @@ function vtConfirm(){
   const mode=VT.mode,rawFile=VT.rawFile;
   vtCancel();
   if(mode==="status")stVideoPost(rawFile,s,e-s);
+  else if(mode==="stcrop")stDraftApply(s,e); /* v113: back to the status page draft with the new window */
   else if(mode==="watch")wtVidTrimmed(s,e);
 }
 async function stVideoPost(f,start,dur){
@@ -5817,7 +5966,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=112;
+const AC_V=113;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
