@@ -235,7 +235,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v113</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v114</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -336,6 +336,7 @@ footer a{color:#64748B}
       <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:10px;background:#F1F5F9;color:#334155" onclick="deleteMyStatus()">🗑 Delete my status</button>
       <div style="font-size:11.5px;color:#64748B;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
+    <div id="stDraftRow" class="hide"></div>
     <div class="card">
       <div style="font-weight:700;font-size:12.5px;color:#0D6E52;padding:2px 2px 6px">Recent updates</div>
       <div id="stFriendsRow"></div>
@@ -1485,6 +1486,7 @@ function wtRender(){
   const big=WT_SCOPE!=="feed"&&!WT_CH_PAGE; /* v67: any video view (shorts + long) = full-screen autoplay */
   for(const p of WT_POSTS)el.appendChild(wtCard(p,big,(WT_SCOPE==="watch"&&WT_CAT==="shorts"))); /* v69: shorts autoplay WITH sound */
   wtObserveVideos();
+  wtPrefetchVids(); /* v114: first videos load in the background — instant on scroll */
 }
 var WT_XL={};
 async function wtXlate(pid){try{const el=$("pt-"+pid);if(!el)return;const lg=localStorage.getItem("ac_lang")||"en";const r=await api("translate",{from:ME,text:WT_XL[pid]||el.innerText,to:lg});if(r&&(r.out||r.text)){el.innerHTML=esc(r.out||r.text)+'<div style="font-size:10px;color:#94A3B8;margin-top:2px">translated to your language</div>';}else toast((r&&r.err)||"Could not translate");}catch(e){toast("Could not translate");}}
@@ -1532,6 +1534,43 @@ function wtObserveVideos(){
     if(!box.dataset.observed){box.dataset.observed="1";WT_IO.observe(box);}
   });
 }
+
+/* ============ v114 (skylar): INSTANT WATCH — one shared video cache + single-flight
+   fetch + background prefetch of the first videos in the feed, so by the time he
+   scrolls to a video it is ALREADY live. No waiting on arrival, replays instant. ============ */
+var WT_VCACHE={},WT_VFETCH={},WT_VKEYS=[];
+function wtCacheEvict(){
+  while(WT_VKEYS.length>6){
+    const k=WT_VKEYS.shift();
+    try{if(WT_VCACHE[k])URL.revokeObjectURL(WT_VCACHE[k]);}catch(e){}
+    delete WT_VCACHE[k];delete WT_VFETCH[k];
+  }
+}
+async function wtGetVid(fid,n,prog){
+  if(WT_VCACHE[fid])return WT_VCACHE[fid];
+  if(!WT_VFETCH[fid])WT_VFETCH[fid]=(async function(){
+    let bin="";
+    try{
+      const r=await api("fgetall",{from:ME,fid:fid});
+      if(!r||!r.ok||!r.v)throw 0;
+      bin=r.v;
+    }catch(e0){
+      for(let i=0;i<n;i++){const r=await api("fget",{from:ME,fid:fid,ci:i});if(!r||!r.v)throw 0;bin+=r.v;if(prog)prog(Math.round((i+1)/Math.max(1,n)*100));}
+    }
+    const b64=bin.startsWith("data:")?bin.split(",")[1]:bin;
+    const mime=bin.slice(5,bin.indexOf(";"))||"video/mp4";
+    const bytes=Uint8Array.from(atob(b64),function(c){return c.charCodeAt(0);});
+    const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+    WT_VCACHE[fid]=url;WT_VKEYS.push(fid);wtCacheEvict();
+    return url;
+  })();
+  return WT_VFETCH[fid];
+}
+function wtPrefetchVids(){
+  const vids=WT_POSTS.filter(function(p){return p.fid&&!p.pic;}).slice(0,4);
+  vids.forEach(function(p){try{wtGetVid(p.fid,Number(p.fidn)||0).catch(function(){});}catch(e){}});
+}
+
 async function wtAutoPlayVid(pid,fid,n,box){
   box=box||document.querySelector('.wt-vidbox[data-pid="'+pid+'"]');
   if(!box)return;
@@ -1541,18 +1580,8 @@ async function wtAutoPlayVid(pid,fid,n,box){
   if(box.dataset.loading==="1")return;
   box.dataset.loading="1";
   try{
-    let bin="";
-    try{
-      const r=await api("fgetall",{from:ME,fid});
-      if(!r||!r.ok||!r.v)throw 0;
-      bin=r.v;
-    }catch(e0){
-      for(let i=0;i<n;i++){const r=await api("fget",{from:ME,fid,ci:i});if(!r||!r.v)throw 0;bin+=r.v;}
-    }
-    const b64=bin.startsWith("data:")?bin.split(",")[1]:bin;
-    const mime=bin.slice(5,bin.indexOf(";"))||"video/mp4";
-    const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-    const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+    box.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px" id="wtld-'+pid+'">Loading…</div>';
+    const url=await wtGetVid(fid,n,function(p){const l=document.getElementById("wtld-"+pid);if(l)l.textContent="Loading… "+p+"%";});
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
     box.innerHTML='<video preload="metadata" id="wtv-'+pid+'" playsinline'+(snd?' loop autoplay':' muted controls')+' style="width:100%;height:100%;object-fit:cover;background:#000" src="'+url+'"></video>'+(snd?'':'<div id="wtplay-'+pid+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="wtBigPlay(\''+pid+'\')"><div style="width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px">▶</div></div>')+'<div id="wtmute-'+pid+'" style="position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.55);color:#fff;border-radius:16px;padding:6px 10px;font-size:15px" onclick="wtToggleMute(\''+pid+'\')">🔊</div>';
@@ -1582,24 +1611,9 @@ function wtToggleMute(pid){
 function fmtWT(ts){const s=Math.floor((Date.now()-(ts||Date.now()))/1000);if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+"m ago";if(s<86400)return Math.floor(s/3600)+"h ago";return Math.floor(s/86400)+"d ago";}
 async function wtPlay(pid,fid,n){
   const box=$("pv-"+pid);if(!box)return;
-  box.innerHTML='<div style="color:#94A3B8;text-align:center;padding:18px;font-size:12px">Loading video…</div>';
+  box.innerHTML='<div style="color:#94A3B8;text-align:center;padding:18px;font-size:12px" id="wtld2-'+pid+'">Loading video…</div>';
   try{
-    /* v63: ONE bulk request for all chunks (was n sequential requests — videos looked dead on mobile) */
-    let bin="";
-    try{
-      const r=await api("fgetall",{from:ME,fid});
-      if(!r||!r.ok||!r.v)throw 0;
-      bin=r.v;
-    }catch(e0){
-      for(let i=0;i<n;i++){
-        box.innerHTML='<div style="color:#94A3B8;text-align:center;padding:18px;font-size:12px">Loading video… '+(i+1)+'/'+n+'</div>';
-        const r=await api("fget",{from:ME,fid,ci:i});if(!r||!r.v)throw 0;bin+=r.v;
-      }
-    }
-    const b64=bin.startsWith("data:")?bin.split(",")[1]:bin;
-    const mime=bin.slice(5,bin.indexOf(";"))||"video/mp4";
-    const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-    const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+    const url=await wtGetVid(fid,n,function(p){const l=document.getElementById("wtld2-"+pid);if(l)l.textContent="Loading… "+p+"%";});
     const p=WT_POSTS.find(x=>x.id===pid);
     const ts=Number(p&&p.ts||0),te=Number(p&&p.te||0);
     box.innerHTML='<video preload="metadata" id="wtv-'+pid+'" controls autoplay playsinline style="width:100%;max-height:420px;background:#000" src="'+url+'"></video>';
@@ -2239,7 +2253,7 @@ function renderStoryStrip(){
   for(const el of targets){
     el.innerHTML="";
     el.appendChild(storyCircle(mine?mine.items[mine.items.length-1].pic:PIC_CACHE[ME],String(ME_NAME||"?").charAt(0).toUpperCase(),!!(mine&&unseen(mine)),"My status",function(){if(mine)openStatusViewer(ME);else stAddOpen();},true));
-    if(ST_DRAFT)stDraftCircle(el); /* v113: his picked-but-unposted video sits in the series */
+    if(ST_DRAFT&&el.id==="statusStrip")stDraftCircle(el); /* v114: draft circle lives only on the STATUS page */
     for(const g of fr){
       const last=g.items[g.items.length-1];
       el.appendChild(storyCircle(String(last.pic).indexOf("data:image")===0?last.pic:"",String(g.name||"?").charAt(0).toUpperCase(),unseen(g),String(g.name||"?"),function(){openStatusViewer(g.num);},false));
@@ -2285,19 +2299,12 @@ function showStItem(){
     (async function(){
       try{$("stImg").className="hide";$("stAudWrap").className="hide";try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();}catch(e){}$("stVid").className="";}catch(e){}
       const v=$("stVid");
-      if(!STV_VC[s.vf]){
+      if(!WT_VCACHE[s.vf]){
         try{$("stTime").textContent="Loading video…";}catch(e){}
-        try{
-          const r=await api("fgetall",{from:ME,fid:s.vf});
-          if(!r||!r.n)throw 0;
-          let bin="";
-          for(let i=0;i<r.n;i++){const r2=await api("fget",{from:ME,fid:s.vf,ci:i});if(!r2||!r2.v)throw 0;bin+=r2.v;}
-          const bytes=Uint8Array.from(atob(bin),function(c){return c.charCodeAt(0);});
-          STV_VC[s.vf]=URL.createObjectURL(new Blob([bytes],{type:"video/mp4"}));
-        }catch(e){toast("Could not load that video status");nextItem();return;}
+        try{await wtGetVid(s.vf,0);}catch(e){toast("Could not load that video status");nextItem();return;}
       }
       try{$("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length;}catch(e){}
-      v.src=STV_VC[s.vf];
+      v.src=WT_VCACHE[s.vf];
       v.muted=false;
       const start=(Number(s.ts)||0),end=(Number(s.te)||0);
       v.onended=function(){nextItem();};
@@ -2359,7 +2366,8 @@ function renderStatusScreen(){
     const pic=PIC_CACHE[ME];
     if(pic){av.textContent="";av.style.backgroundImage="url("+pic+")";av.style.backgroundSize="cover";av.style.backgroundPosition="center";}
     else{av.style.backgroundImage="";av.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();}
-    $("stMySub").textContent=ST_DRAFT?("🎬 Video draft ready ("+vtFmt(ST_DRAFT.te-ST_DRAFT.ts)+") — tap the 🎬 Draft circle to crop & post"):(mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours");
+    try{stDraftRowRender();}catch(e3){}
+    $("stMySub").textContent=ST_DRAFT?("🎬 Video draft ready ("+vtFmt(ST_DRAFT.te-ST_DRAFT.ts)+") — use the draft card below to crop & post"):(mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours");
     $("stDelBtn").style.display=mine.length?"":"none";
     const fr=storyGroups().filter(g=>g.num!==ME);
     fr.sort((x,y)=>{const xa=x.items[x.items.length-1]?x.items[x.items.length-1].at:0,ya=y.items[y.items.length-1]?y.items[y.items.length-1].at:0;return ya-xa;});
@@ -2476,8 +2484,8 @@ async function stVideoChosen(fi){
        (1-4 min) and post from there; posting loads, auto-posts and returns him here. */
     ST_DRAFT={f:f,src:src,dur:d2,ts:0,te:Math.min(d2,240)};
     showTab("status");
-    renderStatusScreen();renderStoryStrip();
-    toast("Video ready — tap the 🎬 Draft circle to crop & post");
+    renderStatusScreen();renderStoryStrip();stDraftRowRender();
+    toast("Video draft ready — crop it or tap Post");
   }catch(e){toast("Could not process that video — try a different file");}
 }
 
@@ -2496,29 +2504,41 @@ function stDraftCircle(el){
   dd.onclick=function(){stDraftSheetOpen();};
   el.appendChild(dd);
 }
+function stDraftRowRender(){
+  const el=document.getElementById("stDraftRow");if(!el)return;
+  if(!ST_DRAFT){el.className="hide";el.innerHTML="";return;}
+  el.className="";
+  const d=ST_DRAFT;
+  el.innerHTML='<div class="card" style="border:1.5px dashed #10B981">'+
+   '<div style="display:flex;align-items:center;gap:10px">'+
+   '<div style="width:44px;height:44px;border-radius:10px;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 44px">🎬</div>'+
+   '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px;color:#0F172A">Video draft</div>'+
+   '<div style="font-size:12px;color:#64748B">'+vtFmt(d.te-d.ts)+' · window '+vtFmt(d.ts)+" → "+vtFmt(d.te)+'</div></div>'+
+   '</div>'+
+   '<div id="stDraftBtns" style="display:flex;gap:8px;margin-top:10px">'+
+   '<button class="big" style="flex:1;padding:9px;font-size:12.5px;background:#E2E8F0;color:#334155;margin:0" onclick="stDraftSheetOpen()">▶ Preview</button>'+
+   '<button class="big" style="flex:1;padding:9px;font-size:12.5px;background:#E2E8F0;color:#334155;margin:0" onclick="stDraftCrop()">✂ Crop</button>'+
+   '<button class="big" style="flex:1.2;padding:9px;font-size:12.5px;background:#10B981;color:#fff;margin:0" onclick="stDraftPost()">Post</button>'+
+   '</div>'+
+   '<button class="big" style="width:100%;padding:8px;font-size:12px;background:#F1F5F9;color:#64748B;margin:6px 0 0" onclick="stDraftDiscard()">🗑 Discard draft</button>'+
+   '<div id="stDraftProg" style="display:none;margin-top:8px"><div id="stDraftProgTxt" style="font-weight:700;color:#075E46;font-size:13px"></div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div id="stDraftProgBar" style="height:100%;width:0;background:#10B981;border-radius:6px;transition:width .2s"></div></div></div>'+
+   '</div>';
+}
 function stDraftSheetOpen(){
   if(!ST_DRAFT)return;
   let el=document.getElementById("stDraftSheet");
   if(!el){
     el=document.createElement("div");el.id="stDraftSheet";
-    el.style.cssText="position:fixed;inset:0;z-index:600;background:rgba(15,23,42,.88);display:flex;align-items:center;justify-content:center;padding:16px";
+    el.style.cssText="position:fixed;inset:0;z-index:600;background:rgba(15,23,42,.92);display:flex;align-items:center;justify-content:center;padding:14px";
     document.body.appendChild(el);
   }
   const d=ST_DRAFT;
   el.className="";
-  el.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:14px;max-height:92vh;overflow:auto">'+
-   '<div style="font-weight:700;font-size:15px;margin-bottom:8px">\uD83C\uDFAC Your video status</div>'+
-   '<video src="'+d.src+'" controls playsinline style="width:100%;max-height:300px;background:#000;border-radius:10px;display:block"></video>'+
-   '<div id="stDraftWin" style="font-size:12.5px;color:#334155;margin:8px 0;font-weight:600"></div>'+
-   '<div id="stDraftProg" style="display:none;margin:8px 0"><div id="stDraftProgTxt" style="font-weight:700;color:#075E46;font-size:13px"></div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div id="stDraftProgBar" style="height:100%;width:0;background:#10B981;border-radius:6px;transition:width .2s"></div></div></div>'+
-   '<div id="stDraftBtns" style="display:flex;gap:8px;margin-top:6px">'+
-   '<button class="big" style="flex:1;padding:11px;border:none;border-radius:12px;background:#E2E8F0;color:#334155;font-weight:700;font-size:13px" onclick="stDraftCrop()">\u2702 Crop</button>'+
-   '<button class="big" style="flex:1;padding:11px;border:none;border-radius:12px;background:#F1F5F9;color:#64748B;font-weight:700;font-size:13px" onclick="stDraftDiscard()">\uD83D\uDDD1 Discard</button>'+
-   '<button class="big" style="flex:1.4;padding:11px;border:none;border-radius:12px;background:#10B981;color:#fff;font-weight:700;font-size:13px" onclick="stDraftPost()">Post</button>'+
-   '</div>'+
-   '<div style="text-align:center;margin-top:10px"><span style="color:#075E46;font-size:13px;font-weight:700;cursor:pointer" onclick="stDraftSheetClose()">Close</span></div>'+
+  el.innerHTML='<div style="background:#0F172A;border-radius:16px;max-width:480px;width:100%;padding:10px;max-height:92vh;overflow:auto">'+
+   '<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 6px 8px"><div style="font-weight:700;color:#fff;font-size:14px">🎬 Your video draft</div><div style="color:#fff;font-size:20px;cursor:pointer;padding:0 6px" onclick="stDraftSheetClose()">✕</div></div>'+
+   '<video src="'+d.src+'" controls playsinline style="width:100%;max-height:68vh;border-radius:10px;display:block;background:#000"></video>'+
+   '<div style="color:#CBD5E1;font-size:12px;padding:8px 6px 2px">Window '+vtFmt(d.ts)+" → "+vtFmt(d.te)+' ('+vtFmt(d.te-d.ts)+') — crop & post from the draft card on the Status page</div>'+
    '</div>';
-  stDraftWinRefresh();
 }
 function stDraftSheetClose(){const el=document.getElementById("stDraftSheet");if(el)el.className="hide";}
 function stDraftWinRefresh(){try{const d=ST_DRAFT;document.getElementById("stDraftWin").textContent="Showing "+vtFmt(d.ts)+" \u2192 "+vtFmt(d.te)+" ("+vtFmt(d.te-d.ts)+" of "+vtFmt(d.dur)+") \u00b7 crop window 1-4 minutes";}catch(e){}}
@@ -2531,13 +2551,13 @@ function stDraftApply(s,e){
   if(!ST_DRAFT)return;
   ST_DRAFT.ts=Math.max(0,Math.round(s));ST_DRAFT.te=Math.min(ST_DRAFT.dur,Math.round(e));
   if(ST_DRAFT.dur>60&&ST_DRAFT.te-ST_DRAFT.ts<60)ST_DRAFT.te=Math.min(ST_DRAFT.dur,ST_DRAFT.ts+60);
-  stDraftSheetOpen();renderStoryStrip();
+  stDraftRowRender();renderStoryStrip();
 }
 function stDraftDiscard(){
   if(!ST_DRAFT)return;
   try{URL.revokeObjectURL(ST_DRAFT.src);}catch(e){}
   ST_DRAFT=null;
-  stDraftSheetClose();renderStoryStrip();renderStatusScreen();
+  stDraftSheetClose();stDraftRowRender();renderStoryStrip();renderStatusScreen();
   toast("Draft discarded");
 }
 function stDraftProg(p,txt){try{document.getElementById("stDraftProgTxt").textContent=txt+" "+p+"%";document.getElementById("stDraftProgBar").style.width=p+"%";}catch(e){}}
@@ -2557,11 +2577,11 @@ async function stDraftPost(){
   if(!ST_DRAFT)return;
   const d=ST_DRAFT;
   if(d.f.size>100*1024*1024){toast("Please keep videos under 100MB");return;}
-  try{document.getElementById("stDraftBtns").style.display="none";}catch(e){}
-  try{document.getElementById("stDraftProg").style.display="";}catch(e){}
-  stDraftProg(2,"Uploading\u2026");
+  const row=document.getElementById("stDraftBtns");if(row)row.style.display="none";
+  const pr=document.getElementById("stDraftProg");if(pr)pr.style.display="";
+  stDraftProg(2,"Uploading…");
   try{
-    const CH=300000,BYTES=Math.round(CH*0.75); /* same proven math as channel videos */
+    const CH=300000,BYTES=Math.round(CH*0.75);
     const n=Math.min(900,Math.ceil(d.f.size/BYTES));
     const s=await api("fstart",{from:ME,to:ME,name:d.f.name||"video",n:n,pub:1});
     if(!s||!s.fid)throw 0;
@@ -2569,20 +2589,21 @@ async function stDraftPost(){
     await fputParallel(fid,n,async function(i){
       const sl=d.f.slice(i*BYTES,(i+1)*BYTES);
       return await new Promise(function(res){const fr=new FileReader();fr.onload=function(){res(String(fr.result).split(",")[1]);};fr.readAsDataURL(sl);});
-    },function(p){stDraftProg(Math.max(2,Math.round(p*0.97)),"Uploading\u2026");});
-    stDraftProg(99,"Publishing\u2026");
+    },function(p){stDraftProg(Math.max(2,Math.round(p*0.97)),"Uploading…");});
+    stDraftProg(99,"Publishing…");
     const th=await stDraftThumb();
     const r=await api("story",{node:ME,vf:fid,vd:Math.round(d.te-d.ts),ts:Math.round(d.ts),te:Math.round(d.te),th:th});
     if(!r||!r.ok)throw 0;
     try{URL.revokeObjectURL(d.src);}catch(e){}
     ST_DRAFT=null;
     stDraftSheetClose();
-    toast("Video status posted \u2713 \u2014 friends see it for 24h");
+    stDraftRowRender();
+    toast("Video status posted ✓ — open My status to see it");
     refreshStories();renderStatusScreen();renderStoryStrip();
   }catch(e){
-    toast("Upload failed \u2014 check connection and try again");
-    try{document.getElementById("stDraftBtns").style.display="";}catch(e2){}
-    try{document.getElementById("stDraftProg").style.display="none";}catch(e2){}
+    toast("Upload failed — check connection and try again");
+    const row2=document.getElementById("stDraftBtns");if(row2)row2.style.display="";
+    const pr2=document.getElementById("stDraftProg");if(pr2)pr2.style.display="none";
   }
 }
 
@@ -6034,7 +6055,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=113;
+const AC_V=114;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
