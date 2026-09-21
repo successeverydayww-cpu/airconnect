@@ -374,7 +374,6 @@ footer a{color:#64748B}
       <div style="font-weight:600;margin-bottom:6px">📶 Lite mode (data saver)</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Photos load on tap, videos never autoplay — saves your data.</div>
       <button class="big" id="liteBtn" style="background:#CBD5E1;color:#334155" onclick="liteToggle()">Lite mode: OFF</button>
-      <button class="big" style="margin-top:8px" onclick="showMyPhrase()">🔐 My recovery phrase</button>
       <button class="big" id="installBtn" style="margin-top:8px;display:none" onclick="installApp()">📲 Install AirConnect app</button>
     </div>
     <div class="card">
@@ -383,17 +382,14 @@ footer a{color:#64748B}
       <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
     </div>
     <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">🖼️ My profile photo</div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <div class="av" id="myPic" style="width:56px;height:56px;font-size:20px;flex:0 0 56px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
-        <button class="big blue" style="flex:1" onclick="document.getElementById('picinput').click()">Upload photo</button>
-        <button class="big" style="flex:0 0 auto;background:#CBD5E1" onclick="removeMyPic()">🗑</button>
+      <div style="font-weight:600;margin-bottom:10px">👤 My Profile</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <div class="av" id="myPic" style="width:64px;height:64px;font-size:24px;flex:0 0 64px;cursor:pointer" onclick="document.getElementById('picinput').click()">?</div>
+        <div style="flex:1;min-width:0;font-size:12px;color:#64748B">Tap your photo to change it. Your profile shows to friends in lists and chats.</div>
+        <button class="big" style="flex:0 0 auto;padding:8px 12px;font-size:13px" onclick="document.getElementById('picinput').click()">📷 Change photo</button>
+        <button class="big" style="flex:0 0 auto;background:#CBD5E1;padding:8px 10px" onclick="removeMyPic()">🗑</button>
         <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
       </div>
-      <div style="font-size:11.5px;color:#64748B;margin-top:6px">Your photo shows to friends in lists and chats. Tap a friend's photo to view it fullscreen — protected against saving.</div>
-    </div>
-    <div class="card">
-      <div style="font-weight:600;margin-bottom:6px">👤 My profile</div>
       <div onclick="editMyName()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">Name</div><div id="meNameRow" style="font-weight:600;font-size:15px">—</div></div>
         <div style="color:#075E46;font-size:17px">✏️</div>
@@ -402,7 +398,15 @@ footer a{color:#64748B}
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">About</div><div id="meAboutRow" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div>
         <div style="color:#075E46;font-size:17px">✏️</div>
       </div>
-      <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap to edit, WhatsApp-style. Your name and about show to friends.</div>
+      <div style="<div onclick="showMyPhrase()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #E2E8F0;cursor:pointer">
+        <div style="min-width:0"><div style="font-weight:600;font-size:14px">🔐 My recovery phrase</div><div style="font-size:11.5px;color:#64748B">Tap to view — it keeps your account if you change phone</div></div>
+        <div style="color:#075E46;font-size:17px">›</div>
+      </div>
+      <div onclick="ppOpen()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #E2E8F0;cursor:pointer">
+        <div style="min-width:0"><div style="font-weight:600;font-size:14px">🔑 Change passphrase</div><div style="font-size:11.5px;color:#64748B">Enter your current passphrase to set a new one</div></div>
+        <div style="color:#075E46;font-size:17px">›</div>
+      </div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap any row to edit, WhatsApp-style.</div>
     </div>
     <div class="card" id="planStatusCard">
       <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
@@ -582,6 +586,18 @@ footer a{color:#64748B}
     <div style="font-size:12.5px;color:#64748B;margin-bottom:10px">Pick one skill — this citizen lives fully in that role for you. Premium feature.</div>
     <div id="skillList"></div>
     <button class="big" style="width:100%;margin-top:10px;background:#CBD5E1" onclick="skillClose()">Close</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+<div id="ppSheet" class="ovl hide" onclick="if(event.target===this)ppClose()">
+  <div class="sheet">
+    <div style="font-weight:700;font-size:16px;margin-bottom:4px">🔑 Change passphrase</div>
+    <div style="font-size:12.5px;color:#64748B;margin-bottom:10px">Your passphrase is your identity — you use it to recover your account on a new phone.</div>
+    <input id="ppCur" placeholder="Current passphrase" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+    <input id="ppNew" placeholder="New passphrase (at least 8 characters)" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+    <input id="ppNew2" placeholder="Repeat new passphrase" style="width:100%;box-sizing:border-box">
+    <button class="big blue" style="width:100%;margin-top:10px" onclick="ppSave()">Save new passphrase</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="ppClose()">Cancel</button>
     <div style="height:8px"></div>
   </div>
 </div>
@@ -1094,7 +1110,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=74');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=75');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -4688,7 +4704,19 @@ function updateSrChips(){
 }
 function srSend(t){$("chatbox").value=t;sendChat();}
 const _rb73=renderBubbles;renderBubbles=function(){_rb73();try{if(CHAT_OPEN)updateSrChips();}catch(e){}};
-const AC_V=74;
+/* ===== v75: change passphrase ===== */
+function ppClose(){$("ppSheet").className="ovl hide";}
+function ppOpen(){["ppCur","ppNew","ppNew2"].forEach(function(i){var e=$(i);if(e)e.value="";});$("ppSheet").className="ovl";}
+async function ppSave(){
+  const cur=String($("ppCur").value||"").trim(),nw=String($("ppNew").value||"").trim(),nw2=String($("ppNew2").value||"").trim();
+  if(!cur){toast("Enter your current passphrase");return;}
+  if(nw.length<8){toast("New passphrase too short — use at least 8 characters");return;}
+  if(nw!==nw2){toast("New passphrases don't match");return;}
+  const r=await api("ppset",{from:ME,aid:AID,cur:cur,nw:nw});
+  if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
+  else toast((r&&r.err)||"Could not change passphrase");
+}
+const AC_V=75;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -4711,7 +4739,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=74").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=75").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
