@@ -234,7 +234,7 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v91</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v92</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -5387,7 +5387,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=91;
+const AC_V=92;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5409,6 +5409,15 @@ async function checkForcedUpdate(){
       setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now());}catch(e2){location.reload();}},400);
     }
   }catch(e){}
+}
+async function manualRefresh(){
+  const o=document.createElement("div");
+  o.id="mref";o.style.cssText="position:fixed;inset:0;z-index:99999;background:#0B141A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;font-family:inherit";
+  o.innerHTML='<div style="font-size:38px;margin-bottom:12px">🔄</div><div style="font-size:18px;font-weight:700;margin-bottom:8px">Refreshing AirConnect…</div><div style="font-size:13px;color:#CBD5E1">Pulling the latest version — one moment, your account is safe</div>';
+  document.body.appendChild(o);
+  try{navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:"AC_PURGE"});}catch(e2){}
+  try{const ks=await caches.keys();for(const k of ks){await caches.delete(k);}}catch(e2){}
+  setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now());}catch(e2){location.reload();}},350);
 }
 /* ----- PWA: service worker + silent auto-update (v66: WhatsApp-style — new version installs itself on open, page refreshes once in background, no taps needed) ----- */
 try{
