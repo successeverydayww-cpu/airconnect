@@ -169,6 +169,8 @@ footer a{color:#64748B}
       <button class="big blue" id="resendbtn" onclick="startSignup()" style="margin-top:8px">Resend code</button>
       <div id="otpnote" style="font-size:11.5px;color:#64748B;margin-top:6px;text-align:center"></div>
     </div>
+    <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Your language — your AI agent will always speak it to you</div>
+    <select id="regLang" onchange="try{localStorage.setItem('ac_lang',this.value);localStorage.removeItem('ac_langset');}catch(e){}" style="width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:8px;margin-bottom:6px;background:#fff;font-size:13px"><option value="en">English</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="fr">Français — French</option><option value="es">Español — Spanish</option><option value="pt">Português — Portuguese</option><option value="ar">العربية — Arabic</option><option value="zh">中文 — Chinese</option><option value="hi">हिन्दी — Hindi</option><option value="sw">Kiswahili — Swahili</option><option value="de">Deutsch — German</option><option value="ru">Русский — Russian</option><option value="tr">Türkçe — Turkish</option><option value="am">አማርኛ — Amharic</option><option value="so">Soomaali — Somali</option><option value="tw">Twi</option><option value="zu">isiZulu</option><option value="ef">Efịk</option><option value="ib">Ibibio</option></select>
     <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
     <button class="big blue" onclick="register()">Resume my number</button>
@@ -1133,7 +1135,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=82');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=83');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted')return;
     const v=await api("vapid");
@@ -1147,7 +1149,8 @@ async function flushIce(){while(pendingIce.length&&pc&&pc.remoteDescription){try
 function sendIce(c){iceOut.push(c);}
 
 let TURN_CFG=null,TURN_AT=0;
-async function refreshTurn(){ /* v32: fetch fresh TURN iceServers from trunk (cached 50min) */
+async function refreshTurn(){
+  try{langSync();}catch(e){} /* v32: fetch fresh TURN iceServers from trunk (cached 50min) */
   try{ if(Date.now()-TURN_AT<50*60*1000&&TURN_CFG) return TURN_CFG;
     const r=await api("turncfg");
     if(r&&r.ok&&Array.isArray(r.iceServers)&&r.iceServers.length){TURN_CFG=r.iceServers;TURN_AT=Date.now();
@@ -1477,6 +1480,8 @@ function wtRender(){
   for(const p of WT_POSTS)el.appendChild(wtCard(p,big,(WT_SCOPE==="watch"&&WT_CAT==="shorts"))); /* v69: shorts autoplay WITH sound */
   wtObserveVideos();
 }
+var WT_XL={};
+async function wtXlate(pid){try{const el=$("pt-"+pid);if(!el)return;const lg=localStorage.getItem("ac_lang")||"en";const r=await api("translate",{from:ME,text:WT_XL[pid]||el.innerText,to:lg});if(r&&(r.out||r.text)){el.innerHTML=esc(r.out||r.text)+'<div style="font-size:10px;color:#94A3B8;margin-top:2px">translated to your language</div>';}else toast((r&&r.err)||"Could not translate");}catch(e){toast("Could not translate");}}
 function wtCard(p,big,sound){
   const d=document.createElement("div");
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)";
@@ -1484,14 +1489,14 @@ function wtCard(p,big,sound){
   const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14.5px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.v?' <span style="background:#075E46;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(p.mysub?' <span style="color:#075E46;font-size:10px">✓</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
   let body="";
   if(p.rs)body+='<div style="font-size:11px;color:#075E46;margin-top:6px">🔁 reshared post</div>';
-  if(p.text)body+='<div style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';
+  if(p.text){try{WT_XL[p.id]=p.text;}catch(e){}body+='<div id="pt-'+p.id+'" style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';}
   if(p.pic&&p.fid){body+='<div class="wt-imgbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#F1F5F9" id="pi-'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+(p.fidn||0)+'" data-name="'+esc(p.name||"photo.jpg")+'"><div style="padding:26px;text-align:center;color:#94A3B8;font-size:12px">Loading photo…</div></div>';}
   else if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'" data-sound="'+(sound?"1":"")+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
   const RE=["👍","❤️","😂","😮","🙏","🔥"];
   let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
   for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
   rrow+='</div>';
-  const acts='<div style="display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#64748B;font-weight:500"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' Comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span><span style="flex:1;text-align:right;color:#94A3B8;font-weight:400">👁 '+(p.vcnt||0)+'</span></div>';
+  const acts='<div style="display:flex;gap:16px;margin-top:12px;font-size:12.5px;color:#64748B;font-weight:500"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' Comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span>'+(p.text?'<span style="cursor:pointer" onclick="wtXlate(\''+p.id+'\')">🌐 Translate</span>':'')+'<span style="flex:1;text-align:right;color:#94A3B8;font-weight:400">👁 '+(p.vcnt||0)+'</span></div>';
   d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:7px 18px;font-size:13px;border-radius:18px;background:'+(p.mysub?"#E2E8F0":"#D7EEE0")+';color:'+(p.mysub?"#64748B":"#075E46")+';font-weight:600" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed":"Subscribe")+'</button></div>';
   return d;
 }
@@ -4603,9 +4608,20 @@ function openGc(){
   const l=$("gcList");
   l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<label class="row" style="cursor:pointer"><input type="checkbox" value="'+f.id+'" style="width:20px;height:20px"> <div class="rname" style="margin-left:10px">'+esc(WIN_NAMES[f.id]||f.id)+"</div></label>").join(""):'<div style="color:#64748B;font-size:13px;padding:6px 0">No friends yet — add one in Settings first.</div>';
   $("gcName").value="";
+  try{gcPlanCard();}catch(e){}
   $("gcsheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeGc(){$("gcsheet").className="ovl hide";}
+function gcPlanCard(){
+  if($("gcPlanCard"))return;
+  const pc=document.createElement("div");pc.id="gcPlanCard";
+  pc.style.cssText="background:#F0FDF4;border:1px solid #075E46;border-radius:12px;padding:11px;margin:10px 0;font-size:12px;color:#075E46;line-height:1.45";
+  pc.innerHTML='<b>🌍 Group Language Plan — $3 / ₦4,800 a month</b><br>Speak your language, everyone understands. Every member hears group calls and reads messages in their OWN chosen language — you talk in English, your Chinese member hears Chinese, your Igbo member hears Igbo, live.';
+  const lb=document.createElement("label");lb.style.cssText="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer";
+  lb.innerHTML='<input type="checkbox" id="gcPlan" style="width:18px;height:18px"> <span><b>Enable the Language Plan for this group</b> <span style="font-weight:400">(payment activates it — you will be guided)</span></span>';
+  pc.appendChild(lb);
+  try{document.querySelector("#gcsheet .sheet").appendChild(pc);}catch(e){}
+}
 async function createGroup(){
   const name=$("gcName").value.trim();
   const members=Array.from(document.querySelectorAll("#gcList input:checked")).map(x=>x.value);
@@ -4614,7 +4630,8 @@ async function createGroup(){
   const pass=(($("gcPass")&&$("gcPass").value)||"").trim();
   const lock=$("gcLock")&&$("gcLock").checked?1:0;
   const perm=$("gcPerm")&&$("gcPerm").checked?1:0;
-  const r=await api("gcreate",{by:ME,name,members,pass,lock,perm});
+  const gplan=($("gcPlan")&&$("gcPlan").checked)?1:0;
+  const r=await api("gcreate",{by:ME,name,members,pass,lock,perm,gplan});
   if(r&&r.ok){
     GROUPS.push({id:r.id,name:r.name,by:ME,members:r.members,admins:[ME],lock,perm,pass,past:[],reqs:[],created:new Date().toISOString()});
     persistV12();closeGc();renderLists();toast("Group created 🎉");
@@ -5171,7 +5188,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=82;
+const AC_V=83;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
@@ -5198,7 +5215,7 @@ async function checkForcedUpdate(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=82").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=83").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -5295,6 +5312,14 @@ function closeProfileSheet(){
     }
   }catch(e){}
   el.remove();
+}
+async function langSync(){
+  try{
+    if(localStorage.getItem("ac_langset"))return;
+    const lg=localStorage.getItem("ac_lang");if(!lg||!ME||!AID)return;
+    const r=await api("meset",{from:ME,aid:AID,lang:lg});
+    if(r&&r.ok)localStorage.setItem("ac_langset","1");
+  }catch(e){}
 }
 function menuOpen(){
   const mv=document.getElementById("menuView");
