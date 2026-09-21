@@ -505,7 +505,7 @@ footer a{color:#64748B}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v87</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v88</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -661,8 +661,8 @@ footer a{color:#64748B}
 <div id="gview" class="ovl hide">
   <div class="ohdr">
     <button class="bk" onclick="closeGroup()">‹</button>
-    <div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div>
-    <div style="flex:1;min-width:0"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
+    <div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0;cursor:pointer" onclick="openGInfo()" title="Tap for group info"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div>
+    <div style="flex:1;min-width:0;cursor:pointer" onclick="openGInfo()"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
     <button class="bk" onclick="openGInfo()" title="Group info (members, admins, link, settings)">ⓘ</button><button class="bk" onclick="gCall()" title="Group call">📞</button><button class="bk" onclick="leaveGroup()" title="Leave group">👋</button>
   </div>
   <div class="bubbles" id="gbubbles"></div>
@@ -5320,7 +5320,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=87;
+const AC_V=88;
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
 function installApp(){
