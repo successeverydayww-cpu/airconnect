@@ -1011,16 +1011,19 @@ function vmStat(){try{$("vmStat").textContent=vmEnabled()?"ON":"OFF";}catch(e){}
    the retry from the same caller gets a fast, brief (<=6s) AI answer that ends the call itself. */
 let VM_BRIEF=false,VM_MISS={};try{VM_MISS=JSON.parse(localStorage.getItem("ac_vm_miss"))||{};}catch(e){}
 let VM_BRIEF_SILENCE=null,VM_BRIEF_SAID="";
-function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<900000)?r:null; /* v48: 15min window */}
+function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<10800000)?r:null; /* v128: 3h window — the second call (any time within 3h) still gets the instant AI pickup */}
 function vmRecordMiss(from){try{const prev=vmMissInfo(from);VM_MISS[from]={t:Date.now(),n:((prev&&prev.n)||0)+1};localStorage.setItem("ac_vm_miss",JSON.stringify(VM_MISS));}catch(e){}}
 function vmArm(){vmDisarm();if(!vmEnabled())return;
   const from=pendingOffer&&pendingOffer.from;
   const miss=from?vmMissInfo(from):null;
   VM_BRIEF=!!(miss&&miss.n>=1);
-  /* v48 (skylar: "the second call did not come in"): the 2nd call now RINGS normally —
-     AI only steps in after 6.5s of no pickup, with a visible countdown. */
-  const delay=VM_BRIEF?6500:20000;
-  if(VM_BRIEF){try{const el=document.getElementById("incStat");if(el){el.textContent="AI receptionist answers in 7s — pick up to take the call";setTimeout(()=>{try{if(state==="incoming"&&el)el.textContent="AI receptionist answering…";}catch(e){}},5200);}}catch(e){}}
+  /* v128 (skylar voice 22 Sep): the FIRST call always rings the FULL normal ring — the AI never
+     steals a first call. If the same caller rings a SECOND time within 3h of a missed call, the
+     AI receptionist picks automatically in under 5 seconds, greets, says the owner is not with
+     their phone right now, and takes a message. */
+  if(!VM_BRIEF)return;
+  const delay=4000;
+  try{const el=document.getElementById("incStat");if(el){el.textContent="AI receptionist answers in 4s — pick up to take the call";setTimeout(()=>{try{if(state==="incoming"&&el)el.textContent="AI receptionist answering…";}catch(e){}},2500);}}catch(e){}
   vmRingTimer=setTimeout(function(){if(state==="incoming"&&pendingOffer&&ME)vmAnswer();},delay);}
 function vmDisarm(){if(vmRingTimer){clearTimeout(vmRingTimer);vmRingTimer=null;}}
 async function vmAnswer(){
@@ -1047,7 +1050,7 @@ async function vmAnswer(){
         await new Promise(r=>setTimeout(r,500));
       }
       try{if(mixCtx)await mixCtx.resume().catch(()=>{});}catch(e){}
-      vmSpeak("Hello"+cn+", good to hear from you. You have reached "+(ME_NAME||"my user")+"'s assistant. They are not available at the moment. Please call back later — or, if there is anything you would like me to tell them, I would be glad to pass it on.");
+      vmSpeak("Hello"+cn+", good to hear from you. You have reached "+(ME_NAME||"my user")+"'s assistant — "+(ME_NAME||"they")+" is not with the phone at the moment. But if there is anything you would like me to pass on, I would be glad to take a message for you.");
       /* now listen to the caller and let the citizen brain answer them */
       vmSTT();
       vmBriefSilence(12000);
@@ -4000,6 +4003,8 @@ async function dial(p){
   if(!gate.ok){toast("Not friends yet — add first");return;}
   if(gate&&gate.ai){await aiCall(PEER);return;}   /* v125: AI accounts answer with live voice instead of WebRTC */
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[PEER]||"+"+PEER));
+  const pt=(WIN_PRES[PEER])||0;   /* v128: honest reachability warning — if their phone has not checked in recently, the call may ring into the void */
+  if(pt&&Date.now()-pt>120000){toast((WIN_NAMES[PEER]||("+"+PEER))+" appears offline — their phone may not ring. A chat message always lands.");}
   if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}catch(e){}}
   if(camOn&&!cam){try{cam=await navigator.mediaDevices.getUserMedia({video:true});}catch(e){cam=null;}}
   if(cam){$("localv").srcObject=cam;setVLayout("ring");}
@@ -6413,7 +6418,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=127;
+const AC_V=128;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
