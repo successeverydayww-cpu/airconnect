@@ -5342,9 +5342,14 @@ function getDev(){
   return d;
 }
 async function getDevAsync(){
-  const d=getDev();
-  try{const s=await idbGet("dev");if(s){try{if(!localStorage.getItem("ac_dev"))localStorage.setItem("ac_dev",s);}catch(e){}return s;}}catch(e){}
-  return d;
+  /* v135: IndexedDB is the durable device identity. Restore it BEFORE creating or
+     trusting a replacement localStorage id, otherwise an update/storage eviction
+     can silently strand an existing account on the login screen. */
+  let d="";
+  try{d=localStorage.getItem("ac_dev")||"";}catch(e){}
+  if(!d){try{const m=document.cookie.match(/(?:^|;\s*)ac_dev=([a-zA-Z0-9-]+)/);if(m)d=m[1];}catch(e){}}
+  try{const saved=await idbGet("dev");if(saved){d=saved;try{localStorage.setItem("ac_dev",saved);}catch(e){}try{document.cookie="ac_dev="+saved+"; max-age=31536000; path=/; SameSite=Lax";}catch(e){}return saved;}}catch(e){}
+  return d||getDev();
 }
 function savePhraseLocally(p){
   if(!p)return;
@@ -6655,7 +6660,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=134;
+const AC_V=135;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
@@ -6709,9 +6714,18 @@ try{
 setInterval(function(){try{checkForcedUpdate();}catch(e){}},45000);
 (async function(){
   checkForcedUpdate();
+  /* v135: auto-resume from any durable identity layer. Previous startup only tried
+     when the account number survived; users with an intact device binding or saved
+     recovery phrase were incorrectly left logged out after storage cleanup. */
   let id=readLoginSync();
-  if(!id){id=await idbGet("me");}
-  if(id){try{$("login").className="hide";$("app").className="";}catch(e){}setTimeout(()=>{try{register();}catch(e){}},400);}
+  if(!id){id=await idbGet("me");if(id)saveLogin(id);}
+  let phrase=getPhraseSync();
+  if(!phrase){phrase=await idbGet("acphrase");if(phrase)savePhraseLocally(phrase);}
+  let durableDev="";try{durableDev=await idbGet("dev");}catch(e){}
+  if(id||phrase||durableDev){
+    try{if(id)$("oldnum").value=id;$("sendcodebtn").textContent="Signing you back in…";}catch(e){}
+    setTimeout(()=>{try{register();}catch(e){}},180);
+  }
 })();
 (function(){const ref=(new URL(location)).searchParams.get('ref');if(ref&&/^\d{9,12}$/.test(ref)){setTimeout(()=>{$("peer").value=ref;showTab('settings');flashShare('Invited by + '+ref+' — their number is pre-filled. Register, then send the request!');},600);}})();
 
