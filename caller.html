@@ -4715,7 +4715,17 @@ async function handleSigs(msgs){
     if(m.type==="gbye"){if(m.payload&&m.payload.g){try{gcEndLog(m.payload.g,(m.payload&&m.payload.n)||1);}catch(e){}try{if(GROUP_OPEN)renderGBubbles();}catch(e){}}if(GCI&&m.payload&&GCI.gid===m.payload.g){gcDecline();}if(GC.on&&GC.pcs[m.from]){try{GC.pcs[m.from].close();}catch(e){}delete GC.pcs[m.from];gcUI();}continue;}
   }
 
-  if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>Date.now()-(m.at?new Date(m.at).getTime():0)<10000);}
+  if(!SIG_PRIMED){SIG_PRIMED=true;msgs=msgs.filter(m=>{
+      const age=Date.now()-(m.at?new Date(m.at).getTime():0);
+      if(age<10000)return true;
+      /* v124 fix: a cold-started app (callee just tapped the incoming-call push) must still
+         receive LIVE incoming-call invites — the caller waits up to 75s, so any offer/gcallo
+         under 70s old is a call that is STILL RINGING right now. This filter used to silently
+         eat the first incoming offer on every cold start, which is why calls only connected
+         on the SECOND attempt. */
+      if((m.type==="offer"||m.type==="gcallo")&&age<70000)return true;
+      return false;
+    });}
 for(const m of msgs){
   if(m.type==="offer"){
     m.payload=await unzipDesc(m.payload);
@@ -6213,7 +6223,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=123;
+const AC_V=124;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
