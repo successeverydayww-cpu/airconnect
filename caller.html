@@ -2039,10 +2039,13 @@ function renderCallLog(){
   const missed=AC_CALLS.filter(function(c){return c.miss;}).reverse();
   const recent=AC_CALLS.filter(function(c){return !c.miss;}).reverse();
   const row=function(c,label){
-    const nm=WIN_NAMES[c.n]||("+"+c.n);
+    const isGrp=c.d==="grp";
+    const grpObj=isGrp?GROUPS.find(function(x){return x.id===c.n;}):null;
+    const nm=isGrp?(grpObj?grpObj.name:("Group "+c.n)):(WIN_NAMES[c.n]||("+"+c.n));
+    const idLine=isGrp?("ID: "+esc(c.n)):(' · + '+esc(c.n));
     const r=document.createElement("div");r.className="row";r.style.cursor="pointer";
-    r.innerHTML='<div class="av" style="background:'+(c.miss?"#FEE2E2":memColor(c.n))+';color:'+(c.miss?"#B91C1C":"#fff")+'">'+esc(nm.charAt(0).toUpperCase())+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(c.n)+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+' · + '+esc(c.n)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();dial(\''+c.n+'\')">📞</button></div>';
-    r.onclick=function(){dial(c.n);};
+    r.innerHTML='<div class="av" style="background:'+(c.miss?"#FEE2E2":(isGrp?"#E0F2FE":memColor(c.n)))+';color:'+(c.miss?"#B91C1C":(isGrp?"#0369A1":"#fff"))+'">'+(isGrp?"👥":esc(nm.charAt(0).toUpperCase()))+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+(isGrp?"":dotHTML(c.n))+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+(isGrp?" · "+idLine:idLine)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();'+(isGrp?'openGroup(\''+c.n+'\')':'dial(\''+c.n+'\')')+'">'+(isGrp?"👥":"📞")+'</button></div>';
+    r.onclick=function(){if(isGrp)openGroup(c.n);else dial(c.n);};
     ll.appendChild(r);
   };
   const sec=function(t,col){
@@ -2051,7 +2054,7 @@ function renderCallLog(){
     ll.appendChild(h);
   };
   if(missed.length){sec("MISSED CALLS","#DC2626");for(const c of missed)row(c,"Missed call");}
-  if(recent.length){sec("RECENT · LAST 7 DAYS","#64748B");for(const c of recent)row(c,c.d==="out"?"Outgoing":"Incoming");}
+  if(recent.length){sec("RECENT · LAST 7 DAYS","#64748B");for(const c of recent)row(c,c.d==="grp"?"Group call":(c.d==="out"?"Outgoing":"Incoming"));}
   const nc=$("nocall");
   if(nc){nc.className=AC_CALLS.length?"empty hide":"empty";if(!AC_CALLS.length)nc.textContent="Calls you make and receive appear here. Missed calls stay until seen, everything auto-deletes after 7 days.";}
 }
@@ -6152,7 +6155,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=119;
+const AC_V=120;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
