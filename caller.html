@@ -2001,11 +2001,11 @@ function renderLists(){
   const cl=$("chatlist");cl.innerHTML="";
   const allFr=fr.slice().filter(f=>!ARCHS.includes(f.id)||(SEARCH&&SEARCH.length>0));
 
-  /* v91: favorite ordering — friends + groups merged, most-engaged first (each open = 12h recency boost, capped 60) */
-  const favTs=x=>{const l=lastOf(x);return (l&&l.id)?(Number(String(l.id).replace(/\D/g,"").slice(0,13))||0):0;};
-  const favKey=x=>favTs(x)+(Math.min(OPENS[x]||0,60)*43200000);
-  const gItems=GROUPS.map(g=>({k:g.id,g:g,ts:((lastG(g)&&lastG(g).id)?(Number(String(lastG(g).id).replace(/\D/g,"").slice(0,13))||0):0)+(Math.min(OPENS[g.id]||0,60)*43200000)}));
-  const fItems=allFr.map(f=>({k:f.id,f:f,ts:favKey(f.id)}));
+  /* v133: WhatsApp ordering — pinned conversations stay first; everything else is
+     ordered strictly by its newest real message, across private chats and groups. */
+  const activityTs=m=>{if(!m)return 0;const v=m.ts||m.id||m.created||0;const d=Date.parse(normTs(v));if(Number.isFinite(d))return d;const n=Number(v);return Number.isFinite(n)?n:0;};
+  const gItems=GROUPS.map(g=>({k:g.id,g:g,ts:activityTs(lastG(g))||(Date.parse(g.created||0)||0)}));
+  const fItems=allFr.map(f=>({k:f.id,f:f,ts:activityTs(lastOf(f.id))}));
   const merged=fItems.concat(gItems).sort((a,b)=>{const pa=PINS.includes(a.k)?1:0,pb=PINS.includes(b.k)?1:0;if(pa!==pb)return pb-pa;return a.ts<b.ts?1:-1;});
   for(const it of merged){
     if(!it.f){
@@ -6570,7 +6570,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=132;
+const AC_V=133;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
