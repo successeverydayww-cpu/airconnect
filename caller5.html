@@ -316,9 +316,9 @@ footer a{color:#64748B}
   </div>
 
   <div id="view-status" class="view hide">
-    <div style="padding:10px 14px 2px;font-weight:700;font-size:16px;color:#0F172A">Status</div>
+    <div style="padding:10px 14px 2px;font-weight:700;font-size:16px;color:#0F172A">Updates</div>
     <div id="stRingStrip" style="display:flex;gap:14px;overflow-x:auto;padding:12px 14px 4px;scrollbar-width:none"></div>
-    <div class="card">
+    <div class="card" style="border:none;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="position:relative;flex:0 0 60px">
           <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">?</div>
@@ -338,12 +338,12 @@ footer a{color:#64748B}
       <div style="font-size:11.5px;color:#64748B;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
     <div id="stDraftRow" class="hide"></div>
-    <div class="card">
+    <div class="card" style="border:none;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-weight:700;font-size:12.5px;color:#0D6E52;padding:2px 2px 6px">Recent updates</div>
       <div id="stFriendsRow"></div>
       <div id="stFriends" style="font-size:14px;color:#64748B">No friend statuses yet.</div>
     </div>
-    <div class="card" id="stViewedCard" style="display:none">
+    <div class="card" id="stViewedCard" style="display:none;border:none;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-weight:700;font-size:12.5px;color:#64748B;padding:2px 2px 6px">Viewed updates</div>
       <div id="stViewed"></div>
     </div>
@@ -616,7 +616,7 @@ footer a{color:#64748B}
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
     <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#075E46"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg></span>Watch</button>
-    <button id="tab-status" aria-label="Status" onclick="showTab('status')"><span class="ico">◉</span>Status</button>
+    <button id="tab-status" aria-label="Updates" onclick="showTab('status')"><span class="ico">◉</span>Updates</button>
     <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
     <button id="tab-settings" aria-label="Settings" onclick="menuOpen()"><span class="ico">⚙️</span>Menu</button>
   </nav>
@@ -1441,7 +1441,7 @@ function showTab(t){
   try{localStorage.setItem("ac_tab","tab-"+t);}catch(e){}
   if(t!=="watch"){document.querySelectorAll("#wtfeed video").forEach(function(v){try{v.pause();}catch(e){}});}
   for(const v of["chats","watch","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
-  const TITLES={chats:"🛰️ AirConnect",watch:"Watch",status:"Status",calls:"Calls",settings:"Settings"};
+  const TITLES={chats:"🛰️ AirConnect",watch:"Watch",status:"Updates",calls:"Calls",settings:"Settings"};
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="watch"){wtBoot();}
