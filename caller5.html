@@ -2061,7 +2061,7 @@ function renderCallLog(){
     const idLine=isGrp?("ID: "+esc(c.n)):(' · + '+esc(c.n));
     const r=document.createElement("div");r.className="row";r.style.cursor="pointer";
     const gAv=(isGrp&&GPIC_CACHE[c.n])?('<div class="av" style="background-image:url('+GPIC_CACHE[c.n]+');background-size:cover;background-position:center"></div>'):null;
-    r.innerHTML=(gAv||('<div class="av" style="background:'+(c.miss?"#FEE2E2":(isGrp?"#E0F2FE":memColor(c.n)))+';color:'+(c.miss?"#B91C1C":(isGrp?"#0369A1":"#fff"))+'>'+(isGrp?"👥":esc(nm.charAt(0).toUpperCase()))+'</div>'))+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+(isGrp?"":dotHTML(c.n))+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+(isGrp?" · "+idLine:idLine)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();'+(isGrp?'openGroup(\''+c.n+'\')':'dial(\''+c.n+'\')')+'">'+(isGrp?"👥":"📞")+'</button></div>';
+    r.innerHTML=(gAv||('<div class="av" style="background:'+(c.miss?"#FEE2E2":(isGrp?"#E0F2FE":memColor(c.n)))+';color:'+(c.miss?"#B91C1C":(isGrp?"#0369A1":"#fff"))+'>'+(isGrp?"👥":esc(nm.charAt(0).toUpperCase()))+'</div>'))+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+(isGrp?"":dotHTML(c.n))+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+(isGrp?" · "+idLine:idLine)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();'+(isGrp?'openGroup(\''+c.n+'\')':'dial(\''+c.n+'\')')+'">'+"📞"+'</button></div>';
     if(isGrp){try{gFetchPic(c.n);}catch(e){}}
     r.onclick=function(){if(isGrp)openGroup(c.n);else dial(c.n);};
     ll.appendChild(r);
@@ -6282,7 +6282,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=121;
+const AC_V=122;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
