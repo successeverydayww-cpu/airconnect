@@ -187,7 +187,7 @@ footer a{color:#64748B}
 </div>
 
 <div id="app" class="hide">
-  <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">⚡ Offline — showing saved chats. Reconnects automatically.</div>
+  <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">📴 Offline — everything you've seen still works. Messages you send will auto-send when network returns.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
     <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#075E46;flex:0 0 34px">?</button></div>
@@ -1427,6 +1427,7 @@ async function finishLogin(d){
   })();
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
   armPush();poll();ringLoop();presTick();
+  setInterval(function(){try{acFlushQ();}catch(e){}},45000);   /* v131: retry queued sends when network returns */
   try{if(localStorage.getItem("ac_push_ok")!=="1")setTimeout(armPush,6000);}catch(e){}   /* v129: push never landed — try once more this session */
   setInterval(function(){if(state==="live"||state==="dialing"||state==="incoming")flushOutIce();},400);setInterval(flushOutIce,700);
   setInterval(tick,1000);setInterval(callBarTick,1000);
@@ -3384,7 +3385,7 @@ function renderBubbles(){
     if(m.who!=="sys"){
       const meta=document.createElement("div");meta.className="bmeta";
       let h=tsClock(m.ts)||fmtT(m.ts);
-      if(m.who==="me")h='<span class="tick'+(m.r?" on":"")+'">'+(m.r?"✓✓":"✓")+"</span> "+h;
+      if(m.who==="me")h='<span class="tick'+(m.r?" on":"")+'">'+(m.pend?"🕓":(m.r?"✓✓":"✓"))+"</span> "+h;
       meta.innerHTML=h;d.appendChild(meta);
     }
     b.appendChild(d);
@@ -3779,10 +3780,36 @@ function toggleMode(){
 let OFFLINE=false;
 function setOffline(v){if(v!==OFFLINE){OFFLINE=v;$("offbanner").className=v?"":"hide";}}
 let OFF_T=null;
-window.addEventListener("online",()=>{if(OFF_T){clearTimeout(OFF_T);OFF_T=null;}setOffline(false);});
+window.addEventListener("online",()=>{if(OFF_T){clearTimeout(OFF_T);OFF_T=null;}setOffline(false);try{acFlushQ();}catch(e){}});
 window.addEventListener("offline",()=>{if(OFF_T)clearTimeout(OFF_T);OFF_T=setTimeout(()=>{OFF_T=null;setOffline(true);},4000);});
 setOffline(!navigator.onLine);
 let chatSeq=0;
+/* ---------- v131: OFFLINE-FIRST — write while offline, auto-send on reconnect ---------- */
+function acQueueLoad(){try{return JSON.parse(localStorage.getItem("ac_outq")||"[]");}catch(e){return[];}}
+function acQueueSave(q){try{localStorage.setItem("ac_outq",JSON.stringify(q.slice(-60)));}catch(e){}}
+let AC_FLUSHING=false;
+async function acFlushQ(){
+  if(AC_FLUSHING||OFFLINE||!ME)return;
+  let q=acQueueLoad();if(!q.length)return;
+  AC_FLUSHING=true;
+  const keep=[];
+  for(const it of q){
+    try{
+      const r=await api("chat",{from:ME,to:it.to,text:await e2eEnc(it.to,it.text)});
+      if(r&&r.ok){
+        const c=CHATS[it.to]||[];
+        for(const b of c){if(b.qid===it.qid){b.ts=r.id;delete b.pend;delete b.qid;}}
+        if(CHAT_OPEN===it.to)renderBubbles();
+      }else keep.push(it);
+    }catch(e){keep.push(it);}
+  }
+  AC_FLUSHING=false;
+  const sentN=q.length-keep.length;
+  if(sentN>0){
+    acQueueSave(keep);
+    toast(sentN>1?("📤 "+sentN+" queued messages sent automatically"):"📤 Queued message sent automatically");
+  }
+}
 async function sendChat(){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
     if(chatBusy)return;
@@ -3792,6 +3819,17 @@ async function sendChat(){
   chatBusy=true;$("sendbtn").disabled=true;
   let t2=t;
   if(REPLY_TO){t2="r:"+REPLY_TO.id+"|"+REPLY_TO.pv+"|"+t;clearReply();}
+  /* v131: no network? NEVER lose the message — queue it, show it with a 🕓 clock,
+     and auto-send the moment the connection returns (WhatsApp-style). */
+  if(OFFLINE){
+    const qid="q"+Date.now()+Math.floor(Math.random()*999);
+    const q=acQueueLoad();q.push({qid:qid,to:CHAT_OPEN,text:t2});acQueueSave(q);
+    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t2,ts:new Date().toISOString(),pend:1,qid:qid});
+    box.value="";
+    renderBubbles();
+    toast("📴 Queued — will auto-send when network returns");
+    return;
+  }
   const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t2)});
   chatBusy=false;$("sendbtn").disabled=false;
   if(r&&r.ok){
@@ -6430,7 +6468,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=130;
+const AC_V=131;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
