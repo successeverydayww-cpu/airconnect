@@ -1174,10 +1174,20 @@ async function armPush(){
     if(!('serviceWorker' in navigator))return;
     const reg=await navigator.serviceWorker.register('sw.js?v=85');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
-    if(perm!=='granted')return;
+    if(perm!=='granted'){pushNudge(perm);return;}
     const v=await api("vapid");
     const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8Array(v.key)});
     await api("subscribe",{user:ME,sub:sub.toJSON()});
+    try{localStorage.setItem("ac_push_ok","1");}catch(e){}
+  }catch(e){pushNudge("error");}
+}
+function pushNudge(perm){
+  /* v129: notifications are the lifeline of calls — a user who silently misses them
+     can never be reached with the app closed. Be loud, and retry every session. */
+  try{localStorage.setItem("ac_push_ok","0");}catch(e){}
+  try{
+    if(perm==="denied"){toast("\u26a0\ufe0f Notifications are BLOCKED — calls cannot ring your phone. Unblock them in your browser site settings, then reopen AirConnect.");return;}
+    toast("\ud83d\udd14 Turn ON notifications — otherwise calls can't ring your phone when the app is closed.");
   }catch(e){}
 }
 async function log(msg){if(ME)await api("log",{msg:"["+ME_NAME+" "+ME+"] "+msg});}
@@ -1417,6 +1427,7 @@ async function finishLogin(d){
   })();
   lastSig=new Date().toISOString();lastMsg=new Date().toISOString();
   armPush();poll();ringLoop();presTick();
+  try{if(localStorage.getItem("ac_push_ok")!=="1")setTimeout(armPush,6000);}catch(e){}   /* v129: push never landed — try once more this session */
   setInterval(function(){if(state==="live"||state==="dialing"||state==="incoming")flushOutIce();},400);setInterval(flushOutIce,700);
   setInterval(tick,1000);setInterval(callBarTick,1000);
   renderLists();
@@ -6418,7 +6429,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=128;
+const AC_V=129;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
