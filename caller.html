@@ -1395,7 +1395,8 @@ async function register(){
   if(d.phrase)showPhraseModal(d.phrase,d.resumed==="new");
 }
 async function finishLogin(d){
-  ME=d.id;ME_NAME=d.name;
+  ME=d.id;ME_NAME=d.name||localStorage.getItem("ac_name")||"AirConnect user";
+  try{localStorage.setItem("ac_name",ME_NAME);}catch(e){}
   if(d.aid){AID=d.aid;try{localStorage.setItem("ac_aid",d.aid);}catch(e){}}
   if(d.phrase)savePhraseLocally(d.phrase);
   vmStat();
@@ -1405,6 +1406,7 @@ async function finishLogin(d){
     if(fr){
       WIN_BLOCKS=fr.blocks||[];WIN_FRIENDS=(fr.friends||[]).filter(x=>!WIN_BLOCKS.includes(x.id));WIN_REQS=fr.requests||[];
       for(const x of WIN_FRIENDS)if(x.name)WIN_NAMES[x.id]=x.name;
+      persistFriendCache();
       if(fr.pks)E2E_PKS=Object.assign(E2E_PKS||{},fr.pks);
     }
   }catch(e){}
@@ -1418,6 +1420,7 @@ async function finishLogin(d){
   maybeLock();
   $("mynum").textContent="+ "+ME;
   restoreChats();
+  restoreFriendCache();
   renderLists();
   refreshModeBtn();
   try{const lt=localStorage.getItem("ac_tab");if(lt&&$(lt)&&lt!=="tab-settings"){showTab(lt.replace("tab-",""));}}catch(e){}
@@ -3731,6 +3734,19 @@ async function cvSend(){
 }
 function persistChats(){try{for(const k in CHATS){if(CHATS[k].length>100)CHATS[k]=CHATS[k].slice(-100);}localStorage.setItem("aicall_chats",JSON.stringify(CHATS));}catch(e){}}
 function restoreChats(){try{const x=localStorage.getItem("aicall_chats");if(x)CHATS=JSON.parse(x)||{};}catch(e){}}
+function persistFriendCache(){try{localStorage.setItem("ac_friends",JSON.stringify({friends:WIN_FRIENDS,names:WIN_NAMES,at:Date.now()}));}catch(e){}}
+function restoreFriendCache(){
+  try{
+    const c=JSON.parse(localStorage.getItem("ac_friends")||"null");
+    if(c&&Array.isArray(c.friends)&&c.friends.length){if(!WIN_FRIENDS.length)WIN_FRIENDS=c.friends;if(c.names)WIN_NAMES=Object.assign({},c.names,WIN_NAMES||{});return;}
+  }catch(e){}
+  /* v140 emergency continuity: old chats still identify real contacts even when
+     the server's daily read allowance is temporarily unavailable. */
+  if(!WIN_FRIENDS.length){
+    WIN_FRIENDS=Object.keys(CHATS||{}).filter(x=>/^\d{9,12}$/.test(x)&&x!==ME).map(id=>({id:id}));
+    try{const n=JSON.parse(localStorage.getItem("ac_names")||"{}");WIN_NAMES=Object.assign({},n,WIN_NAMES||{});}catch(e){}
+  }
+}
 let MODE=localStorage.getItem("aicall_mode")||"online";
 function refreshModeBtn(){const b=$("modeBtn");if(b){b.textContent=MODE==="online"?"🟢 Online":"⚪ Offline";b.className="big "+(MODE==="online"?"blue":"red");}}
 function toggleMode(){
@@ -5212,6 +5228,7 @@ async function poll(){
     if(fresh){renderUnread();try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}}
     const prevFr=WIN_FRIENDS.length;
     WIN_FRIENDS=(d.friends||[]).filter(f=>!WIN_BLOCKS.includes(f.id));WIN_REQS=d.requests||[];WIN_NAMES=d.names||{};
+    persistFriendCache();try{localStorage.setItem("ac_names",JSON.stringify(WIN_NAMES));}catch(e){}
     if(d.pks)E2E_PKS=d.pks;
     let v12ch=false;
     for(const g of (d.groups||[])){
@@ -6583,7 +6600,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=139;
+const AC_V=140;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
@@ -6656,8 +6673,15 @@ setInterval(function(){try{checkForcedUpdate();}catch(e){}},45000);
   let phrase=getPhraseSync();
   if(!phrase){phrase=await idbGet("acphrase");if(phrase)savePhraseLocally(phrase);}
   let durableDev="";try{durableDev=await idbGet("dev");}catch(e){}
-  if(id||phrase||durableDev){
-    try{if(id)$("oldnum").value=id;$("sendcodebtn").textContent="Signing you back in…";}catch(e){}
+  if(id){
+    /* v140: a verified device reopens immediately from its durable local identity.
+       Server sync validates it in the background; a temporary database outage can
+       no longer throw an existing user back to registration. */
+    await finishLogin({id:id,name:localStorage.getItem("ac_name")||"AirConnect user",aid:AID,phrase:phrase||""});
+    return;
+  }
+  if(phrase||durableDev){
+    try{$("sendcodebtn").textContent="Signing you back in…";}catch(e){}
     setTimeout(()=>{try{register();}catch(e){}},180);
   }
 })();
