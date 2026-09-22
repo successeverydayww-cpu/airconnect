@@ -34,8 +34,8 @@ nav button .ico{display:block;font-size:20px;position:relative}
 .rtime{font-size:11px;color:#64748B;margin-left:auto;flex-shrink:0}
 .empty{padding:40px 20px;text-align:center;color:#64748B;font-size:14px}
 .callbtns{display:flex;gap:8px;margin-left:auto}
-.callbtns button{border:0;border-radius:50%;width:42px;height:42px;font-size:17px;cursor:pointer;flex-shrink:0}
-.cb1{background:#D7EEE0;color:#075E46}.cb2{background:#0b3d4d;color:#fff}
+.callbtns button{border:0;background:transparent;border-radius:0;width:auto;height:auto;font-size:21px;cursor:pointer;flex-shrink:0;padding:6px 8px}
+.cb1{background:transparent;color:#075E46}.cb2{background:transparent;color:#0F172A}
 /* forms */
 .card{margin:12px;background:#FFFFFF;border:1px solid #0F172A;border-radius:12px;padding:16px}
 input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;font-size:15px;margin-bottom:10px;outline:none}
@@ -425,6 +425,7 @@ footer a{color:#64748B}
         <button class="big" style="flex:0 0 auto;padding:8px 12px;font-size:13px" onclick="document.getElementById('picinput').click()">📷 Change photo</button>
         <button class="big" style="flex:0 0 auto;background:#CBD5E1;padding:8px 10px" onclick="removeMyPic()">🗑</button>
         <input type="file" id="picinput" class="hide" accept="image/*" onchange="picChosen(this)">
+        <input type="file" id="gpicinput" class="hide" accept="image/*" onchange="gPicChosen(this)">
       </div>
       <div onclick="editMyName()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">Name</div><div id="meNameRow" style="font-weight:600;font-size:15px">—</div></div>
@@ -680,7 +681,7 @@ footer a{color:#64748B}
 <div id="gview" class="ovl hide">
   <div class="ohdr">
     <button class="bk" onclick="closeGroup()">‹</button>
-    <div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0;cursor:pointer" onclick="openGInfo()" title="Tap for group info"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div>
+    <div class="av" id="gvAv" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0;cursor:pointer" onclick="openGInfo()" title="Tap for group info"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div>
     <div style="flex:1;min-width:0;cursor:pointer" onclick="openGInfo()"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
     <button class="bk" onclick="openGInfo()" title="Group options">⋮</button><button class="bk" onclick="gCall()" title="Group call">📞</button>
   </div>
@@ -1982,8 +1983,10 @@ function renderLists(){
       const g=it.g;const lg=lastG(g);
       const gp=lg?((lg.who==="sys")?String(lg.text||"").slice(0,60):((lg.who==="me"?"You: ":"")+(String(lg.text||"").slice(0,56)))):"No messages yet";
       const row=document.createElement("div");row.className="row";
-      row.innerHTML='<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div><div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name)+'<span style="color:#00A884;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#00A884;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
+      const gpAv=GPIC_CACHE[g.id];
+      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name)+'<span style="color:#00A884;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#00A884;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
       row.onclick=function(){openGroup(g.id);};
+      try{gFetchPic(g.id);}catch(e){}
       cl.appendChild(row);
       continue;
     }
@@ -2044,7 +2047,9 @@ function renderCallLog(){
     const nm=isGrp?(grpObj?grpObj.name:("Group "+c.n)):(WIN_NAMES[c.n]||("+"+c.n));
     const idLine=isGrp?("ID: "+esc(c.n)):(' · + '+esc(c.n));
     const r=document.createElement("div");r.className="row";r.style.cursor="pointer";
-    r.innerHTML='<div class="av" style="background:'+(c.miss?"#FEE2E2":(isGrp?"#E0F2FE":memColor(c.n)))+';color:'+(c.miss?"#B91C1C":(isGrp?"#0369A1":"#fff"))+'">'+(isGrp?"👥":esc(nm.charAt(0).toUpperCase()))+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+(isGrp?"":dotHTML(c.n))+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+(isGrp?" · "+idLine:idLine)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();'+(isGrp?'openGroup(\''+c.n+'\')':'dial(\''+c.n+'\')')+'">'+(isGrp?"👥":"📞")+'</button></div>';
+    const gAv=(isGrp&&GPIC_CACHE[c.n])?('<div class="av" style="background-image:url('+GPIC_CACHE[c.n]+');background-size:cover;background-position:center"></div>'):null;
+    r.innerHTML=(gAv||('<div class="av" style="background:'+(c.miss?"#FEE2E2":(isGrp?"#E0F2FE":memColor(c.n)))+';color:'+(c.miss?"#B91C1C":(isGrp?"#0369A1":"#fff"))+'>'+(isGrp?"👥":esc(nm.charAt(0).toUpperCase()))+'</div>'))+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+(isGrp?"":dotHTML(c.n))+'<div style="min-width:0;flex:1"><div class="rname"'+(c.miss?' style="color:#DC2626"':'')+'>'+esc(nm)+'</div><div class="rsub">'+(c.d==="out"?"↗ ":"↙ ")+label+" · "+ago(c.at)+(isGrp?" · "+idLine:idLine)+'</div></div></div><div class="callbtns"><button class="cb1" onclick="event.stopPropagation();'+(isGrp?'openGroup(\''+c.n+'\')':'dial(\''+c.n+'\')')+'">'+(isGrp?"👥":"📞")+'</button></div>';
+    if(isGrp){try{gFetchPic(c.n);}catch(e){}}
     r.onclick=function(){if(isGrp)openGroup(c.n);else dial(c.n);};
     ll.appendChild(r);
   };
@@ -2193,6 +2198,56 @@ async function picChosen(fi){
     if(r&&r.ok){PIC_CACHE[ME]=pic;PIC_FETCHED[ME]=1;savePics();refreshMyPic();renderLists();renderStatusScreen();toast("Profile photo saved ✓");}
     else toast((r&&r.err)||"Could not save photo — check connection");
   }catch(e){toast("Could not read that image — try another photo");}
+}
+/* ----- v121 (skylar): GROUP PROFILE PHOTO — admin-uploadable, shown everywhere the group appears ----- */
+let GPIC_CACHE={};try{GPIC_CACHE=JSON.parse(localStorage.getItem("aicall_gpics"))||{};}catch(e){}
+let GPIC_FETCHED={};
+function saveGPics(){try{localStorage.setItem("aicall_gpics",JSON.stringify(GPIC_CACHE));}catch(e){}}
+function gApplyHeaderPic(gid){
+  const el=$("gvAv");if(!el)return;
+  const pic=GPIC_CACHE[gid];
+  if(pic){el.textContent="";el.style.backgroundImage="url("+pic+")";el.style.backgroundSize="cover";el.style.backgroundPosition="center";}
+  else{el.style.backgroundImage="";try{if(!el.getAttribute("data-def"))el.setAttribute("data-def",el.innerHTML);}catch(e2){}try{el.innerHTML=el.getAttribute("data-def")||el.innerHTML;}catch(e2){}el.style.background="#E0F2FE";}
+}
+function gFetchPic(gid){
+  if(!gid||GPIC_FETCHED[gid])return;
+  GPIC_FETCHED[gid]=1;
+  api("gpic",{g:gid}).then(function(r){
+    GPIC_CACHE[gid]=(r&&r.pic)||"";
+    saveGPics();
+    try{renderLists();}catch(e){}
+    try{if(GROUP_OPEN===gid)gApplyHeaderPic(gid);}catch(e){}
+    try{renderCallLog();}catch(e){}
+  }).catch(function(){GPIC_FETCHED[gid]=0;});
+}
+async function gPicChosen(fi){
+  const f=fi.files&&fi.files[0];fi.value="";
+  if(!f||!GROUP_OPEN)return;
+  toast("Reading group photo…");
+  try{
+    const dataUrl=await readDataUrl(f);
+    const img=await new Promise(function(res,rej){const i=new Image();i.onload=function(){res(i);};i.onerror=function(){rej(new Error("img"));};i.src=dataUrl;});
+    const cv=document.createElement("canvas");
+    let w=img.width,h=img.height;const mx=128;
+    if(!w||!h){w=128;h=128;}
+    if(w>mx||h>mx){const sc=mx/Math.max(w,h);w=Math.round(w*sc);h=Math.round(h*sc);}
+    cv.width=Math.max(1,w);cv.height=Math.max(1,h);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    let pic=cv.toDataURL("image/jpeg",0.72);
+    let guard=0;
+    while(pic.length>44000&&cv.width>16&&guard++<12){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
+    toast("Saving group photo…");
+    const r=await api("gavatar",{by:ME,g:GROUP_OPEN,pic:pic});
+    if(r&&r.ok){GPIC_CACHE[GROUP_OPEN]=pic;GPIC_FETCHED[GROUP_OPEN]=1;saveGPics();gApplyHeaderPic(GROUP_OPEN);try{renderLists();}catch(e){}try{renderCallLog();}catch(e){}toast("Group photo saved ✓");gMenuClose();try{openGInfo();}catch(e){}}
+    else toast((r&&r.err)||"Could not save photo — check connection");
+  }catch(e){toast("Could not read that image — try another photo");}
+}
+async function gPicRemove(){
+  if(!GROUP_OPEN)return;
+  if(!confirm("Remove the group photo?"))return;
+  const r=await api("gavatar",{by:ME,g:GROUP_OPEN,pic:""});
+  if(r&&r.ok){GPIC_CACHE[GROUP_OPEN]="";GPIC_FETCHED[GROUP_OPEN]=1;saveGPics();gApplyHeaderPic(GROUP_OPEN);try{renderLists();}catch(e){}try{renderCallLog();}catch(e){}toast("Group photo removed");gMenuClose();try{openGInfo();}catch(e){}}
+  else toast((r&&r.err)||"Could not remove");
 }
 function viewPic(p){
   if(!p)return;
@@ -5310,6 +5365,7 @@ function openGroup(gid){
   const g=GROUPS.find(x=>x.id===gid);if(!g)return;
   GROUP_OPEN=gid;GUNREAD[gid]=0;OPENS[gid]=(OPENS[gid]||0)+1;persistV12();renderLists();
   $("gvName").textContent=g.name;$("gvName").style.cursor="pointer";$("gvName").onclick=openGInfo;$("gvSub").style.cursor="pointer";$("gvSub").onclick=openGInfo;
+  try{gApplyHeaderPic(gid);gFetchPic(gid);}catch(e){}
   const gAdm=(g.admins||[g.by]).indexOf(ME)>=0;
   $("gvSub").textContent=g.members.length+" members"+((g.admins||[]).length>1?" · "+g.admins.length+" admins":"")+(gAdm?" · you are admin":"");
   try{const gb=$("gbox");if(g.lock&&!gAdm){gb.disabled=true;gb.placeholder="🔒 Only admins can send";}else{gb.disabled=false;gb.placeholder="Message group";}}catch(e){}
@@ -5456,6 +5512,8 @@ function gMenuRoot(){
     gRow(el,"🔗","Copy group link",null,function(){acCopy(acLinkBase()+"#g="+GROUP_OPEN);toast("Group link copied ✓");});
     gRow(el,r.lock?"🔓":"🔒",r.lock?"Open chat for everyone":"Lock chat to admins",null,function(){gMenuClose();glock2();});
     gRow(el,"✏️","Rename group",null,function(){const v=prompt("New group name:");if(v&&v.trim())gRenameGo(v.trim());});
+    gRow(el,"🖼","Set group photo",null,function(){try{gMenuClose();$("gpicinput").click();}catch(e){}});
+    if(GPIC_CACHE[GROUP_OPEN])gRow(el,"🚫","Remove group photo",null,function(){gPicRemove();});
     gRow(el,"➕","Add member",null,function(){gMenuAdd();});
     gRow(el,"🔑","Set group password",null,function(){const v=prompt("Group password (needed to delete the group):");if(v)gPassGo(v);});
     gRow(el,"🗑","Delete group",null,function(){gMenuClose();gdel2();},"#DC2626");
@@ -5590,6 +5648,7 @@ async function stPostChannel(){
 async function acHashHandle(){
   try{
     const h=location.hash||"";
+    if(h.indexOf("#post=")===0){acDeepLink();return;} /* v121 (skylar): a shared post link must survive login — don't let the g/u/s hash-consumer below wipe it before acDeepLink can open the exact post */
     if(h.indexOf("#g=")===0){const gid=h.slice(3).trim();if(gid)localStorage.setItem("ac_pendg",gid);}
     if(h.indexOf("#u=")===0){const num=h.slice(3).trim();if(num)localStorage.setItem("ac_pendu",num);}
     if(h.indexOf("#s=")===0){const num=h.slice(3).trim();if(num)localStorage.setItem("ac_pends",num);}
@@ -6155,7 +6214,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=120;
+const AC_V=121;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
@@ -6176,7 +6235,7 @@ async function checkForcedUpdate(){
       document.body.appendChild(o);
       try{navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:"AC_PURGE"});}catch(e2){}
       try{const ks=await caches.keys();for(const k of ks){await caches.delete(k);}}catch(e2){}
-      setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now());}catch(e2){location.reload();}},400);
+      setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now()+(location.hash||""));}catch(e2){location.reload();}},400);
     }
   }catch(e){}
 }
@@ -6187,7 +6246,7 @@ async function manualRefresh(){
   document.body.appendChild(o);
   try{navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:"AC_PURGE"});}catch(e2){}
   try{const ks=await caches.keys();for(const k of ks){await caches.delete(k);}}catch(e2){}
-  setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now());}catch(e2){location.reload();}},350);
+  setTimeout(function(){try{location.replace(location.pathname+"?acupd="+Date.now()+(location.hash||""));}catch(e2){location.reload();}},350);
 }
 /* ----- PWA: service worker + silent auto-update (v66: WhatsApp-style — new version installs itself on open, page refreshes once in background, no taps needed) ----- */
 try{
