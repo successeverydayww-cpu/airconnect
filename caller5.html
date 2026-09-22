@@ -330,7 +330,7 @@ footer a{color:#64748B}
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">✏️ Text</button>
+        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stTextOpen()">✏️ Text</button>
         <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">📷 Photo</button>
         <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">🎬 Video</button>
       </div>
@@ -354,7 +354,7 @@ footer a{color:#64748B}
   <div id="stAddBg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="stAddClose()"></div>
   <div id="stAddSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
     <div style="font-weight:700;text-align:center;margin-bottom:16px;color:#0F172A">Add to my status</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;text-align:center">
       <div onclick="stAddClose();document.getElementById('stCamIn').click()" style="cursor:pointer">
         <div style="width:52px;height:52px;border-radius:50%;background:#e2445c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📸</div>
         <div style="font-size:12px;color:#0F172A">Camera</div>
@@ -367,6 +367,10 @@ footer a{color:#64748B}
         <div style="width:52px;height:52px;border-radius:50%;background:#e2845c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div>
         <div style="font-size:12px;color:#0F172A">Video</div>
       </div>
+      <div onclick="stAddClose();stTextOpen()" style="cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;background:#0ea5a4;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">✍️</div>
+        <div style="font-size:12px;color:#0F172A">Text</div>
+      </div>
       <div onclick="stAddClose();stVoiceSheet()" style="cursor:pointer">
         <div style="width:52px;height:52px;border-radius:50%;background:#4ad66d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
         <div style="font-size:12px;color:#0F172A">Voice</div>
@@ -374,6 +378,21 @@ footer a{color:#64748B}
     </div>
     <button class="big" style="width:100%;margin-top:18px;background:#F1F5F9;color:#334155" onclick="stAddClose()">Cancel</button>
   </div>
+  <div id="stTextBg" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55" onclick="stTextClose()"></div>
+  <div id="stTextSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#0F172A;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
+    <div style="font-weight:700;text-align:center;margin-bottom:12px;color:#fff">Text status</div>
+    <textarea id="stTxtIn" maxlength="400" placeholder="Type your status…" style="width:100%;height:110px;background:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;box-sizing:border-box;resize:none"></textarea>
+    <div id="stTxtBgRow" style="display:flex;gap:8px;margin:14px 0 4px;justify-content:center"></div>
+    <button class="big" style="width:100%;margin-top:12px;background:#00A884;color:#fff" onclick="stTextPost()">Post</button>
+    <button class="big" style="width:100%;margin-top:8px;background:transparent;color:#94A3B8" onclick="stTextClose()">Cancel</button>
+  </div>
+  <div id="stViewsBg" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55" onclick="stViewsClose()"></div>
+  <div id="stViewsSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto;max-height:70vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:700;color:#0F172A">Status views</div><div id="stViewsCount" style="color:#64748B;font-size:13px"></div></div>
+    <div id="stViewsList"></div>
+    <button class="big" style="width:100%;margin-top:14px;background:#F1F5F9;color:#334155" onclick="stViewsClose()">Close</button>
+  </div>
+
 
   <div id="view-calls" class="view hide">
     <div id="calllist"></div>
@@ -712,6 +731,7 @@ footer a{color:#64748B}
   <div style="position:absolute;top:66px;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;overflow:hidden">
     <img id="stImg" draggable="false" style="max-width:100%;max-height:100%;-webkit-user-drag:none" alt="">
     <video id="stVid" class="hide" playsinline onended="nextItem()" controlslist="nodownload" disablepictureinpicture style="max-width:100%;max-height:100%"></video>
+        <div id="stTxtCard" class="hide" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box;color:#fff;font-size:24px;font-weight:700;text-align:center;line-height:1.35;word-break:break-word"></div>
     <div id="stAudWrap" class="hide" style="text-align:center;color:#0F172A">
       <div style="font-size:60px;margin-bottom:8px">🎙️</div>
       <div id="stAudName" style="font-weight:600">Voice note</div>
@@ -721,6 +741,12 @@ footer a{color:#64748B}
   <div onclick="prevItem()" style="position:absolute;left:0;top:66px;bottom:0;width:33%;z-index:5"></div>
   <div onclick="nextItem()" style="position:absolute;right:0;top:66px;bottom:0;width:33%;z-index:5"></div>
   <div id="stWm" style="position:fixed;bottom:18px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:12px;pointer-events:none"></div>
+  <div id="stBar" class="hide" style="position:fixed;bottom:0;left:0;right:0;padding:8px 10px calc(12px + env(safe-area-inset-bottom));display:flex;gap:6px;align-items:center;background:rgba(15,23,42,.6);z-index:8">
+    <div id="stEmojiRow" style="display:flex;gap:2px;flex:0 0 auto"></div>
+    <input id="stReplyIn" placeholder="Reply…" maxlength="500" style="flex:1;min-width:0;background:#fff;border:none;border-radius:18px;padding:10px 14px;font-size:14px">
+    <button style="flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#00A884;color:#fff;border:none;font-size:16px;cursor:pointer" onclick="stReplySend()">➤</button>
+  </div>
+
 </div>
 
 <!-- chat overlay -->
@@ -2281,7 +2307,8 @@ function storyCircleSeg(g,isMine,label,onclick){
   inner.style.cssText="position:absolute;left:9px;top:9px;width:"+(sz-18)+"px;height:"+(sz-18)+"px;border-radius:50%;overflow:hidden;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700";
   const last=its.length?its[its.length-1]:null;
   const pk=String((last&&last.pic)||"");
-  if(pk.indexOf("data:image")===0){inner.style.backgroundImage="url("+pk+")";inner.style.backgroundSize="cover";inner.style.backgroundPosition="center";inner.textContent="";}
+  if(last&&last.txt){inner.style.background=last.bg||"#075E46";inner.style.fontSize="20px";inner.textContent="✍️";}
+  else if(pk.indexOf("data:image")===0){inner.style.backgroundImage="url("+pk+")";inner.style.backgroundSize="cover";inner.style.backgroundPosition="center";inner.textContent="";}
   else if(pk.indexOf("data:video")===0){inner.textContent="🎬";inner.style.fontSize="18px";}
   else if(pk.indexOf("data:audio")===0){inner.textContent="🎙️";inner.style.fontSize="16px";}
   else{inner.textContent=String(label||"?").charAt(0).toUpperCase();}
@@ -2334,9 +2361,14 @@ function showStItem(){
   const g=STV.groups[STV.gi];if(!g)return;
   const s=g.items[STV.ii];if(!s){nextGroup();return;}
   try{STORY_SEEN[s.id]=1;localStorage.setItem("ac_story_seen",JSON.stringify(STORY_SEEN));}catch(e){}
+  if(g.num!==ME)stViewSend(s);
+  try{const bar=$("stBar");if(bar)bar.className=(g.num!==ME)?"":"hide";}catch(e){}
+  try{stEmojiRowRender();}catch(e){}
   try{
     $("stName").textContent=(g.num===ME?"My status":g.name);
-    $("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length;
+    $("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length+((g.num===ME&&s.v!=null)?" · 👁 "+s.v+(s.v===1?" view":" views"):"");
+    $("stTime").style.cursor=(g.num===ME&&s.vw&&s.vw.length)?"pointer":"";
+    $("stTime").onclick=(g.num===ME)?function(){stViewsOpen(s);}:null;
     $("stWm").textContent="AirConnect · status · protected view · "+(ME_NAME||"");
     $("stImg").style.filter="";$("stVid").style.filter="";
     const pr=$("stProg");pr.innerHTML="";
@@ -2365,10 +2397,14 @@ function showStItem(){
     return;
   }
   const isVid=String(s.pic).indexOf("data:video")===0;
+  const isTxt=!!s.txt;
   const isAud=String(s.pic).indexOf("data:audio")===0;
   clearTimeout(STV.timer);
   try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();$("stAudWrap").className="hide";}catch(e){}
-  if(isAud){
+  if(isTxt){
+    try{$("stImg").className="hide";$("stVid").className="hide";try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}$("stAudWrap").className="hide";try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();}catch(e){}$("stTxtCard").className="";$("stTxtCard").style.background=s.bg||"#075E46";$("stTxtCard").textContent=s.txt;}catch(e){}
+    STV.timer=setTimeout(function(){nextItem();},7000);
+  }else if(isAud){
     try{$("stImg").className="hide";$("stVid").className="hide";try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}$("stAudWrap").className="";}catch(e){}
     $("stAudName").textContent=(g.num===ME?"My voice note":g.name+" · voice note");
     const a=$("stAud");a.src=s.pic;try{a.currentTime=0;a.play().catch(function(){});}catch(e){}
@@ -2403,7 +2439,7 @@ function closeStatusViewer(){
   clearTimeout(STV.timer);
   try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();}catch(e){}
   try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}
-  try{$("stview").className="ovl hide";}catch(e){}
+  try{$("stview").className="ovl hide";}catch(e){}try{$("stBar").className="hide";}catch(e){}try{$("stTxtCard").className="hide";}catch(e){}
 }
 function renderStatusScreen(){
   if(!ME)return;
@@ -2416,6 +2452,7 @@ function renderStatusScreen(){
     try{stDraftRowRender();}catch(e3){}try{const strip=$("stRingStrip");if(strip){strip.innerHTML="";const gs2=storyGroups();const mine2=gs2.find(x=>x.num===ME);const fr2=gs2.filter(x=>x.num!==ME).slice().sort((a,b)=>{const aa=(a.items[a.items.length-1]||{}).at||0,bb=(b.items[b.items.length-1]||{}).at||0;return bb-aa;});strip.appendChild(storyCircleSeg(mine2||null,true,"My status",function(){if(mine2)openStatusViewer(ME);else stAddOpen();}));for(const g of fr2){strip.appendChild(storyCircleSeg(g,false,String(WIN_NAMES[g.num]||g.name||"?"),function(){openStatusViewer(g.num);}));}}}catch(e4){}
 
     $("stMySub").textContent=ST_DRAFT?("🎬 Video draft ready ("+vtFmt(ST_DRAFT.te-ST_DRAFT.ts)+") — use the draft card below to crop & post"):(mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours");
+    try{const tv=mine.reduce(function(n,x){return n+(Number(x.v)||0);},0);if(tv)$("stMySub").textContent+=" · 👁 "+tv+" view"+(tv>1?"s":"");}catch(e){}
     $("stDelBtn").style.display=mine.length?"":"none";
     const fr=storyGroups().filter(g=>g.num!==ME);
     fr.sort((x,y)=>{const xa=x.items[x.items.length-1]?x.items[x.items.length-1].at:0,ya=y.items[y.items.length-1]?y.items[y.items.length-1].at:0;return ya-xa;});
@@ -2430,8 +2467,9 @@ function renderStatusScreen(){
       const c=document.createElement("div");
       c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#00A884":"#CBD5E1")+";padding:2px;box-sizing:border-box;flex:0 0 50px";
       const inner=document.createElement("div");
-      const pk=String((g.items[0]||{}).pic||"");
-      if(pk.indexOf("data:image")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
+      const it0=(g.items[0]||{});const pk=String(it0.pic||"");
+      if(it0.txt){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:"+(it0.bg||"#075E46")+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="✍️";}
+      else if(pk.indexOf("data:image")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
       else if(pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
       else if(pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
       else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E2E8F0;color:#475569;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center";inner.textContent=nm.charAt(0).toUpperCase();}
@@ -2484,7 +2522,7 @@ async function stPhotoChosen(fi){
     while(pic.length>44000&&cv.width>24&&guard++<12){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
     toast("Posting status…");
     const r=await api("story",{node:ME,pic:pic});
-    if(r&&r.ok){toast("Status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();}
+    if(r&&r.ok){toast("Status posted ✓ — friends see it for 24h");stPosted();}
     else toast((r&&r.err)||"Could not post status — check connection");
   }catch(e){toast("Could not read that image — try another photo");}
 }
@@ -2873,6 +2911,83 @@ async function stVideoRec(v2,dur,maxW,br){
 }
 
 /* ================= v56: owner Admin dashboard — activate/reject wallet claims by hand ================= */
+
+/* ---------------- v118 (skylar): text statuses + views + reactions + replies ---------------- */
+const ST_TXT_BGS=["#075E46","#5B4B9E","#C2185B","#D97706","#0E7490","#334155"];
+let ST_TXT_BG=ST_TXT_BGS[0];
+function stTextOpen(){ST_TXT_BG=ST_TXT_BGS[0];try{$("stTxtIn").value="";}catch(e){}stTxtBgRowRender();$("stTextSheet").className="";$("stTextBg").className="";}
+function stTextClose(){try{$("stTextSheet").className="hide";$("stTextBg").className="hide";}catch(e){}}
+function stTxtBgRowRender(){const r=$("stTxtBgRow");if(!r)return;r.innerHTML="";for(const c of ST_TXT_BGS){const d=document.createElement("div");d.style.cssText="width:30px;height:30px;border-radius:50%;background:"+c+";cursor:pointer;border:"+(ST_TXT_BG===c?"3px solid #fff":"2px solid rgba(255,255,255,.35)");d.onclick=function(){ST_TXT_BG=c;stTxtBgRowRender();};r.appendChild(d);}}
+async function stTextPost(){
+  const t=String(($("stTxtIn")||{}).value||"").trim();
+  if(!t){toast("Type something first");return;}
+  toast("Posting status…");
+  const r=await api("story",{node:ME,txt:t,bg:ST_TXT_BG});
+  if(r&&r.ok){stTextClose();toast("Text status posted ✓");stPosted();}
+  else toast((r&&r.err)||"Could not post text status");
+}
+async function stPosted(){ /* v118 proof moment: refresh + open my own series so the new post is on screen immediately */
+  try{
+    const d=await api("stories",{node:ME});
+    if(d&&d.stories){STORIES=d.stories;renderStoryStrip();}
+    renderStatusScreen();
+    const mine=STORIES.filter(function(x){return x.num===ME;});
+    if(mine.length)openStatusViewer(ME);
+  }catch(e){try{renderStatusScreen();}catch(e2){}}
+}
+let STV_SENT={};
+function stViewSend(s){
+  if(!s||!s.num||s.num===ME)return;
+  if(STV_SENT[s.id])return;STV_SENT[s.id]=1;
+  try{api("stview",{node:ME,owner:s.num,id:s.id}).catch(function(){});}catch(e){}
+}
+const ST_EMOJIS=["❤️","😂","😮","😢","👍","🔥"];
+function stEmojiRowRender(){
+  const r=$("stEmojiRow");if(!r)return;r.innerHTML="";
+  for(const em of ST_EMOJIS){const sp=document.createElement("span");sp.textContent=em;sp.style.cssText="font-size:20px;cursor:pointer;padding:2px";sp.onclick=function(){stReactSend(em);};r.appendChild(sp);}
+}
+async function stReactSend(em){
+  try{
+    const g=STV.groups[STV.gi];if(!g||g.num===ME)return;
+    const s=g.items[STV.ii];if(s)stViewSend(s);
+    const to=g.num,nm=WIN_NAMES[to]||g.name||("+"+to);
+    const txt="↩ Reacted "+em+" to your status";
+    const r=await api("chat",{from:ME,to:to,text:await e2eEnc(to,txt)});
+    if(r&&r.ok){(CHATS[to]=CHATS[to]||[]).push({who:"me",text:txt,ts:r.id});toast("Reaction sent to "+nm+" ✓");}
+    else toast("Could not send — check connection");
+  }catch(e){}
+}
+async function stReplySend(){
+  try{
+    const inp=$("stReplyIn");const t=String((inp&&inp.value)||"").trim();
+    if(!t)return;
+    const g=STV.groups[STV.gi];if(!g||g.num===ME)return;
+    const s=g.items[STV.ii];if(s)stViewSend(s);
+    const to=g.num,nm=WIN_NAMES[to]||g.name||("+"+to);
+    const txt="↩ Replied to your status: "+t;
+    const r=await api("chat",{from:ME,to:to,text:await e2eEnc(to,txt)});
+    if(r&&r.ok){if(inp)inp.value="";(CHATS[to]=CHATS[to]||[]).push({who:"me",text:txt,ts:r.id});toast("Reply sent to "+nm+" ✓");}
+    else toast("Could not send — check connection");
+  }catch(e){}
+}
+function stViewsOpen(s){
+  try{
+    const l=$("stViewsList");if(!l)return;
+    l.innerHTML="";
+    const vw=(s&&s.vw)||[];
+    if(!vw.length){l.innerHTML='<div style="color:#64748B;font-size:14px;padding:10px 2px">No views yet</div>';}
+    for(const v of vw){
+      const d=document.createElement("div");
+      d.style.cssText="display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px solid #F1F5F9;font-size:14px";
+      d.innerHTML='<div style="font-weight:600">'+esc(String(v.name||("+"+v.num)))+'</div><div style="color:#64748B">'+ago(Number(v.at)||0)+'</div>';
+      l.appendChild(d);
+    }
+    $("stViewsCount").textContent=((s&&s.v)||0)+" view"+(((s&&s.v)||0)===1?"":"s");
+    $("stViewsSheet").className="";$("stViewsBg").className="";
+  }catch(e){}
+}
+function stViewsClose(){try{$("stViewsSheet").className="hide";$("stViewsBg").className="hide";}catch(e){}}
+
 function stAddOpen(){$("stAddSheet").className="";$("stAddBg").className="";}
 function stAddClose(){$("stAddSheet").className="hide";$("stAddBg").className="hide";}
 var ADM_CLAIMS=[];
@@ -3012,7 +3127,7 @@ async function stVoicePost(){
   const b64=SVR_B64;stVoiceDiscard();
   toast("Posting voice status…");
   const r=await api("story",{node:ME,pic:b64});
-  if(r&&r.ok){toast("Voice status posted ✓ — friends see it for 24h");stVoiceClose();refreshStories();renderStatusScreen();}
+  if(r&&r.ok){toast("Voice status posted ✓ — friends see it for 24h");stVoiceClose();stPosted();}
   else toast((r&&r.err)||"Could not post voice note");
 }
 setInterval(refreshStories,60000);
@@ -6105,7 +6220,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=117;
+const AC_V=118;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
