@@ -194,8 +194,7 @@ footer a{color:#64748B}
   </div>
 
   <div id="view-chats" class="view">
-    <div id="storystrip" style="display:flex;gap:12px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid #0F172A"></div>
-    <input type="file" id="storyinput" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
+        <input type="file" id="storyinput" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
     <input type="file" id="stCamIn" class="hide" accept="image/*" capture="environment" onchange="stPhotoChosen(this)">
     <input type="file" id="stPhotoIn" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
     <input type="file" id="stVidIn" class="hide" accept="video/*" onchange="stVideoChosen(this)">
@@ -220,7 +219,7 @@ footer a{color:#64748B}
     </div>
     <div id="stVoice" class="ovl hide" style="z-index:60" onclick="if(event.target===this)stVoiceClose()">
       <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;text-align:center">
-        <div style="font-weight:600;margin-bottom:4px">🎙️ Voice status</div>
+        <div style="font-weight:600;margin-bottom:4px">🎙️ Voice update</div>
         <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold the button and speak · max 30 seconds</div>
         <div id="stVRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="stVPrev" class="hide" style="margin:10px 0"></div>
@@ -325,8 +324,8 @@ footer a{color:#64748B}
           <div onclick="stAddOpen()" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#D7EEE0;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)">📷</div>
         </div>
         <div style="flex:1;min-width:0;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">
-          <div style="font-weight:600">My status</div>
-          <div style="font-size:12.5px;color:#64748B" id="stMySub">Tap to add a status update</div>
+          <div style="font-weight:600">My updates</div>
+          <div style="font-size:12.5px;color:#64748B" id="stMySub">Tap to add an update</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px">
@@ -334,14 +333,14 @@ footer a{color:#64748B}
         <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">📷 Photo</button>
         <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">🎬 Video</button>
       </div>
-      <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:10px;background:#F1F5F9;color:#334155" onclick="deleteMyStatus()">🗑 Delete my status</button>
-      <div style="font-size:11.5px;color:#64748B;margin-top:8px">Status updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
+      <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:10px;background:#F1F5F9;color:#334155" onclick="deleteMyStatus()">🗑 Delete my updates</button>
+      <div style="font-size:11.5px;color:#64748B;margin-top:8px">Updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
     <div id="stDraftRow" class="hide"></div>
     <div class="card" style="border:none;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-weight:700;font-size:12.5px;color:#0D6E52;padding:2px 2px 6px">Recent updates</div>
       <div id="stFriendsRow"></div>
-      <div id="stFriends" style="font-size:14px;color:#64748B">No friend statuses yet.</div>
+      <div id="stFriends" style="font-size:14px;color:#64748B">No friend updates yet.</div>
     </div>
     <div class="card" id="stViewedCard" style="display:none;border:none;box-shadow:0 1px 3px rgba(0,0,0,.08)">
       <div style="font-weight:700;font-size:12.5px;color:#64748B;padding:2px 2px 6px">Viewed updates</div>
@@ -353,7 +352,7 @@ footer a{color:#64748B}
   <div id="stFab" class="hide" style="position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:50%;background:#D7EEE0;color:#075E46;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29" onclick="stAddOpen()">📷</div>
   <div id="stAddBg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="stAddClose()"></div>
   <div id="stAddSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
-    <div style="font-weight:700;text-align:center;margin-bottom:16px;color:#0F172A">Add to my status</div>
+    <div style="font-weight:700;text-align:center;margin-bottom:16px;color:#0F172A">Add to my updates</div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;text-align:center">
       <div onclick="stAddClose();document.getElementById('stCamIn').click()" style="cursor:pointer">
         <div style="width:52px;height:52px;border-radius:50%;background:#e2445c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">📸</div>
@@ -380,15 +379,15 @@ footer a{color:#64748B}
   </div>
   <div id="stTextBg" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55" onclick="stTextClose()"></div>
   <div id="stTextSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#0F172A;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
-    <div style="font-weight:700;text-align:center;margin-bottom:12px;color:#fff">Text status</div>
-    <textarea id="stTxtIn" maxlength="400" placeholder="Type your status…" style="width:100%;height:110px;background:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;box-sizing:border-box;resize:none"></textarea>
+    <div style="font-weight:700;text-align:center;margin-bottom:12px;color:#fff">Text update</div>
+    <textarea id="stTxtIn" maxlength="400" placeholder="Type your update…" style="width:100%;height:110px;background:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;box-sizing:border-box;resize:none"></textarea>
     <div id="stTxtBgRow" style="display:flex;gap:8px;margin:14px 0 4px;justify-content:center"></div>
     <button class="big" style="width:100%;margin-top:12px;background:#00A884;color:#fff" onclick="stTextPost()">Post</button>
     <button class="big" style="width:100%;margin-top:8px;background:transparent;color:#94A3B8" onclick="stTextClose()">Cancel</button>
   </div>
   <div id="stViewsBg" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55" onclick="stViewsClose()"></div>
   <div id="stViewsSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto;max-height:70vh;overflow:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:700;color:#0F172A">Status views</div><div id="stViewsCount" style="color:#64748B;font-size:13px"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-weight:700;color:#0F172A">Update views</div><div id="stViewsCount" style="color:#64748B;font-size:13px"></div></div>
     <div id="stViewsList"></div>
     <button class="big" style="width:100%;margin-top:14px;background:#F1F5F9;color:#334155" onclick="stViewsClose()">Close</button>
   </div>
@@ -450,7 +449,7 @@ footer a{color:#64748B}
       <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap any row to edit, WhatsApp-style.</div>
       <button class="big" style="margin-top:14px;width:100%;background:#F1F5F9;color:#111827" onclick="logOut()">🚪 Log out</button>
       <button class="big" style="margin-top:8px;width:100%;background:#e2445c" onclick="delAccount()">🗑 Delete my account</button>
-      <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">Deleting is permanent — your number, chats, statuses and photo are erased from our servers. You'll be asked for your passphrase to confirm it's really you.</div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">Deleting is permanent — your number, chats, updates and photo are erased from our servers. You'll be asked for your passphrase to confirm it's really you.</div>
     </div>
     <div class="card" id="planStatusCard">
       <div style="font-weight:600;margin-bottom:6px">⭐ Your plan</div>
@@ -2386,7 +2385,7 @@ function renderStoryStrip(){
   const fr=gs.filter(g=>g.num!==ME);
   for(const el of targets){
     el.innerHTML="";
-    el.appendChild(storyCircleSeg(mine||null,true,"My status",function(){if(mine)openStatusViewer(ME);else stAddOpen();}));
+    el.appendChild(storyCircleSeg(mine||null,true,"My updates",function(){if(mine)openStatusViewer(ME);else stAddOpen();}));
     for(const g of fr){
       el.appendChild(storyCircleSeg(g,false,String(g.name||"?"),function(){openStatusViewer(g.num);}));
     }
@@ -2396,7 +2395,7 @@ function viewStoryById(id){const s=STORIES.find(x=>x.id===id);if(s)openStatusVie
 function storyGroups(){
   const groups=[];
   const mine=STORIES.filter(s=>s.num===ME);
-  if(mine.length)groups.push({num:ME,name:"My status",items:mine});
+  if(mine.length)groups.push({num:ME,name:"My updates",items:mine});
   for(const s of STORIES){
     if(s.num===ME)continue;
     let g=groups.find(g=>g.num===s.num);
@@ -2423,11 +2422,11 @@ function showStItem(){
   try{const bar=$("stBar");if(bar)bar.className=(g.num!==ME)?"":"hide";}catch(e){}
   try{stEmojiRowRender();}catch(e){}
   try{
-    $("stName").textContent=(g.num===ME?"My status":g.name);
+    $("stName").textContent=(g.num===ME?"My updates":g.name);
     $("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length+((g.num===ME&&s.v!=null)?" · 👁 "+s.v+(s.v===1?" view":" views"):"");
     $("stTime").style.cursor=(g.num===ME&&s.vw&&s.vw.length)?"pointer":"";
     $("stTime").onclick=(g.num===ME)?function(){stViewsOpen(s);}:null;
-    $("stWm").textContent="AirConnect · status · protected view · "+(ME_NAME||"");
+    $("stWm").textContent="AirConnect · update · protected view · "+(ME_NAME||"");
     $("stImg").style.filter="";$("stVid").style.filter="";
     const pr=$("stProg");pr.innerHTML="";
     g.items.forEach(function(it,i){const b=document.createElement("div");b.className="stseg"+(i<=STV.ii?" on":"");pr.appendChild(b);});
@@ -2438,7 +2437,7 @@ function showStItem(){
       const v=$("stVid");
       if(!WT_VCACHE[s.vf]){
         try{$("stTime").textContent="Loading video…";}catch(e){}
-        try{await wtGetVid(s.vf,0);}catch(e){toast("Could not load that video status");nextItem();return;}
+        try{await wtGetVid(s.vf,0);}catch(e){toast("Could not load that video update");nextItem();return;}
       }
       try{$("stTime").textContent=ago(s.at)+" · "+(STV.ii+1)+"/"+g.items.length;}catch(e){}
       v.src=WT_VCACHE[s.vf];
@@ -2507,7 +2506,7 @@ function renderStatusScreen(){
     const pic=PIC_CACHE[ME];
     if(pic){av.textContent="";av.style.backgroundImage="url("+pic+")";av.style.backgroundSize="cover";av.style.backgroundPosition="center";}
     else{av.style.backgroundImage="";av.textContent=String(ME_NAME||"?").charAt(0).toUpperCase();}
-    try{stDraftRowRender();}catch(e3){}try{const strip=$("stRingStrip");if(strip){strip.innerHTML="";const gs2=storyGroups();const mine2=gs2.find(x=>x.num===ME);const fr2=gs2.filter(x=>x.num!==ME).slice().sort((a,b)=>{const aa=(a.items[a.items.length-1]||{}).at||0,bb=(b.items[b.items.length-1]||{}).at||0;return bb-aa;});strip.appendChild(storyCircleSeg(mine2||null,true,"My status",function(){if(mine2)openStatusViewer(ME);else stAddOpen();}));for(const g of fr2){strip.appendChild(storyCircleSeg(g,false,String(WIN_NAMES[g.num]||g.name||"?"),function(){openStatusViewer(g.num);}));}}}catch(e4){}
+    try{stDraftRowRender();}catch(e3){}try{const strip=$("stRingStrip");if(strip){strip.innerHTML="";const gs2=storyGroups();const mine2=gs2.find(x=>x.num===ME);const fr2=gs2.filter(x=>x.num!==ME).slice().sort((a,b)=>{const aa=(a.items[a.items.length-1]||{}).at||0,bb=(b.items[b.items.length-1]||{}).at||0;return bb-aa;});strip.appendChild(storyCircleSeg(mine2||null,true,"My updates",function(){if(mine2)openStatusViewer(ME);else stAddOpen();}));for(const g of fr2){strip.appendChild(storyCircleSeg(g,false,String(WIN_NAMES[g.num]||g.name||"?"),function(){openStatusViewer(g.num);}));}}}catch(e4){}
 
     $("stMySub").textContent=ST_DRAFT?("🎬 Video draft ready ("+vtFmt(ST_DRAFT.te-ST_DRAFT.ts)+") — use the draft card below to crop & post"):(mine.length?("Tap to view · "+mine.length+" update"+(mine.length>1?"s":"")+" · "+ago(mine[mine.length-1].at)):"Add a photo, video or voice note — friends see it for 24 hours");
     try{const tv=mine.reduce(function(n,x){return n+(Number(x.v)||0);},0);if(tv)$("stMySub").textContent+=" · 👁 "+tv+" view"+(tv>1?"s":"");}catch(e){}
@@ -2578,9 +2577,9 @@ async function stPhotoChosen(fi){
     let pic=cv.toDataURL("image/jpeg",0.7);
     let guard=0;
     while(pic.length>44000&&cv.width>24&&guard++<12){cv.width=Math.round(cv.width*0.85);cv.height=Math.round(cv.height*0.85);cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);pic=cv.toDataURL("image/jpeg",0.6);}
-    toast("Posting status…");
+    toast("Posting update…");
     const r=await api("story",{node:ME,pic:pic});
-    if(r&&r.ok){toast("Status posted ✓ — friends see it for 24h");stPosted();}
+    if(r&&r.ok){toast("Update posted ✓ — friends see it for 24h");stPosted();}
     else toast((r&&r.err)||"Could not post status — check connection");
   }catch(e){toast("Could not read that image — try another photo");}
 }
@@ -2605,7 +2604,7 @@ function tsDay(ts){
 async function stVideoChosen(fi){
   const f=fi.files&&fi.files[0];fi.value="";
   if(!f)return;
-  if(!window.MediaRecorder){toast("Video status needs Chrome — try the 🖼️ photo option");return;}
+  if(!window.MediaRecorder){toast("Video update needs Chrome — try the 🖼️ photo option");return;}
   toast("Reading video…");
   /* v109 (skylar): the old flow read the WHOLE file as a dataURL before even checking
      its length — on a phone a 50-100MB gallery video froze the page right after selection,
@@ -2742,7 +2741,7 @@ async function stDraftPost(){
     ST_DRAFT=null;
     stDraftSheetClose();
     stDraftRowRender();
-    toast("Video status posted ✓");
+    toast("Video update posted ✓");
     try{const d2=await api("stories",{node:ME});if(d2&&d2.stories)STORIES=d2.stories;}catch(e){}
     renderStoryStrip();renderStatusScreen();
     openStatusViewer(ME); /* v116: the proof moment — his series opens with the new video playing */
@@ -2850,7 +2849,7 @@ async function stVideoPost(f,start,dur){
       if(wholeDurCheck&&dur>=wholeDurCheck-0.6){
         const du=await readDataUrl(f);
         const r0=await api("story",{node:ME,pic:du});
-        if(r0&&r0.ok){toast("Video status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();if(wakeLock)wakeLock.release().catch(()=>{});return;}
+        if(r0&&r0.ok){toast("Video update posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();if(wakeLock)wakeLock.release().catch(()=>{});return;}
       }
     }
   }catch(e){}
@@ -2879,9 +2878,9 @@ async function stVideoPost(f,start,dur){
   try{URL.revokeObjectURL(dataUrl);}catch(e){}
   if(wakeLock)wakeLock.release().catch(()=>{});
   if(!b64){toast("Could not record that clip cleanly — try a shorter window or the 🖼️ photo option");return;}
-  toast("Posting video status…");
+  toast("Posting video update…");
   const r=await api("story",{node:ME,pic:b64});
-  if(r&&r.ok){toast("Video status posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();}
+  if(r&&r.ok){toast("Video update posted ✓ — friends see it for 24h");refreshStories();renderStatusScreen();}
   else toast((r&&r.err)||"Could not post video — try again");
 }
 async function stVideoRec(v2,dur,maxW,br){
@@ -2979,10 +2978,10 @@ function stTxtBgRowRender(){const r=$("stTxtBgRow");if(!r)return;r.innerHTML="";
 async function stTextPost(){
   const t=String(($("stTxtIn")||{}).value||"").trim();
   if(!t){toast("Type something first");return;}
-  toast("Posting status…");
+  toast("Posting update…");
   const r=await api("story",{node:ME,txt:t,bg:ST_TXT_BG});
-  if(r&&r.ok){stTextClose();toast("Text status posted ✓");stPosted();}
-  else toast((r&&r.err)||"Could not post text status");
+  if(r&&r.ok){stTextClose();toast("Text update posted ✓");stPosted();}
+  else toast((r&&r.err)||"Could not post text update");
 }
 async function stPosted(){ /* v118 proof moment: refresh + open my own series so the new post is on screen immediately */
   try{
@@ -3141,7 +3140,7 @@ function stVoiceClose(){
 }
 async function stVoiceDown(e){
   if(SVR_B64)return;
-  if(!window.MediaRecorder||!navigator.mediaDevices){toast("Voice status needs Chrome — try photo status");return;}
+  if(!window.MediaRecorder||!navigator.mediaDevices){toast("Voice update needs Chrome — try photo update");return;}
   try{SVR_STREAM=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
   catch(err){toast("Microphone blocked — allow mic access first");return;}
   SVR_CH=[];
@@ -3158,7 +3157,7 @@ async function stVoiceDown(e){
     const fr=new FileReader();
     fr.onload=function(){
       SVR_B64=String(fr.result);
-      if(SVR_B64.length>390000){toast("Too long — voice status is max 30 seconds");SVR_B64=null;$("stVBtns").className="hide";return;}
+      if(SVR_B64.length>390000){toast("Too long — voice update is max 30 seconds");SVR_B64=null;$("stVBtns").className="hide";return;}
       $("stVPrev").className="";
       $("stVPrev").innerHTML='<audio controls autoplay src="'+SVR_B64+'" style="width:100%"></audio>';
       $("stVBtns").className="";
@@ -3183,9 +3182,9 @@ function stVoiceDiscard(){SVR_B64=null;$("stVBtns").className="hide";$("stVPrev"
 async function stVoicePost(){
   if(!SVR_B64)return;
   const b64=SVR_B64;stVoiceDiscard();
-  toast("Posting voice status…");
+  toast("Posting voice update…");
   const r=await api("story",{node:ME,pic:b64});
-  if(r&&r.ok){toast("Voice status posted ✓ — friends see it for 24h");stVoiceClose();stPosted();}
+  if(r&&r.ok){toast("Voice update posted ✓ — friends see it for 24h");stVoiceClose();stPosted();}
   else toast((r&&r.err)||"Could not post voice note");
 }
 setInterval(refreshStories,60000);
@@ -5667,7 +5666,7 @@ function stMenu(){
     b.onclick=fn;el.appendChild(b);
   };
   row("🔗","Copy link to this status",function(){acCopy(link);toast("Link copied ✓ — paste anywhere to share");stMenuClose();});
-  row("📤","Share…",function(){stMenuClose();const txt=(mine?"My status":esc(g.name)+"'s status")+" — via AirConnect";if(navigator.share){try{navigator.share({title:"AirConnect status",text:txt,url:link});}catch(e){}}else{acCopy(txt+" "+link);toast("Copied — paste anywhere to share");}});
+  row("📤","Share…",function(){stMenuClose();const txt=(mine?"My updates":esc(g.name)+"'s updates")+" — via AirConnect";if(navigator.share){try{navigator.share({title:"AirConnect update",text:txt,url:link});}catch(e){}}else{acCopy(txt+" "+link);toast("Copied — paste anywhere to share");}});
   if(mine)row("📢","Post to my channel",function(){stMenuClose();stPostChannel();});
   if(mine)row("🗑","Delete this status",function(){stMenuClose();stMenuDel();},"#DC2626");
   document.body.appendChild(el);
@@ -5687,8 +5686,8 @@ async function stPostChannel(){
   let g=null;try{g=STV.groups[STV.gi];}catch(e){}
   if(!g||g.num!==ME)return;
   const s=g.items[STV.ii];const pic=s.pic||"";
-  if(!pic){toast("Only photo and video statuses can be posted");return;}
-  if(pic.indexOf("data:audio")===0){toast("Voice statuses cannot be posted to a channel yet");return;}
+  if(!pic){toast("Only photo and video updates can be posted");return;}
+  if(pic.indexOf("data:audio")===0){toast("Voice updates cannot be posted to a channel yet");return;}
   toast("Posting…");
   try{
     let dur=0;
@@ -5751,7 +5750,7 @@ async function acHashConsume(){
       try{await refreshStories();}catch(e){}
       setTimeout(function(){
         const has=(typeof storyGroups==="function")&&storyGroups().some(function(g){return g.num===ps;});
-        if(has)openStatusViewer(ps);else toast("No statuses available from that link right now");
+        if(has)openStatusViewer(ps);else toast("No updates available from that link right now");
       },500);
     }
   }catch(e){}
@@ -6149,7 +6148,7 @@ async function exportData(){
   toast("Downloaded ✅");
 }
 async function delAccount(){
-  if(!confirm("Delete your account permanently?\n\nYour number, chats, statuses and photo will be erased from our servers. This cannot be undone."))return;
+  if(!confirm("Delete your account permanently?\n\nYour number, chats, updates and photo will be erased from our servers. This cannot be undone."))return;
   const ph=(prompt("Type your passphrase to confirm — this proves it's really you:")||"").trim();
   if(!ph){toast("Deletion cancelled — passphrase required");return;}
   toast("Deleting…");
@@ -6178,7 +6177,7 @@ function logOut(){
 /* ----- onboarding ----- */
 var OB_STEPS=[
   {i:"🛰️",t:"Free calls worldwide",s:"Voice and video calls to your friends — clear quality, no airtime, works on 2G data."},
-  {i:"👥",t:"Groups, statuses & chats",s:"Share 24h statuses, create groups, send photos, videos and voice notes — friends-only, always private."},
+  {i:"👥",t:"Groups, updates & chats",s:"Share 24h updates, create groups, send photos, videos and voice notes — friends-only, always private."},
   {i:"🤖",t:"Your Guardian answers for you",s:"When you're busy, Premium AI can answer your calls and take messages."},
   {i:"📲",t:"Install the app",s:"In your browser menu choose 'Add to Home screen' — AirConnect opens full-screen like a real app."}
 ];
@@ -6282,7 +6281,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=122;
+const AC_V=123;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
