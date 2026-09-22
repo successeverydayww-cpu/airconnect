@@ -1149,7 +1149,7 @@ let lastSig="",lastMsg=0,pollFails=0;
 let WIN_FRIENDS=[],WIN_REQS=[],WIN_NAMES={},CHATS={},UNREAD={},CHAT_OPEN=null,WIN_BLOCKS=[];
 let PIC_CACHE={};try{PIC_CACHE=JSON.parse(localStorage.getItem("aicall_pics"))||{};}catch(e){}
 let PIC_FETCHED={};
-let CALL_ROLE="",ICE_RESTART_AT=0,TYPING_UNTIL=0,TYPE_AT=0,RR_AT=0,RING_ACKED=false,chatHistBusy={};
+let CALL_ROLE="",ICE_RESTART_AT=0,TYPING_UNTIL=0,TYPE_AT=0,RR_AT=0,RING_ACKED=false,chatHistBusy={},EXT_WAIT=false;
 let ME=null,ME_NAME="",PEER=null,pc=null,mic=null,cam=null,camOn=false,muted=false,mixCtx=null,incomingAt=0,dialAt=0,
     rxAnalyser=null,txAnalyser=null,voiceBus=null,state="idle",pendingIce=[],iceOut=[],
     pendingOffer=null,callTimer=null,callStart=0,chatBusy=false;
@@ -3925,7 +3925,7 @@ function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
 }
 async function dial(p){
   if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
-    PEER=p;CALL_ROLE="offerer";RING_ACKED=false;clAdd(p,"out",0);
+    PEER=p;CALL_ROLE="offerer";RING_ACKED=false;EXT_WAIT=false;clAdd(p,"out",0);
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
   if(gate&&gate.ai){await aiCall(PEER);return;}   /* v125: AI accounts answer with live voice instead of WebRTC */
@@ -4216,7 +4216,7 @@ function callCleanup(){
   if(mic){try{mic.getTracks().forEach(t=>t.stop());}catch(e){}mic=null;}
   if(cam){try{cam.getTracks().forEach(t=>t.stop());}catch(e){}cam=null;}
   if(mixCtx){try{mixCtx.close();}catch(e){}mixCtx=null;}
-  camOn=false;muted=false;pendingOffer=null;
+  camOn=false;muted=false;pendingOffer=null;EXT_WAIT=false;
   if(callTimer){clearInterval(callTimer);callTimer=null;}
   $("callview").className="ovl hide";$("incoming").className="ovl hide";
   setVLayout("off");
@@ -4285,7 +4285,10 @@ setInterval(async()=>{
     const now=Date.now();
     if(state==="incoming"&&incomingAt&&now-incomingAt>60000){if(pendingOffer&&pendingOffer.from)vmRecordMiss(pendingOffer.from);log("auto-end: incoming ring timed out (missed call)");callCleanup();toast("Missed call");}
     if(state==="live"&&!pc){log("auto-end: dead call link cleaned");callCleanup();toast("Call ended");}
-    if(state==="dialing"&&dialAt&&now-dialAt>75000){log("auto-end: no answer timeout");try{await api("sig",{from:ME,to:peerNum,type:"noans",payload:"{ }"});}catch(e){}hangup(true);toast("No answer");}
+    if(state==="dialing"&&dialAt&&now-dialAt>75000){
+      if(RING_ACKED&&!EXT_WAIT&&now-dialAt<135000){EXT_WAIT=true;log("their phone is ringing — extending the wait, they may be mid-answer");}   /* v127: never hang up on someone who is actively answering */
+      else{log("auto-end: no answer timeout");try{await api("sig",{from:ME,to:peerNum,type:"noans",payload:"{ }"});}catch(e){}hangup(true);toast("No answer");}
+    }
   }catch(e){}
 },5000);
 /* ---------------- friend requests ---------------- */
@@ -4840,6 +4843,7 @@ async function handleSigs(msgs){
       return false;
     });}
 for(const m of msgs){
+  try{   /* v127: fault isolation — one bad signal can never kill the rest of the batch */
   if(m.type==="offer"){
     m.payload=await unzipDesc(m.payload);
     if(state==="live"&&pc&&pc.remoteDescription){
@@ -4870,7 +4874,9 @@ for(const m of msgs){
     }
   }
   else if(m.type==="answer"&&state==="dialing"){
-    m.payload=await unzipDesc(m.payload);await pc.setRemoteDescription(m.payload);await flushIce();
+    try{m.payload=await unzipDesc(m.payload);}catch(e){m.payload=null;}
+    if(!m.payload||!pc||pc.signalingState!=="have-local-offer")continue;   /* v127: duplicate/corrupt answers can never break a live dial */
+    await pc.setRemoteDescription(m.payload);await flushIce();
     state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";
     setStatus("LIVE","live");
     await log("call answered by +"+PEER+" — LIVE");
@@ -4893,6 +4899,7 @@ for(const m of msgs){
   }
   else if(m.type==="ice-batch"&&pc){for(const c of m.payload)await queueIce(c);}
   else if(m.type==="ice"&&pc){await queueIce(m.payload);}
+  }catch(e){}
 }
 }
 
@@ -6338,7 +6345,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=126;
+const AC_V=127;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
