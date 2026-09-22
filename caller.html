@@ -390,6 +390,12 @@ footer a{color:#64748B}
 
 
   <div id="view-calls" class="view hide">
+    <div class="card" style="padding:12px;margin-bottom:8px">
+      <div style="font-weight:600;margin-bottom:4px">📡 Offline Call <span style="font-size:10.5px;background:#D7EEE0;color:#075E46;padding:2px 7px;border-radius:99px;vertical-align:middle">NEW — zero data</span></div>
+      <div style="font-size:12px;color:#64748B;margin-bottom:8px">Call nearby with no internet at all — one phone opens its hotspot, the other joins, pair with QR codes.</div>
+      <button class="big blue" style="width:100%" onclick="ofcOpen()">📡 Start offline call</button>
+    </div>
+
     <div id="calllist"></div>
     <div id="nocall" class="empty">Calls you make and receive appear here. Missed calls stay until seen, everything auto-deletes after 7 days.</div>
   </div>
@@ -891,6 +897,15 @@ footer a{color:#64748B}
 
 <!-- PIN settings + lock wiring -->
 <!-- incoming call overlay -->
+<div id="ofcview" class="ovl hide">
+  <div class="top" style="padding-top:26px">
+    <div class="av">📡</div>
+    <div class="iname" style="font-size:19px;font-weight:700">Offline Call</div>
+    <div class="istat" style="font-size:12.5px;color:#64748B;padding:0 22px" id="ofcHint">Works with zero data — one phone opens its hotspot, the other joins it.</div>
+  </div>
+  <div id="ofcBody" style="padding:6px 18px 26px;overflow-y:auto;max-height:62vh"></div>
+  <div style="padding:0 18px 18px"><button class="big" style="width:100%;background:#E2E8F0;color:#334155" onclick="ofcClose()">Close</button></div>
+</div>
 <div id="incoming" class="ovl hide">
   <div class="top" style="padding-top:80px">
     <div class="av" id="incAv">📞</div>
@@ -4174,6 +4189,160 @@ function showCall(txt){
   $("callStat").textContent=txt;
   $("callview").className="ovl";
 }
+/* ---------- v132: OFFLINE CALLS — true phone-to-phone calls with ZERO internet ----------
+   The voice must travel over SOME radio (physics) — so we use the one that works
+   with no data and no credit: one phone's hotspot (or any shared Wi-Fi), with the
+   call connecting directly phone-to-phone. Pairing is done with QR codes because
+   no server is reachable. No major app ships this. */
+let OFC={pc:null,role:0,on:0,stream:null,scanIv:null,cam:null,aud:null};
+function ofcOpen(){OFC.on=1;ofcRender("menu");$("ofcview").className="ovl";}
+function ofcClose(){ofcScanStop();if(OFC.stream||OFC.pc){ofcTeardown();toast("Offline call closed");}$("ofcview").className="ovl hide";}
+function ofcTeardown(){
+  ofcScanStop();
+  try{OFC.pc&&OFC.pc.close();}catch(e){}
+  try{OFC.stream&&OFC.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+  try{OFC.aud&&OFC.aud.remove();}catch(e){}
+  OFC={pc:null,role:0,on:0,stream:null,scanIv:null,cam:null,aud:null};
+}
+function ofcPc(){
+  const p=new RTCPeerConnection({iceServers:[],iceCandidatePoolSize:0});
+  p.ontrack=function(e){
+    const a=new Audio();a.autoplay=true;a.srcObject=e.streams[0];a.volume=(typeof spkLoud!=="undefined"&&!spkLoud)?0.55:1;
+    OFC.aud=a;try{a.play();}catch(x){}
+  };
+  p.onconnectionstatechange=function(){
+    if(p.connectionState==="connected"&&OFC.on)ofcGoLive();
+    if(["failed","closed","disconnected"].indexOf(p.connectionState)>=0&&OFC.on){toast("Offline call lost");ofcTeardown();callCleanup();state="idle";try{setStatus("Ready","idle");}catch(e){}}
+  };
+  return p;
+}
+async function ofcMic(){
+  if(OFC.stream){for(const t of OFC.stream.getAudioTracks()){OFC.pc.addTrack(t,OFC.stream);}return OFC.stream;}
+  const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  OFC.stream=st;if(typeof mic==="undefined"){}else{try{mic=st;}catch(e){}}
+  for(const t of st.getAudioTracks())OFC.pc.addTrack(t,st);
+  return st;
+}
+function ofcGather(p,desc){
+  return new Promise(async function(res){
+    try{await p.setLocalDescription(desc);}catch(e){res(null);return;}
+    const t0=Date.now();
+    const iv=setInterval(function(){
+      if(p.iceGatheringState==="complete"||Date.now()-t0>2500){clearInterval(iv);res(p.localDescription);}
+    },120);
+  });
+}
+function ofcRender(step){
+  const b=$("ofcBody");if(!b)return;
+  if(step==="menu"){
+    b.innerHTML='<div style="text-align:center;font-size:13px;color:#475569;line-height:1.55;margin-bottom:12px">Works with <b>zero internet</b>:<br>1\ufe0f\u20e3 One phone turns on its <b>hotspot</b> (no data needed)<br>2\ufe0f\u20e3 The other phone joins that Wi-Fi<br>3\ufe0f\u20e3 Pair with the QR codes — the call connects directly, phone to phone.<br><span style="color:#94A3B8;font-size:11.5px">No credit, no data, no server. Just be near each other.</span></div>'
+      +'<button class="big blue" style="width:100%;margin-bottom:8px" onclick="ofcCreate()">\ud83d\udcde Create a call (show my code)</button>'
+      +'<button class="big" style="width:100%;background:#E2E8F0;color:#334155" onclick="ofcJoin()">\ud83d\udce5 Join a call (scan their code)</button>';
+    $("ofcHint").textContent="Works with zero data — one phone opens its hotspot, the other joins it.";
+  }
+  if(step==="working"){b.innerHTML='<div style="text-align:center;padding:18px;font-size:13.5px;color:#475569" id="ofcWork">\u23f3 Preparing code…</div>';}
+}
+async function ofcCreate(){
+  ofcRender("working");
+  try{
+    OFC.role=1;OFC.pc=ofcPc();
+    await ofcMic();
+    const offer=await OFC.pc.createOffer({offerToReceiveAudio:true,offerToReceiveVideo:false});
+    const ld=await ofcGather(OFC.pc,offer);
+    if(!ld)throw new Error("could not prepare the call code");
+    const txt=JSON.stringify(await zipDesc(ld));
+    ofcShowCode(txt,"1. Ask your friend to tap \ud83d\udce5 Join a call and scan this:","2. Then scan THEIR answer code below");
+  }catch(e){
+    berr(e);
+  }
+  function berr(e){$("ofcBody").innerHTML='<div style="text-align:center;padding:16px;color:#B91C1C;font-size:13px">Could not start the offline call'+((e&&e.message&&String(e.message).indexOf("Permission")>=0)?" — allow microphone and try again":"")+'.<br><button class="big" style="margin-top:10px;background:#E2E8F0;color:#334155" onclick="ofcRender(\'menu\')">Back</button></div>';}
+}
+async function ofcJoin(){
+  const b=$("ofcBody");
+  b.innerHTML='<div style="font-size:13px;color:#475569;margin-bottom:8px">Scan the code on their screen — or paste it below.</div>'
+    +'<div id="ofcScanBox"></div>'
+    +'<button class="big blue" style="width:100%;margin-bottom:8px" onclick="ofcScanStart(ofcCodeIn)">\ud83d\udcf7 Scan with camera</button>'
+    +'<textarea id="ofcPaste" style="width:100%;height:74px;border:1px solid #CBD5E1;border-radius:10px;padding:8px;font-size:12px" placeholder="Paste their call code here"></textarea>'
+    +'<button class="big" style="width:100%;background:#D7EEE0;color:#075E46" onclick="ofcCodeIn($(\'ofcPaste\').value)">Connect \u2192</button>';
+  $("ofcHint").textContent="Point the camera at the code on their phone.";
+}
+function ofcShowCode(txt,line1,line2){
+  const b=$("ofcBody");
+  b.innerHTML='<div style="font-size:13px;color:#475569;margin-bottom:8px">'+line1+'</div>'
+    +'<div id="ofcQr" style="background:#fff;padding:10px;border-radius:12px;width:fit-content;margin:0 auto"></div>'
+    +'<details style="margin:8px 0"><summary style="font-size:11.5px;color:#94A3B8">Can\'t scan? Show this code to type in manually</summary><textarea readonly style="width:100%;height:60px;font-size:11px;border:1px solid #CBD5E1;border-radius:8px;padding:6px" onclick="this.select()">'+txt+'</textarea></details>'
+    +'<div style="font-size:13px;color:#475569;margin:10px 0 8px">'+line2+'</div>'
+    +'<div id="ofcScanBox"></div>'
+    +'<button class="big blue" style="width:100%;margin-bottom:8px" onclick="ofcScanStart(ofcAnswerIn)">\ud83d\udcf7 Scan their answer code</button>'
+    +'<textarea id="ofcPaste" style="width:100%;height:74px;border:1px solid #CBD5E1;border-radius:10px;padding:8px;font-size:12px" placeholder="Paste their answer code here"></textarea>'
+    +'<button class="big" style="width:100%;background:#D7EEE0;color:#075E46" onclick="ofcAnswerIn($(\'ofcPaste\').value)">Connect \u2192</button>';
+  try{
+    if(typeof QRCode!=="undefined")new QRCode($("ofcQr"),{text:txt,width:230,height:230,colorDark:"#0B1220",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.L});
+    else $("ofcQr").textContent="Use the manual code below";
+  }catch(e){$("ofcQr").innerHTML='<div style="font-size:12px;color:#B91C1C;padding:8px">QR too dense — use the manual code below</div>';}
+  $("ofcHint").textContent="Connected phones pair in seconds.";
+}
+function ofcScanStop(){
+  try{OFC.cam&&OFC.cam.getTracks().forEach(function(t){t.stop();});}catch(e){}
+  OFC.cam=null;try{clearInterval(OFC.scanIv);}catch(e){}OFC.scanIv=null;
+  const b=$("ofcScanBox");if(b)b.innerHTML="";
+}
+function ofcScanStart(cb){
+  ofcScanStop();
+  try{
+    navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(function(st){
+      OFC.cam=st;
+      const v=document.createElement("video");v.srcObject=st;v.playsInline=true;v.muted=true;v.autoplay=true;
+      v.style.cssText="width:100%;max-width:320px;border-radius:12px;background:#000;display:block;margin:0 auto";
+      const holder=$("ofcScanBox");holder.innerHTML="";holder.appendChild(v);
+      v.play().catch(function(){});
+      const c=document.createElement("canvas");const x=c.getContext("2d",{willReadFrequently:true});
+      OFC.scanIv=setInterval(function(){
+        if(!OFC.cam){clearInterval(OFC.scanIv);return;}
+        try{
+          if(!v.videoWidth)return;
+          c.width=v.videoWidth;c.height=v.videoHeight;x.drawImage(v,0,0);
+          const d=x.getImageData(0,0,c.width,c.height);
+          const code=(typeof jsQR!=="undefined")?jsQR(d.data,c.width,c.height):null;
+          if(code&&code.data){clearInterval(OFC.scanIv);ofcScanStop();cb(code.data);}
+        }catch(e){}
+      },350);
+    }).catch(function(){toast("Camera unavailable — paste the code instead");});
+  }catch(e){toast("Camera unavailable — paste the code instead");}
+}
+async function ofcCodeIn(raw){
+  const t=String(raw||"").trim();if(!t){toast("Paste or scan their code first");return;}
+  ofcRender("working");
+  try{
+    OFC.role=2;OFC.pc=ofcPc();
+    const desc=await unzipDesc(JSON.parse(t));
+    await OFC.pc.setRemoteDescription(desc);
+    await ofcMic();
+    const ans=await OFC.pc.createAnswer();
+    const ld=await ofcGather(OFC.pc,ans);
+    if(!ld)throw new Error("could not prepare the answer code");
+    const txt=JSON.stringify(await zipDesc(ld));
+    ofcShowCode(txt,"1. Scan THIS back on their phone:","2. Wait — the call connects the moment they scan \u2705");
+    $("ofcHint").textContent="Show this screen to your friend \u2014 you connect in seconds.";
+    toast("Answer code ready — show it to them");
+  }catch(e){toast("That code did not work — ask them to resend");ofcJoin();}
+}
+async function ofcAnswerIn(raw){
+  const t=String(raw||"").trim();if(!t){toast("Scan or paste their answer code first");return;}
+  try{
+    const desc=await unzipDesc(JSON.parse(t));
+    await OFC.pc.setRemoteDescription(desc);
+    toast("Connecting\u2026");
+  }catch(e){toast("That answer code did not work \u2014 ask them to show it again");}
+}
+function ofcGoLive(){
+  state="live";CALL_ROLE=OFC.role===1?"offerer":"answerer";PEER="offline";try{WIN_NAMES.offline="\ud83d\udce1 Offline call";}catch(e){}
+  pc=OFC.pc;callStart=Date.now();
+  ofcScanStop();$("ofcview").className="ovl hide";
+  showCall("Connected \u2014 zero internet used");
+  try{setStatus("\ud83d\udce1 OFFLINE CALL","live");}catch(e){}
+  log("offline call connected \u2014 no internet, no data, phone to phone");
+}
 function acceptCall(){
   vmDisarm();
   pushHist();
@@ -4280,6 +4449,7 @@ function callCleanup(){
   setStatus("Ready","");
 }
 function hangup(silent){
+  if(OFC.on){ofcTeardown();callCleanup();state="idle";try{setStatus("Ready","idle");}catch(e){}if(!silent)toast("Offline call ended");return;}   /* v132 */
   if(AI_CALL&&AI_CALL.on)aiStop(true);
   if(pc&&PEER){try{api("sig",{from:ME,to:PEER,type:"bye",payload:{}});}catch(e){}}
   callCleanup();
@@ -6400,7 +6570,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=131;
+const AC_V=132;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
