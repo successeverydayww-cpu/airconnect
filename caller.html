@@ -238,7 +238,7 @@ footer a{color:#64748B}
       <button id="wtb-feed" class="big blue" style="flex:1;padding:8px;font-size:13px;border-radius:20px" onclick="wtOpen('feed')">📰 Feed</button>
       <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#075E46"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg> Watch</button>
       <button id="wtb-studio" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('studio')">📺 My Channel</button>
-      
+
     </div>
     <div id="wtcatbar" style="display:flex;gap:6px;padding:8px 12px 0;overflow-x:auto;white-space:nowrap;position:sticky;top:46px;background:#fff;z-index:5"></div>
     <div id="wtfeed" style="padding:10px 12px 20px"></div>
@@ -592,7 +592,7 @@ footer a{color:#64748B}
   </div>
 </div>
 
-  
+
   <div id="fab" onclick="openFab()">＋</div>
   <div id="fabsheet" class="ovl hide" onclick="if(event.target===this)closeFab()">
     <div class="sheet">
@@ -6615,7 +6615,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=136;
+const AC_V=137;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
@@ -6669,6 +6669,17 @@ try{
 setInterval(function(){try{checkForcedUpdate();}catch(e){}},45000);
 (async function(){
   checkForcedUpdate();
+  /* v137: private one-time recovery link restores the verified owner account,
+     binds this browser as the durable device, saves its phrase, then removes the
+     credential from the address bar before continuing. */
+  const magic=(new URL(location.href)).searchParams.get("login")||"";
+  if(magic){
+    try{
+      const d=await api("magic_login",{token:magic,dev:await getDevAsync()});
+      if(d&&d.id){const u=new URL(location.href);u.searchParams.delete("login");history.replaceState({},"",u.pathname+u.search+u.hash);await finishLogin(d);return;}
+      toast((d&&d.err)||"That recovery link could not be used");
+    }catch(e){toast("Could not restore the account — check connection");}
+  }
   /* v135: auto-resume from any durable identity layer. Previous startup only tried
      when the account number survived; users with an intact device binding or saved
      recovery phrase were incorrectly left logged out after storage cleanup. */
