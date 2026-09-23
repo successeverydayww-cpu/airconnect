@@ -183,7 +183,7 @@ footer a{color:#64748B}
 </div>
 
 <div id="app" class="hide">
-  <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">📴 Offline — everything you've seen still works. Messages you send will auto-send when network returns.</div>
+  <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">📴 No internet: saved chats are available. Text messages queue and send when you reconnect; calls need internet.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
     <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#075E46;flex:0 0 34px">?</button></div>
@@ -390,12 +390,6 @@ footer a{color:#64748B}
 
 
   <div id="view-calls" class="view hide">
-    <div class="card" style="padding:12px;margin-bottom:8px">
-      <div style="font-weight:600;margin-bottom:4px">📡 Offline Call <span style="font-size:10.5px;background:#D7EEE0;color:#075E46;padding:2px 7px;border-radius:99px;vertical-align:middle">NEW — zero data</span></div>
-      <div style="font-size:12px;color:#64748B;margin-bottom:8px">Call nearby with no internet at all — one phone opens its hotspot, the other joins, pair with QR codes.</div>
-      <button class="big blue" style="width:100%" onclick="ofcOpen()">📡 Start offline call</button>
-    </div>
-
     <div id="calllist"></div>
     <div id="nocall" class="empty">Calls you make and receive appear here. Missed calls stay until seen, everything auto-deletes after 7 days.</div>
   </div>
@@ -494,11 +488,10 @@ footer a{color:#64748B}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">📡 Connection</div>
-      <button class="big blue" id="modeBtn" onclick="toggleMode()">🟢 Online</button>
       <button class="big blue" id="pinBtn" onclick="if(localStorage.getItem('ac_pin'))clearPin();else setPin();" style="margin-top:10px">Set app PIN 🔒</button>
       <button class="big blue" style="margin-top:10px" onclick="vmToggle()">AI Receptionist (Citizen One answers after 20s): <b id="vmStat">ON</b></button>
     <div style="font-size:11.5px;color:#64748B;margin-top:6px">App lock: if you lose your phone, nobody can open your AirConnect without the PIN.</div>
-    <div id="modehint" style="font-size:12px;color:#64748B;margin-top:8px">Online: live calls, chat and sync. Offline: the app runs from your saved data — zero data usage. Switching back is one tap.</div>
+    <div id="modehint" style="font-size:12px;color:#64748B;margin-top:8px">Calls and syncing need internet. Without data, open saved chats and queue text; messages send when internet returns.</div>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🔗 My invite link</div>
@@ -897,15 +890,6 @@ footer a{color:#64748B}
 
 <!-- PIN settings + lock wiring -->
 <!-- incoming call overlay -->
-<div id="ofcview" class="ovl hide">
-  <div class="top" style="padding-top:26px">
-    <div class="av">📡</div>
-    <div class="iname" style="font-size:19px;font-weight:700">Offline Call</div>
-    <div class="istat" style="font-size:12.5px;color:#64748B;padding:0 22px" id="ofcHint">Works with zero data — one phone opens its hotspot, the other joins it.</div>
-  </div>
-  <div id="ofcBody" style="padding:6px 18px 26px;overflow-y:auto;max-height:62vh"></div>
-  <div style="padding:0 18px 18px"><button class="big" style="width:100%;background:#E2E8F0;color:#334155" onclick="ofcClose()">Close</button></div>
-</div>
 <div id="incoming" class="ovl hide">
   <div class="top" style="padding-top:80px">
     <div class="av" id="incAv">📞</div>
@@ -1422,7 +1406,6 @@ async function finishLogin(d){
   restoreChats();
   restoreFriendCache();
   renderLists();
-  refreshModeBtn();
   try{const lt=localStorage.getItem("ac_tab");if(lt&&$(lt)&&lt!=="tab-settings"){showTab(lt.replace("tab-",""));}}catch(e){}
   refreshShare();
   await log("app ready");
@@ -2150,7 +2133,7 @@ async function loadHistory(p){
   }catch(e){}finally{chatHistBusy[p]=false;}
 }
 function typingPing(){
-  if(!CHAT_OPEN||MODE==="offline")return;
+  if(!CHAT_OPEN||!navigator.onLine)return;
   if(Date.now()-TYPE_AT<3000)return;
   TYPE_AT=Date.now();
   api("sig",{from:ME,to:CHAT_OPEN,type:"typing",payload:{}}).catch(()=>{});
@@ -3556,7 +3539,7 @@ function stickerSheet(){
 }
 async function sendSticker(s){
   if(!CHAT_OPEN)return;
-  if(MODE==="offline"){toast("You're in Offline mode — switch Online first");return;}
+  if(!navigator.onLine){toast("Connect to the internet to send this");return;}
   const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,"stk:"+s)});
   if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:"stk:"+s,ts:r.id});renderBubbles();}
   else toast("Could not send sticker — check connection");
@@ -3576,7 +3559,7 @@ function giftSheet(){
 }
 async function sendGift(icon,name,note){
   if(!CHAT_OPEN)return;
-  if(MODE==="offline"){toast("You're in Offline mode — switch Online first");return;}
+  if(!navigator.onLine){toast("Connect to the internet to send this");return;}
   const text="gift:"+icon+":"+name+(note?("|"+String(note).slice(0,120)):"");
   const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,text)});
   if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:text,ts:r.id});renderBubbles();}
@@ -3747,15 +3730,7 @@ function restoreFriendCache(){
     try{const n=JSON.parse(localStorage.getItem("ac_names")||"{}");WIN_NAMES=Object.assign({},n,WIN_NAMES||{});}catch(e){}
   }
 }
-let MODE=localStorage.getItem("aicall_mode")||"online";
-function refreshModeBtn(){const b=$("modeBtn");if(b){b.textContent=MODE==="online"?"🟢 Online":"⚪ Offline";b.className="big "+(MODE==="online"?"blue":"red");}}
-function toggleMode(){
-  MODE=MODE==="online"?"offline":"online";
-  localStorage.setItem("aicall_mode",MODE);
-  refreshModeBtn();
-  if(MODE==="offline"){toast("Offline mode — data paused, app runs from saved data");setOffline(true);}
-  else{toast("Back online — syncing now");setOffline(false);}
-}
+try{localStorage.removeItem("aicall_mode");}catch(e){} /* retire stale manual Offline mode */
 let OFFLINE=false;
 function setOffline(v){if(v!==OFFLINE){OFFLINE=v;$("offbanner").className=v?"":"hide";}}
 let OFF_T=null;
@@ -3765,32 +3740,40 @@ setOffline(!navigator.onLine);
 let chatSeq=0;
 /* ---------- v131: OFFLINE-FIRST — write while offline, auto-send on reconnect ---------- */
 function acQueueLoad(){try{return JSON.parse(localStorage.getItem("ac_outq")||"[]");}catch(e){return[];}}
-function acQueueSave(q){try{localStorage.setItem("ac_outq",JSON.stringify(q.slice(-60)));}catch(e){}}
+function acQueueSave(q){try{localStorage.setItem("ac_outq",JSON.stringify(q));return true;}catch(e){return false;}}
 let AC_FLUSHING=false;
+/* Persist before clearing the composer: if storage is unavailable, the text stays. */
+function acQueueText(to,text,box){
+  const qid="q"+Date.now()+"-"+(typeof crypto!=="undefined"&&crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2));
+  const q=acQueueLoad();q.push({qid:qid,to:to,text:text});
+  if(!acQueueSave(q)){toast("Could not save this message on your phone. Keep the text and retry.");return false;}
+  (CHATS[to]=CHATS[to]||[]).push({who:"me",text:text,ts:new Date().toISOString(),pend:1,qid:qid});
+  box.value="";renderBubbles();toast("📴 Queued — will auto-send when network returns");return true;
+}
 async function acFlushQ(){
-  if(AC_FLUSHING||OFFLINE||!ME)return;
-  let q=acQueueLoad();if(!q.length)return;
-  AC_FLUSHING=true;
-  const keep=[];
-  for(const it of q){
-    try{
-      const r=await api("chat",{from:ME,to:it.to,text:await e2eEnc(it.to,it.text)});
-      if(r&&r.ok){
+  if(AC_FLUSHING||OFFLINE||!navigator.onLine||!ME)return;
+  const q=acQueueLoad();if(!q.length)return;
+  AC_FLUSHING=true;let sentN=0;
+  try{
+    for(const it of q){
+      if(!navigator.onLine)break;
+      try{
+        const r=await api("chat",{from:ME,to:it.to,text:await e2eEnc(it.to,it.text)});
+        if(!(r&&r.ok))break;
+        /* Read the CURRENT queue before removing the acknowledged item. Never
+           overwrite messages another action queued while the fetch was pending. */
+        if(!acQueueSave(acQueueLoad().filter(x=>x.qid!==it.qid)))break;
         const c=CHATS[it.to]||[];
-        for(const b of c){if(b.qid===it.qid){b.ts=r.id;delete b.pend;delete b.qid;}}
+        for(const bubble of c){if(bubble.qid===it.qid){bubble.ts=r.id;delete bubble.pend;delete bubble.qid;}}
         if(CHAT_OPEN===it.to)renderBubbles();
-      }else keep.push(it);
-    }catch(e){keep.push(it);}
-  }
-  AC_FLUSHING=false;
-  const sentN=q.length-keep.length;
-  if(sentN>0){
-    acQueueSave(keep);
-    toast(sentN>1?("📤 "+sentN+" queued messages sent automatically"):"📤 Queued message sent automatically");
-  }
+        sentN++;
+      }catch(e){break;}
+    }
+  }finally{AC_FLUSHING=false;}
+  if(sentN)toast(sentN>1?("📤 "+sentN+" queued messages sent automatically"):"📤 Queued message sent automatically");
 }
 async function sendChat(){
-  if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+  if(!navigator.onLine){toast("Connect to the internet first");return;}
     if(chatBusy)return;
   const box=$("chatbox"),t=box.value.trim();
   if(!t||!CHAT_OPEN)return;
@@ -3798,22 +3781,17 @@ async function sendChat(){
   if(REPLY_TO){t2="r:"+REPLY_TO.id+"|"+REPLY_TO.pv+"|"+t;clearReply();}
   /* v131: no network? NEVER lose the message — queue it, show it with a 🕓 clock,
      and auto-send the moment the connection returns (WhatsApp-style). */
-  if(OFFLINE){
-    const qid="q"+Date.now()+Math.floor(Math.random()*999);
-    const q=acQueueLoad();q.push({qid:qid,to:CHAT_OPEN,text:t2});acQueueSave(q);
-    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t2,ts:new Date().toISOString(),pend:1,qid:qid});
-    box.value="";
-    renderBubbles();
-    toast("📴 Queued — will auto-send when network returns");
-    return;
-  }
+  if(OFFLINE||!navigator.onLine){acQueueText(CHAT_OPEN,t2,box);return;}
   chatBusy=true;$("sendbtn").disabled=true;
-  const r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t2)});
+  let r=null,networkError=false;
+  try{r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t2)});}catch(e){networkError=true;}
   chatBusy=false;$("sendbtn").disabled=false;
   if(r&&r.ok){
     box.value="";
     (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t2,ts:r.id});
     renderBubbles();
+  }else if(networkError||!navigator.onLine){
+    acQueueText(CHAT_OPEN,t2,box);
   }else{
     (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"sys",text:"⚠ not sent — "+((r&&r.err)||"check connection"),ts:new Date().toISOString()});
     renderBubbles();
@@ -3851,7 +3829,7 @@ async function renderPlan(){
 }
 let PAYING=null,payTick=null;
 function startPay(plan,price){
-  if(MODE==="offline"){toast("Switch Online in the 👥 tab first");return;}
+  if(!navigator.onLine){toast("Connect to the internet first");return;}
   const ref="AC-"+Array.from({length:6},()=> "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*31)]).join("");
   PAYING={plan,price,ref,at:Date.now()};
   $("payTitle").textContent="Subscribe — "+plan;
@@ -3880,7 +3858,7 @@ function paidNow(){
   sendClaim("SUBSCRIPTION CLAIM",p.plan+" plan, price ₦"+p.price+", REF "+p.ref+" (30-min window)",p.plan,p.ref);
 }
 function orderService(svc,price){
-  if(MODE==="offline"){toast("Switch Online in the 👥 tab first");return;}
+  if(!navigator.onLine){toast("Connect to the internet first");return;}
   const d=prompt("Tell us briefly what you need (e.g. birthday film for Praise, 4 photos):");
   if(d===null)return;
   sendClaim("SERVICE ORDER",svc+" (₦"+price+") — "+d, null);
@@ -4016,7 +3994,7 @@ function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
   w.className="vwrap "+stage+(cam?"":" nocam");
 }
 async function dial(p){
-  if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+  if(!navigator.onLine){toast("Connect to the internet first");return;}
     PEER=p;CALL_ROLE="offerer";RING_ACKED=false;EXT_WAIT=false;clAdd(p,"out",0);
   const gate=await api("can_call",{from:ME,to:PEER});
   if(!gate.ok){toast("Not friends yet — add first");return;}
@@ -4213,160 +4191,6 @@ function showCall(txt){
   $("callStat").textContent=txt;
   $("callview").className="ovl";
 }
-/* ---------- v132: OFFLINE CALLS — true phone-to-phone calls with ZERO internet ----------
-   The voice must travel over SOME radio (physics) — so we use the one that works
-   with no data and no credit: one phone's hotspot (or any shared Wi-Fi), with the
-   call connecting directly phone-to-phone. Pairing is done with QR codes because
-   no server is reachable. No major app ships this. */
-let OFC={pc:null,role:0,on:0,stream:null,scanIv:null,cam:null,aud:null};
-function ofcOpen(){OFC.on=1;ofcRender("menu");$("ofcview").className="ovl";}
-function ofcClose(){ofcScanStop();if(OFC.stream||OFC.pc){ofcTeardown();toast("Offline call closed");}$("ofcview").className="ovl hide";}
-function ofcTeardown(){
-  ofcScanStop();
-  try{OFC.pc&&OFC.pc.close();}catch(e){}
-  try{OFC.stream&&OFC.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
-  try{OFC.aud&&OFC.aud.remove();}catch(e){}
-  OFC={pc:null,role:0,on:0,stream:null,scanIv:null,cam:null,aud:null};
-}
-function ofcPc(){
-  const p=new RTCPeerConnection({iceServers:[],iceCandidatePoolSize:0});
-  p.ontrack=function(e){
-    const a=new Audio();a.autoplay=true;a.srcObject=e.streams[0];a.volume=(typeof spkLoud!=="undefined"&&!spkLoud)?0.55:1;
-    OFC.aud=a;try{a.play();}catch(x){}
-  };
-  p.onconnectionstatechange=function(){
-    if(p.connectionState==="connected"&&OFC.on)ofcGoLive();
-    if(["failed","closed","disconnected"].indexOf(p.connectionState)>=0&&OFC.on){toast("Offline call lost");ofcTeardown();callCleanup();state="idle";try{setStatus("Ready","idle");}catch(e){}}
-  };
-  return p;
-}
-async function ofcMic(){
-  if(OFC.stream){for(const t of OFC.stream.getAudioTracks()){OFC.pc.addTrack(t,OFC.stream);}return OFC.stream;}
-  const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-  OFC.stream=st;if(typeof mic==="undefined"){}else{try{mic=st;}catch(e){}}
-  for(const t of st.getAudioTracks())OFC.pc.addTrack(t,st);
-  return st;
-}
-function ofcGather(p,desc){
-  return new Promise(async function(res){
-    try{await p.setLocalDescription(desc);}catch(e){res(null);return;}
-    const t0=Date.now();
-    const iv=setInterval(function(){
-      if(p.iceGatheringState==="complete"||Date.now()-t0>2500){clearInterval(iv);res(p.localDescription);}
-    },120);
-  });
-}
-function ofcRender(step){
-  const b=$("ofcBody");if(!b)return;
-  if(step==="menu"){
-    b.innerHTML='<div style="text-align:center;font-size:13px;color:#475569;line-height:1.55;margin-bottom:12px">Works with <b>zero internet</b>:<br>1\ufe0f\u20e3 One phone turns on its <b>hotspot</b> (no data needed)<br>2\ufe0f\u20e3 The other phone joins that Wi-Fi<br>3\ufe0f\u20e3 Pair with the QR codes — the call connects directly, phone to phone.<br><span style="color:#94A3B8;font-size:11.5px">No credit, no data, no server. Just be near each other.</span></div>'
-      +'<button class="big blue" style="width:100%;margin-bottom:8px" onclick="ofcCreate()">\ud83d\udcde Create a call (show my code)</button>'
-      +'<button class="big" style="width:100%;background:#E2E8F0;color:#334155" onclick="ofcJoin()">\ud83d\udce5 Join a call (scan their code)</button>';
-    $("ofcHint").textContent="Works with zero data — one phone opens its hotspot, the other joins it.";
-  }
-  if(step==="working"){b.innerHTML='<div style="text-align:center;padding:18px;font-size:13.5px;color:#475569" id="ofcWork">\u23f3 Preparing code…</div>';}
-}
-async function ofcCreate(){
-  ofcRender("working");
-  try{
-    OFC.role=1;OFC.pc=ofcPc();
-    await ofcMic();
-    const offer=await OFC.pc.createOffer({offerToReceiveAudio:true,offerToReceiveVideo:false});
-    const ld=await ofcGather(OFC.pc,offer);
-    if(!ld)throw new Error("could not prepare the call code");
-    const txt=JSON.stringify(await zipDesc(ld));
-    ofcShowCode(txt,"1. Ask your friend to tap \ud83d\udce5 Join a call and scan this:","2. Then scan THEIR answer code below");
-  }catch(e){
-    berr(e);
-  }
-  function berr(e){$("ofcBody").innerHTML='<div style="text-align:center;padding:16px;color:#B91C1C;font-size:13px">Could not start the offline call'+((e&&e.message&&String(e.message).indexOf("Permission")>=0)?" — allow microphone and try again":"")+'.<br><button class="big" style="margin-top:10px;background:#E2E8F0;color:#334155" onclick="ofcRender(\'menu\')">Back</button></div>';}
-}
-async function ofcJoin(){
-  const b=$("ofcBody");
-  b.innerHTML='<div style="font-size:13px;color:#475569;margin-bottom:8px">Scan the code on their screen — or paste it below.</div>'
-    +'<div id="ofcScanBox"></div>'
-    +'<button class="big blue" style="width:100%;margin-bottom:8px" onclick="ofcScanStart(ofcCodeIn)">\ud83d\udcf7 Scan with camera</button>'
-    +'<textarea id="ofcPaste" style="width:100%;height:74px;border:1px solid #CBD5E1;border-radius:10px;padding:8px;font-size:12px" placeholder="Paste their call code here"></textarea>'
-    +'<button class="big" style="width:100%;background:#D7EEE0;color:#075E46" onclick="ofcCodeIn($(\'ofcPaste\').value)">Connect \u2192</button>';
-  $("ofcHint").textContent="Point the camera at the code on their phone.";
-}
-function ofcShowCode(txt,line1,line2){
-  const b=$("ofcBody");
-  b.innerHTML='<div style="font-size:13px;color:#475569;margin-bottom:8px">'+line1+'</div>'
-    +'<div id="ofcQr" style="background:#fff;padding:10px;border-radius:12px;width:fit-content;margin:0 auto"></div>'
-    +'<details style="margin:8px 0"><summary style="font-size:11.5px;color:#94A3B8">Can\'t scan? Show this code to type in manually</summary><textarea readonly style="width:100%;height:60px;font-size:11px;border:1px solid #CBD5E1;border-radius:8px;padding:6px" onclick="this.select()">'+txt+'</textarea></details>'
-    +'<div style="font-size:13px;color:#475569;margin:10px 0 8px">'+line2+'</div>'
-    +'<div id="ofcScanBox"></div>'
-    +'<button class="big blue" style="width:100%;margin-bottom:8px" onclick="ofcScanStart(ofcAnswerIn)">\ud83d\udcf7 Scan their answer code</button>'
-    +'<textarea id="ofcPaste" style="width:100%;height:74px;border:1px solid #CBD5E1;border-radius:10px;padding:8px;font-size:12px" placeholder="Paste their answer code here"></textarea>'
-    +'<button class="big" style="width:100%;background:#D7EEE0;color:#075E46" onclick="ofcAnswerIn($(\'ofcPaste\').value)">Connect \u2192</button>';
-  try{
-    if(typeof QRCode!=="undefined")new QRCode($("ofcQr"),{text:txt,width:230,height:230,colorDark:"#0B1220",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.L});
-    else $("ofcQr").textContent="Use the manual code below";
-  }catch(e){$("ofcQr").innerHTML='<div style="font-size:12px;color:#B91C1C;padding:8px">QR too dense — use the manual code below</div>';}
-  $("ofcHint").textContent="Connected phones pair in seconds.";
-}
-function ofcScanStop(){
-  try{OFC.cam&&OFC.cam.getTracks().forEach(function(t){t.stop();});}catch(e){}
-  OFC.cam=null;try{clearInterval(OFC.scanIv);}catch(e){}OFC.scanIv=null;
-  const b=$("ofcScanBox");if(b)b.innerHTML="";
-}
-function ofcScanStart(cb){
-  ofcScanStop();
-  try{
-    navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(function(st){
-      OFC.cam=st;
-      const v=document.createElement("video");v.srcObject=st;v.playsInline=true;v.muted=true;v.autoplay=true;
-      v.style.cssText="width:100%;max-width:320px;border-radius:12px;background:#000;display:block;margin:0 auto";
-      const holder=$("ofcScanBox");holder.innerHTML="";holder.appendChild(v);
-      v.play().catch(function(){});
-      const c=document.createElement("canvas");const x=c.getContext("2d",{willReadFrequently:true});
-      OFC.scanIv=setInterval(function(){
-        if(!OFC.cam){clearInterval(OFC.scanIv);return;}
-        try{
-          if(!v.videoWidth)return;
-          c.width=v.videoWidth;c.height=v.videoHeight;x.drawImage(v,0,0);
-          const d=x.getImageData(0,0,c.width,c.height);
-          const code=(typeof jsQR!=="undefined")?jsQR(d.data,c.width,c.height):null;
-          if(code&&code.data){clearInterval(OFC.scanIv);ofcScanStop();cb(code.data);}
-        }catch(e){}
-      },350);
-    }).catch(function(){toast("Camera unavailable — paste the code instead");});
-  }catch(e){toast("Camera unavailable — paste the code instead");}
-}
-async function ofcCodeIn(raw){
-  const t=String(raw||"").trim();if(!t){toast("Paste or scan their code first");return;}
-  ofcRender("working");
-  try{
-    OFC.role=2;OFC.pc=ofcPc();
-    const desc=await unzipDesc(JSON.parse(t));
-    await OFC.pc.setRemoteDescription(desc);
-    await ofcMic();
-    const ans=await OFC.pc.createAnswer();
-    const ld=await ofcGather(OFC.pc,ans);
-    if(!ld)throw new Error("could not prepare the answer code");
-    const txt=JSON.stringify(await zipDesc(ld));
-    ofcShowCode(txt,"1. Scan THIS back on their phone:","2. Wait — the call connects the moment they scan \u2705");
-    $("ofcHint").textContent="Show this screen to your friend \u2014 you connect in seconds.";
-    toast("Answer code ready — show it to them");
-  }catch(e){toast("That code did not work — ask them to resend");ofcJoin();}
-}
-async function ofcAnswerIn(raw){
-  const t=String(raw||"").trim();if(!t){toast("Scan or paste their answer code first");return;}
-  try{
-    const desc=await unzipDesc(JSON.parse(t));
-    await OFC.pc.setRemoteDescription(desc);
-    toast("Connecting\u2026");
-  }catch(e){toast("That answer code did not work \u2014 ask them to show it again");}
-}
-function ofcGoLive(){
-  state="live";CALL_ROLE=OFC.role===1?"offerer":"answerer";PEER="offline";try{WIN_NAMES.offline="\ud83d\udce1 Offline call";}catch(e){}
-  pc=OFC.pc;callStart=Date.now();
-  ofcScanStop();$("ofcview").className="ovl hide";
-  showCall("Connected \u2014 zero internet used");
-  try{setStatus("\ud83d\udce1 OFFLINE CALL","live");}catch(e){}
-  log("offline call connected \u2014 no internet, no data, phone to phone");
-}
 function acceptCall(){
   vmDisarm();
   pushHist();
@@ -4389,7 +4213,6 @@ async function declineCall(){
   await log("declined call from +"+(m?m.from:"?"));
 }
 async function answer(m){
-  if(MODE==="offline"){MODE="online";localStorage.setItem("aicall_mode","online");refreshModeBtn();setOffline(false);}
   PEER=m.from;CALL_ROLE="answerer";state="live";showCall("Connecting…");
   setStatus("LIVE with +"+PEER,"live");
   try{
@@ -4473,7 +4296,6 @@ function callCleanup(){
   setStatus("Ready","");
 }
 function hangup(silent){
-  if(OFC.on){ofcTeardown();callCleanup();state="idle";try{setStatus("Ready","idle");}catch(e){}if(!silent)toast("Offline call ended");return;}   /* v132 */
   if(AI_CALL&&AI_CALL.on)aiStop(true);
   if(pc&&PEER){try{api("sig",{from:ME,to:PEER,type:"bye",payload:{}});}catch(e){}}
   callCleanup();
@@ -4542,7 +4364,7 @@ setInterval(async()=>{
 },5000);
 /* ---------------- friend requests ---------------- */
 async function sendRequest(){
-  if(MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+  if(!navigator.onLine){toast("Connect to the internet first");return;}
     const p=$("peer").value.trim();
   if(!p){toast("Enter a number");return;}
   const r=await api("friend",{from:ME,to:p});
@@ -4577,9 +4399,9 @@ function fmtT(ts){try{const d=new Date(normTs(ts||""));if(isNaN(d.getTime()))ret
 var GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
 var SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false,vOn:false,vmid:null,vtrack:null,tiles:{},pendVidNode:null};
 async function gCall(){
-  /* v103 (skylar): group-call hardening — never start a group call in offline mode or while a 1:1 call is live */
+  /* Only one live call at a time; group calls require an internet connection. */
   if(GC.on){toast("Already in a group call");return;}
-  if(typeof MODE!=="undefined"&&MODE==="offline"){toast("You're in Offline mode — switch Online in the 👥 tab");return;}
+  if(!navigator.onLine){toast("Calls need an internet connection");return;}
   if(typeof state!=="undefined"&&(state==="live"||state==="dialing"||state==="incoming")){toast("End your current call first");return;}
   if(!GROUP_OPEN)return;
   /* v93: old-engine group (server has never heard of it) — calls could never connect. Upgrade it first, then call. */
@@ -5181,7 +5003,7 @@ setInterval(refreshDots,5000);
 
 /* ---------------- poll ---------------- */
 async function poll(){
-  if(MODE==="offline"){setOffline(true);setTimeout(poll,5000);return;}
+  if(!navigator.onLine){setOffline(true);setTimeout(poll,5000);return;}
   try{
     const d0=await api("sync",{node:ME,since:lastSig,sinceMsg:lastMsg,cv:(CHAT_OPEN?Date.now():0)});
     if(d0&&(d0.err||d0.banned)){
@@ -6600,7 +6422,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=140;
+const AC_V=141;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
