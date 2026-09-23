@@ -867,6 +867,8 @@ footer a{color:#64748B}
     <div class="cname" id="callName">—</div>
     <div class="cstat" id="callStat">calling…</div>
     <div id="aiBanner" class="cstat hide" style="color:#e8c468;font-weight:600">⭐ Premium AI is answering — talk to it or leave a message</div>
+    <div id="micNotice" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;font-weight:600;color:#d1fae5"></div>
+    <button id="micEnable" type="button" class="hide" onclick="enableCallMic()" style="background:#e8c468;color:#151b26;border:0;border-radius:10px;padding:8px 12px;margin-top:8px;font-weight:700;cursor:pointer">Enable microphone</button>
   </div>
   <div class="vwrap hide" id="vwrap">
     <video id="remotev" autoplay playsinline></video>
@@ -1439,7 +1441,7 @@ async function finishLogin(d){
   setInterval(function(){try{acFlushQ();}catch(e){}},45000);   /* v131: retry queued sends when network returns */
   try{if(localStorage.getItem("ac_push_ok")!=="1")setTimeout(armPush,6000);}catch(e){}   /* v129: push never landed — try once more this session */
   setInterval(function(){if(state==="live"||state==="dialing"||state==="incoming")flushOutIce();},400);setInterval(flushOutIce,700);
-  setInterval(tick,1000);setInterval(callBarTick,1000);
+  setInterval(tick,1000);setInterval(callBarTick,1000);setInterval(callMicTick,250);
   renderLists();
   acHashHandle();
   if(!localStorage.getItem("ac_ob")){obShow();$("ob").className="ovl";}
@@ -4030,12 +4032,16 @@ async function newPC(){
   voiceBus=ctx.createGain();
   voiceBus.connect(mixOut);voiceBus.connect(txAnalyser); /* v101 echo fix: destination connect REMOVED - it played own mic back locally (echo before pickup) */
   pc.addTrack(mixOut.stream.getAudioTracks()[0],mixOut.stream);
-  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(stream=>{
+  const attachCallMic=stream=>{
+    if(!pc){stream.getTracks().forEach(t=>t.stop());return;}
     mic=stream;
-    const src=ctx.createMediaStreamSource(mic);
+    const src=ctx.createMediaStreamSource(stream);
     src.connect(voiceBus);
-    if(muted)mic.getAudioTracks().forEach(t=>t.enabled=false);
-  }).catch(()=>{log("mic unavailable — sending silence");try{toast("\ud83c\udf99\ufe0f You can hear them, but they can't hear you — allow microphone in your browser, then end and recall. (The call is still connected.)");}catch(e){}});   /* v130: new users who deny the mic prompt get honest guidance instead of silence */
+    if(muted)stream.getAudioTracks().forEach(t=>t.enabled=false);
+  };
+  if(mic&&mic.getAudioTracks().some(t=>t.readyState==="live"))attachCallMic(mic);
+  else navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(attachCallMic)
+    .catch(()=>{log("mic unavailable - sending silence");toast("Microphone off. Tap Enable microphone on this call to be heard.");});   /* v130: new users who deny the mic prompt get honest guidance instead of silence */
 
   if(camOn){
     cam=await navigator.mediaDevices.getUserMedia({video:true});
@@ -4090,14 +4096,20 @@ let AI_CALL=null,AI_AC=null;
 async function aiCall(p){
   PEER=p;CALL_ROLE="ai";RING_ACKED=false;clAdd(p,"out",0);
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[p]||("+"+p)));
-  if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}catch(e){toast("Allow microphone to make voice calls");callCleanup();return;}}
+  if(!mic||!mic.getAudioTracks().some(t=>t.readyState==="live")){
+    if(mic){try{mic.getTracks().forEach(t=>t.stop());}catch(e){}mic=null;}
+    try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
+    catch(e){toast("Microphone off. Tap Enable microphone on this call to talk.");}
+  }
   AI_CALL={on:true,peer:p,rec:null,speaking:false,said:"",tries:0,sttWarned:false,noiseChunks:0};
+  if(mic)setupAiMicMeter();
   setStatus("Calling +"+p,"dialing");startRing("dial");
   try{await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words).")});}catch(e){}
   aiSTT();
 }
 function aiStop(sendNote){
   if(!AI_CALL)return;
+  if(AI_MIC_CTX){try{AI_MIC_CTX.close();}catch(e){}AI_MIC_CTX=null;txAnalyser=null;}
   const p=AI_CALL.peer;
   if(AI_CALL.rec){try{if(AI_CALL.rec.state!=="inactive")AI_CALL.rec.stop();}catch(e){}AI_CALL.rec=null;}
   AI_CALL=null;
@@ -4126,6 +4138,57 @@ function aiOnMsg(from,text){
     aiSpeak(t);
   }
   return true;
+}
+/* v143: meter the actual local mic for AI calls (which have no WebRTC peer), and
+   remind users only when the audio track is off, muted, or permission is missing.
+   Never label a quiet room as a disabled microphone. The analyser never plays audio. */
+let AI_MIC_CTX=null,MIC_WARN_AT=0;
+function setupAiMicMeter(){
+  if(!mic||AI_MIC_CTX||!(AI_CALL&&AI_CALL.on))return;
+  try{
+    AI_MIC_CTX=regCtx(new (window.AudioContext||window.webkitAudioContext)());
+    txAnalyser=AI_MIC_CTX.createAnalyser();
+    AI_MIC_CTX.createMediaStreamSource(mic).connect(txAnalyser);
+  }catch(e){try{AI_MIC_CTX&&AI_MIC_CTX.close();}catch(x){}AI_MIC_CTX=null;txAnalyser=null;}
+}
+function callMicTick(){
+  const view=$("callview");
+  if(!view||view.className.includes("hide")||(state!=="live"&&state!=="dialing"))return;
+  const notice=$("micNotice"),button=$("micEnable"),track=mic&&mic.getAudioTracks()[0];
+  const live=!!(track&&track.readyState==="live"),on=live&&!muted&&track.enabled&&!track.muted;
+  let message="",tip="";
+  if(on){
+    if(AI_CALL&&AI_CALL.on&&!txAnalyser)setupAiMicMeter();
+    const rms=txAnalyser?meter(txAnalyser,$("tx")):0;
+    message=rms>.015?"🎙️ Sound detected by your microphone":"🎙️ Microphone on. Speak to see the You bar move.";
+    MIC_WARN_AT=0;
+    button.className="hide";
+  }else{
+    $("tx").style.width="0%";
+    if(muted||live&&!track.enabled){message="🔇 Microphone muted. Tap Unmute microphone to talk.";tip="Your microphone is muted. Tap Unmute microphone to talk.";button.textContent="Unmute microphone";}
+    else if(live&&track.muted){message="🎙️ Microphone unavailable. Check your phone's microphone input.";tip="Microphone input is unavailable. Check your phone microphone or Bluetooth connection.";button.textContent="Retry microphone";}
+    else{message="🎙️ Microphone off. Tap Enable microphone and allow access.";tip="Microphone is off. Tap Enable microphone and allow browser access.";button.textContent="Enable microphone";}
+    button.className="";
+    notice.style.color="#fde68a";
+    if(!MIC_WARN_AT||Date.now()-MIC_WARN_AT>=5000){toast(tip);MIC_WARN_AT=Date.now();}
+  }
+  if(on)notice.style.color="#d1fae5";
+  notice.className="cstat";
+  if(notice.textContent!==message)notice.textContent=message;
+}
+async function enableCallMic(){
+  const track=mic&&mic.getAudioTracks()[0];
+  if(track&&track.readyState==="live"&&!track.muted){muted=false;track.enabled=true;$("muteBtn").className="cbtn on";$("muteBtn").textContent="🎙️";callMicTick();return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    if(mic&&mic!==stream){try{mic.getTracks().forEach(t=>t.stop());}catch(e){}}
+    mic=stream;muted=false;
+    $("muteBtn").className="cbtn on";$("muteBtn").textContent="🎙️";
+    if(AI_MIC_CTX){try{AI_MIC_CTX.close();}catch(e){}AI_MIC_CTX=null;txAnalyser=null;}
+    if(AI_CALL&&AI_CALL.on){setupAiMicMeter();if(!AI_CALL.rec||AI_CALL.rec.state==="inactive")aiSTT();}
+    else if(pc&&mixCtx&&voiceBus){mixCtx.createMediaStreamSource(stream).connect(voiceBus);}
+    callMicTick();
+  }catch(e){toast("Microphone blocked. Allow access in your browser or phone settings, then tap Enable microphone again.");}
 }
 function aiSTT(){
   if(!AI_CALL||!AI_CALL.on)return;
@@ -4370,6 +4433,7 @@ function callCleanup(){
   setVLayout("off");
   $("rx").style.width="0";$("tx").style.width="0";
   $("muteBtn").className="cbtn";$("muteBtn").textContent="🎙️";
+  MIC_WARN_AT=0;$("micNotice").className="cstat hide";$("micEnable").className="hide";
   setStatus("Ready","");
 }
 function hangup(silent){
@@ -6497,7 +6561,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=142;
+const AC_V=143;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
