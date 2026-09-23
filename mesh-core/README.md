@@ -1,20 +1,10 @@
-# AirConnect Hybrid Mesh Core
+# AirConnect online-first route engine
 
-This directory starts the transport-independent routing layer for AirConnect.
-It does not replace the existing online or v132 QR hotspot call paths.
+This source-only routing scaffold is not deployed in the web app. It now follows the production policy: online calls and video require an internet connection; text messages may queue locally without one and send when internet returns. Direct LAN, hotspot, and mesh voice routes are not selected. There is no claim of offline voice calling.
 
-Route priority:
-1. Direct LAN or hotspot, zero data.
-2. Continuous local mesh, zero data.
-3. AirGate private backhaul for wider mesh coverage.
-4. Existing internet call path.
-5. Store-and-forward queue for non-live messages only.
-
-A live voice or video call is never labeled connected unless a continuous path exists.
-Relay nodes will route encrypted envelopes and must never receive plaintext message or media keys.
-
-Run tests:
+Run regression checks from the AirConnect repository root:
 
 ```sh
 node mesh-core/test/route-engine.test.js
+node tests/online_first.test.cjs
 ```
