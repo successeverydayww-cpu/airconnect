@@ -7,7 +7,7 @@ const root = path.join(__dirname, '..');
 const files = ['app.html', 'caller.html', 'caller5.html'];
 for (const name of files) {
   const html = fs.readFileSync(path.join(root, name), 'utf8');
-  assert.match(html, /const AC_V=141;/);
+  assert.match(html, /const AC_V=142;/);
   assert.doesNotMatch(html, /\bOFC\b|\bofc[A-Z]\w*|Offline Call|\btoggleMode\s*\(|\bMODE\b/);
   assert.match(html, /async function dial\(/);       // internet calls still exist
   assert.match(html, /async function answer\(/);
@@ -18,7 +18,7 @@ for (const name of files) {
   assert.doesNotMatch(html, /\.slice\(-60\)/);      // no silent queue eviction
 }
 const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-assert.match(sw, /airconnect-v141/);
+assert.match(sw, /airconnect-v142/);
 assert.match(sw, /caches\.match\('\.\/caller\.html'\)/);
 
 const html = fs.readFileSync(path.join(root, 'caller5.html'), 'utf8');

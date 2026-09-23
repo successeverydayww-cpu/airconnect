@@ -4091,7 +4091,7 @@ async function aiCall(p){
   PEER=p;CALL_ROLE="ai";RING_ACKED=false;clAdd(p,"out",0);
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[p]||("+"+p)));
   if(!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}catch(e){toast("Allow microphone to make voice calls");callCleanup();return;}}
-  AI_CALL={on:true,peer:p,rec:null,speaking:false,said:"",tries:0};
+  AI_CALL={on:true,peer:p,rec:null,speaking:false,said:"",tries:0,sttWarned:false,noiseChunks:0};
   setStatus("Calling +"+p,"dialing");startRing("dial");
   try{await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words).")});}catch(e){}
   aiSTT();
@@ -4143,6 +4143,13 @@ function aiSTT(){
         const b64="data:"+(e.data.type||"audio/webm")+";base64,"+btoa(bin);
         const r=await api("stt",{audio:b64});
         const t=((r&&r.text)||"").trim();
+        if(!AI_CALL||!AI_CALL.on)return;
+        if(r&&r.err){if(!AI_CALL.sttWarned){AI_CALL.sttWarned=true;toast("Speech recognition is unavailable right now. Please retry your call later.");}return;}
+        if(/^\[(?:background noise|silence|music|inaudible)\]$/i.test(t)){
+          if(++AI_CALL.noiseChunks===2)toast("I can’t make out your voice. Check your microphone and speak close to it.");
+          return;
+        }
+        AI_CALL.noiseChunks=0;
         if(t&&AI_CALL&&AI_CALL.on&&!AI_CALL.speaking&&t.length>1){
           AI_CALL.said=(AI_CALL.said?AI_CALL.said+" ":"")+t.slice(0,300);
           api("chat",{from:ME,to:AI_CALL.peer,text:await e2eEnc(AI_CALL.peer,"📞 CALL "+(ME_NAME||ME)+" says: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short spoken sentences (under 40 words).")}).catch(function(){});
@@ -4426,7 +4433,7 @@ setInterval(async()=>{
   try{
     const now=Date.now();
     if(state==="incoming"&&incomingAt&&now-incomingAt>60000){if(pendingOffer&&pendingOffer.from)vmRecordMiss(pendingOffer.from);log("auto-end: incoming ring timed out (missed call)");callCleanup();toast("Missed call");}
-    if(state==="live"&&!pc){log("auto-end: dead call link cleaned");callCleanup();toast("Call ended");}
+    if(state==="live"&&!pc&&!(AI_CALL&&AI_CALL.on)){log("auto-end: dead call link cleaned");callCleanup();toast("Call ended");}
     if(state==="dialing"&&dialAt&&now-dialAt>75000){
       if(RING_ACKED&&!EXT_WAIT&&now-dialAt<135000){EXT_WAIT=true;log("their phone is ringing — extending the wait, they may be mid-answer");}   /* v127: never hang up on someone who is actively answering */
       else{log("auto-end: no answer timeout");try{await api("sig",{from:ME,to:peerNum,type:"noans",payload:"{ }"});}catch(e){}hangup(true);toast("No answer");}
@@ -6490,7 +6497,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=141;
+const AC_V=142;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
