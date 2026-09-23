@@ -4126,35 +4126,61 @@ function aiStop(sendNote){
   if(call.sendTimer){clearTimeout(call.sendTimer);call.sendTimer=null;}
   if(call.rec){try{if(call.rec.state!=="inactive")call.rec.stop();}catch(e){}call.rec=null;}
   AI_CALL=null;
+  try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}
   try{if(AI_AC){AI_AC.close();}}catch(e){}AI_AC=null;
   if(sendNote&&p){try{e2eEnc(p,"📞 The call has just ended. Send one final short line: a 📝 call note summarizing the call for "+(ME_NAME||"me")+" in one sentence.").then(function(t){api("chat",{from:ME,to:p,text:t}).catch(function(){});}).catch(function(){});}catch(e){}}
 }
+/* v146: speak with the phone's built-in voice immediately when it is available.
+   Cloud synthesis remains the fallback, avoiding a compulsory ~2s download per reply. */
 async function aiSpeak(text){
   const call=AI_CALL;
   if(!call||!call.on||!text)return;
-  if(call.speaking){call.queuedReplies=[text];return;} /* latest answer supersedes an older queued answer */
+  if(call.speaking){call.queuedReplies=[text];return;}
   call.speaking=true;
-  try{
-    const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:String(text).slice(0,600)})});
-    if(!r.ok)throw new Error("tts");
+  /* A recorder active during playback may pick up the speaker and echo a stale turn. */
+  if(call.rec&&call.rec.state==="recording"){
+    call.discardSpeech=true;
+    try{call.rec.stop();}catch(e){call.discardSpeech=false;}
+  }
+  const done=()=>{
     if(call!==AI_CALL||!call.on)return;
-    if(!AI_AC)AI_AC=new (window.AudioContext||window.webkitAudioContext)();
-    try{await AI_AC.resume();}catch(e){}
-    const buf=await r.arrayBuffer();
-    const ab=await AI_AC.decodeAudioData(buf.slice(0));
-    if(call!==AI_CALL||!call.on)return;
-    const src=AI_AC.createBufferSource();src.buffer=ab;src.connect(AI_AC.destination);
-    /* Flush pre-greeting audio, then pause recording so our speaker is not transcribed. */
-    if(call.rec&&call.rec.state==="recording")try{call.rec.stop();}catch(e){}
-    aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");
-    src.onended=()=>{
+    call.speaking=false;
+    if(call.queuedReplies&&call.queuedReplies.length){aiSpeak(call.queuedReplies.pop());call.queuedReplies=[];return;}
+    aiSTT();aiSendHeard(call);
+    aiVoiceStatus(call,"Listening now. Speak and stay on until I reply.");
+  };
+  const cloud=async()=>{
+    try{
+      const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:String(text).slice(0,600)})});
+      if(!r.ok)throw new Error("tts");
       if(call!==AI_CALL||!call.on)return;
-      call.speaking=false;aiSTT();aiSendHeard(call);
-      aiVoiceStatus(call,"Listening now. Speak and stay on until I reply.");
-      if(call.queuedReplies&&call.queuedReplies.length)aiSpeak(call.queuedReplies.shift());
-    };
-    src.start(0);
-  }catch(e){if(call===AI_CALL&&call.on){call.speaking=false;aiVoiceStatus(call,"Voice playback failed. Listening for you now.");aiSTT();aiSendHeard(call);}}
+      if(!AI_AC)AI_AC=new (window.AudioContext||window.webkitAudioContext)();
+      try{await AI_AC.resume();}catch(e){}
+      const buf=await r.arrayBuffer();
+      const ab=await AI_AC.decodeAudioData(buf.slice(0));
+      if(call!==AI_CALL||!call.on)return;
+      const src=AI_AC.createBufferSource();src.buffer=ab;src.connect(AI_AC.destination);
+      aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");
+      src.onended=done;src.start(0);
+    }catch(e){if(call===AI_CALL&&call.on){aiVoiceStatus(call,"Voice playback failed. Listening for you now.");done();}}
+  };
+  if(window.speechSynthesis&&window.SpeechSynthesisUtterance){
+    try{
+      const synth=window.speechSynthesis,utt=new window.SpeechSynthesisUtterance(String(text).slice(0,600));
+      const vs=synth.getVoices();
+      utt.voice=vs.find(v=>v.lang.toLowerCase()==="en-ng")||vs.find(v=>v.lang.toLowerCase().startsWith("en"))||null;
+      utt.lang=utt.voice?utt.voice.lang:"en-US";utt.rate=1.06;
+      let started=false,finished=false;
+      const fallback=()=>{if(finished||started)return;finished=true;try{synth.cancel();}catch(e){}cloud();};
+      const timer=setTimeout(fallback,1200);
+      utt.onstart=()=>{if(finished)return;started=true;clearTimeout(timer);aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");};
+      utt.onend=()=>{if(finished)return;clearTimeout(timer);if(!started){finished=true;cloud();return;}finished=true;done();};
+      utt.onerror=()=>{if(finished)return;finished=true;clearTimeout(timer);try{synth.cancel();}catch(e){}cloud();};
+      synth.cancel();synth.speak(utt);
+      return;
+    }catch(e){}
+  }
+  cloud();
 }
 function aiOnMsg(from,text){
   if(!(AI_CALL&&AI_CALL.on&&from===AI_CALL.peer))return false;
@@ -4238,7 +4264,8 @@ function aiSTT(){
       if(call!==AI_CALL||!call.on)return;
       const blob=new Blob(parts,{type:mime});
       /* When a meter is available, silence-only recordings must never reach the agent. */
-      if(blob.size>300&&(call.voiceSeen||!txAnalyser)){
+      if(call.discardSpeech){call.discardSpeech=false;}
+      else if(blob.size>300&&(call.voiceSeen||!txAnalyser)){
         call.audioQueue=(call.audioQueue||Promise.resolve()).then(()=>aiProcessSpeech(call,blob)).catch(()=>{});
       }
       if(!call.speaking)setTimeout(aiSTT,0);
@@ -6589,7 +6616,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=145;
+const AC_V=146;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
