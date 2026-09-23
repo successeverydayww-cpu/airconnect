@@ -416,6 +416,15 @@ footer a{color:#64748B}
       <button class="big" id="installBtn" style="margin-top:8px;display:none" onclick="installApp()">📲 Install AirConnect app</button>
     </div>
     <div class="card">
+      <div style="font-weight:600;margin-bottom:6px">🎙 AI receptionist voice</div>
+      <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Your AI speaks with one steady voice. Most people pick the opposite of their own.</div>
+      <div style="display:flex;gap:8px">
+        <button class="big" style="flex:1;background:#CBD5E1;color:#334155" onclick="setAiVoice('f')">♀ Female</button>
+        <button class="big" style="flex:1;background:#CBD5E1;color:#334155" onclick="setAiVoice('m')">♂ Male</button>
+      </div>
+      <div style="font-size:11.5px;color:#64748B;margin-top:6px">Current: <span id="aiVoiceLab">Female</span></div>
+    </div>
+    <div class="card">
       <div style="font-weight:600;margin-bottom:6px">➕ Add a friend</div>
       <input id="peer" placeholder="Friend's number, e.g. 1100000001" inputmode="numeric">
       <button class="big blue" id="freq" onclick="sendRequest()">Send friend request</button>
@@ -1174,7 +1183,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=85');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=86');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){pushNudge(perm);return;}
     const v=await api("vapid");
@@ -4208,7 +4217,37 @@ function aiStop(sendNote){
 }
 /* v146: speak with the phone's built-in voice immediately when it is available.
    Cloud synthesis remains the fallback, avoiding a compulsory ~2s download per reply. */
-async function aiSpeak(text){
+async /* v149: ONE STABLE receptionist voice per device — no more male/female switching.
+   Default female voice (male users get a female receptionist); female users can pick
+   a male voice in Settings. Chosen voice is pinned so it never changes mid-call. */
+function aiPickVoice(synth){
+  try{
+    var wantF=(localStorage.getItem("ac_aivoice")||"f")!=="m";
+    var all=synth.getVoices()||[];
+    var vs=all.filter(function(v){return v.lang&&v.lang.toLowerCase().indexOf("en")===0;});
+    if(!vs.length)vs=all;
+    if(!vs.length)return null;
+    var cached=null;try{cached=localStorage.getItem("ac_voiceuri");}catch(e){}
+    if(cached){var cv=null;for(var i=0;i<vs.length;i++){if(vs[i].voiceURI===cached){cv=vs[i];break;}}
+      if(cv)return cv;}
+    var FE=/(female|woman|aria|zira|susan|samantha|karen|tessa|fiona|victoria|joanna|emma|ava|serena|kate|sara|nora|monica|kyoko|mei|laila|zuri|michelle|amira|lucia|maria|paulina)/i;
+    var MA=/(\bmale\b|\bman\b|brian|daniel|george|\bguy\b|james|ryan|\balex\b|fred|thomas|david|\bmark\b|peter|oliver|rishi|magnus|reed|eddy|antonio|diego|jorge|carlos)/i;
+    vs.sort(function(a,b){return String(a.name).localeCompare(String(b.name));});
+    var pick=null;
+    for(var j=0;j<vs.length&&!pick;j++){if(wantF?FE.test(vs[j].name):MA.test(vs[j].name))pick=vs[j];}
+    if(!pick){for(var k=0;k<vs.length&&!pick;k++){if(wantF?!MA.test(vs[k].name):!FE.test(vs[k].name))pick=vs[k];}}
+    if(!pick)pick=vs[0];
+    try{localStorage.setItem("ac_voiceuri",pick.voiceURI);}catch(e){}
+    return pick;
+  }catch(e){return null;}
+}
+function setAiVoice(g){
+  try{localStorage.setItem("ac_aivoice",g);localStorage.removeItem("ac_voiceuri");}catch(e){}
+  aiVoiceLabel();
+  try{toast(g==="m"?"Your AI now speaks with a male voice ✓":"Your AI now speaks with a female voice ✓");}catch(e){}
+}
+function aiVoiceLabel(){try{var e=document.getElementById("aiVoiceLab");if(e){var g=(localStorage.getItem("ac_aivoice")||"f")!=="m"?"Female":"Male";e.textContent=g;}}catch(e){}}
+function aiSpeak(text){
   const call=AI_CALL;
   if(!call||!call.on||!text)return;
   if(call.speaking){call.queuedReplies=[text];return;}
@@ -4244,7 +4283,7 @@ async function aiSpeak(text){
     try{
       const synth=window.speechSynthesis,utt=new window.SpeechSynthesisUtterance(String(text).slice(0,600));
       const vs=synth.getVoices();
-      utt.voice=vs.find(v=>v.lang.toLowerCase()==="en-ng")||vs.find(v=>v.lang.toLowerCase().startsWith("en"))||null;
+      utt.voice=aiPickVoice(synth);
       utt.lang=utt.voice?utt.voice.lang:"en-US";utt.rate=1.06;
       let started=false,finished=false;
       const fallback=()=>{if(finished||started)return;finished=true;try{synth.cancel();}catch(e){}cloud();};
@@ -6690,8 +6729,8 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=148;
-function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
+const AC_V=149;
+function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
@@ -6728,7 +6767,7 @@ async function manualRefresh(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=85").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=86").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
