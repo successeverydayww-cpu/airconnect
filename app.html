@@ -12,6 +12,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#F8FAFC;color:#0F172A;overflow-x:hidden}
 .hide{display:none!important}
+.acStay #login{display:none!important}
+.acStay #app{display:block!important}
 /* header */
 .hdr{position:sticky;top:0;z-index:20;background:#0D6E52;color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #C9EBDE}
 .hdr .sub{font-size:12px;color:#52796B;font-weight:400}
@@ -120,6 +122,7 @@ footer a{color:#64748B}
 </style>
 </head>
 <body>
+<script>/* v150: a returning user never sees the login screen flash — hide it before first paint */try{var __acid="";try{__acid=localStorage.getItem("aicall_id")||"";}catch(e){}if(!__acid){try{__acid=sessionStorage.getItem("aicall_id")||"";}catch(e){}}if(!__acid){try{__acid=(document.cookie.match(/(?:^|;\s*)aicall_id=(\d+)/)||[])[1]||"";}catch(e){}}if(__acid){document.documentElement.className+=" acStay";}}catch(e){}</script>
 <style>
 #menuWrap{position:fixed;inset:0;background:rgba(2,6,23,.55);z-index:70;opacity:0;pointer-events:none;transition:opacity .18s}
 #menuWrap.on{opacity:1;pointer-events:auto}
@@ -1175,7 +1178,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=86');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=87');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){pushNudge(perm);return;}
     const v=await api("vapid");
@@ -6661,8 +6664,8 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=149;
-function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}}
+const AC_V=150;
+function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();_deferredInstall=e;try{const b=$("installBtn");if(b)b.style.display="";}catch(x){}});
@@ -6699,7 +6702,7 @@ async function manualRefresh(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=86").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=87").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
