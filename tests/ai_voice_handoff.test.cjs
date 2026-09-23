@@ -6,7 +6,7 @@ const path=require('node:path');
 (async()=>{
 for(const page of ['app.html','caller.html','caller5.html']){
  const s=fs.readFileSync(path.join(__dirname,'..',page),'utf8');
- assert.match(s,/const AC_V=146;/,page+' client version');
+ assert.match(s,/const AC_V=147;/,page+' client version');
  assert.match(s,/id="aiSpeechStatus"/,page+' actual-delivery status');
  assert.doesNotMatch(s,/AI_CALL\.rec\.start\(7000\)|,3500\)/,page+' no fixed speech slice');
  assert.match(s,/if\(AI_CALL&&AI_CALL\.on&&txAnalyser\)aiVoiceActivity\(AI_CALL,rms\)/,page+' meter-based speech detection');
@@ -53,10 +53,10 @@ for(const page of ['app.html','caller.html','caller5.html']){
  assert.match(statuses.aiSpeechStatus.textContent,/Waiting for my reply/,page+' confirms delivery');
  assert.equal(recorders.length,2,page+' starts a fresh recorder');
  now+=250;context.aiVoiceActivity(call,.03);
- now+=450;context.aiVoiceActivity(call,.001);
- assert.equal(recorders[1].state,'recording',page+' requires a completed half-second pause');
+ now+=250;context.aiVoiceActivity(call,.001);
+ assert.equal(recorders[1].state,'recording',page+' keeps recording through a brief mid-sentence pause');
  now+=100;context.aiVoiceActivity(call,.001);
- assert.equal(recorders[1].state,'inactive',page+' ends completed speech within half a second of silence');
+ assert.equal(recorders[1].state,'inactive',page+' ends completed speech a third of a second after silence');
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(chats,1,page+' duplicate transcript suppressed without a stale response');
  transcript='How are you doing?';

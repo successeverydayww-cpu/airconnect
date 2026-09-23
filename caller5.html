@@ -4116,7 +4116,7 @@ function aiVoiceActivity(call,rms){
   if(call!==AI_CALL||!call.on||call.speaking||!call.rec||call.rec.state!=="recording")return;
   const now=Date.now();
   if(rms>.014){call.voiceSeen=true;call.voiceAt=now;return;}
-  if(call.voiceSeen&&now-call.voiceAt>=500&&now-call.recordAt>=700){
+  if(call.voiceSeen&&now-call.voiceAt>=350&&now-call.recordAt>=450){
     try{call.rec.stop();}catch(e){}
   }
 }
@@ -4143,7 +4143,8 @@ function aiSendHeard(call){
     const text=await e2eEnc(call.peer,"📞 VOICE "+(ME_NAME||ME)+": "+heard+". Reply briefly to this turn, without repeating earlier answers.");
     const reply=await api("chat",{from:ME,to:call.peer,text,voice:{session:call.session,started:call.started,seq:++call.turn}});
     if(!reply||reply.err||reply.ok===false)throw new Error("not delivered");
-    aiVoiceStatus(call,"I heard you. Waiting for my reply...");
+    if(reply.reply&&call===AI_CALL&&call.on){call.lastSpokenReply={t:String(reply.reply),at:Date.now()};aiVoiceStatus(call,"Replying...");aiSpeak(String(reply.reply).slice(0,400));}
+    else aiVoiceStatus(call,"I heard you. Waiting for my reply...");
     if(call.pending)aiSendHeard(call);
   }).catch(()=>{if(call===AI_CALL&&call.on){call.pending=(heard+" "+call.pending).trim();aiVoiceStatus(call,"Words not delivered. Check connection or send a chat message.");toast("Voice message not delivered. Check your connection.");}});
 }
@@ -4181,11 +4182,12 @@ async function aiCall(p){
   }
   AI_CALL={on:true,peer:p,rec:null,speaking:false,said:"",tries:0,noiseChunks:0,pending:"",lastSent:0,recTimer:null,sendTimer:null,session:"v"+Date.now().toString(36)+Math.random().toString(36).slice(2,8),started:Date.now(),turn:0};
   if(mic)setupAiMicMeter();
+  try{const s=window.speechSynthesis;if(s&&s.getVoices)s.getVoices();if(s){const wu=new SpeechSynthesisUtterance(" ");wu.volume=0;s.speak(wu);}}catch(e){}
   setStatus("Calling +"+p,"dialing");startRing("dial");
   aiVoiceStatus(AI_CALL,"Listening. Speak after the greeting and stay on for my reply.");
   aiSTT();
   const greetingCall=AI_CALL;
-  try{const opened=await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words)."),voice:{session:greetingCall.session,started:greetingCall.started,seq:0}});if(opened&&opened.err)throw new Error(opened.err);}catch(e){aiVoiceStatus(greetingCall,"Could not reach the AI. Check your connection.");toast("Could not reach the AI. Try calling again.");}
+  try{const opened=await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words)."),voice:{session:greetingCall.session,started:greetingCall.started,seq:0}});if(opened&&opened.err)throw new Error(opened.err);if(opened&&opened.reply&&greetingCall===AI_CALL&&greetingCall.on){greetingCall.lastSpokenReply={t:String(opened.reply),at:Date.now()};aiSpeak(String(opened.reply).slice(0,400));}}catch(e){aiVoiceStatus(greetingCall,"Could not reach the AI. Check your connection.");toast("Could not reach the AI. Try calling again.");}
 }
 function aiStop(sendNote){
   if(!AI_CALL)return;
@@ -4257,7 +4259,7 @@ function aiOnMsg(from,text){
   const t=String(text||"");
   if(t&&t.indexOf("📞")!==0&&t.indexOf("📝")!==0){
     if(state!=="live"){state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";setStatus("LIVE · AI","live");}
-    aiSpeak(t);
+    if(!(AI_CALL.lastSpokenReply&&t===AI_CALL.lastSpokenReply.t&&Date.now()-AI_CALL.lastSpokenReply.at<15000))aiSpeak(t);
   }
   return true;
 }
@@ -5269,7 +5271,7 @@ async function poll(){
     if(d0&&(d0.err||d0.banned)){
       if(d0.banned){toast("Account banned");return;}
       pollFails=Math.min(pollFails+1,6);
-      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?800:(document.hidden?9000:CHAT_OPEN?1500:3000));
+      setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(AI_CALL&&AI_CALL.on)?250:(state==="live"||state==="dialing"||state==="incoming")?800:(document.hidden?9000:CHAT_OPEN?1500:3000));
       return;
     }
     const d=d0;
@@ -5331,7 +5333,7 @@ async function poll(){
     if(prevFr!==WIN_FRIENDS.length||ms.length||msgs.length)renderLists();
     pollFails=0;
   }catch(e){pollFails=Math.min(pollFails+1,6);if(pollFails>=3)setOffline(true);}
-  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(state==="live"||state==="dialing"||state==="incoming")?800:(document.hidden?9000:CHAT_OPEN?1500:3000));
+  setTimeout(poll,pollFails?Math.min(900*pollFails,5000):(AI_CALL&&AI_CALL.on)?250:(state==="live"||state==="dialing"||state==="incoming")?800:(document.hidden?9000:CHAT_OPEN?1500:3000));
 }
 setInterval(tickReqs,4000);
 
@@ -6684,7 +6686,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=146;
+const AC_V=147;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
