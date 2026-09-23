@@ -11,7 +11,7 @@ for(const page of ['app.html','caller.html','caller5.html']){
     vm.runInNewContext(found[0],{state:'live',AI_CALL:ai,pc,log(){},callCleanup(){ended++},toast(){} });
     assert.equal(!!ended,expectEnd,page+' ai='+!!ai+' pc='+!!pc);
   }
-  assert.match(src,/if\(\+\+AI_CALL\.noiseChunks===2\)toast\(/,page+' mic feedback');
-  assert.match(src,/const AC_V=143;/,page+' version');
+  assert.match(src,/if\(\+\+call\.noiseChunks===2\)/,page+' mic feedback');
+  assert.match(src,/const AC_V=144;/,page+' version');
 }
 console.log('PASS: AI calls remain live after greeting, dead human links still close, speech errors surface');

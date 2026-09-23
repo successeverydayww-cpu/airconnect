@@ -867,6 +867,7 @@ footer a{color:#64748B}
     <div class="cname" id="callName">—</div>
     <div class="cstat" id="callStat">calling…</div>
     <div id="aiBanner" class="cstat hide" style="color:#e8c468;font-weight:600">⭐ Premium AI is answering — talk to it or leave a message</div>
+    <div id="aiSpeechStatus" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;color:#d1fae5"></div>
     <div id="micNotice" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;font-weight:600;color:#d1fae5"></div>
     <button id="micEnable" type="button" class="hide" onclick="enableCallMic()" style="background:#e8c468;color:#151b26;border:0;border-radius:10px;padding:8px 12px;margin-top:8px;font-weight:700;cursor:pointer">Enable microphone</button>
   </div>
@@ -4093,6 +4094,44 @@ async function dialVideo(p){camOn=true;await dial(p);}
    ANSWER with live voice: your speech is transcribed (stt act), sent as chat, the AI replies,
    and the reply is SPOKEN back to you (xtts). No WebRTC needed — it is a voice session over chat. ---------- */
 let AI_CALL=null,AI_AC=null;
+function aiVoiceStatus(call,text){
+  if(call!==AI_CALL||!call.on)return;
+  const el=$("aiSpeechStatus");el.className="cstat";el.textContent=text;
+}
+function aiSendHeard(call){
+  if(call!==AI_CALL||!call.on||call.speaking||!call.pending)return;
+  if(call.sendTimer)return;
+  const delay=Math.max(0,7500-(Date.now()-(call.lastSent||0)));
+  if(delay){call.sendTimer=setTimeout(()=>{call.sendTimer=null;aiSendHeard(call);},delay);return;}
+  const heard=call.pending.slice(0,260);call.pending=call.pending.slice(260).trim();call.lastSent=Date.now();
+  aiVoiceStatus(call,"Words recognized. Sending to the AI...");
+  call.sending=(call.sending||Promise.resolve()).then(async()=>{
+    const text=await e2eEnc(call.peer,"📞 CALL "+(ME_NAME||ME)+" says: "+heard+". Reply TO THE CALLER in 1-2 short spoken sentences (under 40 words).");
+    const reply=await api("chat",{from:ME,to:call.peer,text});
+    if(!reply||reply.err||reply.ok===false)throw new Error("not delivered");
+    aiVoiceStatus(call,"I heard you. Waiting for my reply...");
+    if(call.pending)aiSendHeard(call);
+  }).catch(()=>{if(call===AI_CALL&&call.on){call.pending=(heard+" "+call.pending).trim();aiVoiceStatus(call,"Words not delivered. Check connection or send a chat message.");toast("Voice message not delivered. Check your connection.");}});
+}
+async function aiProcessSpeech(call,blob){
+  if(call!==AI_CALL||!call.on)return;
+  try{
+    aiVoiceStatus(call,"Transcribing your words...");
+    const bytes=new Uint8Array(await blob.arrayBuffer());let bin="";
+    for(let i=0;i<bytes.length;i+=32768)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+32768));
+    const r=await api("stt",{audio:"data:"+(blob.type||"audio/webm")+";base64,"+btoa(bin)});
+    if(call!==AI_CALL||!call.on)return;
+    if(!r||r.err){aiVoiceStatus(call,"Speech recognition failed. Please retry or send a chat message.");toast("Speech recognition failed. Please retry.");return;}
+    const t=String(r.text||"").trim();
+    if(!t||/^\[(?:background noise|silence|music|inaudible)\]$/i.test(t)){
+      if(++call.noiseChunks===2){aiVoiceStatus(call,"I detect sound, but cannot make out words. Speak close to the mic.");toast("I cannot make out your words. Speak close to the mic.");}
+      return;
+    }
+    call.noiseChunks=0;
+    if(t.length>1){call.said=(call.said?call.said+" ":"")+t.slice(0,300);call.pending=(call.pending?call.pending+" ":"")+t.slice(0,300);aiVoiceStatus(call,"Words recognized. Sending to the AI...");aiSendHeard(call);}
+  }catch(e){if(call===AI_CALL&&call.on){aiVoiceStatus(call,"Could not send your audio. Check your connection.");toast("Could not send your audio. Check connection.");}}
+}
+
 async function aiCall(p){
   PEER=p;CALL_ROLE="ai";RING_ACKED=false;clAdd(p,"out",0);
   state="dialing";dialAt=Date.now();showCall("Calling "+(WIN_NAMES[p]||("+"+p)));
@@ -4101,34 +4140,51 @@ async function aiCall(p){
     try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});}
     catch(e){toast("Microphone off. Tap Enable microphone on this call to talk.");}
   }
-  AI_CALL={on:true,peer:p,rec:null,speaking:false,said:"",tries:0,sttWarned:false,noiseChunks:0};
+  AI_CALL={on:true,peer:p,rec:null,speaking:false,said:"",tries:0,noiseChunks:0,pending:"",lastSent:0,recTimer:null,sendTimer:null};
   if(mic)setupAiMicMeter();
   setStatus("Calling +"+p,"dialing");startRing("dial");
-  try{await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words).")});}catch(e){}
+  aiVoiceStatus(AI_CALL,"Listening. Speak after the greeting and stay on for my reply.");
   aiSTT();
+  try{const opened=await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words).")});if(opened&&opened.err)throw new Error(opened.err);}catch(e){aiVoiceStatus(AI_CALL,"Could not reach the AI. Check your connection.");toast("Could not reach the AI. Try calling again.");}
 }
 function aiStop(sendNote){
   if(!AI_CALL)return;
   if(AI_MIC_CTX){try{AI_MIC_CTX.close();}catch(e){}AI_MIC_CTX=null;txAnalyser=null;}
-  const p=AI_CALL.peer;
-  if(AI_CALL.rec){try{if(AI_CALL.rec.state!=="inactive")AI_CALL.rec.stop();}catch(e){}AI_CALL.rec=null;}
+  const call=AI_CALL,p=call.peer;
+  call.on=false;
+  if(call.recTimer){clearTimeout(call.recTimer);call.recTimer=null;}
+  if(call.sendTimer){clearTimeout(call.sendTimer);call.sendTimer=null;}
+  if(call.rec){try{if(call.rec.state!=="inactive")call.rec.stop();}catch(e){}call.rec=null;}
   AI_CALL=null;
   try{if(AI_AC){AI_AC.close();}}catch(e){}AI_AC=null;
   if(sendNote&&p){try{e2eEnc(p,"📞 The call has just ended. Send one final short line: a 📝 call note summarizing the call for "+(ME_NAME||"me")+" in one sentence.").then(function(t){api("chat",{from:ME,to:p,text:t}).catch(function(){});}).catch(function(){});}catch(e){}}
 }
 async function aiSpeak(text){
-  if(!AI_CALL||!AI_CALL.on||AI_CALL.speaking||!text)return;
-  AI_CALL.speaking=true;
+  const call=AI_CALL;
+  if(!call||!call.on||!text)return;
+  if(call.speaking){call.queuedReplies=call.queuedReplies||[];call.queuedReplies.push(text);return;}
+  call.speaking=true;
   try{
     const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:String(text).slice(0,600)})});
     if(!r.ok)throw new Error("tts");
+    if(call!==AI_CALL||!call.on)return;
     if(!AI_AC)AI_AC=new (window.AudioContext||window.webkitAudioContext)();
     try{await AI_AC.resume();}catch(e){}
     const buf=await r.arrayBuffer();
     const ab=await AI_AC.decodeAudioData(buf.slice(0));
-    const src=AI_AC.createBufferSource();src.buffer=ab;src.connect(AI_AC.destination);src.start(0);
-    setTimeout(function(){if(AI_CALL&&AI_CALL.on)AI_CALL.speaking=false;},ab.duration*1000+400);
-  }catch(e){if(AI_CALL)AI_CALL.speaking=false;}
+    if(call!==AI_CALL||!call.on)return;
+    const src=AI_AC.createBufferSource();src.buffer=ab;src.connect(AI_AC.destination);
+    /* Flush pre-greeting audio, then pause recording so our speaker is not transcribed. */
+    if(call.rec&&call.rec.state==="recording")try{call.rec.stop();}catch(e){}
+    aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");
+    src.onended=()=>{
+      if(call!==AI_CALL||!call.on)return;
+      call.speaking=false;aiSTT();aiSendHeard(call);
+      aiVoiceStatus(call,"Listening now. Speak and stay on until I reply.");
+      if(call.queuedReplies&&call.queuedReplies.length)aiSpeak(call.queuedReplies.shift());
+    };
+    src.start(0);
+  }catch(e){if(call===AI_CALL&&call.on){call.speaking=false;aiVoiceStatus(call,"Voice playback failed. Listening for you now.");aiSTT();aiSendHeard(call);}}
 }
 function aiOnMsg(from,text){
   if(!(AI_CALL&&AI_CALL.on&&from===AI_CALL.peer))return false;
@@ -4191,36 +4247,31 @@ async function enableCallMic(){
   }catch(e){toast("Microphone blocked. Allow access in your browser or phone settings, then tap Enable microphone again.");}
 }
 function aiSTT(){
-  if(!AI_CALL||!AI_CALL.on)return;
+  const call=AI_CALL;
+  if(!call||!call.on||call.speaking||call.rec)return;
   try{
-    if(!mic){if(AI_CALL.tries<6){AI_CALL.tries++;setTimeout(aiSTT,2000);}return;}
+    if(!mic||!mic.getAudioTracks().some(t=>t.readyState==="live")){
+      if(call.tries<6){call.tries++;setTimeout(aiSTT,2000);}
+      else aiVoiceStatus(call,"Microphone unavailable. Tap Enable microphone.");
+      return;
+    }
     let mime="";for(const m of ["audio/webm;codecs=opus","audio/webm","audio/mp4"]){try{if(MediaRecorder.isTypeSupported(m)){mime=m;break;}}catch(e){}}
-    if(!mime)return;
-    AI_CALL.rec=new MediaRecorder(mic,{mimeType:mime,audioBitsPerSecond:24000});
-    AI_CALL.rec.ondataavailable=async function(e){
-      if(!e.data||!e.data.size||!AI_CALL||!AI_CALL.on||AI_CALL.speaking)return;
-      try{
-        const buf=await e.data.arrayBuffer();
-        const bytes=new Uint8Array(buf);let bin="";const CH=32768;
-        for(let i=0;i<bytes.length;i+=CH)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
-        const b64="data:"+(e.data.type||"audio/webm")+";base64,"+btoa(bin);
-        const r=await api("stt",{audio:b64});
-        const t=((r&&r.text)||"").trim();
-        if(!AI_CALL||!AI_CALL.on)return;
-        if(r&&r.err){if(!AI_CALL.sttWarned){AI_CALL.sttWarned=true;toast("Speech recognition is unavailable right now. Please retry your call later.");}return;}
-        if(/^\[(?:background noise|silence|music|inaudible)\]$/i.test(t)){
-          if(++AI_CALL.noiseChunks===2)toast("I can’t make out your voice. Check your microphone and speak close to it.");
-          return;
-        }
-        AI_CALL.noiseChunks=0;
-        if(t&&AI_CALL&&AI_CALL.on&&!AI_CALL.speaking&&t.length>1){
-          AI_CALL.said=(AI_CALL.said?AI_CALL.said+" ":"")+t.slice(0,300);
-          api("chat",{from:ME,to:AI_CALL.peer,text:await e2eEnc(AI_CALL.peer,"📞 CALL "+(ME_NAME||ME)+" says: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short spoken sentences (under 40 words).")}).catch(function(){});
-        }
-      }catch(err){}
+    if(!mime){aiVoiceStatus(call,"Recording unsupported in this browser. Send a chat message.");return;}
+    const rec=new MediaRecorder(mic,{mimeType:mime,audioBitsPerSecond:24000});
+    const parts=[];call.rec=rec;
+    rec.ondataavailable=e=>{if(e.data&&e.data.size)parts.push(e.data);};
+    rec.onerror=()=>{if(call===AI_CALL&&call.on){aiVoiceStatus(call,"Recording error. Please try again.");toast("Microphone recording failed.");}};
+    rec.onstop=()=>{
+      if(call.rec===rec)call.rec=null;
+      if(call.recTimer){clearTimeout(call.recTimer);call.recTimer=null;}
+      if(call!==AI_CALL||!call.on)return;
+      const blob=new Blob(parts,{type:mime});
+      if(blob.size>300){call.audioQueue=(call.audioQueue||Promise.resolve()).then(()=>aiProcessSpeech(call,blob)).catch(()=>{});}
+      if(!call.speaking)setTimeout(aiSTT,0);
     };
-    AI_CALL.rec.start(7000);
-  }catch(e){}
+    rec.start();
+    call.recTimer=setTimeout(()=>{if(call===AI_CALL&&call.rec===rec&&rec.state==="recording")rec.stop();},3500);
+  }catch(e){if(call===AI_CALL&&call.on){call.rec=null;aiVoiceStatus(call,"Recording failed. Tap Enable microphone to retry.");toast("Recording failed. Tap Enable microphone.");}}
 }
 
 document.addEventListener("click",e=>{
@@ -4433,7 +4484,7 @@ function callCleanup(){
   setVLayout("off");
   $("rx").style.width="0";$("tx").style.width="0";
   $("muteBtn").className="cbtn";$("muteBtn").textContent="🎙️";
-  MIC_WARN_AT=0;$("micNotice").className="cstat hide";$("micEnable").className="hide";
+  MIC_WARN_AT=0;$("micNotice").className="cstat hide";$("aiSpeechStatus").className="cstat hide";$("micEnable").className="hide";
   setStatus("Ready","");
 }
 function hangup(silent){
@@ -6561,7 +6612,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=143;
+const AC_V=144;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;
