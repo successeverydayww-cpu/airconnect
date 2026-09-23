@@ -4073,7 +4073,11 @@ function aiSendHeard(call){
     const text=await e2eEnc(call.peer,"📞 VOICE "+(ME_NAME||ME)+": "+heard+". Reply briefly to this turn, without repeating earlier answers.");
     const reply=await api("chat",{from:ME,to:call.peer,text,voice:{session:call.session,started:call.started,seq:++call.turn}});
     if(!reply||reply.err||reply.ok===false)throw new Error("not delivered");
-    if(reply.reply&&call===AI_CALL&&call.on){call.lastSpokenReply={t:String(reply.reply),at:Date.now()};aiVoiceStatus(call,"Replying...");aiSpeak(String(reply.reply).slice(0,400));}
+    if(reply.reply&&call===AI_CALL&&call.on){
+      const rt=String(reply.reply);
+      if(!(call.lastSpoken&&rt===call.lastSpoken.t&&Date.now()-call.lastSpoken.at<15000)){call.lastSpoken={t:rt,at:Date.now()};aiSpeak(rt.slice(0,400));}
+      aiVoiceStatus(call,"Replying...");
+    }
     else aiVoiceStatus(call,"I heard you. Waiting for my reply...");
     if(call.pending)aiSendHeard(call);
   }).catch(()=>{if(call===AI_CALL&&call.on){call.pending=(heard+" "+call.pending).trim();aiVoiceStatus(call,"Words not delivered. Check connection or send a chat message.");toast("Voice message not delivered. Check your connection.");}});
@@ -4117,7 +4121,7 @@ async function aiCall(p){
   aiVoiceStatus(AI_CALL,"Listening. Speak after the greeting and stay on for my reply.");
   aiSTT();
   const greetingCall=AI_CALL;
-  try{const opened=await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words)."),voice:{session:greetingCall.session,started:greetingCall.started,seq:0}});if(opened&&opened.err)throw new Error(opened.err);if(opened&&opened.reply&&greetingCall===AI_CALL&&greetingCall.on){greetingCall.lastSpokenReply={t:String(opened.reply),at:Date.now()};aiSpeak(String(opened.reply).slice(0,400));}}catch(e){aiVoiceStatus(greetingCall,"Could not reach the AI. Check your connection.");toast("Could not reach the AI. Try calling again.");}
+  try{const opened=await api("chat",{from:ME,to:p,text:await e2eEnc(p,"📞 INCOMING VOICE CALL: "+(ME_NAME||ME)+" is calling you right now. Answer with ONE short warm spoken greeting (under 25 words)."),voice:{session:greetingCall.session,started:greetingCall.started,seq:0}});if(opened&&opened.err)throw new Error(opened.err);if(opened&&opened.reply&&greetingCall===AI_CALL&&greetingCall.on){const gt=String(opened.reply);if(!(greetingCall.lastSpoken&&gt===greetingCall.lastSpoken.t&&Date.now()-greetingCall.lastSpoken.at<15000)){greetingCall.lastSpoken={t:gt,at:Date.now()};aiSpeak(gt.slice(0,400));}}}catch(e){aiVoiceStatus(greetingCall,"Could not reach the AI. Check your connection.");toast("Could not reach the AI. Try calling again.");}
 }
 function aiStop(sendNote){
   if(!AI_CALL)return;
@@ -4189,7 +4193,7 @@ function aiOnMsg(from,text){
   const t=String(text||"");
   if(t&&t.indexOf("📞")!==0&&t.indexOf("📝")!==0){
     if(state!=="live"){state="live";stopRing();callStart=Date.now();$("callStat").textContent="00:00";setStatus("LIVE · AI","live");}
-    if(!(AI_CALL.lastSpokenReply&&t===AI_CALL.lastSpokenReply.t&&Date.now()-AI_CALL.lastSpokenReply.at<15000))aiSpeak(t);
+    if(!(AI_CALL.lastSpoken&&t===AI_CALL.lastSpoken.t&&Date.now()-AI_CALL.lastSpoken.at<15000)){AI_CALL.lastSpoken={t:t,at:Date.now()};aiSpeak(t);}
   }
   return true;
 }
@@ -6618,7 +6622,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=147;
+const AC_V=148;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 let _deferredInstall=null;

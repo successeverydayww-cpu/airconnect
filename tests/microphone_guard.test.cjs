@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const assert=require('node:assert/strict');
 for(const page of ['app.html','caller.html','caller5.html']){
   const html=fs.readFileSync(path.join(__dirname,'..',page),'utf8');
-  assert.match(html,/const AC_V=147;/,page+' client version');
+  assert.match(html,/const AC_V=148;/,page+' client version');
   assert.match(html,/id="micNotice"[^>]*role="status"/,page+' persistent mic notice');
   assert.match(html,/id="micEnable"[^>]*onclick="enableCallMic\(\)"/,page+' in-call recovery button');
   assert.match(html,/setInterval\(callMicTick,250\)/,page+' meter refresh');
@@ -44,5 +44,5 @@ for(const page of ['app.html','caller.html','caller5.html']){
   elements.callview.className='ovl hide';now+=10000;sandbox.callMicTick();
   assert.equal(warnings.length,3,page+' no reminders after call closes');
 }
-assert.match(fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8'),/airconnect-v147/);
+assert.match(fs.readFileSync(path.join(__dirname,'..','sw.js'),'utf8'),/airconnect-v148/);
 console.log('PASS: AI and human calls show local mic activity, off/muted mic prompts every 5 seconds, retries stay available, cleanup stops prompts');

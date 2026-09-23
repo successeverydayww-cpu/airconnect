@@ -6,7 +6,7 @@ const path=require('node:path');
 (async()=>{
 for(const page of ['app.html','caller.html','caller5.html']){
  const s=fs.readFileSync(path.join(__dirname,'..',page),'utf8');
- assert.match(s,/const AC_V=147;/,page+' client version');
+ assert.match(s,/const AC_V=148;/,page+' client version');
  assert.match(s,/id="aiSpeechStatus"/,page+' actual-delivery status');
  assert.doesNotMatch(s,/AI_CALL\.rec\.start\(7000\)|,3500\)/,page+' no fixed speech slice');
  assert.match(s,/if\(AI_CALL&&AI_CALL\.on&&txAnalyser\)aiVoiceActivity\(AI_CALL,rms\)/,page+' meter-based speech detection');
