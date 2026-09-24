@@ -1042,7 +1042,8 @@ function vmEnabled(){try{return localStorage.getItem("ac_vm")!=="0";}catch(e){re
 function vmToggle(){try{localStorage.setItem("ac_vm",vmEnabled()?"0":"1");}catch(e){}vmStat();}
 function vmStat(){try{$("vmStat").textContent=vmEnabled()?"ON":"OFF";}catch(e){}}
 let VM_BRIEF=false,VM_MISS={};try{VM_MISS=JSON.parse(localStorage.getItem("ac_vm_miss"))||{};}catch(e){}
-let VM_LANG="",VM_HEARD="",VM_CALLER=""; /* v157: caller language detection + note-taker transcript */
+let VM_LANG="",VM_HEARD="",VM_CALLER="",VM_CID=""; /* v157-158: caller language, note-taker transcript, registered identity name */
+function vmCallerName(){try{return (WIN_NAMES[VM_CALLER]||VM_CID||"");}catch(e){return VM_CID||"";}}
 let VM_BRIEF_SILENCE=null,VM_BRIEF_SAID="";
 function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<10800000)?r:null; /* v128: 3h window — the second call (any time within 3h) still gets the instant AI pickup */}
 function vmRecordMiss(from){try{const prev=vmMissInfo(from);VM_MISS[from]={t:Date.now(),n:((prev&&prev.n)||0)+1};localStorage.setItem("ac_vm_miss",JSON.stringify(VM_MISS));}catch(e){}}
@@ -1062,7 +1063,8 @@ function vmDisarm(){if(vmRingTimer){clearTimeout(vmRingTimer);vmRingTimer=null;}
 async function vmAnswer(){
   vmDisarm();
   const m=pendingOffer;if(!m||state!=="incoming")return;
-  VM_MODE=true;vmWantEnd=false;vmEndAt=Date.now()+120000;vmSTTTries=0;VM_LANG="";VM_HEARD="";VM_CALLER=String(m.from||"");
+  VM_MODE=true;vmWantEnd=false;vmEndAt=Date.now()+120000;vmSTTTries=0;VM_LANG="";VM_HEARD="";VM_CID="";VM_CALLER=String(m.from||"");
+  try{api("whois",{from:ME,num:VM_CALLER}).then(function(r){if(r&&r.name)VM_CID=String(r.name).slice(0,60);}).catch(function(){});}catch(e){} /* v158: caller's registered app name */
   pushHist();stopRing();$("incoming").className="ovl hide";
   answer(m);
   try{$("vmTake").style.display="inline-block";}catch(e){}
@@ -1071,7 +1073,7 @@ async function vmAnswer(){
   vmEnsureFriend();
   if(VM_BRIEF){
     /* v36: lively 2nd-call receptionist — pick fast, greet, LISTEN, answer, then close */
-    const cn=WIN_NAMES[m.from]?" "+WIN_NAMES[m.from]:"";
+    const cn=(vmCallerName()?" "+vmCallerName():""); /* v158: contact name OR registered app name */
     VM_BRIEF_SAID="";
     vmEndAt=Date.now()+60000;
     vmWatchEnd();
@@ -1105,7 +1107,7 @@ async function vmBriefWrap(){
   if(!VM_MODE||!VM_BRIEF)return;
   clearTimeout(VM_BRIEF_SILENCE);VM_BRIEF_SILENCE=null;
   vmSpeak("Of course. I will let them know. Thank you for calling — goodbye.");
-  try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION LOG (system — no reply needed): I answered the caller's second call. Caller said: "+(VM_BRIEF_SAID?("\""+VM_BRIEF_SAID.slice(0,280)+"\""):"(nothing recorded)")+(VM_LANG&&VM_LANG!=="en"?" (caller spoke "+VM_LANG+")":"")+". I told them they would be reached soon."}).catch(function(){});}catch(e){}
+  try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION LOG (system — no reply needed): I answered the caller's second call"+(vmCallerName()?" from "+vmCallerName():"")+". Caller said: "+(VM_BRIEF_SAID?("\""+VM_BRIEF_SAID.slice(0,280)+"\""):"(nothing recorded)")+(VM_LANG&&VM_LANG!=="en"?" (caller spoke "+VM_LANG+")":"")+". I told them they would be reached soon."}).catch(function(){});}catch(e){}
   setTimeout(function(){if(VM_MODE)hangup(true);},4200);
 }
 function vmSTT(){
@@ -1132,8 +1134,10 @@ function vmSTT(){
           const VM_LANGS={en:"English",yo:"Yoruba",ig:"Igbo",ha:"Hausa",pcm:"Nigerian Pidgin",tw:"Twi",zu:"Zulu",fr:"French",es:"Spanish",pt:"Portuguese",ar:"Arabic",zh:"Chinese (Mandarin)",hi:"Hindi",sw:"Swahili",de:"German",ru:"Russian",tr:"Turkish",am:"Amharic",so:"Somali",it:"Italian"};
           const lnm=(VM_LANG&&VM_LANG!=="en")?(VM_LANGS[VM_LANG]||VM_LANG):"";
           const langRuleOk=lnm?("The caller speaks "+lnm+" — ALWAYS reply TO THE CALLER IN "+lnm+" ONLY."):"";
+          const cid=vmCallerName();
+          const cidRule=cid?("The caller's registered name is "+cid+" — address them by it naturally."):"";
           const prompt=VM_BRIEF
-            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+" — serve this user's caller with calm, humble loyalty. "+langRuleOk+" The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, wise, calm sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
+            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+" — serve this user's caller with calm, humble loyalty. "+langRuleOk+" "+cidRule+" The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, wise, calm sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
             :("📞 "+langRuleOk+" Caller says: "+t.slice(0,300));
           api("chat",{from:ME,to:AI_VM,text:prompt}).catch(function(){});
         }
@@ -1191,7 +1195,7 @@ function vmEndNote(){ /* v157 (skylar): AI note-taker — structured call note i
   if(!ME)return;
   const heard=(VM_HEARD||VM_BRIEF_SAID||"").slice(0,900);
   if(!heard&&!VM_CALLER)return;
-  const cn=(typeof WIN_NAMES!=="undefined"&&WIN_NAMES[VM_CALLER])?("\""+WIN_NAMES[VM_CALLER]+"\""):"unknown caller";
+  const cn=vmCallerName()?("\""+vmCallerName()+"\""):"unknown caller";
   api("chat",{from:ME,to:AI_VM,text:"📝 NOTE-TAKER: You just handled a phone call on behalf of "+(ME_NAME||"your user")+". Caller: "+cn+(VM_CALLER?" (+"+VM_CALLER+")":"")+(VM_LANG&&VM_LANG!=="en"?" speaking "+VM_LANG:"")+". What the caller said: \""+(heard||"(nothing recorded — likely a silent or brief call)")+"\". Write a short 📝 Call note for "+(ME_NAME||"your user")+": (1) who called, (2) what they wanted in 1-2 lines, (3) the one action "+(ME_NAME||"your user")+" should take now. Under 60 words, start with \"📝 Call note:\"."}).catch(function(){});
   VM_HEARD="";VM_CALLER="";
 }
@@ -6872,7 +6876,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=157;
+const AC_V=158;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
