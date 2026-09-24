@@ -413,6 +413,7 @@ footer a{color:#64748B}
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Photos load on tap, videos never autoplay — saves your data.</div>
       <button class="big" id="liteBtn" style="background:#CBD5E1;color:#334155" onclick="liteToggle()">Lite mode: OFF</button>
       <button class="big" id="installBtn" style="margin-top:8px;display:none" onclick="installApp()">📲 Install AirConnect app</button>
+      <button class="big" style="margin-top:8px;background:#D7EEE0;color:#075E46" onclick="try{localStorage.setItem('ac_last','caller');}catch(e){};location.href='/exam'">🎓 Exam Prep — JAMB, WAEC, SAT & more</button>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🎙 AI receptionist voice</div>
@@ -657,8 +658,30 @@ footer a{color:#64748B}
     <button class="big blue" id="msReply" style="width:100%" onclick="msReply()">↩ Reply</button>
     <button class="big" id="msTr" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="msTranslate()">🌐 Translate</button>
     <button class="big blue" id="msPin" style="width:100%;margin-top:8px" onclick="msPin()">📌 Pin chat</button>
+    <button class="big blue" id="msFwd" style="width:100%;margin-top:8px;display:none" onclick="msFwd()">↪ Forward</button>
+    <button class="big blue" id="msEdit" style="width:100%;margin-top:8px;display:none" onclick="msEdit()">✏️ Edit message</button>
+    <button class="big" id="msUnsend" style="width:100%;margin-top:8px;background:#e2445c;display:none" onclick="msUnsend()">🚫 Unsend for everyone</button>
     <button class="big" id="msDel" style="width:100%;margin-top:8px;background:#e2445c" onclick="msDel()">🗑 Delete chat</button>
     <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeMs()">Cancel</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+<!-- v153: edit sheet -->
+<div id="esheet" class="ovl hide" onclick="if(event.target===this)closeES()">
+  <div class="sheet">
+    <div style="font-weight:600;margin-bottom:8px">✏️ Edit message</div>
+    <textarea id="esheetBox" style="width:100%;min-height:90px;border:1px solid #E2E8F0;border-radius:10px;padding:10px;font-size:14px" maxlength="3500"></textarea>
+    <button class="big blue" style="width:100%;margin-top:10px" onclick="editMsgSave()">Save edit</button>
+    <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeES()">Cancel</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+<!-- v153: forward sheet -->
+<div id="fsheet" class="ovl hide" onclick="if(event.target===this)closeFS()">
+  <div class="sheet">
+    <div style="font-weight:600;margin-bottom:8px">↪ Forward to…</div>
+    <div id="fwdList" style="max-height:46vh;overflow-y:auto"></div>
+    <button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeFS()">Cancel</button>
     <div style="height:8px"></div>
   </div>
 </div>
@@ -2019,7 +2042,8 @@ function renderLists(){
   for(const it of merged){
     if(!it.f){
       const g=it.g;const lg=lastG(g);
-      const gp=lg?((lg.who==="sys")?String(lg.text||"").slice(0,60):((lg.who==="me"?"You: ":"")+(String(lg.text||"").slice(0,56)))):"No messages yet";
+      const gpRaw=lg?((lg.who==="sys")?String(lg.text||"").slice(0,60):((lg.who==="me"?"You: ":"")+(String(lg.text||"").slice(0,56)))):"No messages yet";
+      const gp=(lg&&lg.unsent)?"🚫 Message unsent":(gpRaw.indexOf("FW|")===0?"↪ "+gpRaw.slice(3):gpRaw);
       const row=document.createElement("div");row.className="row";
       const gpAv=GPIC_CACHE[g.id];
       row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name)+'<span style="color:#00A884;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#00A884;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
@@ -2139,6 +2163,8 @@ async function loadHistory(p){
         if(cur.some(b=>b.who===who&&String(b.text||"")===String(txt)&&Math.abs(new Date(normTs(b.ts))-new Date(nid))<8000))continue;
         if(txt.startsWith("fchunk:"))continue;
         const fm=txt.match(/^\[file:([a-z0-9]+)\]$/i);
+        if(txt==="ac:unsent"){cur.push({who,unsent:1,ts:nid});continue;} /* v153: unsent for everyone */
+        if(txt.indexOf("ed1:")===0){cur.push({who,text:await e2eDec(p,txt.slice(4)),edited:1,ts:nid});continue;} /* v153: edited */
         if(fm)cur.push({who,fileId:fm[1],ts:nid});
         else cur.push({who,text:await e2eDec(p,txt),ts:nid});
         added++;
@@ -3417,6 +3443,13 @@ async function lpGet(url){
 
 function renderTextBubble(d,m){
   let txt=String(m.text||"");
+  /* v153: unsent-for-everyone tombstone — WhatsApp style */
+  if(m.unsent){
+    d.style.cssText="align-self:center;background:#F1F5F9;color:#94A3B8;border-radius:12px;padding:7px 14px;font-style:italic;font-size:12.5px;text-align:center";
+    d.textContent=m.who==="me"?"🚫 You unsent this message":"🚫 This message was unsent";
+    return;
+  }
+  const fwd=txt.indexOf("FW|")===0;if(fwd)txt=txt.slice(3); /* v153: forwarded label */
   /* v67: WhatsApp-style quoted reply — "r:<id>|<preview>|<text>" renders as a
      tappable quoted block, not raw wire format. */
   let rq=null;
@@ -3425,6 +3458,7 @@ function renderTextBubble(d,m){
     if(p1>2&&p2>p1){const rid=txt.slice(2,p1);const rp=txt.slice(p1+1,p2);txt=txt.slice(p2+1);
       rq={id:rid,p:rp};}
   }
+
   if(rq){
     const q=document.createElement("div");
     const out=d.className.indexOf("out")>=0;
@@ -3472,8 +3506,11 @@ function renderTextBubble(d,m){
   const quote=rmQ?rmQ[2].slice(0,90):null;
   const body=rmQ?rmQ[3]:txt;
   const esc2=esc(body)+(m.who==="me"?(m.r?" <span style=\"color:#2563EB\">✓✓</span>":" ✓"):"");
-  d.innerHTML=(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;text-decoration:underline;word-break:break-all">'+u+"</a>");
+  const fwdLab=fwd?'<div style="font-size:10.5px;color:'+(m.who==="me"?"rgba(255,255,255,0.7)":"#94A3B8")+';margin-bottom:2px">↪ Forwarded</div>':"";
+  const edLab=m.edited?'<div style="font-size:10px;color:'+(m.who==="me"?"rgba(255,255,255,0.65)":"#94A3B8")+';margin-top:2px">Edited</div>':"";
+  d.innerHTML=fwdLab+(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;text-decoration:underline;word-break:break-all">'+u+"</a>");
   const lpU=lpFind(body);if(lpU)lpCard(d,lpU);   /* v126 link preview card */
+  if(edLab)d.innerHTML+=edLab;
 }
 async function fetchFileBubble(m,d){
   try{
@@ -5275,6 +5312,22 @@ async function poll(){
         continue;
       }
       if(rawTxt.startsWith("kq:")){try{pubkeyPush(3);}catch(x){}continue;} /* silent key re-sync request */
+      if(rawTxt.indexOf("usm:")===0){ /* v153: peer unsent a message */
+        const uid=rawTxt.slice(4),arr=CHATS[from]||(CHATS[from]=[]);let ch=false;
+        for(const b of arr){if(normTs(b.ts)===normTs(uid)&&!b.unsent){b.unsent=1;b.edited=0;b.text="";ch=true;}}
+        if(ch){persistChats();if(CHAT_OPEN===from)renderBubbles();}
+        continue;
+      }
+      if(rawTxt.indexOf("edm:")===0){ /* v153: peer edited a message */
+        const p2=rawTxt.indexOf("|");const eid=p2>4?rawTxt.slice(4,p2):"";
+        const ebody=p2>4?rawTxt.slice(p2+1):"";
+        if(eid&&ebody.indexOf("ed1:")===0){
+          const arr=CHATS[from]||(CHATS[from]=[]);let ch=false;
+          for(const b of arr){if(normTs(b.ts)===normTs(eid)){b.text=await e2eDec(from,ebody.slice(4));b.edited=1;b.unsent=0;ch=true;}}
+          if(ch){persistChats();if(CHAT_OPEN===from)renderBubbles();}
+        }
+        continue;
+      }
       if((CHATS[from]||[]).some(b=>b.ts===m.id))continue; /* v67: chat-open history + poll race delivered the same message twice */
       const fm=rawTxt.match(/^\[file:([a-z0-9]+)\]$/i);
       const f2m=rawTxt.match(/^\[f2:([a-z0-9]+):([^\]]{0,80}):(\d+)\]$/);
@@ -5690,6 +5743,11 @@ function openMs(m,el,mode){
     $("msPin").textContent=g?((PMSG[GROUP_OPEN]&&PMSG[GROUP_OPEN].ts===m.ts)?"📌 Unpin message":"📌 Pin message"):((CHAT_OPEN&&PINS.includes(CHAT_OPEN))?"📌 Unpin chat":"📌 Pin chat");
     $("msDel").textContent=g?"🗑 Delete message":"🗑 Delete chat";
     $("msDel").style.display="";
+    /* v153 (skylar): WhatsApp unsend/edit/forward — sender-only, 1:1 chats */
+    const ownText=(!g&&CHAT_OPEN&&m.who==="me"&&!m.fileId&&!m.img&&!m.vid&&!m.aud&&!m.f2&&String(m.text||""));
+    const fwdEl=$("msFwd");if(fwdEl)fwdEl.style.display=(ownText&&!m.unsent)?"":"none";
+    const edEl=$("msEdit");if(edEl)edEl.style.display=(ownText&&!m.unsent&&String(m.text||"").indexOf("ed1:")!==0&&Date.now()-chatTimeMs(m.ts)<15*60000)?"":"none";
+    const usEl=$("msUnsend");if(usEl)usEl.style.display=((!g&&CHAT_OPEN&&m.who==="me"&&!m.unsent)?"":"none");
     $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(x){}
     return;
   }
@@ -5729,6 +5787,64 @@ async function msReact(e){
     if(!(cur&&cur.e===e))REACTS[MS_MSG.ts].push({by:ME,e});
     if(GROUP_OPEN)renderGBubbles();else renderBubbles();
   }else toast((r&&r.err)||"Could not react");
+}
+/* ===== v153 (skylar): unsend · edit · forward — WhatsApp parity ===== */
+function msUnsend(){
+  closeMs();
+  if(!MS_MSG||!CHAT_OPEN||MS_MSG.who!=="me")return;
+  if(!confirm("Unsend this message for everyone?"))return;
+  api("unsend",{by:ME,peer:CHAT_OPEN,id:MS_MSG.ts}).then(r=>{
+    if(r&&r.ok){
+      const arr=CHATS[CHAT_OPEN]||[];
+      for(const b of arr){if(normTs(b.ts)===normTs(MS_MSG.ts)){b.unsent=1;b.edited=0;b.text="";}}
+      persistChats();renderBubbles();toast("Unsent for everyone 🚫");
+    }else toast((r&&r.err)||"Could not unsend");
+  }).catch(()=>toast("Could not unsend"));
+}
+function msEdit(){
+  closeMs();
+  if(!MS_MSG||!CHAT_OPEN||MS_MSG.who!=="me")return;
+  const eb=$("esheetBox");if(!eb)return;
+  const raw=String(MS_MSG.text||"");const rm=raw.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
+  eb.value=rm?rm[3]:raw;
+  const sh=$("esheet");if(sh)sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+  try{eb.focus();}catch(e){}
+}
+function closeES(){$("esheet").className="ovl hide";}
+async function editMsgSave(){
+  const nv=String($("esheetBox").value||"").trim();
+  if(!MS_MSG||!CHAT_OPEN||!nv){closeES();return;}
+  if(nv.length>3500){toast("Message too long");return;}
+  const raw=String(MS_MSG.text||"");const rm=raw.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
+  let t2=nv;
+  if(rm)t2="r:"+rm[1]+"|"+rm[2]+"|"+nv; /* keep quoted reply intact while editing the body */
+  const r=await api("editmsg",{by:ME,peer:CHAT_OPEN,id:MS_MSG.ts,text:await e2eEnc(CHAT_OPEN,t2)}).catch(()=>null);
+  if(r&&r.ok){
+    const arr=CHATS[CHAT_OPEN]||[];
+    for(const b of arr){if(normTs(b.ts)===normTs(MS_MSG.ts)){b.text=t2;b.edited=1;b.unsent=0;}}
+    persistChats();renderBubbles();closeES();toast("Message edited ✏️");
+  }else toast((r&&r.err)||"Could not edit — 15-minute window may have passed");
+}
+function msFwd(){
+  closeMs();
+  if(!MS_MSG)return;
+  const raw=String(MS_MSG.text||"");const rm=raw.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
+  FWD_BODY=(rm?rm[3]:raw).slice(0,3500);
+  if(!FWD_BODY){toast("Nothing to forward");return;}
+  const l=$("fwdList");
+  l.innerHTML=WIN_FRIENDS.map(f=>'<button class="big" style="width:100%;margin-top:8px;text-align:left" onclick="fwdTo(\''+f.id+'\')">➡ '+esc(WIN_NAMES[f.id]||("+"+f.id))+'</button>').join("");
+  if(!WIN_FRIENDS.length)l.innerHTML='<div style="padding:12px;color:#64748B">No friends yet — add a friend first.</div>';
+  $("fsheet").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+}
+function closeFS(){$("fsheet").className="ovl hide";}
+let FWD_BODY="";
+async function fwdTo(id){
+  $("fsheet").className="ovl hide";
+  if(!FWD_BODY||!id)return;
+  const r=await api("chat",{from:ME,to:id,text:await e2eEnc(id,"FW|"+FWD_BODY)}).catch(()=>null);
+  if(r&&r.ok)toast("Forwarded to "+(WIN_NAMES[id]||("+"+id))+" ↪");
+  else toast((r&&r.err)||"Could not forward");
+  FWD_BODY="";
 }
 function msReply(){
   closeMs();
@@ -6664,7 +6780,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=152;
+const AC_V=153;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires

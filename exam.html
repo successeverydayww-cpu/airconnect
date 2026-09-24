@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AirConnect · Exam Prep</title>
+<style>
+  :root{--g:#075E46;--g2:#25D366;--bg:#F0F2F5;--card:#fff;--ink:#1F2937;--mut:#64748B}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:80px}
+  .top{background:linear-gradient(135deg,var(--g),#0C7C5A);color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .top h1{margin:0;font-size:19px;display:flex;align-items:center;gap:8px}
+  .top .sub{font-size:12px;opacity:.85;margin-top:3px}
+  .wrap{max-width:720px;margin:0 auto;padding:14px}
+  .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(15,23,42,.08)}
+  .card h2{margin:0 0 10px;font-size:15px;color:var(--g)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid #E2E8F0;background:#fff;color:var(--ink);border-radius:20px;padding:8px 14px;font-size:13.5px;font-weight:600;cursor:pointer}
+  .chip.on{background:var(--g);border-color:var(--g);color:#fff}
+  .btn{display:block;width:100%;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
+  .btn.g{background:var(--g2);color:#fff}
+  .btn.o{background:#E2E8F0;color:#334155}
+  .note{font-size:12.5px;color:var(--mut);margin-top:8px;line-height:1.5}
+  .qcard{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(15,23,42,.08);margin-bottom:12px}
+  .qhead{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mut);margin-bottom:10px}
+  .timer{background:#FEF3C7;color:#92400E;border-radius:8px;padding:3px 10px;font-weight:700;font-variant-numeric:tabular-nums}
+  .timer.low{background:#FEE2E2;color:#991B1B}
+  .qq{font-size:16px;line-height:1.5;margin-bottom:14px;white-space:pre-wrap}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid #E2E8F0;border-radius:12px;background:#fff;padding:12px 14px;font-size:14.5px;margin-bottom:9px;cursor:pointer}
+  .opt.picked{border-color:var(--g);background:#E8F5F1}
+  .opt.right{border-color:#16A34A;background:#DCFCE7}
+  .opt.wrong{border-color:#DC2626;background:#FEE2E2}
+  .topic{display:inline-block;background:#E0F2FE;color:#075985;border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:600}
+  .expl{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.5;margin-top:10px}
+  .bar{height:8px;background:#E2E8F0;border-radius:6px;overflow:hidden;margin-bottom:14px}
+  .bar i{display:block;height:100%;background:var(--g2);border-radius:6px;transition:width .3s}
+  .score{font-size:42px;font-weight:800;color:var(--g);text-align:center}
+  .yt{color:#075E46;font-weight:600;text-decoration:none;font-size:13.5px}
+  .pill{display:inline-block;background:var(--g);color:#fff;border-radius:14px;padding:3px 12px;font-size:12px;font-weight:600}
+  .nav{display:flex;gap:8px;justify-content:space-between;margin-top:6px}
+  .nav .btn{margin-top:0;width:auto;flex:1;padding:11px 8px}
+  .back{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="top">
+  <button class="back" onclick="goHome()">← AirConnect</button>
+  <h1>🎓 Exam Prep</h1>
+  <div class="sub">Timed CBT practice with explanations · JAMB · WAEC · NECO · SAT · KCSE · IELTS & more</div>
+</div>
+<div class="wrap" id="root"></div>
+<script>
+/* ============ question bank (skylar, v153) ============ */
+var Q={
+"jamb":{label:"JAMB UTME (Nigeria)",secs:{
+ English:[
+  ["The committee ___ divided in its opinion.","is,are,were,have",0,"A collective noun acting as one unit takes a singular verb.","Concord"],
+  ["Neither the teacher nor the students ___ present.","is,are,was,has",1,"With 'neither...nor', the verb agrees with the nearer subject - 'students' (plural).","Concord"],
+  ["One of the boys ___ come.","have,has,are,were",1,"'One' is the headword - singular verb 'has'.","Concord"],
+  ["Choose the word nearest in meaning to 'audacious'.","timid,bold,careless,rude",1,"Audacious means bold or daring.","Lexis"],
+  ["Choose the opposite of 'scarce'.","rare,plentiful,small,costly",1,"Scarce means in short supply; the opposite is plentiful.","Lexis"],
+  ["'To let sleeping dogs lie' means...","to wake the guard,to avoid reopening old quarrels,to feed the dogs,to quarrel openly",1,"The idiom advises leaving a settled matter undisturbed.","Idioms"],
+  ["She succeeded ___ passing the examination.","at,on,in,by",2,"'Succeed in + gerund' is the correct collocation.","Collocation"],
+  ["The correct spelling is...","accomodation,acommodation,accommodation,accomodetion",2,"Accommodation has double 'c' and double 'm'.","Spelling"],
+  ["In 'The child is father of the man', the expression is a...","metaphor,paradox,simile,hyperbole",1,"An apparently contradictory statement that reveals a truth is a paradox.","Figures of speech"],
+  ["The past tense of 'broadcast' is...","broadcasted,broadcast,broadcaster,broadcasts",1,"'Broadcast' is irregular and unchanged in the past tense.","Grammar"]
+ ],
+ Mathematics:[
+  ["If 3x + 2 = 11, find x.","2,3,4,5",1,"3x = 9, so x = 3.","Algebra"],
+  ["Factorise x\u00B2 \u2212 5x + 6.","(x\u22121)(x\u22126),(x\u22122)(x\u22123),(x+2)(x+3),(x\u22125)(x\u22121)",1,"\u22122 and \u22123 multiply to 6 and add to \u22125.","Algebra"],
+  ["Find the sum of the first 20 terms of the A.P. with a = 3, d = 4.","780,800,820,840",2,"S = n/2[2a + (n\u22121)d] = 10(6 + 76) = 820.","Sequences"],
+  ["If sin\u03B8 = 3/5 and \u03B8 is acute, find cos\u03B8.","5/3,4/5,3/4,5/4",1,"A 3-4-5 triangle: adjacent = 4, hypotenuse = 5.","Trigonometry"],
+  ["Evaluate log\u2081\u2080 1000.","1,2,3,10",2,"10\u00B3 = 1000, so the log is 3.","Logarithms"],
+  ["Find the arithmetic mean of 2, 4, 6, 8, 10.","5,6,7,8",1,"Sum = 30, divided by 5 terms = 6.","Statistics"],
+  ["Find the area of a circle of radius 7 cm. (\u03C0 = 22/7)","144,154,164,174",1,"A = \u03C0r\u00B2 = 22/7 \u00D7 49 = 154 cm\u00B2.","Mensuration"],
+  ["Solve: x + y = 7 and x \u2212 y = 3. Find x.","2,3,5,4",2,"Adding: 2x = 10, so x = 5.","Simultaneous equations"],
+  ["The 5th term of the G.P. 2, 6, 18, ... is","54,162,243,486",1,"T\u2099 = ar\u207F\u207B\u00B9 = 2 \u00D7 3\u2074 = 162.","Sequences"],
+  ["If y varies inversely as x and y = 4 when x = 3, find y when x = 2.","5,6,7,8",1,"xy = k = 12, so y = 12/2 = 6.","Variation"]
+ ],
+ Physics:[
+  ["The unit of electrical resistance is the","volt,ohm,watt,ampere",1,"Resistance is measured in ohms (\u03A9).","Current electricity"],
+  ["The acceleration due to gravity on Earth is approximately","8.81 m/s\u00B2,9.81 m/s\u00B2,10.81 m/s\u00B2,7.81 m/s\u00B2",1,"g \u2248 9.81 m/s\u00B2 at sea level.","Mechanics"],
+  ["The speed of light in vacuum is approximately","3\u00D710\u2076 m/s,3\u00D710\u2078 m/s,3\u00D710\u00B9\u2070 m/s,3\u00D710\u2075 m/s",1,"Light travels at about 3\u00D710\u2078 m/s.","Waves"],
+  ["A body moving in a circle at constant speed has","zero acceleration,constant velocity,changing velocity,uniform velocity",2,"Its direction changes every instant, so the velocity changes - it accelerates.","Circular motion"],
+  ["Ohm's law states that V equals","I/R,IR,R/I,I\u00B2R",1,"V = IR for a metallic conductor at constant temperature.","Current electricity"],
+  ["Which quantity is a scalar?","weight,mass,velocity,force",1,"Mass has magnitude only; weight, velocity and force have direction.","Fundamentals"],
+  ["A radioactive sample of half-life 5 days drops from 100 g to 25 g in","5 days,10 days,15 days,20 days",1,"100 \u2192 50 (one half-life) \u2192 25 (two half-lives) = 10 days.","Radioactivity"],
+  ["Work done equals force multiplied by","time,velocity,the distance moved in the direction of the force,power",2,"W = F \u00D7 d, with d along the line of action of the force.","Energy"],
+  ["The instrument for measuring atmospheric pressure is the","hydrometer,barometer,ammeter,ammeter",1,"A barometer measures atmospheric pressure.","Pressure"],
+  ["A ray passing through the optical centre of a convex lens","bends away from the axis,passes undeviated,bends towards the axis,is reflected",1,"Rays through the optical centre emerge undeviated.","Optics"]
+ ],
+ Chemistry:[
+  ["The chemical symbol for sodium is","So,Sd,Na,Su",2,"From the Latin 'natrium' - Na.","Symbols"],
+  ["A solution with pH 4 is","acidic,alkaline,neutral,salty",0,"pH below 7 is acidic.","Acids and bases"],
+  ["The bond in sodium chloride is","covalent,ionic,metallic,hydrogen",1,"Na donates an electron to Cl - ionic bonding.","Bonding"],
+  ["Avogadro's number is approximately","6.02\u00D710\u00B2\u00B2,6.02\u00D710\u00B2\u00B3,6.02\u00D710\u00B2\u2074,3.02\u00D710\u00B2\u00B3",1,"One mole contains about 6.02\u00D710\u00B2\u00B3 particles.","Mole concept"],
+  ["Isotopes of an element have the same number of ___ but different numbers of neutrons.","protons,electrons,protons and neutrons,nucleons",0,"Isotopes share the same atomic number (protons).","Atomic structure"],
+  ["The molecular formula of ethanol is","CH\u2083OH,C\u2082H\u2085OH,C\u2082H\u2084OH,CH\u2084O",1,"Ethanol is C\u2082H\u2085OH.","Organic chemistry"],
+  ["A catalyst increases the rate of a reaction by","raising the temperature,lowering the activation energy,increasing concentration,being consumed",1,"Catalysts provide a lower-energy pathway and are not consumed.","Rates of reaction"],
+  ["The noble gases belong to Group","1,2,7,0 (VIII)",3,"Group 0 (also called VIII or 18) - inert gases with full outer shells.","Periodic table"],
+  ["Rusting of iron requires both","carbon and nitrogen,water and oxygen,hydrogen and carbon,salt and carbon",1,"Rust forms when iron contacts water AND oxygen.","Corrosion"],
+  ["2H\u2082 + O\u2082 \u2192 2H\u2082O is an example of","decomposition,double displacement,synthesis (combination),displacement",2,"Two reactants combine into one product - synthesis.","Reaction types"]
+ ],
+ Biology:[
+  ["Photosynthesis takes place in the","mitochondria,nucleus,chloroplast,ribosome",2,"Chlorophyll inside chloroplasts traps light energy.","Plant biology"],
+  ["The basic unit of life is the","tissue,cell,organ,organ system",1,"All living things are made of cells.","Cell biology"],
+  ["Malaria is caused by ___ and transmitted by the ___","Plasmodium; female Anopheles mosquito,virus; tsetse fly,bacterium; housefly,fungus; tick",0,"Plasmodium, carried by the female Anopheles mosquito.","Health"],
+  ["The blood cells that transport oxygen are the","white blood cells,red blood cells,platelets,plasma cells",1,"Haemoglobin in red cells binds oxygen.","Transport"],
+  ["In photosynthesis, glucose is formed from","CO\u2082 and water,sugar and starch,oxygen and nitrogen,starch and water",0,"6CO\u2082 + 6H\u2082O \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082.","Plant biology"],
+  ["Which of these is a vertebrate?","earthworm,snail,fish,spider",2,"A fish has a backbone - a vertebrate.","Classification"],
+  ["Enzymes are ___ that speed up body reactions","lipids,proteins,carbohydrates,minerals",1,"Enzymes are protein catalysts.","Digestion"],
+  ["The main organ of excretion in humans is the","liver,lung,kidney,skin",2,"The kidneys filter waste from the blood.","Excretion"],
+  ["The male gamete of a flowering plant is contained in the","ovule,pollen grain,stigma,sepal",1,"The pollen grain carries the male gamete.","Reproduction"],
+  ["Diffusion is the movement of particles","against the gradient using energy,along the gradient without energy,only in water,only in gases",1,"Diffusion is passive movement from high to low concentration.","Transport in cells"]
+ ],
+ Economics:[
+  ["The basic economic problem is","inflation,scarcity,taxation,unemployment",1,"Resources are limited while human wants are unlimited.","Foundations"],
+  ["The law of demand states that price and quantity demanded are","directly related,inversely related,unrelated,always equal",1,"Higher price \u2192 lower quantity demanded - a downward-sloping curve.","Demand"],
+  ["GDP is the total value of","exports only,goods and services produced in a country in a year,money in circulation,government spending",1,"Gross Domestic Product counts domestic output in a period.","National income"],
+  ["Inflation is a","one-off price rise,persistent rise in the general price level,fall in prices,rise in output",1,"A sustained general increase in prices.","Macroeconomics"],
+  ["Under perfect competition, products are","differentiated,homogeneous,branded,patented",1,"Identical (homogeneous) products make firms price-takers.","Market structures"],
+  ["Opportunity cost is the","money cost of production,value of the forgone alternative,total revenue,accounting cost",1,"What you give up to get something is its opportunity cost.","Foundations"],
+  ["The primary function of money is to act as a","store of taxes,medium of exchange,source of inflation,substitute for banks",1,"Money facilitates the exchange of goods and services.","Money"],
+  ["The supply curve slopes","downward,upward,horizontally,vertically",1,"Higher prices induce producers to supply more.","Supply"]
+ ],
+ Government:[
+  ["The 1914 amalgamation united the Northern and Southern Protectorates under","Lord Lugard,Obafemi Awolowo,Nnamdi Azikiwe,Queen Victoria",0,"Frederick Lugard effected the 1914 amalgamation.","Nigerian history"],
+  ["Nigeria became a Republic in","1960,1963,1966,1979",1,"Nigeria adopted a Republican constitution on 1 October 1963.","Nigerian history"],
+  ["The doctrine of separation of powers is associated with","Rousseau,Montesquieu,Hobbes,Locke",1,"Montesquieu advocated dividing government into arms.","Political thought"],
+  ["The right to vote in an election is called","franchise,plebiscite,Referendum,constituency",0,"Suffrage (franchise) is the citizen's right to vote.","Electoral systems"],
+  ["Nigeria operates a ___ system of government.","unitary,federal,confederal,monarchical",1,"Power is shared between the central government and the states.","Systems of government"],
+  ["The arm of government that makes laws is the","executive,legislature,judiciary,civil service",1,"The legislature enacts laws.","Constitutionalism"],
+  ["Nigeria gained independence on","1 January 1960,1 October 1960,1 October 1963,1 October 1961",1,"Independence came on 1 October 1960.","Nigerian history"],
+  ["A constitution that cannot be easily amended is said to be","flexible,rigid,written,unwritten",1,"Rigid constitutions require special amendment procedures.","Constitutionalism"]
+ ],
+ Literature:[
+  ["'Othello' was written by","William Shakespeare,Christopher Marlowe,John Milton,Geoffrey Chaucer",0,"Shakespeare's tragedy of jealousy (c. 1603).","Drama"],
+  ["In 'The Lion and the Jewel', the village is","Ilujinle,Umuofia,Abazon,Lagos",0,"Soyinka sets the play in the Yoruba village Ilujinle.","Drama"],
+  ["The main character in a novel is the","antagonist,protagonist,narrator,foil",1,"The protagonist is the central character.","Literary terms"],
+  ["'Purple Hibiscus' was written by","Chimamanda Ngozi Adichie,Chinua Achebe,Buchi Emecheta,Wole Soyinka",0,"Adichie's debut novel (2003).","Prose"],
+  ["In 'Things Fall Apart', the protagonist is","Nwoye,Okonkwo,Obierika,Ikemefuna",1,"Okonkwo, the proud leader of Umuofia.","Prose"],
+  ["When the audience knows what a character does not, it is","dramatic irony,satire,pathos,paradox",0,"Dramatic irony - audience awareness versus character ignorance.","Literary terms"],
+  ["A rhyme scheme of 'aa' describes a","couplet,quatrain,sestet,sonnet",0,"Two successive rhyming lines form a couplet.","Poetry"],
+  ["'The child is the father of the man' is a","paradox,metaphor,pun,litotes",0,"An impossible-sounding truth - a paradox.","Poetry"]
+ ],
+ "Christian Religious Studies":[
+  ["'In the beginning God created the heavens and the earth' opens","Genesis,Psalms,Exodus,John",0,"Genesis 1:1.","Creation"],
+  ["Moses led the Israelites out of Egypt in the book of","Genesis,Exodus,Leviticus,Numbers",1,"The Exodus records the deliverance from Egypt.","Moses"],
+  ["David defeated Goliath with a","sword and shield,sling and stone,spear,bow and arrow",1,"1 Samuel 17 - a sling and a smooth stone.","David"],
+  ["Jesus' first recorded miracle was","raising Lazarus,turning water into wine,healing a leper,calming the storm",1,"Water into wine at Cana (John 2).","Ministry of Jesus"],
+  ["The Sermon on the Mount is found in","Matthew 5-7,Mark 1-3,Luke 22,John 3",0,"Matthew chapters 5 to 7.","Teachings"],
+  ["Joseph was sold by his brothers to the","Egyptians,Midianites,Hittites,Philistines",1,"Sold to Midianite traders heading for Egypt.","Joseph"],
+  ["The Holy Spirit descended on the disciples at","Pentecost,Passover,Tabernacle,Christmas",0,"Acts 2 - the day of Pentecost.","Early church"],
+  ["'The Lord is my shepherd' opens","Psalm 23,Psalm 1,Psalm 91,Psalm 121",0,"Psalm 23.","Psalms"]
+ ]}},
+"waec":{label:"WAEC / WASSCE",secs:{},sameAs:"jamb"},
+"neco":{label:"NECO SSCE",secs:{},sameAs:"jamb"},
+"bece":{label:"BECE (Junior)",secs:{},sameAs:"jamb"},
+"satu":{label:"SAT (USA)",secs:{
+ Math:[
+  ["If 2x + 5 = 15, what is x?","4,5,6,7",1,"2x = 10, so x = 5.","Linear equations"],
+  ["What is the slope of the line through (1, 2) and (3, 8)?","2,3,4,6",1,"(8\u22122)/(3\u22121) = 6/2 = 3.","Coordinate geometry"],
+  ["Solve x\u00B2 \u2212 9 = 0.","3 only,\u22123 only,\u00B13,9",2,"x\u00B2 = 9, so x = 3 or x = \u22123.","Quadratics"],
+  ["What is 30% of 80?","18,24,28,30",1,"0.3 \u00D7 80 = 24.","Percentages"],
+  ["A right triangle has legs 5 and 12. Its hypotenuse is","13,15,17,\u221A17",0,"The 5-12-13 Pythagorean triple.","Geometry"],
+  ["If f(x) = x\u00B2 + 1, find f(\u22122).","3,5,\u22123,\u22125",1,"(\u22122)\u00B2 + 1 = 5.","Functions"],
+  ["The average of 3, 7, 11 and 15 is","8,9,10,11",1,"36 \u00F7 4 = 9.","Statistics"],
+  ["If |x \u2212 3| = 5, then x =","8 only,\u22122 only,8 or \u22122,5 or \u22125",2,"x\u22123=5 gives x=8; x\u22123=\u22125 gives x=\u22122.","Absolute value"]
+ ],
+ "Reading & Writing":[
+  ["___ going to the store later.","Their,There,They're,Theirs",2,"Contraction of 'they are'.","Grammar"],
+  ["The dog wagged ___ tail.","it's,its,its',it is",1,"Possessive - no apostrophe.","Grammar"],
+  ["The rain will ___ the game.","affect,effect,effectuate,affection",0,"'Affect' is the verb; 'effect' is the noun.","Grammar"],
+  ["___ students attended the seminar.","Fewer,Less,Least,Lesser",0,"Countable nouns take 'fewer'.","Grammar"],
+  ["Two independent clauses joined by ONLY a comma is a comma splice. Which of these is a CORRECT way to fix one?","Add a conjunction such as and,Keep the comma and add nothing,Delete the second clause,Replace the comma with a question mark",0,"Add a coordinating conjunction (and, but, so) - or use a semicolon or full stop.","Sentence structure"],
+  ["Choose the strongest topic sentence for a paragraph on the benefits of exercise.","Exercise is good for you in several ways.,Some people run.,Health matters.,My cousin likes sports.",0,"It announces the controlling idea and the scope.","Writing"]
+ ]}},
+"act":{label:"ACT (USA)",secs:{},sameAs:"satu"},
+"gcse":{label:"GCSE (UK)",secs:{},sameAs:"satu"},
+"kcse":{label:"KCSE (Kenya)",secs:{
+ Mathematics:[
+  ["Simplify 2(3x \u2212 4).","6x\u22124,6x\u22128,6x+8,3x\u22128",1,"Multiply through: 6x \u2212 8.","Algebra"],
+  ["Find the area of a triangle with base 6 cm and height 5 cm.","11,15,30,60",1,"A = \u00BD \u00D7 6 \u00D7 5 = 15 cm\u00B2.","Mensuration"],
+  ["Solve 2x \u2212 3 = 7.","2,3,5,7",2,"2x = 10, so x = 5.","Algebra"],
+  ["What is 15% of 200?","15,20,30,45",2,"0.15 \u00D7 200 = 30.","Percentages"],
+  ["Find the LCM of 12 and 18.","24,36,48,72",1,"12 = 2\u00B2\u00D73; 18 = 2\u00D73\u00B2; LCM = 2\u00B2\u00D73\u00B2 = 36.","Number theory"],
+  ["Simple interest on Sh 10,000 at 5% p.a. for 2 years is","500,1000,1500,2000",1,"I = PRT/100 = 10000\u00D75\u00D72/100 = 1000.","Commercial arithmetic"]
+ ],
+ English:[
+  ["Identify the adverb: 'She sang beautifully.'","she,sang,beautifully,none",2,"'Beautifully' modifies the verb 'sang'.","Grammar"],
+  ["The plural of 'analysis' is","analysises,analysis,analyses,analysi",2,"Words ending in -is form the plural with -es.","Grammar"],
+  ["A synonym for 'commence' is","conclude,begin,continue,stop",1,"Commence means begin.","Vocabulary"],
+  ["Which sentence is correctly punctuated?","Its raining today.,It is raining today?,It is raining today.,it is raining today.",2,"A statement starts with a capital letter and ends with a full stop - and the possessive form of \u0027it\u0027 has no apostrophe.","Punctuation"]
+ ]}},
+"nsc":{label:"NSC Matric (South Africa)",secs:{},sameAs:"kcse"},
+"jee":{label:"JEE Main (India)",secs:{},sameAs:"jamb"},
+"neet":{label:"NEET (India)",secs:{},sameAs:"jamb"},
+"ielts":{label:"IELTS (Global)",secs:{
+ "Academic Practice":[
+  ["The IELTS band scale runs from","0-5,0-9,1-10,1-12",1,"Scores run from band 0 to band 9.","Test format"],
+  ["Academic Writing Task 1 asks you to","write an essay on any topic,describe visual information (charts or graphs),write a letter,translate a passage",1,"Task 1 summarises visual data in at least 150 words.","Writing"],
+  ["Writing Task 2 requires an essay of at least ___ words.","150,200,250,300",2,"A formal essay of at least 250 words in 40 minutes.","Writing"],
+  ["The Reading module includes questions about a passage's claims labelled","True/False/Not Given,Right/Wrong/Maybe,Agree/Disagree,Fact/Fiction",0,"The True/False/Not Given question type tests claims in the passage.","Reading"],
+  ["Speaking Part 1 covers","a prepared presentation,yourself and familiar topics,a debate,reading aloud",1,"Part 1 is an interview about you and familiar topics.","Speaking"],
+  ["The IELTS test has ___ papers.","2,3,4,5",2,"Listening, Reading, Writing and Speaking.","Test format"]
+ ]}},
+"toefl":{label:"TOEFL (Global)",secs:{},sameAs:"ielts"}
+};
+var COUNTRY={
+"\uD83C\uDF0D Global":["ielts","toefl"],
+"\uD83C\uDDF3\uD83C\uDDEC Nigeria":["jamb","waec","neco","bece"],
+"\uD83C\uDDEC\uD83C\uDDED Ghana":["waec","bece"],
+"\uD83C\uDDF0\uD83C\uDDEA Kenya":["kcse"],
+"\uD83C\uDDFF\uD83C\uDDE6 South Africa":["nsc"],
+"\uD83C\uDDFA\uD83C\uDDF8 USA":["satu","act"],
+"\uD83C\uDDEC\uD83C\uDDE7 UK":["gcse"],
+"\uD83C\uDDEE\uD83C\uDDF3 India":["jee","neet"]
+};
+function bank(ex){var d=Q[ex];return d.sameAs?Q[d.sameAs]:d;}
+function yt(ex,sub,topic){return "https://youtube.com/results?search_query="+encodeURIComponent(bank(ex).label.split(" (")[0]+" "+sub+" "+topic+" lesson");}
+var sel={c:null,ex:null,sub:null,q:[],i:0,answers:[],t:null,left:0,perq:45};
+var R=document.getElementById("root");
+function h(s){R.innerHTML=s;window.scrollTo(0,0);}
+function fmt(sec){var m=Math.floor(sec/60),s2=sec%60;return m+":"+String(s2).padStart(2,"0");}
+
+function home(){
+ sel={c:null,ex:null,sub:null,q:[],i:0,answers:[],t:null,left:0,perq:45};
+ h('<div class="card"><h2>1 \u00B7 Pick your country</h2><div class="chips">'+
+   Object.keys(COUNTRY).map(function(c){return '<button class="chip" onclick="pickC(this.textContent)">'+c+'</button>';}).join("")+
+   '</div><div class="note">Exams from Nigeria to India, USA to Kenya - and global tests. Pick your exam, pick a subject, and practice with a live countdown.</div></div><div id="step2"></div><div id="step3"></div>');
+}
+function pickC(c){sel.c=c;sel.ex=null;sel.sub=null;
+ var d2=document.getElementById("step2");d2.innerHTML='<div class="card"><h2>2 \u00B7 Pick your exam</h2><div class="chips">'+
+  COUNTRY[c].map(function(e){return '<button class="chip" onclick="pickEx(\''+e+'\')">'+bank(e).label+'</button>';}).join("")+'</div></div><div id="step3"></div>';
+ window.scrollTo(0,document.body.scrollHeight);
+}
+function pickEx(e){sel.ex=e;sel.sub=null;
+ var b=bank(e),subs=Object.keys(b.secs);
+ document.getElementById("step3").innerHTML='<div class="card"><h2>3 \u00B7 Pick a subject \u2014 '+bank(e).label+'</h2>'+
+  '<div class="chips">'+subs.map(function(s){return '<button class="chip" onclick="pickSub(\''+s.replace(/'/g,"\\'")+'\')">'+s+' \u00B7 '+b.secs[s].length+' questions</button>';}).join("")+'</div></div><div id="step4"></div>';
+ window.scrollTo(0,document.body.scrollHeight);
+}
+function pickSub(s){sel.sub=s;
+ var b=bank(sel.ex),topics=[];b.secs[s].forEach(function(q){if(topics.indexOf(q[4])<0)topics.push(q[4]);});
+ document.getElementById("step4").innerHTML='<div class="card"><h2>'+b.label+' \u2014 '+s+'</h2>'+
+  '<div style="margin-bottom:10px"><span class="pill">\uD83D\uDCF9 Free video lessons per topic</span></div>'+
+  topics.map(function(t){return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #F1F5F9"><span class="topic">'+t+'</span><a class="yt" target="_blank" rel="noopener" href="'+yt(sel.ex,s,t)+'">Watch lessons \u2197</a></div>';}).join("")+
+  '<div class="note">Timed like the real CBT: 45 seconds per question. Explanations appear in your review after submission.</div>'+
+  '<button class="btn g" onclick="startPractice(10)">\u25B6 Quick 10 (7.5 min)</button>'+
+  '<button class="btn g" onclick="startPractice(0)">\u25B6 Full paper ('+b.secs[s].length+' questions)</button>';
+ window.scrollTo(0,document.body.scrollHeight);
+}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function startPractice(n){
+ var b=bank(sel.ex),all=shuffle(b.secs[sel.sub]);
+ sel.q=n>0?all.slice(0,Math.min(n,all.length)):all;
+ sel.i=0;sel.answers=[];sel.left=sel.q.length*sel.perq;
+ if(sel.t)clearInterval(sel.t);
+ sel.t=setInterval(function(){sel.left--;var el=document.getElementById("tm");if(el){el.textContent=fmt(sel.left);if(sel.left<=30)el.className="timer low";}if(sel.left<=0)finish();},1000);
+ renderQ();
+}
+function renderQ(){
+ var q=sel.q[sel.i];
+ h('<div class="qcard"><div class="qhead"><span>Question '+(sel.i+1)+' of '+sel.q.length+'</span><span class="timer" id="tm">'+fmt(sel.left)+'</span></div>'+
+  '<div class="bar"><i style="width:'+Math.round(sel.i/sel.q.length*100)+'%"></i></div>'+
+  '<div class="topic">'+q[4]+'</div><div class="qq">'+q[0]+'</div>'+
+  q[1].split(",").map(function(o,k){return '<button class="opt" data-k="'+k+'" onclick="pick('+k+')">'+String.fromCharCode(65+k)+". "+o+'</button>';}).join("")+
+  '<div class="nav"><button class="btn o" style="'+(sel.i===0?"visibility:hidden":"")+'" onclick="prev()">\u2190 Prev</button>'+
+  '<button class="btn g" onclick="next()">'+(sel.i===sel.q.length-1?"Submit \u2713":"Next \u2192")+'</button></div>'+
+  '<button class="btn o" style="margin-top:12px" onclick="if(confirm(\'Submit now?\'))finish()">End & submit</button></div>');
+ if(sel.answers[sel.i]!==undefined){var b2=document.querySelectorAll(".opt")[sel.answers[sel.i]];if(b2)b2.className="opt picked";}
+}
+function pick(k){sel.answers[sel.i]=k;var os=document.querySelectorAll(".opt");for(var j=0;j<os.length;j++)os[j].className="opt";os[k].className="opt picked";}
+function prev(){if(sel.i>0){sel.i--;renderQ();}}
+function next(){if(sel.i<sel.q.length-1){sel.i++;renderQ();}else finish();}
+function finish(){
+ if(sel.t)clearInterval(sel.t);
+ var right=0,rows="";
+ for(var i=0;i<sel.q.length;i++){
+  var q=sel.q[i],ok=sel.answers[i]===q[2];if(ok)right++;
+  rows+='<div class="qcard"><div class="topic">'+q[4]+'</div><div class="qq">'+q[0]+'</div>'+
+   q[1].split(",").map(function(o,k){return '<button class="opt '+(k===q[2]?"right":(sel.answers[i]===k?"wrong":""))+'" disabled>'+String.fromCharCode(65+k)+". "+o+'</button>';}).join("")+
+   (ok?'<div class="expl">\u2705 Correct. '+q[3]+'</div>':'<div class="expl">'+(sel.answers[i]===undefined?"\u23F1 Not answered. ":"\u274C Incorrect. ")+'Correct answer: '+String.fromCharCode(65+q[2])+'. '+q[3]+'</div>')+
+   '<a class="yt" style="display:block;margin-top:8px" target="_blank" rel="noopener" href="'+yt(sel.ex,sel.sub,q[4])+'">\uD83D\uDCF9 Revise this topic with free video lessons \u2197</a></div>';
+ }
+ var pct=sel.q.length?Math.round(right/sel.q.length*100):0;
+ var msg=pct>=80?"Outstanding - you are exam ready! \uD83C\uDFC6":pct>=60?"Solid. Polish the topics you missed. \uD83D\uDCAA":"Keep going - read every explanation and retake. \uD83D\uDCDA";
+ h('<div class="card" style="text-align:center"><div class="score">'+pct+'%</div><div style="color:var(--mut);margin-bottom:6px">'+right+' of '+sel.q.length+' correct \u00B7 '+bank(sel.ex).label+' \u00B7 '+sel.sub+'</div><div style="font-weight:600">'+msg+'</div>'+
+  '<button class="btn g" onclick="home()">Choose another paper</button>'+
+  '<button class="btn o" onclick="startPractice(0)">Retake</button></div>'+rows);
+}
+function goHome(){location.href="/app";}
+home();
+</script>
+</body>
+</html>
