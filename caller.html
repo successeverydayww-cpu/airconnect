@@ -657,6 +657,7 @@ footer a{color:#64748B}
     <div id="msReacts" style="display:flex;gap:8px;justify-content:center;font-size:26px;padding:4px 0 10px"></div>
     <button class="big blue" id="msReply" style="width:100%" onclick="msReply()">↩ Reply</button>
     <button class="big" id="msTr" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="msTranslate()">🌐 Translate</button>
+    <button class="big blue" id="msStar" style="width:100%;margin-top:8px" onclick="msStar()">⭐ Star message</button>
     <button class="big blue" id="msPin" style="width:100%;margin-top:8px" onclick="msPin()">📌 Pin chat</button>
     <button class="big blue" id="msFwd" style="width:100%;margin-top:8px;display:none" onclick="msFwd()">↪ Forward</button>
     <button class="big blue" id="msEdit" style="width:100%;margin-top:8px;display:none" onclick="msEdit()">✏️ Edit message</button>
@@ -1041,6 +1042,7 @@ function vmEnabled(){try{return localStorage.getItem("ac_vm")!=="0";}catch(e){re
 function vmToggle(){try{localStorage.setItem("ac_vm",vmEnabled()?"0":"1");}catch(e){}vmStat();}
 function vmStat(){try{$("vmStat").textContent=vmEnabled()?"ON":"OFF";}catch(e){}}
 let VM_BRIEF=false,VM_MISS={};try{VM_MISS=JSON.parse(localStorage.getItem("ac_vm_miss"))||{};}catch(e){}
+let VM_LANG="",VM_HEARD="",VM_CALLER=""; /* v157: caller language detection + note-taker transcript */
 let VM_BRIEF_SILENCE=null,VM_BRIEF_SAID="";
 function vmMissInfo(from){const r=VM_MISS[from];return (r&&Date.now()-r.t<10800000)?r:null; /* v128: 3h window — the second call (any time within 3h) still gets the instant AI pickup */}
 function vmRecordMiss(from){try{const prev=vmMissInfo(from);VM_MISS[from]={t:Date.now(),n:((prev&&prev.n)||0)+1};localStorage.setItem("ac_vm_miss",JSON.stringify(VM_MISS));}catch(e){}}
@@ -1060,7 +1062,7 @@ function vmDisarm(){if(vmRingTimer){clearTimeout(vmRingTimer);vmRingTimer=null;}
 async function vmAnswer(){
   vmDisarm();
   const m=pendingOffer;if(!m||state!=="incoming")return;
-  VM_MODE=true;vmWantEnd=false;vmEndAt=Date.now()+120000;vmSTTTries=0;
+  VM_MODE=true;vmWantEnd=false;vmEndAt=Date.now()+120000;vmSTTTries=0;VM_LANG="";VM_HEARD="";VM_CALLER=String(m.from||"");
   pushHist();stopRing();$("incoming").className="ovl hide";
   answer(m);
   try{$("vmTake").style.display="inline-block";}catch(e){}
@@ -1103,7 +1105,7 @@ async function vmBriefWrap(){
   if(!VM_MODE||!VM_BRIEF)return;
   clearTimeout(VM_BRIEF_SILENCE);VM_BRIEF_SILENCE=null;
   vmSpeak("Of course. I will let them know. Thank you for calling — goodbye.");
-  try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION LOG (system — no reply needed): I answered the caller's second call. Caller said: "+(VM_BRIEF_SAID?("\""+VM_BRIEF_SAID.slice(0,280)+"\""):"(nothing recorded)")+". I told them they would be reached soon."}).catch(function(){});}catch(e){}
+  try{api("chat",{from:ME,to:AI_VM,text:"📝 RECEPTION LOG (system — no reply needed): I answered the caller's second call. Caller said: "+(VM_BRIEF_SAID?("\""+VM_BRIEF_SAID.slice(0,280)+"\""):"(nothing recorded)")+(VM_LANG&&VM_LANG!=="en"?" (caller spoke "+VM_LANG+")":"")+". I told them they would be reached soon."}).catch(function(){});}catch(e){}
   setTimeout(function(){if(VM_MODE)hangup(true);},4200);
 }
 function vmSTT(){
@@ -1122,12 +1124,17 @@ function vmSTT(){
         for(let i=0;i<bytes.length;i+=CH)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
         const b64="data:"+(e.data.type||"audio/webm")+";base64,"+btoa(bin);
         const r=await api("stt",{audio:b64});
+        const sl=String((r&&r.lang)||"").trim();if(sl)VM_LANG=sl; /* v157: ElevenLabs Scribe detects the caller's language */
         const t=((r&&r.text)||"").trim();
         if(t&&VM_MODE&&!vmSpeaking&&t.length>1){
           if(VM_BRIEF){VM_BRIEF_SAID=(VM_BRIEF_SAID?VM_BRIEF_SAID+" ":"")+t.slice(0,300);vmBriefSilence(10000);}
+          VM_HEARD=(VM_HEARD?VM_HEARD+" ":"")+t.slice(0,300); /* v157: note-taker transcript */
+          const VM_LANGS={en:"English",yo:"Yoruba",ig:"Igbo",ha:"Hausa",pcm:"Nigerian Pidgin",tw:"Twi",zu:"Zulu",fr:"French",es:"Spanish",pt:"Portuguese",ar:"Arabic",zh:"Chinese (Mandarin)",hi:"Hindi",sw:"Swahili",de:"German",ru:"Russian",tr:"Turkish",am:"Amharic",so:"Somali",it:"Italian"};
+          const lnm=(VM_LANG&&VM_LANG!=="en")?(VM_LANGS[VM_LANG]||VM_LANG):"";
+          const langRuleOk=lnm?("The caller speaks "+lnm+" — ALWAYS reply TO THE CALLER IN "+lnm+" ONLY."):"";
           const prompt=VM_BRIEF
-            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+" — serve this user's caller with calm, humble loyalty. The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, wise, calm sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
-            :("📞 Caller says: "+t.slice(0,300));
+            ?("📞 You are answering a live phone call for "+(ME_NAME||"my user")+" — serve this user's caller with calm, humble loyalty. "+langRuleOk+" The caller just said: "+t.slice(0,300)+". Reply TO THE CALLER in 1-2 short, warm, wise, calm sentences (under 40 words) — answer their question or acknowledge their message. If they have nothing more to say, tell them you will pass it on.")
+            :("📞 "+langRuleOk+" Caller says: "+t.slice(0,300));
           api("chat",{from:ME,to:AI_VM,text:prompt}).catch(function(){});
         }
       }catch(err){}
@@ -1180,9 +1187,13 @@ function vmTakeOver(){
   vmStop();toast("You have the call");
   try{callStart=Date.now();$("callStat").textContent="00:00";}catch(e){}
 }
-function vmEndNote(){
+function vmEndNote(){ /* v157 (skylar): AI note-taker — structured call note into the citizen chat after every AI-answered call */
   if(!ME)return;
-  api("chat",{from:ME,to:AI_VM,text:"📞 The call has just ended. Send one final short line: a 📝 voicemail note summarizing the call for "+(ME_NAME||"me")+"."}).catch(function(){});
+  const heard=(VM_HEARD||VM_BRIEF_SAID||"").slice(0,900);
+  if(!heard&&!VM_CALLER)return;
+  const cn=(typeof WIN_NAMES!=="undefined"&&WIN_NAMES[VM_CALLER])?("\""+WIN_NAMES[VM_CALLER]+"\""):"unknown caller";
+  api("chat",{from:ME,to:AI_VM,text:"📝 NOTE-TAKER: You just handled a phone call on behalf of "+(ME_NAME||"your user")+". Caller: "+cn+(VM_CALLER?" (+"+VM_CALLER+")":"")+(VM_LANG&&VM_LANG!=="en"?" speaking "+VM_LANG:"")+". What the caller said: \""+(heard||"(nothing recorded — likely a silent or brief call)")+"\". Write a short 📝 Call note for "+(ME_NAME||"your user")+": (1) who called, (2) what they wanted in 1-2 lines, (3) the one action "+(ME_NAME||"your user")+" should take now. Under 60 words, start with \"📝 Call note:\"."}).catch(function(){});
+  VM_HEARD="";VM_CALLER="";
 }
 
 let lastSig="",lastMsg=0,pollFails=0;
@@ -5741,6 +5752,7 @@ function attachMsgEvents(el,m){
   el.addEventListener("touchend",()=>{if(swDx>55){MS_MSG=m;msReply();}swDx=0;},{passive:true});
   el.addEventListener("contextmenu",e=>{e.preventDefault();open();});
   el.style.cursor="pointer";
+  try{if(starHas(m.ts)){const sc=document.createElement("div");sc.innerHTML='<span class="rchip" style="color:#F4C04D;font-weight:700">⭐ Starred</span>';el.appendChild(sc);}}catch(x){}
   const rs=REACTS[m.ts];
   if(rs&&rs.length){
     const byE={};
@@ -5764,6 +5776,7 @@ function openMs(m,el,mode){
     const fwdEl=$("msFwd");if(fwdEl)fwdEl.style.display=(ownText&&!m.unsent)?"":"none";
     const edEl=$("msEdit");if(edEl)edEl.style.display=(ownText&&!m.unsent&&String(m.text||"").indexOf("ed1:")!==0&&Date.now()-chatTimeMs(m.ts)<15*60000)?"":"none";
     const usEl=$("msUnsend");if(usEl)usEl.style.display=((!g&&CHAT_OPEN&&m.who==="me"&&!m.unsent)?"":"none");
+    const stEl=$("msStar");if(stEl){stEl.textContent=starHas(m.ts)?"⭐ Unstar message":"⭐ Star message";stEl.style.display="";}
     $("msheet").className="ovl";try{history.pushState({ac:1},"");}catch(x){}
     return;
   }
@@ -5804,6 +5817,66 @@ async function msReact(e){
     if(GROUP_OPEN)renderGBubbles();else renderBubbles();
   }else toast((r&&r.err)||"Could not react");
 }
+/* ===== v157 (skylar): starred messages — WhatsApp parity (device-local, nothing else touched) ===== */
+let STARS={};try{STARS=JSON.parse(localStorage.getItem("ac_stars"))||{};}catch(e){}
+function starKey(){return CHAT_OPEN||("g:"+(GROUP_OPEN||""));}
+function starPersist(){try{localStorage.setItem("ac_stars",JSON.stringify(STARS));}catch(e){}}
+function starSnippet(m){
+  try{
+    let t=String(m.text||"");
+    const rm=t.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
+    if(rm)t=rm[3];
+    if(m.img)return "📷 Photo";
+    if(m.vid)return "🎬 Video";
+    if(m.aud)return "🎙 Voice note";
+    if(m.fileId||m.f2)return "📎 File";
+    t=t.replace(/^ed1:/,"").trim();
+    return t.slice(0,120)||"(media)";
+  }catch(e){return "(message)";}
+}
+function starHas(ts){const k=starKey();return !!(STARS[k]&&STARS[k].some(x=>x.ts===ts));}
+function starDel(ts,k){k=k||starKey();if(STARS[k]){STARS[k]=STARS[k].filter(x=>x.ts!==ts);if(!STARS[k].length)delete STARS[k];starPersist();}}
+function msStar(){
+  closeMs();
+  if(!MS_MSG)return;
+  const k=starKey(),ts=MS_MSG.ts;
+  if(starHas(ts)){starDel(ts);toast("Removed from Starred");}
+  else{
+    STARS[k]=STARS[k]||[];
+    STARS[k].push({ts,who:MS_MSG.who,from:MS_MSG.from||"",text:starSnippet(MS_MSG),at:Date.now()});
+    starPersist();toast("Message starred ⭐");
+  }
+  if(GROUP_OPEN)renderGBubbles();else if(CHAT_OPEN)renderBubbles();
+}
+function starsOpen(){
+  let sh=$("starsheet");
+  if(!sh){
+    sh=document.createElement("div");sh.id="starsheet";sh.className="ovl hide";
+    sh.innerHTML='<div class="sheet"><div style="font-weight:700;margin-bottom:8px">⭐ Starred messages</div><div id="starList" style="max-height:52vh;overflow-y:auto"></div><button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeStarSheet()">Close</button><div style="height:8px"></div></div>';
+    document.body.appendChild(sh);
+    sh.addEventListener("click",function(e){if(e.target===sh)closeStarSheet();});
+  }
+  const rows=[];
+  for(const k of Object.keys(STARS)){
+    for(const it of (STARS[k]||[])){
+      const isG=k.indexOf("g:")===0,gid=isG?k.slice(2):null;
+      const nm=isG?(window.GROUPS&&GROUPS.some?((GROUPS.find(g=>g.id===gid)||{}).name||"Group"):"Group"):(WIN_NAMES[k]||("+"+k));
+      rows.push({k,it,nm,isG,gid});
+    }
+  }
+  rows.sort((a,b)=>b.it.at-a.it.at);
+  const l=$("starList");
+  l.innerHTML=rows.length?"":'<div style="padding:12px;color:#64748B">No starred messages yet — long-press any message and tap ⭐ Star message.</div>';
+  for(const r of rows){
+    const b=document.createElement("button");b.className="big";b.style.cssText="width:100%;margin-top:8px;text-align:left;background:#E8EFFB;color:#1A3FA8";
+    const dt=new Date(r.it.at);
+    b.innerHTML=esc(r.nm)+' · '+dt.toLocaleDateString()+' <span style="color:#64748B;font-size:12px">'+dt.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})+'</span><div style="font-weight:400;font-size:13px;color:#334155;white-space:pre-wrap">'+esc(r.it.text)+'</div>';
+    b.onclick=function(){closeStarSheet();if(r.isG){try{openGroup(r.gid);}catch(e){}}else{try{openChat(r.k);}catch(e){}}toast("⭐ in "+r.nm);};
+    l.appendChild(b);
+  }
+  sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+}
+function closeStarSheet(){$("starsheet").className="ovl hide";}
 /* ===== v153 (skylar): unsend · edit · forward — WhatsApp parity ===== */
 function msUnsend(){
   closeMs();
@@ -5812,6 +5885,7 @@ function msUnsend(){
   api("unsend",{by:ME,peer:CHAT_OPEN,id:MS_MSG.ts}).then(r=>{
     if(r&&r.ok){
       const arr=CHATS[CHAT_OPEN]||[];
+      starDel(MS_MSG.ts);
       for(const b of arr){if(normTs(b.ts)===normTs(MS_MSG.ts)){b.unsent=1;b.edited=0;b.text="";}}
       persistChats();renderBubbles();toast("Unsent for everyone 🚫");
     }else toast((r&&r.err)||"Could not unsend");
@@ -5897,6 +5971,7 @@ async function msDel(){
   if(!MS_MSG)return;
   if(GROUP_OPEN){ /* v69: delete a group message locally */
     if(!confirm("Delete this message?"))return;
+    starDel(MS_MSG.ts,"g:"+GROUP_OPEN);
     GMS[GROUP_OPEN]=(GMS[GROUP_OPEN]||[]).filter(x=>x.ts!==MS_MSG.ts);
     if(PMSG[GROUP_OPEN]&&PMSG[GROUP_OPEN].ts===MS_MSG.ts)delete PMSG[GROUP_OPEN];
     persistV12();renderGBubbles();toast("Message deleted");
@@ -5904,6 +5979,7 @@ async function msDel(){
   }
   if(!CHAT_OPEN)return;
   if(!confirm("Delete this chat? This clears your conversation on this device."))return;
+  delete STARS[CHAT_OPEN];starPersist();
   delete CHATS[CHAT_OPEN];delete UNREAD[CHAT_OPEN];
   persistChats();renderLists();closeChat();toast("Chat deleted");
 }
@@ -6796,7 +6872,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=155;
+const AC_V=157;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7073,6 +7149,7 @@ function menuOpen(){
       const more=document.createElement("div");
       more.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:6px 12px";
       more.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748B;padding:8px 2px 2px">MORE SETTINGS</div>'+
+       moreRow("⭐","Starred messages","menuClose();starsOpen();")+
        moreRow("➕","Add a friend","menuClose();connectSheet();")+
        moreRow("🌐","Language","menuClose();langSheet();")+
        moreRow("🛡️","Privacy & Terms","window.open('privacy.html','_blank')")+
