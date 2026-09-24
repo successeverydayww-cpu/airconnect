@@ -1442,6 +1442,7 @@ async function finishLogin(d){
     const fr=await api("friends",{node:ME});
     if(fr){
       WIN_BLOCKS=fr.blocks||[];WIN_FRIENDS=(fr.friends||[]).filter(x=>!WIN_BLOCKS.includes(x.id));WIN_REQS=fr.requests||[];
+      WIN_KC={};for(const x of (fr.friends||[]))if(x.kc)WIN_KC[x.id]=1;KYC_ME=!!fr.mykc; /* v160: KYC badges */
       for(const x of WIN_FRIENDS)if(x.name)WIN_NAMES[x.id]=x.name;
       persistFriendCache();
       if(fr.pks)E2E_PKS=Object.assign(E2E_PKS||{},fr.pks);
@@ -2069,7 +2070,7 @@ function renderLists(){
     }
     const f=it.f;
 
-    const n=(WIN_NAMES[f.id]||"friend")+(PINS.includes(f.id)?" 📌":""),l=lastOf(f.id);
+    const n=(WIN_NAMES[f.id]||"friend")+(WIN_KC[f.id]?" ✔":"")+(PINS.includes(f.id)?" 📌":""),l=lastOf(f.id);
     const rawPrev=l?(l.img?"📷 Photo":(l.aud?"🎙️ Voice note":(l.vid?"🎬 Video":(l.fileId?"📎 Attachment":(l.f2?("📎 "+(l.f2.name||"Attachment")):esc(l.text).slice(0,40)))))):"Tap to message";
     const prev=(ARCHS.includes(f.id)?rawPrev+" · archived":rawPrev);
     const row=document.createElement("div");row.className="row";
@@ -2149,7 +2150,7 @@ function ago(ts){if(!ts)return"";const d=(Date.now()-new Date(ts))/1000;if(d<60)
 function openChat(p){
   pushHist();
   CHAT_OPEN=p;UNREAD[p]=0;OPENS[p]=(OPENS[p]||0)+1;persistV12();renderUnread();
-  const n=(WIN_NAMES[p]||"+"+p);
+  const n=(WIN_NAMES[p]||"+"+p)+((WIN_KC&&WIN_KC[p])?" ✔":"");
   $("cvName").textContent=n;$("cvSub").textContent="AirConnect · + "+p;
   setChatHeaderPic(p);
   $("chatview").className="ovl";
@@ -5881,6 +5882,48 @@ function starsOpen(){
   sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeStarSheet(){$("starsheet").className="ovl hide";}
+/* ===== v160 (skylar): KYC identity verification — upload national ID / passport / driver's license ===== */
+var WIN_KC={},KYC_ME=false;
+function kycSheet(){
+  let sh=$("kycsheet");
+  if(!sh){
+    sh=document.createElement("div");sh.id="kycsheet";sh.className="ovl hide";
+    sh.innerHTML='<div class="sheet"><div style="font-weight:700;margin-bottom:8px">✔ Verify your identity</div>'+
+      '<div id="kycStatus" style="font-size:13px;color:#334155;line-height:1.5;margin-bottom:10px"></div>'+
+      '<div style="background:#E8EFFB;border-radius:10px;padding:10px;font-size:12.5px;color:#1A3FA8;margin-bottom:10px">How it works:<br>1. Upload a clear photo of your national ID, international passport, or driver’s license.<br>2. Our AI reads the name and ID number on the document.<br>3. Your profile name must match the name on your ID.<br>4. One ID number can verify only one account — ever.<br>Your ID number is stored only as a secure hash, never as text. ✔ verified users are trusted at a glance.</div>'+
+      '<button class="big blue" id="kycBtn" style="width:100%" onclick="kycGo()">📷 Upload your ID document</button>'+
+      '<button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeKycSheet()">Close</button><div style="height:8px"></div></div>';
+    document.body.appendChild(sh);
+    sh.addEventListener("click",function(e){if(e.target===sh)closeKycSheet();});
+  }
+  $("kycStatus").innerHTML=KYC_ME?'✅ <b>Your identity is verified</b> — the ✔ badge shows next to your name for everyone.':'You are not verified yet. Verified users get a <b>✔ badge</b> next to their name everywhere — more trust in calls, chats, and payments.';
+  $("kycBtn").style.display=KYC_ME?"none":"";
+  sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
+}
+function closeKycSheet(){$("kycsheet").className="ovl hide";}
+async function kycGo(){
+  const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
+  if(!f)return;
+  const st=$("kycStatus");
+  st.innerHTML="⏳ Uploading and reading your ID…";
+  $("kycBtn").style.display="none";
+  try{
+    const sm=await walRcpShrink(f);
+    const CH=300000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
+    const up=await api("fstart",{from:ME,to:ME,name:"kyc-id.jpg",n,pub:1});
+    if(!up||!up.fid)throw 0;
+    await fputParallel(up.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
+    const r=await api("kyc",{node:ME,fid:up.fid});
+    if(r&&r.verified){
+      KYC_ME=true;
+      st.innerHTML='✅ <b>Identity verified!</b> The ✔ badge is now next to your name for everyone. Thank you, '+(esc(r.name||"friend"))+".";
+      toast("Identity verified ✔");
+    }else{
+      st.innerHTML="❌ "+esc((r&&r.err)||"Verification failed — try again with a clearer photo.");
+      $("kycBtn").style.display="";
+    }
+  }catch(e){st.innerHTML="❌ Upload failed — check your connection and try again.";$("kycBtn").style.display="";}
+}
 /* ===== v153 (skylar): unsend · edit · forward — WhatsApp parity ===== */
 function msUnsend(){
   closeMs();
@@ -6876,7 +6919,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=158;
+const AC_V=160;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7154,6 +7197,7 @@ function menuOpen(){
       more.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:6px 12px";
       more.innerHTML='<div style="font-size:11px;font-weight:700;color:#64748B;padding:8px 2px 2px">MORE SETTINGS</div>'+
        moreRow("⭐","Starred messages","menuClose();starsOpen();")+
+       moreRow("✔","Verify identity (KYC)","menuClose();kycSheet();")+
        moreRow("➕","Add a friend","menuClose();connectSheet();")+
        moreRow("🌐","Language","menuClose();langSheet();")+
        moreRow("🛡️","Privacy & Terms","window.open('privacy.html','_blank')")+
