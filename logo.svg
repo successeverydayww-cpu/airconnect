@@ -1,8 +1,8 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#00C39A"/>
-      <stop offset="100%" stop-color="#00997A"/>
+      <stop offset="0%" stop-color="#2B5FE3"/>
+      <stop offset="100%" stop-color="#1A3FA8"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="108" fill="url(#bg3)"/>
@@ -18,7 +18,7 @@
   <line x1="126" y1="331" x2="386" y2="331" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
   <!-- center hub -->
   <circle cx="256" cy="256" r="40" fill="#FFFFFF"/>
-  <circle cx="256" cy="256" r="16" fill="#BFF7DC"/>
+  <circle cx="256" cy="256" r="16" fill="#F4C04D"/>
   <!-- spokes to hub -->
   <line x1="256" y1="106" x2="256" y2="216" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
   <line x1="126" y1="331" x2="225" y2="283" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>

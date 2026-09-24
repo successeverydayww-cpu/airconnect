@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#E4F8ED"><script>try{document.documentElement.dataset.acTheme=localStorage.getItem("ac_theme")||"light"}catch(e){document.documentElement.dataset.acTheme="light"}</script>
+<meta name="theme-color" content="#F7F9FC"><script>try{document.documentElement.dataset.acTheme=localStorage.getItem("ac_theme")||"light"}catch(e){document.documentElement.dataset.acTheme="light"}</script>
 <meta name="description" content="AirConnect — free voice & video calling and chat with phone-number IDs.">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -15,39 +15,39 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#F8FAFC;
 .acStay #login{display:none!important}
 .acStay #app{display:block!important}
 /* header */
-.hdr{position:sticky;top:0;z-index:20;background:#0D6E52;color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #C9EBDE}
+.hdr{position:sticky;top:0;z-index:20;background:#1A3FA8;color:#fff;padding:14px 16px;font-weight:600;font-size:17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #C9EBDE}
 .hdr .sub{font-size:12px;color:#52796B;font-weight:400}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#667781;margin-right:6px;vertical-align:1px}
-.dot.live{background:#22c55e}.dot.ringing{background:#ffb02e;animation:pulse .8s infinite}
+.dot.live{background:#2B5FE3}.dot.ringing{background:#ffb02e;animation:pulse .8s infinite}
 @keyframes pulse{50%{opacity:.25}}
 /* nav */
-nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#D7EEE0;display:flex;border-top:1px solid #C9EBDE;padding-bottom:env(safe-area-inset-bottom)}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#E8EFFB;display:flex;border-top:1px solid #C9EBDE;padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;color:rgba(255,255,255,.88);font-size:11.5px;padding:8px 0 6px;cursor:pointer;font-weight:800}
 nav button.on{color:#fff}
 nav button .ico{display:block;font-size:20px;position:relative}
-.badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#D7EEE0;color:#075E46;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
+.badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#E8EFFB;color:#1A3FA8;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
 /* lists */
 .view{padding-bottom:64px;min-height:100vh}
 .row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #E2E8F0}
 .row:active{background:#E2E8F0}
-.av{width:46px;height:46px;border-radius:50%;background:#D7EEE0;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#fff;flex-shrink:0}
+.av{width:46px;height:46px;border-radius:50%;background:#E8EFFB;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#fff;flex-shrink:0}
 .rname{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rsub{font-size:13px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rtime{font-size:11px;color:#64748B;margin-left:auto;flex-shrink:0}
 .empty{padding:40px 20px;text-align:center;color:#64748B;font-size:14px}
 .callbtns{display:flex;gap:8px;margin-left:auto}
 .callbtns button{border:0;background:transparent;border-radius:0;width:auto;height:auto;font-size:21px;cursor:pointer;flex-shrink:0;padding:6px 8px}
-.cb1{background:transparent;color:#075E46}.cb2{background:transparent;color:#0F172A}
+.cb1{background:transparent;color:#1A3FA8}.cb2{background:transparent;color:#0F172A}
 /* forms */
 .card{margin:12px;background:#FFFFFF;border:1px solid #0F172A;border-radius:12px;padding:16px}
 input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #CBD5E1;background:#FFFFFF;color:#0F172A;font-size:15px;margin-bottom:10px;outline:none}
-button.big{width:100%;padding:14px;font-size:15px;font-weight:800;border:0;border-radius:12px;background:#D7EEE0;color:#075E46;cursor:pointer;margin-top:4px}
+button.big{width:100%;padding:14px;font-size:15px;font-weight:800;border:0;border-radius:12px;background:#E8EFFB;color:#1A3FA8;cursor:pointer;margin-top:4px}
 button.big:disabled{opacity:.5}
 button.big.red{background:#f15c6d}
-button.big.blue{background:#D7EEE0;color:#075E46}
+button.big.blue{background:#E8EFFB;color:#1A3FA8}
 /* chat overlay */
 .ovl{position:fixed;inset:0;z-index:30;background:#F8FAFC;display:flex;flex-direction:column}
-.ovl .ohdr{background:#0D6E52;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ovl .ohdr{background:#1A3FA8;padding:10px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .ohdr .bk{background:none;border:0;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
 .ohdr .nm{font-weight:600;font-size:16px;color:#fff}
 .ohdr .st{font-size:12px;color:rgba(255,255,255,.75)}
@@ -58,7 +58,7 @@ button.big.blue{background:#D7EEE0;color:#075E46}
 .bub.sys{align-self:center;background:#1C2A45;color:#ffd27d;font-size:12.5px}
 .cinput{display:flex;gap:8px;padding:10px;background:#FFFFFF;border-top:1px solid #0F172A;flex-shrink:0}
 .cinput input{margin:0;flex:1}
-.cinput button{width:52px;border-radius:50%;border:0;background:#D7EEE0;font-size:19px;cursor:pointer;flex-shrink:0}
+.cinput button{width:52px;border-radius:50%;border:0;background:#E8EFFB;font-size:19px;cursor:pointer;flex-shrink:0}
 .cinput button:disabled{opacity:.5}
 /* call + incoming overlays */
 #callview .top{padding:24px;text-align:center}
@@ -81,29 +81,29 @@ button.big.blue{background:#D7EEE0;color:#075E46}
 #callview .cctl{position:absolute;bottom:26px;left:0;right:0;z-index:10}
 #callview .meters{position:absolute;bottom:110px;left:0;right:0;z-index:10;background:none}
 #callview .cstat{color:#cfd8dc}
-#localv{position:absolute;right:8px;bottom:8px;width:28%;border:2px solid #00A884;border-radius:8px}
+#localv{position:absolute;right:8px;bottom:8px;width:28%;border:2px solid #2B5FE3;border-radius:8px}
 .cctl{position:fixed;bottom:0;left:0;right:0;padding:18px 10px 30px;display:flex;justify-content:center;gap:22px;background:linear-gradient(transparent,#F8FAFC 40%)}
 .cbtn{border:0;border-radius:50%;width:58px;height:58px;font-size:22px;cursor:pointer;color:#fff;background:#CBD5E1}
 .cbtn.end{background:#ea0038}
-.cbtn.on{background:#D7EEE0}
+.cbtn.on{background:#E8EFFB}
 .meters{display:flex;gap:10px;justify-content:center;margin:8px 16px;font-size:11px;color:#64748B}
 .meters .m{flex:1;max-width:160px}
 .meters .bar{height:4px;background:#0F172A;border-radius:2px;overflow:hidden}
-.meters .bar>div{height:100%;width:0;background:#D7EEE0;transition:width .3s}
+.meters .bar>div{height:100%;width:0;background:#E8EFFB;transition:width .3s}
 #incoming{align-items:center;justify-content:center;text-align:center}
 #incoming .av{width:110px;height:110px;font-size:44px;margin:0 auto}
 #incoming .iname{font-size:26px;font-weight:600;margin-top:20px}
 #incoming .istat{color:#64748B;margin-top:8px}
 .ictrl{position:fixed;bottom:60px;left:0;right:0;display:flex;justify-content:space-around}
 .ictrl button{border:0;border-radius:50%;width:64px;height:64px;font-size:26px;cursor:pointer}
-.ictrl .acc{background:#16a34a;color:#fff}
+.ictrl .acc{background:#2B5FE3;color:#fff}
 .ictrl .dec{background:#ea0038;color:#fff}
-#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#D7EEE0;color:#075E46;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
+#fab{position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:18px;background:#E8EFFB;color:#1A3FA8;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29;font-weight:600}
 #fab:active{transform:scale(.93)}
 .sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .rchip{display:inline-flex;align-items:center;gap:3px;background:#E2E8F0;border:1px solid #CBD5E1;border-radius:10px;padding:2px 8px;font-size:12px;margin-top:4px;margin-right:4px}
-.rchip.mine{border-color:#075E46}
-.qbox{border-left:3px solid #00A884;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
+.rchip.mine{border-color:#1A3FA8}
+.qbox{border-left:3px solid #2B5FE3;background:#E2E8F0;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;color:#64748B;overflow:hidden}
 #fabsheet .sheet{position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;max-height:72vh;overflow:auto;border-radius:16px 16px 0 0}
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1C2A45;padding:10px 18px;border-radius:20px;font-size:13px;z-index:50;color:#F8FAFC;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 /* chat themes / wallpapers */
@@ -118,7 +118,7 @@ footer a{color:#64748B}
 #sharelink{font-size:12px}
 .stseg{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;max-width:44px}
 .stseg.done,.stseg.on{background:#fff}
-.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#DC2626;font-weight:700}.tick.on{color:#16A34A}
+.bmeta{font-size:10px;color:#64748B;text-align:right;margin-top:3px;padding:0 2px}.tick{color:#DC2626;font-weight:700}.tick.on{color:#2B5FE3}
 </style>
 </head>
 <body>
@@ -131,8 +131,8 @@ footer a{color:#64748B}
 </style>
 <style>
 #vtTrim input[type=range]{-webkit-appearance:none;appearance:none;height:26px;background:transparent;pointer-events:none;position:absolute;left:0;right:0;top:0;width:100%;margin:0}
-#vtTrim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#075E46;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);margin-top:1px;cursor:pointer}
-#vtTrim input[type=range]::-moz-range-thumb{pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#075E46;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer}
+#vtTrim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#1A3FA8;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);margin-top:1px;cursor:pointer}
+#vtTrim input[type=range]::-moz-range-thumb{pointer-events:auto;width:24px;height:24px;border-radius:50%;background:#1A3FA8;border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);cursor:pointer}
 #vtTrim input[type=range]::-moz-range-track{background:transparent}
 #vtTrim input[type=range]::-webkit-slider-runnable-track{background:transparent}
 </style>
@@ -156,7 +156,7 @@ footer a{color:#64748B}
       <option>Turkey</option><option>Canada</option><option>Australia</option>
     </select>
     <div style="display:flex;margin-bottom:2px">
-      <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#D7EEE0;color:#075E46;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
+      <button id="tabPhone" onclick="setMethod('phone')" style="flex:1;padding:9px;background:#E8EFFB;color:#1A3FA8;border:0;border-radius:8px 0 0 8px;font-size:13px">📱 Phone (SMS)</button>
       <button id="tabEmail" onclick="setMethod('email')" style="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px">📧 Email</button>
     </div>
     <input id="phone" placeholder="Your phone number, e.g. 0803 123 4567" inputmode="tel" autocomplete="tel">
@@ -178,8 +178,8 @@ footer a{color:#64748B}
     <button class="big green" onclick="phraseLogin()">Log in with phrase</button>
     <div style="font-size:11px;color:#94A3B8;margin-top:12px;text-align:center;line-height:1.5">
       Verify by SMS or email code, so nobody can sign up as you.<br>Same email + code also logs you back in on any device.<br>
-      <a href="terms.html" target="_blank" style="color:#2563EB">Terms &amp; Data Policy</a> ·
-      <a href="privacy.html" target="_blank" style="color:#2563EB">Privacy</a>
+      <a href="terms.html" target="_blank" style="color:#2B5FE3">Terms &amp; Data Policy</a> ·
+      <a href="privacy.html" target="_blank" style="color:#2B5FE3">Privacy</a>
     </div>
   </div>
   <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -189,7 +189,7 @@ footer a{color:#64748B}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">📴 No internet: saved chats are available. Text messages queue and send when you reconnect; calls need internet.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#075E46;flex:0 0 34px">?</button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A3FA8;flex:0 0 34px">?</button></div>
   </div>
 
   <div id="view-chats" class="view">
@@ -202,10 +202,10 @@ footer a{color:#64748B}
         <div style="font-weight:600;margin-bottom:8px" id="vtTitle">✂ Trim your video</div>
         <video id="vtVid" playsinline muted style="width:100%;max-height:36vh;background:#000;border-radius:8px"></video>
         <div style="font-size:11.5px;color:#64748B;margin-top:6px;text-align:center" id="vtHint">Drag either handle — the video previews where you land</div>
-        <div style="position:relative;height:56px;margin-top:10px;background:#0F172A;border-radius:8px;overflow:hidden"><div id="vtStrip" style="display:flex;height:100%;width:100%"></div><div id="vtBar2" style="position:absolute;top:0;bottom:0;border:3px solid #10B981;border-radius:6px;pointer-events:none;box-sizing:border-box"></div></div>
+        <div style="position:relative;height:56px;margin-top:10px;background:#0F172A;border-radius:8px;overflow:hidden"><div id="vtStrip" style="display:flex;height:100%;width:100%"></div><div id="vtBar2" style="position:absolute;top:0;bottom:0;border:3px solid #2B5FE3;border-radius:6px;pointer-events:none;box-sizing:border-box"></div></div>
         <div style="position:relative;height:26px;margin-top:10px">
           <div style="position:absolute;left:0;right:0;top:11px;height:5px;background:#CBD5E1;border-radius:4px"></div>
-          <div id="vtBar" style="position:absolute;top:11px;height:5px;background:#D7EEE0;border-radius:4px"></div>
+          <div id="vtBar" style="position:absolute;top:11px;height:5px;background:#E8EFFB;border-radius:4px"></div>
           <input type="range" id="vtS" min="0" max="1000" value="0" oninput="vtDrag('s')">
           <input type="range" id="vtE" min="0" max="1000" value="1000" oninput="vtDrag('e')">
         </div>
@@ -220,7 +220,7 @@ footer a{color:#64748B}
       <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;text-align:center">
         <div style="font-weight:600;margin-bottom:4px">🎙️ Voice update</div>
         <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold the button and speak · max 30 seconds</div>
-        <div id="stVRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
+        <div id="stVRec" class="hide" style="color:#2B5FE3;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="stVPrev" class="hide" style="margin:10px 0"></div>
         <button id="stVMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>
         <div id="stVBtns" class="hide" style="display:flex;gap:8px;margin-top:10px">
@@ -233,13 +233,13 @@ footer a{color:#64748B}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#10B981;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v151</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v151</div>
   </div>
 
   <div id="view-watch" class="view hide">
     <div style="display:flex;gap:6px;padding:10px 12px 0;position:sticky;top:0;background:#fff;z-index:5">
       <button id="wtb-feed" class="big blue" style="flex:1;padding:8px;font-size:13px;border-radius:20px" onclick="wtOpen('feed')">📰 Feed</button>
-      <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#075E46"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg> Watch</button>
+      <button id="wtb-watch" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('watch')"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#1A3FA8"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg> Watch</button>
       <button id="wtb-studio" class="big" style="flex:1;padding:8px;font-size:13px;border-radius:20px;background:#E2E8F0;color:#334155" onclick="wtOpen('studio')">📺 My Channel</button>
 
     </div>
@@ -260,7 +260,7 @@ footer a{color:#64748B}
     <input id="wtChEmail" placeholder="Your email (we send the code here)" inputmode="email" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:10px;font-size:14px;box-sizing:border-box">
     <button id="wtChSendBtn" class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChSendCode()">Send code 📧</button>
     <div id="wtChCodeRow" style="display:none">
-      <div id="wtChSent" style="font-size:12px;color:#075E46;margin:10px 0 6px"></div>
+      <div id="wtChSent" style="font-size:12px;color:#1A3FA8;margin:10px 0 6px"></div>
       <input id="wtChCode" placeholder="6-digit code" inputmode="numeric" maxlength="6" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:8px;font-size:16px;letter-spacing:4px;text-align:center;box-sizing:border-box">
       <button class="big blue" style="width:100%;padding:12px;border-radius:12px" onclick="wtChVerify()">Verify &amp; create channel ✓</button>
       <button class="big" style="width:100%;padding:8px;margin-top:6px;border-radius:12px;background:#E2E8F0;color:#334155;font-size:12px" onclick="wtChSendCode()">Resend code</button>
@@ -270,7 +270,7 @@ footer a{color:#64748B}
 </div>
 <div id="admView" class="ovl hide" style="z-index:65;background:#F8FAFC" onclick="if(event.target===this)admClose()">
   <div class="card" style="position:absolute;top:0;left:0;right:0;bottom:0;margin:0;border-radius:0;overflow-y:auto;max-width:600px;margin:0 auto">
-    <div style="position:sticky;top:0;background:#0D6E52;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
+    <div class="ohdr" style="position:sticky;top:0;padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:1">
       <button onclick="admClose()" style="background:none;border:0;color:#fff;font-size:20px;padding:0 4px">‹</button>
       <div style="font-weight:700;font-size:16px;flex:1">🛡️ Admin — Payments</div>
       <button onclick="admLoad()" style="background:none;border:0;color:#fff;font-size:18px">↻</button>
@@ -320,7 +320,7 @@ footer a{color:#64748B}
       <div style="display:flex;align-items:center;gap:12px">
         <div style="position:relative;flex:0 0 60px">
           <div class="av" id="stMyAv" style="width:60px;height:60px;font-size:22px;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">?</div>
-          <div onclick="stAddOpen()" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#D7EEE0;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)">📷</div>
+          <div onclick="stAddOpen()" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#E8EFFB;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.25)">📷</div>
         </div>
         <div style="flex:1;min-width:0;cursor:pointer" onclick="if(STORIES.some(s=>s.num===ME))openStatusViewer(ME);else stAddOpen()">
           <div style="font-weight:600">My updates</div>
@@ -328,16 +328,16 @@ footer a{color:#64748B}
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stTextOpen()">✏️ Text</button>
-        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">📷 Photo</button>
-        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#D7EEE0;color:#075E46;margin:0" onclick="stAddOpen()">🎬 Video</button>
+        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#E8EFFB;color:#1A3FA8;margin:0" onclick="stTextOpen()">✏️ Text</button>
+        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#E8EFFB;color:#1A3FA8;margin:0" onclick="stAddOpen()">📷 Photo</button>
+        <button class="big" style="width:auto;padding:8px 16px;font-size:13px;background:#E8EFFB;color:#1A3FA8;margin:0" onclick="stAddOpen()">🎬 Video</button>
       </div>
       <button class="big" id="stDelBtn" style="display:none;width:100%;margin-top:10px;background:#F1F5F9;color:#334155" onclick="deleteMyStatus()">🗑 Delete my updates</button>
       <div style="font-size:11.5px;color:#64748B;margin-top:8px">Updates last 24 hours and only your friends see them. Protected view — no saving, watermark included.</div>
     </div>
     <div id="stDraftRow" class="hide"></div>
     <div class="card" style="border:none;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-      <div style="font-weight:700;font-size:12.5px;color:#0D6E52;padding:2px 2px 6px">Recent updates</div>
+      <div style="font-weight:700;font-size:12.5px;color:#1A3FA8;padding:2px 2px 6px">Recent updates</div>
       <div id="stFriendsRow"></div>
       <div id="stFriends" style="font-size:14px;color:#64748B">No friend updates yet.</div>
     </div>
@@ -348,7 +348,7 @@ footer a{color:#64748B}
 
     <footer><a href="privacy.html">Privacy Policy</a></footer>
   </div>
-  <div id="stFab" class="hide" style="position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:50%;background:#D7EEE0;color:#075E46;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29" onclick="stAddOpen()">📷</div>
+  <div id="stFab" class="hide" style="position:fixed;right:16px;bottom:76px;width:56px;height:56px;border-radius:50%;background:#E8EFFB;color:#1A3FA8;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.4);cursor:pointer;z-index:29" onclick="stAddOpen()">📷</div>
   <div id="stAddBg" class="hide" style="position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(0,0,0,.4);z-index:59" onclick="stAddClose()"></div>
   <div id="stAddSheet" class="hide" style="position:fixed;left:0;right:0;bottom:0;background:#FFFFFF;z-index:60;padding:22px 20px 26px;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.35);max-width:480px;margin:0 auto">
     <div style="font-weight:700;text-align:center;margin-bottom:16px;color:#0F172A">Add to my updates</div>
@@ -370,7 +370,7 @@ footer a{color:#64748B}
         <div style="font-size:12px;color:#0F172A">Text</div>
       </div>
       <div onclick="stAddClose();stVoiceSheet()" style="cursor:pointer">
-        <div style="width:52px;height:52px;border-radius:50%;background:#4ad66d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
+        <div style="width:52px;height:52px;border-radius:50%;background:#2B5FE3;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
         <div style="font-size:12px;color:#0F172A">Voice</div>
       </div>
     </div>
@@ -381,7 +381,7 @@ footer a{color:#64748B}
     <div style="font-weight:700;text-align:center;margin-bottom:12px;color:#fff">Text update</div>
     <textarea id="stTxtIn" maxlength="400" placeholder="Type your update…" style="width:100%;height:110px;background:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;box-sizing:border-box;resize:none"></textarea>
     <div id="stTxtBgRow" style="display:flex;gap:8px;margin:14px 0 4px;justify-content:center"></div>
-    <button class="big" style="width:100%;margin-top:12px;background:#00A884;color:#fff" onclick="stTextPost()">Post</button>
+    <button class="big" style="width:100%;margin-top:12px;background:#2B5FE3;color:#fff" onclick="stTextPost()">Post</button>
     <button class="big" style="width:100%;margin-top:8px;background:transparent;color:#94A3B8" onclick="stTextClose()">Cancel</button>
   </div>
   <div id="stViewsBg" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55" onclick="stViewsClose()"></div>
@@ -406,14 +406,14 @@ footer a{color:#64748B}
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🧩 Developer API</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Build on our 102 AI citizens — public API docs.</div>
-      <a href="api.html" style="font-size:14px;color:#075E46">Open API docs →</a>
+      <a href="api.html" style="font-size:14px;color:#1A3FA8">Open API docs →</a>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">📶 Lite mode (data saver)</div>
       <div style="font-size:12.5px;color:#64748B;margin-bottom:8px">Photos load on tap, videos never autoplay — saves your data.</div>
       <button class="big" id="liteBtn" style="background:#CBD5E1;color:#334155" onclick="liteToggle()">Lite mode: OFF</button>
       <button class="big" id="installBtn" style="margin-top:8px;display:none" onclick="installApp()">📲 Install AirConnect app</button>
-      <button class="big" style="margin-top:8px;background:#D7EEE0;color:#075E46" onclick="try{localStorage.setItem('ac_last','caller');}catch(e){};location.href='/exam'">🎓 Exam Prep — JAMB, WAEC, SAT & more</button>
+      <button class="big" style="margin-top:8px;background:#E8EFFB;color:#1A3FA8" onclick="try{localStorage.setItem('ac_last','caller');}catch(e){};location.href='/exam'">🎓 Exam Prep — JAMB, WAEC, SAT & more</button>
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">🎙 AI receptionist voice</div>
@@ -441,19 +441,19 @@ footer a{color:#64748B}
       </div>
       <div onclick="editMyName()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">Name</div><div id="meNameRow" style="font-weight:600;font-size:15px">—</div></div>
-        <div style="color:#075E46;font-size:17px">✏️</div>
+        <div style="color:#1A3FA8;font-size:17px">✏️</div>
       </div>
       <div onclick="editMyAbout()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;cursor:pointer">
         <div style="min-width:0"><div style="font-size:12px;color:#64748B">About</div><div id="meAboutRow" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div></div>
-        <div style="color:#075E46;font-size:17px">✏️</div>
+        <div style="color:#1A3FA8;font-size:17px">✏️</div>
       </div>
       <div onclick="showMyPhrase()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-weight:600;font-size:14px">🔐 My recovery phrase</div><div style="font-size:11.5px;color:#64748B">Tap to view — it keeps your account if you change phone</div></div>
-        <div style="color:#075E46;font-size:17px">›</div>
+        <div style="color:#1A3FA8;font-size:17px">›</div>
       </div>
       <div onclick="ppOpen()" style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid #E2E8F0;cursor:pointer">
         <div style="min-width:0"><div style="font-weight:600;font-size:14px">🔑 Change passphrase</div><div style="font-size:11.5px;color:#64748B">Enter your current passphrase to set a new one</div></div>
-        <div style="color:#075E46;font-size:17px">›</div>
+        <div style="color:#1A3FA8;font-size:17px">›</div>
       </div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px">Tap any row to edit, WhatsApp-style.</div>
       <button class="big" style="margin-top:14px;width:100%;background:#F1F5F9;color:#111827" onclick="logOut()">🚪 Log out</button>
@@ -546,7 +546,7 @@ footer a{color:#64748B}
 <div id="walSheet" class="ovl hide" onclick="if(event.target===this)walClose()">
   <div class="sheet">
     <div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 My Wallet</div>
-    <div style="font-size:26px;font-weight:700;color:#075E46;margin-bottom:10px" id="walBal2">₦0</div>
+    <div style="font-size:26px;font-weight:700;color:#1A3FA8;margin-bottom:10px" id="walBal2">₦0</div>
     <button class="big blue" style="width:100%" onclick="walAdd()">➕ Add money</button>
     <button class="big" style="width:100%;margin-top:8px;background:#E2E8F0;color:#334155" onclick="walSend()">📤 Send money</button>
     <div style="font-weight:600;margin-top:14px;margin-bottom:4px">History</div>
@@ -583,14 +583,14 @@ footer a{color:#64748B}
       <div style="font-size:13px"><b>ACCOUNT NAME:</b> Success Friday</div>
       <div style="font-size:13px"><b>ACCOUNT NUMBER:</b> <span id="payAcct">8881724009</span></div>
     </div>
-    <div style="background:#F8FAFC;border:1px dashed #e8c468;border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
-      <div style="font-size:12px;color:#e8c468">YOUR TRANSACTION CODE — copy this, use it as the transfer reference:</div>
-      <div id="payRef" style="font-size:22px;font-weight:700;letter-spacing:2px;margin:6px 0;color:#e8c468">AC-000000</div>
+    <div style="background:#F8FAFC;border:1px dashed #F4C04D;border-radius:10px;padding:10px;margin-bottom:10px;text-align:center">
+      <div style="font-size:12px;color:#F4C04D">YOUR TRANSACTION CODE — copy this, use it as the transfer reference:</div>
+      <div id="payRef" style="font-size:22px;font-weight:700;letter-spacing:2px;margin:6px 0;color:#F4C04D">AC-000000</div>
       <button class="big blue" style="width:100%" onclick="copyRef()">📋 Copy code + bank details</button>
     </div>
     <div style="text-align:center;margin-bottom:10px">
       <span style="font-size:12px;color:#64748B">Pay before this runs out: </span>
-      <span id="payTimer" style="font-size:18px;font-weight:700;color:#075E46">30:00</span>
+      <span id="payTimer" style="font-size:18px;font-weight:700;color:#1A3FA8">30:00</span>
     </div>
     <div style="font-size:12px;color:#64748B;margin-bottom:10px">After paying, keep your receipt ready — you will send it as a screenshot to Premium AI in chat.</div>
     <button class="big blue" style="width:100%" onclick="paidNow()">✅ I've Paid — Continue</button>
@@ -610,20 +610,20 @@ footer a{color:#64748B}
       <div id="fabList"></div>
       <div style="height:10px"></div>
     </div>
-      <div class="card" style="background:#D7EEE0;color:#075E46;border:0">
+      <div class="card" style="background:#E8EFFB;color:#1A3FA8;border:0">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="font-size:26px">💰</div>
         <div style="flex:1">
           <div style="font-size:12px;opacity:.85">My AirConnect Wallet</div>
           <div style="font-size:22px;font-weight:700" id="walBal">₦0</div>
         </div>
-        <button class="big" style="background:#fff;color:#075E46;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
+        <button class="big" style="background:#fff;color:#1A3FA8;padding:8px 12px;font-size:12px;border-radius:10px" onclick="walShow()">Open</button>
       </div>
     </div>
   </div>
   <nav>
     <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
-    <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#075E46"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg></span>Watch</button>
+    <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#1A3FA8"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg></span>Watch</button>
     <button id="tab-status" aria-label="Updates" onclick="showTab('status')"><span class="ico">◉</span>Updates</button>
     <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
     <button id="tab-settings" aria-label="Settings" onclick="menuOpen()"><span class="ico">⚙️</span>Menu</button>
@@ -720,7 +720,7 @@ footer a{color:#64748B}
   </div>
   <div class="bubbles" id="gbubbles"></div>
   <div class="cinput">
-    <div id="greplychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #00A884;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
+    <div id="greplychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #2B5FE3;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
     <input id="gbox" placeholder="Message group" onkeydown="if(event.key==='Enter')gsend()">
     <button onclick="gVoiceSheet()" title="Voice note" style="border:1px solid #CBD5E1;background:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;flex:0 0 38px;padding:0">🎙️</button>
     <button onclick="gsend()">➤</button>
@@ -774,7 +774,7 @@ footer a{color:#64748B}
   <div id="stBar" class="hide" style="position:fixed;bottom:0;left:0;right:0;padding:8px 10px calc(12px + env(safe-area-inset-bottom));display:flex;gap:6px;align-items:center;background:rgba(15,23,42,.6);z-index:8">
     <div id="stEmojiRow" style="display:flex;gap:2px;flex:0 0 auto"></div>
     <input id="stReplyIn" placeholder="Reply…" maxlength="500" style="flex:1;min-width:0;background:#fff;border:none;border-radius:18px;padding:10px 14px;font-size:14px">
-    <button style="flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#00A884;color:#fff;border:none;font-size:16px;cursor:pointer" onclick="stReplySend()">➤</button>
+    <button style="flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#2B5FE3;color:#fff;border:none;font-size:16px;cursor:pointer" onclick="stReplySend()">➤</button>
   </div>
 
 </div>
@@ -805,7 +805,7 @@ footer a{color:#64748B}
       <div style="position:absolute;left:0;right:0;bottom:0;background:#E2E8F0;padding:16px;border-top:1px solid #CBD5E1;text-align:center">
         <div style="font-weight:600;margin-bottom:4px">🎙️ Voice note</div>
         <div style="font-size:12px;color:#64748B;margin-bottom:10px">Hold and speak · max 60 seconds</div>
-        <div id="cvRec" class="hide" style="color:#2563EB;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
+        <div id="cvRec" class="hide" style="color:#2B5FE3;font-size:22px;font-weight:600;margin:6px 0">● 0:00</div>
         <div id="cvPrev" class="hide" style="margin:10px 0"></div>
         <button id="cvMic" class="big blue" style="width:100%;border-radius:24px;font-size:16px;padding:14px">🎙️ Tap to record</button>
         <div id="cvBtns" class="hide" style="display:flex;gap:14px;margin-top:12px;align-items:center;justify-content:center">
@@ -850,7 +850,7 @@ footer a{color:#64748B}
           <div style="font-size:12px;color:#0F172A">Video</div>
         </div>
         <div onclick="chatVoiceSheet()" style="cursor:pointer">
-          <div style="width:52px;height:52px;border-radius:50%;background:#4ad66d;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
+          <div style="width:52px;height:52px;border-radius:50%;background:#2B5FE3;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:22px">🎙️</div>
           <div style="font-size:12px;color:#0F172A">Voice</div>
         </div>
         <div onclick="stickerSheet()" style="cursor:pointer">
@@ -864,7 +864,7 @@ footer a{color:#64748B}
       </div>
       <div onclick="$('attsheet').className='hide';$('attsheetbg').className='hide';" style="margin-top:22px;text-align:center;color:#64748B;font-size:14px;padding:8px;cursor:pointer">Cancel</div>
     </div>
-    <div id="replychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #00A884;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
+    <div id="replychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #2B5FE3;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
     <input id="chatbox" placeholder="Message" onkeydown="if(event.key==='Enter')sendChat()" oninput="typingPing()">
     <button onclick="chatVoiceSheet()" title="Voice note" style="border:1px solid #CBD5E1;background:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;flex:0 0 38px;padding:0">🎙️</button>
     <button id="sendbtn" onclick="sendChat()">➤</button>
@@ -897,10 +897,10 @@ footer a{color:#64748B}
     <div class="av" id="callAv">📞</div>
     <div class="cname" id="callName">—</div>
     <div class="cstat" id="callStat">calling…</div>
-    <div id="aiBanner" class="cstat hide" style="color:#e8c468;font-weight:600">⭐ Premium AI is answering — talk to it or leave a message</div>
-    <div id="aiSpeechStatus" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;color:#d1fae5"></div>
-    <div id="micNotice" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;font-weight:600;color:#d1fae5"></div>
-    <button id="micEnable" type="button" class="hide" onclick="enableCallMic()" style="background:#e8c468;color:#151b26;border:0;border-radius:10px;padding:8px 12px;margin-top:8px;font-weight:700;cursor:pointer">Enable microphone</button>
+    <div id="aiBanner" class="cstat hide" style="color:#F4C04D;font-weight:600">⭐ Premium AI is answering — talk to it or leave a message</div>
+    <div id="aiSpeechStatus" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;color:#E8EFFB"></div>
+    <div id="micNotice" class="cstat hide" role="status" aria-live="polite" style="font-size:13px;font-weight:600;color:#E8EFFB"></div>
+    <button id="micEnable" type="button" class="hide" onclick="enableCallMic()" style="background:#F4C04D;color:#151b26;border:0;border-radius:10px;padding:8px 12px;margin-top:8px;font-weight:700;cursor:pointer">Enable microphone</button>
   </div>
   <div class="vwrap hide" id="vwrap">
     <video id="remotev" autoplay playsinline></video>
@@ -920,7 +920,7 @@ footer a{color:#64748B}
 <div id="lockview" class="ovl hide" style="z-index:80;align-items:center;justify-content:center;text-align:center">
   <div style="font-size:40px">🔒</div>
   <div style="font-size:18px;font-weight:600;margin:10px 0 16px">Enter your PIN</div>
-  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#075E46;margin-bottom:18px;min-height:34px"></div>
+  <div id="pindots" style="font-size:26px;letter-spacing:8px;color:#1A3FA8;margin-bottom:18px;min-height:34px"></div>
   <input id="pininput" type="tel" inputmode="numeric" maxlength="6" style="width:160px;text-align:center;font-size:24px;letter-spacing:8px">
   <button class="big" onclick="pinTry()" style="margin-top:12px">Unlock</button>
   <div style="font-size:11px;color:#94A3B8;margin-top:14px;line-height:1.5">Forgot PIN? Reinstalling the app removes the lock<br>and your local data. Your account is safe.</div>
@@ -1301,8 +1301,8 @@ let VERIFY_METHOD="phone",OTP_EMAIL="";
 function setMethod(m){
   VERIFY_METHOD=m;
   const p=$("phone"),e=$("emailin"),tp=$("tabPhone"),te=$("tabEmail");
-  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#D7EEE0;color:#075E46;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
-  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#D7EEE0;color:#075E46;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
+  if(m==="email"){e.style.display="";p.style.display="none";te.style.cssText="flex:1;padding:9px;background:#E8EFFB;color:#1A3FA8;border:0;border-radius:0 8px 8px 0;font-size:13px";tp.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-right:0;border-radius:8px 0 0 8px;font-size:13px";$("otpcode").placeholder="6-digit code from email";$("sendcodebtn").textContent="Send my code by email";}
+  else{p.style.display="";e.style.display="none";tp.style.cssText="flex:1;padding:9px;background:#E8EFFB;color:#1A3FA8;border:0;border-radius:8px 0 0 8px;font-size:13px";te.style.cssText="flex:1;padding:9px;background:#E2E8F0;color:#64748B;border:1px solid #CBD5E1;border-left:0;border-radius:0 8px 8px 0;font-size:13px";$("otpcode").placeholder="6-digit code from SMS";$("sendcodebtn").textContent="Send my verification code";}
 }
 async function startSignup(){
   const name=$("myname").value.trim();
@@ -1518,7 +1518,7 @@ function wtCats(){
   bar.innerHTML="";
   for(const [k,lbl] of WT_CATS){
     const b=document.createElement("button");
-    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#00A884":"#E2E8F0")+";background:"+(WT_CAT===k?"#D7EEE0":"#fff")+";color:"+(WT_CAT===k?"#075E46":"#334155");
+    b.style.cssText="flex:0 0 auto;padding:6px 13px;font-size:12px;border-radius:16px;border:1px solid "+(WT_CAT===k?"#2B5FE3":"#E2E8F0")+";background:"+(WT_CAT===k?"#E8EFFB":"#fff")+";color:"+(WT_CAT===k?"#1A3FA8":"#334155");
     b.textContent=lbl;
     b.onclick=()=>{WT_CAT=k;wtCats();wtLoad();};
     bar.appendChild(b);
@@ -1528,7 +1528,7 @@ function wtBoot(){if(!WT_LOADED){WT_LOADED=true;wtCats();wtOpen("feed");}else wt
 function wtRefresh(){if(WT_SCOPE==="chans")wtChannels();else wtLoad();}
 function wtOpen(sc){
   WT_SCOPE=sc;
-  for(const x of["feed","watch","studio"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#D7EEE0":"#E2E8F0";b.style.color=x===sc?"#075E46":"#334155";}
+  for(const x of["feed","watch","studio"]){const b=$("wtb-"+x);if(!b)continue;b.style.background=x===sc?"#E8EFFB":"#E2E8F0";b.style.color=x===sc?"#1A3FA8":"#334155";}
   if(sc==="studio"){$("wtfeed").className="hide";$("wtchans").className="hide";$("wtcatbar").className="hide";$("wtstudio").className="";loadStudio();}
   else{$("wtstudio").className="hide";
   if(sc==="chans"){$("wtfeed").className="hide";$("wtchans").className="";$("wtcatbar").className="hide";wtChannels();}
@@ -1566,7 +1566,7 @@ function wtRender(){
   wtStopWtfeed(); /* v115: kill playback before re-rendering the feed */
   const el=$("wtfeed");
   if(WT_CH_PAGE){
-    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#D7EEE0;color:#075E46;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
+    el.innerHTML='<div style="display:flex;gap:8px"><button class="big" style="background:#E2E8F0;color:#334155;padding:8px 14px;border-radius:20px;font-size:13px" onclick="WT_CH_PAGE=null;wtOpen(\'chans\')">← Back</button><button class="big" style="background:#E8EFFB;color:#1A3FA8;padding:8px 14px;border-radius:20px;font-size:13px" onclick="wtTip(\''+WT_CH_PAGE+'\')">🎁 Support</button></div><div style="height:10px"></div>';
   } else el.innerHTML="";
   if(!WT_POSTS.length){el.innerHTML+='<div style="color:#64748B;text-align:center;padding:30px">Nothing here yet — be the first to post!</div>';return;}
   const big=WT_SCOPE!=="feed"&&!WT_CH_PAGE; /* v67: any video view (shorts + long) = full-screen autoplay */
@@ -1581,18 +1581,18 @@ function wtCard(p,big,sound){
   d.dataset.pid=p.id; /* v110: deep-link scroll target for shareable post links */
   d.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:10px";
   const t=new Date(p.at||Date.now());
-  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.v?' <span style="background:#075E46;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(p.mysub?' <span style="color:#075E46;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
+  const head='<div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:38px;height:38px;flex:0 0 38px;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(String(p.pname||p.from).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;cursor:pointer" onclick="wtChanPage(\''+p.ch+'\')">'+esc(p.pname||p.from)+(p.v?' <span style="background:#1A3FA8;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(p.mysub?' <span style="color:#1A3FA8;font-size:10px">✓ subscribed</span>':'')+'</div><div style="font-size:11px;color:#64748B">'+esc(String(p.name||"AirConnect post"))+' · '+fmtWT(p.at)+'</div></div></div>';
   let body="";
-  if(p.rs)body+='<div style="font-size:11px;color:#075E46;margin-top:6px">🔁 reshared post</div>';
+  if(p.rs)body+='<div style="font-size:11px;color:#1A3FA8;margin-top:6px">🔁 reshared post</div>';
   if(p.text){try{WT_XL[p.id]=p.text;}catch(e){}body+='<div id="pt-'+p.id+'" style="font-size:14px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word">'+esc(p.text)+'</div>';}
   if(p.pic&&p.fid){body+='<div class="wt-imgbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#F1F5F9" id="pi-'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+(p.fidn||0)+'" data-name="'+esc(p.name||"photo.jpg")+'"><div style="padding:26px;text-align:center;color:#94A3B8;font-size:12px">Loading photo…</div></div>';}
   else if(p.fid)body+='<div class="wt-vidbox" style="margin-top:8px;border-radius:10px;overflow:hidden;background:#000;position:relative;height:72vh;max-height:640px;min-height:320px" id="pv-'+p.id+'" data-pid="'+p.id+'" data-fid="'+p.fid+'" data-fidn="'+p.fidn+'" data-sound="'+(sound?"1":"")+'"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:12px">Loading video…</div></div>';
   const RE=["👍","❤️","😂","😮","🙏","🔥"];
   let rrow='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px" id="pr-'+p.id+'">';
-  for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#00A884":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
+  for(const r of RE){const n=(p.reacts&&p.reacts[r])||0;rrow+='<button style="border:1px solid '+(p.myreact===r?"#2B5FE3":"#E2E8F0")+';background:'+(p.myreact===r?"#E0F2FE":"#fff")+';border-radius:14px;padding:3px 9px;font-size:13px" onclick="wtReact(\''+p.id+'\',\''+r+'\')">'+r+(n?' '+n:'')+'</button>';}
   rrow+='</div>';
   const acts='<div style="display:flex;gap:14px;margin-top:10px;font-size:12.5px;color:#64748B"><span style="cursor:pointer" onclick="wtCommentsOpen(\''+p.id+'\')">💬 '+(p.ccnt||0)+' comments</span><span style="cursor:pointer" onclick="wtShare(\''+p.id+'\')">🔗 Share</span>'+(p.text?'<span style="cursor:pointer" onclick="wtXlate(\''+p.id+'\')">🌐 Translate</span>':'')+'<span style="flex:1;text-align:right">👁 '+(p.vcnt||0)+' views</span></div>';
-  d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:6px 16px;font-size:12px;border-radius:16px;background:'+(p.mysub?"#E2E8F0":"#D7EEE0")+';color:'+(p.mysub?"#334155":"#075E46")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
+  d.innerHTML=head+body+rrow+acts+'<div style="display:flex;justify-content:flex-end;margin-top:12px;border-top:1px solid #F1F5F9;padding-top:10px"><button class="big" style="padding:6px 16px;font-size:12px;border-radius:16px;background:'+(p.mysub?"#E2E8F0":"#E8EFFB")+';color:'+(p.mysub?"#334155":"#1A3FA8")+'" onclick="wtSub(\''+p.ch+'\')">'+(p.mysub?"Subscribed ✓":"Subscribe")+'</button></div>';
   return d;
 }
 function wtLoadPic(box){
@@ -1768,7 +1768,7 @@ function acDeepLink(){
         const sit=function(){
           tries++;
           const el=document.querySelector('[data-pid="'+pid+'"]');
-          if(el){try{el.scrollIntoView({block:"center"});el.style.boxShadow="0 0 0 4px #10B981";setTimeout(function(){try{el.style.boxShadow="";}catch(e2){}},4500);}catch(e){}}
+          if(el){try{el.scrollIntoView({block:"center"});el.style.boxShadow="0 0 0 4px #2B5FE3";setTimeout(function(){try{el.style.boxShadow="";}catch(e2){}},4500);}catch(e){}}
           else if(tries<30)setTimeout(sit,300);
         };
         setTimeout(sit,700);
@@ -1784,7 +1784,7 @@ function wtPCats(){
   const cats=[["general","General"],["gaming","Gaming"],["sports","Sports"],["music","Music"],["news","News"],["education","Education"],["faith","Faith"],["entertainment","Entertainment"]];
   for(const [k,lbl] of cats){
     const b=document.createElement("button");
-    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#D7EEE0":"#E2E8F0")+";background:"+(WT_PCAT===k?"#D7EEE0":"#fff")+";color:"+(WT_PCAT===k?"#075E46":"#334155");
+    b.style.cssText="flex:0 0 auto;padding:5px 11px;font-size:11.5px;border-radius:14px;border:1px solid "+(WT_PCAT===k?"#E8EFFB":"#E2E8F0")+";background:"+(WT_PCAT===k?"#E8EFFB":"#fff")+";color:"+(WT_PCAT===k?"#1A3FA8":"#334155");
     b.textContent=lbl;
     b.onclick=()=>{WT_PCAT=k;wtPCats();};
     el.appendChild(b);
@@ -1837,7 +1837,7 @@ function wtShowPrev(){
     pv.className="";
     pv.innerHTML='<video src="'+WT_VID_URL+'" controls playsinline style="width:100%;max-height:280px;display:block;background:#000"></video>'+
     '<button onclick="wtPrevClear()" style="position:absolute;top:6px;right:6px;background:rgba(15,23,42,.72);color:#fff;border:0;border-radius:50%;width:28px;height:28px;font-size:13px;cursor:pointer">✕</button>'+
-    '<div style="padding:6px 10px;font-size:11.5px;color:#64748B">'+(WT_VIDDUR>=300?"🎬 Long video — will appear in Watch (long videos), no cropping":"📹 Short — will appear in Shorts")+(WT_VIDDUR<300?' · <span onclick="wtTrimAgain()" style="color:#075E46;font-weight:700;cursor:pointer">✂ Trim again</span>':'')+'</div>';
+    '<div style="padding:6px 10px;font-size:11.5px;color:#64748B">'+(WT_VIDDUR>=300?"🎬 Long video — will appear in Watch (long videos), no cropping":"📹 Short — will appear in Shorts")+(WT_VIDDUR<300?' · <span onclick="wtTrimAgain()" style="color:#1A3FA8;font-weight:700;cursor:pointer">✂ Trim again</span>':'')+'</div>';
   } else {pv.className="hide";pv.innerHTML="";}
 }
 function wtPrevClear(){
@@ -1883,7 +1883,7 @@ async function fputParallel(fid,n,getV,prog){
 }
 function wtProg(p){
   /* v109 (skylar): bold upload progress — 0 to 100% in plain sight, auto-posts when it hits 100 */
-  try{$("wtVidStat").innerHTML='<div style="font-weight:700;color:#075E46">Uploading… '+p+'%</div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:#10B981;border-radius:6px;transition:width .2s"></div></div>';}catch(e){}
+  try{$("wtVidStat").innerHTML='<div style="font-weight:700;color:#1A3FA8">Uploading… '+p+'%</div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+p+'%;background:#2B5FE3;border-radius:6px;transition:width .2s"></div></div>';}catch(e){}
 }
 async function wtPost(){
   const wasCh=WT_CH_PAGE,wasScope=WT_SCOPE; /* v109: after posting, land back on the page he posted from */
@@ -1946,7 +1946,7 @@ async function wtChannels(){
     for(const c of WT_CHANS){
       const d2=document.createElement("div");
       d2.style.cssText="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px";
-      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.v?' <span style="background:#075E46;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(c.mine?' <span style="color:#075E46;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#D7EEE0")+';color:'+(c.subscribed?"#334155":"#075E46")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
+      d2.innerHTML='<div class="av" style="width:42px;height:42px;flex:0 0 42px;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:16px">'+esc(String(c.name||"?").charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0;cursor:pointer" onclick="wtChanPage(\''+c.num+'\')"><div style="font-weight:600;font-size:14px">'+esc(c.name||c.num)+(c.v?' <span style="background:#1A3FA8;color:#fff;border-radius:50%;font-size:9px;padding:1px 5px">✓</span>':'')+(c.mine?' <span style="color:#1A3FA8;font-size:11px">(you)</span>':'')+'</div><div style="font-size:11.5px;color:#64748B">'+(c.subs||0)+' subscriber'+((c.subs||0)===1?'':'s')+(c.about?' · '+esc(String(c.about).slice(0,40)):'')+'</div></div><button class="big" style="padding:6px 12px;font-size:12px;border-radius:16px;background:'+(c.subscribed?"#E2E8F0":"#E8EFFB")+';color:'+(c.subscribed?"#334155":"#1A3FA8")+'" onclick="wtSub(\''+c.num+'\')">'+(c.subscribed?"✓ Subscribed":"Subscribe")+'</button>';
       el.appendChild(d2);
     }
   }catch(e){el.innerHTML='<div style="color:#64748B;text-align:center;padding:30px">Could not load channels.</div>';}
@@ -1959,8 +1959,8 @@ function wtSubFlip(num,on){
     var oc=b.getAttribute("onclick")||"";
     if(oc.indexOf("wtSub('"+num+"')")>-1){
       b.textContent=on?"✓ Subscribed":"Subscribe";
-      b.style.background=on?"#E2E8F0":"#D7EEE0";
-      b.style.color=on?"#334155":"#075E46";
+      b.style.background=on?"#E2E8F0":"#E8EFFB";
+      b.style.color=on?"#334155":"#1A3FA8";
     }
   });
   WT_CHANS.forEach(function(c){if(c.num===num)c.subscribed=on;});
@@ -2046,7 +2046,7 @@ function renderLists(){
       const gp=(lg&&lg.unsent)?"🚫 Message unsent":(gpRaw.indexOf("FW|")===0?"↪ "+gpRaw.slice(3):gpRaw);
       const row=document.createElement("div");row.className="row";
       const gpAv=GPIC_CACHE[g.id];
-      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name)+'<span style="color:#00A884;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#00A884;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
+      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name)+'<span style="color:#2B5FE3;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#2B5FE3;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
       row.onclick=function(){openGroup(g.id);};
       try{gFetchPic(g.id);}catch(e){}
       cl.appendChild(row);
@@ -2333,12 +2333,12 @@ function storyCircle(pic,letter,ring,label,onclick,badge){
   const d=document.createElement("div");d.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
   const w=document.createElement("div");w.style.cssText="position:relative;width:66px;margin:0 auto";
   const c=document.createElement("div");
-  c.style.cssText="width:66px;height:66px;border-radius:50%;border:3px solid "+(ring?"#10B981":"#CBD5E1")+";padding:3px;margin:0 auto;box-sizing:border-box";
+  c.style.cssText="width:66px;height:66px;border-radius:50%;border:3px solid "+(ring?"#2B5FE3":"#CBD5E1")+";padding:3px;margin:0 auto;box-sizing:border-box";
   const inner=document.createElement("div");
   if(pic&&String(pic).indexOf("data:image")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+pic+");background-size:cover;background-position:center";}
-  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700";inner.textContent=letter;}
+  else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700";inner.textContent=letter;}
   c.appendChild(inner);w.appendChild(c);
-  if(badge){const b=document.createElement("div");b.style.cssText="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#10B981;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff";b.textContent="+";w.appendChild(b);}
+  if(badge){const b=document.createElement("div");b.style.cssText="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#2B5FE3;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff";b.textContent="+";w.appendChild(b);}
   d.appendChild(w);
   const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#475569;margin-top:4px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   d.appendChild(t);
@@ -2355,7 +2355,7 @@ function stSegRing(items,sz){
   const sl=C*seg/360,gl=C*gap/360;
   let s='<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 '+sz+' '+sz+'" style="position:absolute;left:0;top:0">';
   for(let i=0;i<n;i++){
-    const col=STORY_SEEN[its[i].id]?"#CBD5E1":"#10B981";
+    const col=STORY_SEEN[its[i].id]?"#CBD5E1":"#2B5FE3";
     s+='<circle cx="'+(sz/2)+'" cy="'+(sz/2)+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'"'+(n===1?'':' stroke-dasharray="'+sl.toFixed(2)+' '+gl.toFixed(2)+'" stroke-dashoffset="'+(-i*(sl+gl)).toFixed(2)+'"')+' transform="rotate(-90 '+(sz/2)+' '+(sz/2)+')"/>';
   }
   return s+"</svg>";
@@ -2367,20 +2367,20 @@ function storyCircleSeg(g,isMine,label,onclick){
   const its=(g&&g.items)||[];
   const ringH=stSegRing(its,sz);
   const pad=document.createElement("div");
-  pad.style.cssText="position:absolute;left:0;top:0;width:"+sz+"px;height:"+sz+"px;box-sizing:border-box;border-radius:50%"+(ringH?"":";border:3px solid "+(!isMine?"#CBD5E1":(its.length?"#10B981":"transparent")));
+  pad.style.cssText="position:absolute;left:0;top:0;width:"+sz+"px;height:"+sz+"px;box-sizing:border-box;border-radius:50%"+(ringH?"":";border:3px solid "+(!isMine?"#CBD5E1":(its.length?"#2B5FE3":"transparent")));
   if(ringH)pad.innerHTML=ringH;
   w.appendChild(pad);
   const inner=document.createElement("div");
-  inner.style.cssText="position:absolute;left:9px;top:9px;width:"+(sz-18)+"px;height:"+(sz-18)+"px;border-radius:50%;overflow:hidden;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700";
+  inner.style.cssText="position:absolute;left:9px;top:9px;width:"+(sz-18)+"px;height:"+(sz-18)+"px;border-radius:50%;overflow:hidden;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700";
   const last=its.length?its[its.length-1]:null;
   const pk=String((last&&last.pic)||"");
-  if(last&&last.txt){inner.style.background=last.bg||"#075E46";inner.style.fontSize="20px";inner.textContent="✍️";}
+  if(last&&last.txt){inner.style.background=last.bg||"#1A3FA8";inner.style.fontSize="20px";inner.textContent="✍️";}
   else if(pk.indexOf("data:image")===0){inner.style.backgroundImage="url("+pk+")";inner.style.backgroundSize="cover";inner.style.backgroundPosition="center";inner.textContent="";}
   else if(pk.indexOf("data:video")===0){inner.textContent="🎬";inner.style.fontSize="18px";}
   else if(pk.indexOf("data:audio")===0){inner.textContent="🎙️";inner.style.fontSize="16px";}
   else{inner.textContent=String(label||"?").charAt(0).toUpperCase();}
   w.appendChild(inner);
-  if(isMine){const b=document.createElement("div");b.style.cssText="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#10B981;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;z-index:2";b.textContent="+";w.appendChild(b);}
+  if(isMine){const b=document.createElement("div");b.style.cssText="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;background:#2B5FE3;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;z-index:2";b.textContent="+";w.appendChild(b);}
   d.appendChild(w);
   const t=document.createElement("div");t.textContent=label;t.style.cssText="font-size:10.5px;color:#475569;margin-top:4px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
   d.appendChild(t);
@@ -2469,7 +2469,7 @@ function showStItem(){
   clearTimeout(STV.timer);
   try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();$("stAudWrap").className="hide";}catch(e){}
   if(isTxt){
-    try{$("stImg").className="hide";$("stVid").className="hide";try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}$("stAudWrap").className="hide";try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();}catch(e){}$("stTxtCard").className="";$("stTxtCard").style.background=s.bg||"#075E46";$("stTxtCard").textContent=s.txt;}catch(e){}
+    try{$("stImg").className="hide";$("stVid").className="hide";try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}$("stAudWrap").className="hide";try{$("stAud").pause();$("stAud").removeAttribute("src");$("stAud").load();}catch(e){}$("stTxtCard").className="";$("stTxtCard").style.background=s.bg||"#1A3FA8";$("stTxtCard").textContent=s.txt;}catch(e){}
     STV.timer=setTimeout(function(){nextItem();},7000);
   }else if(isAud){
     try{$("stImg").className="hide";$("stVid").className="hide";try{$("stVid").pause();$("stVid").removeAttribute("src");$("stVid").load();}catch(e){}$("stAudWrap").className="";}catch(e){}
@@ -2532,13 +2532,13 @@ function renderStatusScreen(){
       const t=document.createElement("div");
       t.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 2px;cursor:pointer;border-bottom:1px solid #F1F5F9";
       const c=document.createElement("div");
-      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#00A884":"#CBD5E1")+";padding:2px;box-sizing:border-box;flex:0 0 50px";
+      c.style.cssText="width:50px;height:50px;border-radius:50%;border:2.5px solid "+(unseen?"#2B5FE3":"#CBD5E1")+";padding:2px;box-sizing:border-box;flex:0 0 50px";
       const inner=document.createElement("div");
       const it0=(g.items[0]||{});const pk=String(it0.pic||"");
-      if(it0.txt){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:"+(it0.bg||"#075E46")+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="✍️";}
+      if(it0.txt){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:"+(it0.bg||"#1A3FA8")+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="✍️";}
       else if(pk.indexOf("data:image")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background-image:url("+g.items[0].pic+");background-size:cover;background-position:center";}
-      else if(pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
-      else if(pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
+      else if(pk.indexOf("data:audio")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎙️";}
+      else if(pk.indexOf("data:video")===0){inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;font-size:18px";inner.textContent="🎬";}
       else{inner.style.cssText="width:100%;height:100%;border-radius:50%;background:#E2E8F0;color:#475569;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center";inner.textContent=nm.charAt(0).toUpperCase();}
       c.appendChild(inner);t.appendChild(c);
       const tx=document.createElement("div");
@@ -2546,7 +2546,7 @@ function renderStatusScreen(){
       tx.innerHTML='<div style="font-weight:600">'+esc(nm)+'</div><div style="font-size:12px;color:#64748B">'+g.items.length+" update"+(g.items.length>1?"s":"")+" · "+ago(lastI?lastI.at:0)+" ago</div>";
       const dd=document.createElement("div");
       dd.style.cssText="display:flex;gap:3px;flex:0 0 auto";
-      for(let i=0;i<Math.min(g.items.length,8);i++){const b=document.createElement("div");b.style.cssText="width:6px;height:6px;border-radius:3px;background:"+(STORY_SEEN[g.items[i].id]?"#00A884":"#CBD5E1");dd.appendChild(b);}
+      for(let i=0;i<Math.min(g.items.length,8);i++){const b=document.createElement("div");b.style.cssText="width:6px;height:6px;border-radius:3px;background:"+(STORY_SEEN[g.items[i].id]?"#2B5FE3":"#CBD5E1");dd.appendChild(b);}
       t.appendChild(tx);t.appendChild(dd);
       t.onclick=function(){openStatusViewer(g.num);};
       return t;
@@ -2649,10 +2649,10 @@ var ST_DRAFT=null,STV_VC={};
 function stDraftCircle(el){
   const dd=document.createElement("div");dd.style.cssText="text-align:center;flex:0 0 auto;cursor:pointer";
   const w2=document.createElement("div");w2.style.cssText="position:relative;width:66px;margin:0 auto";
-  const c2=document.createElement("div");c2.style.cssText="width:66px;height:66px;border-radius:50%;border:3px dashed #10B981;padding:3px;margin:0 auto;box-sizing:border-box";
-  const i2=document.createElement("div");i2.style.cssText="width:100%;height:100%;border-radius:50%;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:24px";i2.textContent="\uD83C\uDFAC";
+  const c2=document.createElement("div");c2.style.cssText="width:66px;height:66px;border-radius:50%;border:3px dashed #2B5FE3;padding:3px;margin:0 auto;box-sizing:border-box";
+  const i2=document.createElement("div");i2.style.cssText="width:100%;height:100%;border-radius:50%;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;font-size:24px";i2.textContent="\uD83C\uDFAC";
   c2.appendChild(i2);w2.appendChild(c2);dd.appendChild(w2);
-  const t2=document.createElement("div");t2.textContent="Draft";t2.style.cssText="font-size:10.5px;color:#075E46;font-weight:700;margin-top:4px";
+  const t2=document.createElement("div");t2.textContent="Draft";t2.style.cssText="font-size:10.5px;color:#1A3FA8;font-weight:700;margin-top:4px";
   dd.appendChild(t2);
   dd.onclick=function(){stDraftSheetOpen();};
   el.appendChild(dd);
@@ -2662,19 +2662,19 @@ function stDraftRowRender(){
   if(!ST_DRAFT){el.className="hide";el.innerHTML="";return;}
   el.className="";
   const d=ST_DRAFT;
-  el.innerHTML='<div class="card" style="border:1.5px dashed #10B981">'+
+  el.innerHTML='<div class="card" style="border:1.5px dashed #2B5FE3">'+
    '<div style="display:flex;align-items:center;gap:10px">'+
-   '<div style="width:44px;height:44px;border-radius:10px;background:#D7EEE0;color:#075E46;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 44px">🎬</div>'+
+   '<div style="width:44px;height:44px;border-radius:10px;background:#E8EFFB;color:#1A3FA8;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 44px">🎬</div>'+
    '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px;color:#0F172A">Video draft</div>'+
    '<div style="font-size:12px;color:#64748B">'+vtFmt(d.te-d.ts)+' · window '+vtFmt(d.ts)+" → "+vtFmt(d.te)+'</div></div>'+
    '</div>'+
    '<div id="stDraftBtns" style="display:flex;gap:8px;margin-top:10px">'+
    '<button class="big" style="flex:1;padding:9px;font-size:12.5px;background:#E2E8F0;color:#334155;margin:0" onclick="stDraftSheetOpen()">▶ Preview</button>'+
    '<button class="big" style="flex:1;padding:9px;font-size:12.5px;background:#E2E8F0;color:#334155;margin:0" onclick="stDraftCrop()">✂ Crop</button>'+
-   '<button class="big" style="flex:1.2;padding:9px;font-size:12.5px;background:#10B981;color:#fff;margin:0" onclick="stDraftPost()">Post</button>'+
+   '<button class="big" style="flex:1.2;padding:9px;font-size:12.5px;background:#2B5FE3;color:#fff;margin:0" onclick="stDraftPost()">Post</button>'+
    '</div>'+
    '<button class="big" style="width:100%;padding:8px;font-size:12px;background:#F1F5F9;color:#64748B;margin:6px 0 0" onclick="stDraftDiscard()">🗑 Discard draft</button>'+
-   '<div id="stDraftProg" style="display:none;margin-top:8px"><div id="stDraftProgTxt" style="font-weight:700;color:#075E46;font-size:13px"></div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div id="stDraftProgBar" style="height:100%;width:0;background:#10B981;border-radius:6px;transition:width .2s"></div></div></div>'+
+   '<div id="stDraftProg" style="display:none;margin-top:8px"><div id="stDraftProgTxt" style="font-weight:700;color:#1A3FA8;font-size:13px"></div><div style="height:8px;background:#E2E8F0;border-radius:6px;margin-top:4px;overflow:hidden"><div id="stDraftProgBar" style="height:100%;width:0;background:#2B5FE3;border-radius:6px;transition:width .2s"></div></div></div>'+
    '</div>';
 }
 function stDraftSheetOpen(){
@@ -2980,7 +2980,7 @@ async function stVideoRec(v2,dur,maxW,br){
 /* ================= v56: owner Admin dashboard — activate/reject wallet claims by hand ================= */
 
 /* ---------------- v118 (skylar): text statuses + views + reactions + replies ---------------- */
-const ST_TXT_BGS=["#075E46","#5B4B9E","#C2185B","#D97706","#0E7490","#334155"];
+const ST_TXT_BGS=["#1A3FA8","#5B4B9E","#C2185B","#D97706","#0E7490","#334155"];
 let ST_TXT_BG=ST_TXT_BGS[0];
 function stTextOpen(){ST_TXT_BG=ST_TXT_BGS[0];try{$("stTxtIn").value="";}catch(e){}stTxtBgRowRender();$("stTextSheet").className="";$("stTextBg").className="";}
 function stTextClose(){try{$("stTextSheet").className="hide";$("stTextBg").className="hide";}catch(e){}}
@@ -3075,12 +3075,12 @@ async function admLoad(){
   }catch(e){$("admPending").innerHTML='<div style="color:#f15c6d;font-size:13px">Could not load claims.</div>';}
 }
 function admCard(c){
-  const status=c.activated?'<span style="color:#075E46;font-weight:700">✅ Activated</span>':c.rejected?'<span style="color:#94A3B8;font-weight:700">❌ Rejected</span>':'<span style="color:#D97706;font-weight:700">⏳ Pending</span>';
+  const status=c.activated?'<span style="color:#1A3FA8;font-weight:700">✅ Activated</span>':c.rejected?'<span style="color:#94A3B8;font-weight:700">❌ Rejected</span>':'<span style="color:#D97706;font-weight:700">⏳ Pending</span>';
   const when=c.doneAt?new Date(c.doneAt).toLocaleString():new Date(c.at).toLocaleString();
   const rcpBtn=c.fid?'<button onclick="admViewReceipt(\''+c.fid+'\',this)" style="border:1px solid #CBD5E1;background:#fff;border-radius:8px;padding:5px 10px;font-size:11.5px;margin-top:6px">🖼 View receipt</button>':'<div style="font-size:11px;color:#94A3B8;margin-top:4px">No receipt uploaded yet</div>';
   const actions=(!c.activated&&!c.rejected)?('<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
     (c.fid?'<button onclick="admAutoCheck(\''+c.k+'\',this)" style="flex:1;background:#EFF6FF;color:#1D4ED8;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">🤖 AI check</button>':"")+
-    '<button onclick="admActivate(\''+c.k+'\',\''+c.num+'\','+c.amt+',\''+esc(c.ref||"")+'\')" style="flex:1;background:#D7EEE0;color:#075E46;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">✅ Activate</button>'+
+    '<button onclick="admActivate(\''+c.k+'\',\''+c.num+'\','+c.amt+',\''+esc(c.ref||"")+'\')" style="flex:1;background:#E8EFFB;color:#1A3FA8;border:0;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600">✅ Activate</button>'+
     '<button onclick="admReject(\''+c.k+'\')" style="flex:1;background:#F1F5F9;color:#334155;border:0;border-radius:8px;padding:8px;font-size:12.5px">❌ Reject</button>'+
     '</div>'):"";
   return '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">'+
@@ -3229,7 +3229,7 @@ window.addEventListener("focus",()=>{try{document.getElementById("pvImg").style.
 function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
 
 /* ---------- chat themes & wallpapers (WhatsApp-style) ---------- */
-const THEME_SWATCHES=["linear-gradient(135deg,#0f766e,#134e4a)","linear-gradient(135deg,#1e3a8a,#0c2461)","linear-gradient(135deg,#7c1d6f,#441054)","linear-gradient(135deg,#b45309,#71320a)","linear-gradient(135deg,#065f46,#022c22)","linear-gradient(135deg,#9f1239,#4c0519)","linear-gradient(135deg,#334155,#0f172a)","linear-gradient(135deg,#c2410c,#7c2d12)"];
+const THEME_SWATCHES=["linear-gradient(135deg,#0f766e,#134e4a)","linear-gradient(135deg,#1e3a8a,#0c2461)","linear-gradient(135deg,#7c1d6f,#441054)","linear-gradient(135deg,#b45309,#71320a)","linear-gradient(135deg,#153580,#022c22)","linear-gradient(135deg,#9f1239,#4c0519)","linear-gradient(135deg,#334155,#0f172a)","linear-gradient(135deg,#c2410c,#7c2d12)"];
 let THEME_URLS={};
 function themeDB(){return new Promise((res,rej)=>{const r=indexedDB.open("air_themes",1);r.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains("media"))e.target.result.createObjectStore("media")};r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error)})}
 function wpgPut(key,blob){return themeDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(["media"],"readwrite");tx.objectStore("media").put(blob,key);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)}))}
@@ -3304,7 +3304,7 @@ function gCallRow(c){
   const cnt=c.end?(c.n&&c.n>1?(" · "+c.n+" participants"):" · no one joined"):"";
   p.innerHTML='<span>📞</span><span>Group call'+(ended?' ended':'')+' · '+callT(c.at)+' · '+ago(c.at)+' ago'+cnt+'</span>';
   if(!ended){
-    const j=document.createElement("span");j.textContent="Join";j.style.cssText="background:#10B981;color:#fff;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer";
+    const j=document.createElement("span");j.textContent="Join";j.style.cssText="background:#2B5FE3;color:#fff;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer";
     j.onclick=function(ev){ev.stopPropagation();try{gCall();}catch(e){}};
     p.appendChild(j);
   }
@@ -3382,7 +3382,7 @@ function renderBubbles(){
       const ic=document.createElement("div");ic.textContent="🎬";ic.style.fontSize="24px";
       const tx=document.createElement("div");
       tx.innerHTML='<div style="font-weight:600">Video</div><div style="font-size:12px;color:#64748B">'+esc((m.f2.name||"video").slice(0,40))+'</div>';
-      const bt=document.createElement("div");bt.textContent="▶";bt.style.cssText="background:#D7EEE0;color:#075E46;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center";
+      const bt=document.createElement("div");bt.textContent="▶";bt.style.cssText="background:#E8EFFB;color:#1A3FA8;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center";
       w.appendChild(ic);w.appendChild(tx);w.appendChild(bt);
       w.onclick=()=>f2Play(m.f2.fid,m.f2.name);
       d.appendChild(w);
@@ -3428,7 +3428,7 @@ function lpCard(d,url){
     tx.style.cssText="padding:7px 10px 8px";
     tx.innerHTML='<div style="font-weight:600;font-size:12.8px;color:#0F172A;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+esc(p.title||p.host)+'</div>'
       +(p.desc?'<div style="font-size:11.6px;color:#64748B;margin-top:2px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+esc(p.desc)+'</div>':"")
-      +'<div style="font-size:10.5px;color:#00A884;margin-top:4px;text-transform:uppercase;letter-spacing:.4px">'+esc(p.host)+'</div>';
+      +'<div style="font-size:10.5px;color:#2B5FE3;margin-top:4px;text-transform:uppercase;letter-spacing:.4px">'+esc(p.host)+'</div>';
     card.appendChild(tx);
   });
 }
@@ -3462,7 +3462,7 @@ function renderTextBubble(d,m){
   if(rq){
     const q=document.createElement("div");
     const out=d.className.indexOf("out")>=0;
-    q.style.cssText="border-left:4px solid "+(out?"#25D366":"#00A884")+";background:"+(out?"rgba(255,255,255,0.18)":"#E8F5F1")+";border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12.5px;color:"+(out?"#E7FFF3":"#12554A")+";max-width:100%;overflow:hidden;cursor:pointer";
+    q.style.cssText="border-left:4px solid "+(out?"#25D366":"#2B5FE3")+";background:"+(out?"rgba(255,255,255,0.18)":"#E8F5F1")+";border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12.5px;color:"+(out?"#E7FFF3":"#12554A")+";max-width:100%;overflow:hidden;cursor:pointer";
     q.textContent=rq.p.length>90?rq.p.slice(0,90)+"…":rq.p;
     q.onclick=function(){try{const el=document.querySelector('[data-ts="'+rq.id+'"]');if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.style.transition="background .3s";el.style.background="#FEF3C7";setTimeout(()=>{el.style.background="";},900);}}catch(x){}};
     d.appendChild(q);
@@ -3491,7 +3491,7 @@ function renderTextBubble(d,m){
     card.appendChild(t);
     const a=document.createElement("a");a.href=urlM[0];a.target="_blank";a.rel="noopener";
     a.textContent="⬇ Download";a.className="big blue";
-    a.style.cssText="display:block;width:100%;background:#D7EEE0;color:#075E46;text-align:center;text-decoration:none;box-sizing:border-box";
+    a.style.cssText="display:block;width:100%;background:#E8EFFB;color:#1A3FA8;text-align:center;text-decoration:none;box-sizing:border-box";
     card.appendChild(a);
     const hint=document.createElement("div");hint.textContent="Tap Download — it opens in your browser and saves to your phone. If nothing opens, long-press to copy the link below.";
     hint.style.cssText="font-size:11px;color:#64748B;margin-top:6px";
@@ -3505,10 +3505,10 @@ function renderTextBubble(d,m){
   const rmQ=txt.match(/^r:([^|]+)\|([^|]*)\|([\s\S]*)$/);
   const quote=rmQ?rmQ[2].slice(0,90):null;
   const body=rmQ?rmQ[3]:txt;
-  const esc2=esc(body)+(m.who==="me"?(m.r?" <span style=\"color:#2563EB\">✓✓</span>":" ✓"):"");
+  const esc2=esc(body)+(m.who==="me"?(m.r?" <span style=\"color:#2B5FE3\">✓✓</span>":" ✓"):"");
   const fwdLab=fwd?'<div style="font-size:10.5px;color:'+(m.who==="me"?"rgba(255,255,255,0.7)":"#94A3B8")+';margin-bottom:2px">↪ Forwarded</div>':"";
   const edLab=m.edited?'<div style="font-size:10px;color:'+(m.who==="me"?"rgba(255,255,255,0.65)":"#94A3B8")+';margin-top:2px">Edited</div>':"";
-  d.innerHTML=fwdLab+(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;text-decoration:underline;word-break:break-all">'+u+"</a>");
+  d.innerHTML=fwdLab+(quote?'<div class="qbox">'+esc(quote)+'</div>':"")+esc2.replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2B5FE3;text-decoration:underline;word-break:break-all">'+u+"</a>");
   const lpU=lpFind(body);if(lpU)lpCard(d,lpU);   /* v126 link preview card */
   if(edLab)d.innerHTML+=edLab;
 }
@@ -3528,7 +3528,7 @@ async function fetchFileBubble(m,d){
       d.textContent="";const vd=document.createElement("video");vd.src=r.text;vd.controls=true;vd.playsInline=true;vd.style.cssText="max-width:100%;max-height:300px;border-radius:6px;display:block";
       d.appendChild(vd);
     }else if(r&&r.text){
-      d.textContent="";const a=document.createElement("a");a.href=r.text;a.download="attachment";a.textContent="⬇ Download attachment";a.style.color="#2563EB";
+      d.textContent="";const a=document.createElement("a");a.href=r.text;a.download="attachment";a.textContent="⬇ Download attachment";a.style.color="#2B5FE3";
       d.appendChild(a);
     }else d.textContent="⚠ attachment unavailable";
   }catch(e){d.textContent="⚠ attachment unavailable";}
@@ -3908,7 +3908,7 @@ function startPay(plan,price){
     if(left<=0){$("payTimer").textContent="EXPIRED";$("payTimer").style.color="#f15c6d";clearInterval(payTick);toast("Code expired — cancel and Subscribe again");return;}
     const m=Math.floor(left/60000),s=Math.floor((left%60000)/1000);
     $("payTimer").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
-    $("payTimer").style.color=left<300000?"#f15c6d":"#00A884";
+    $("payTimer").style.color=left<300000?"#f15c6d":"#2B5FE3";
   },1000);
 }
 function cancelPay(){PAYING=null;clearInterval(payTick);$("payModal").className="ovl hide";}
@@ -4326,7 +4326,7 @@ function callMicTick(){
     notice.style.color="#fde68a";
     if(!MIC_WARN_AT||Date.now()-MIC_WARN_AT>=5000){toast(tip);MIC_WARN_AT=Date.now();}
   }
-  if(on)notice.style.color="#d1fae5";
+  if(on)notice.style.color="#E8EFFB";
   notice.className="cstat";
   if(notice.textContent!==message)notice.textContent=message;
 }
@@ -4395,7 +4395,7 @@ function xlCap(txt,who,tr){
   try{
     let c=document.getElementById("xlcap");
     if(!c){c=document.createElement("div");c.id="xlcap";c.style.cssText="position:fixed;left:8px;right:8px;bottom:14px;z-index:220;background:rgba(0,0,0,.72);color:#fff;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.45;max-height:104px;overflow:auto";document.body.appendChild(c);}
-    c.innerHTML=(who?'<b style="color:#A7F3D0">'+esc(who)+':</b> ':'')+esc(txt)+(tr?'<div style="color:#A7F3D0;margin-top:3px">'+esc(tr)+'</div>':'');
+    c.innerHTML=(who?'<b style="color:#C9D9F7">'+esc(who)+':</b> ':'')+esc(txt)+(tr?'<div style="color:#C9D9F7;margin-top:3px">'+esc(tr)+'</div>':'');
     clearTimeout(XL.capT);XL.capT=setTimeout(function(){try{c.remove();}catch(e){}},7000);
   }catch(e){}
 }
@@ -4684,7 +4684,7 @@ function refreshDots(){
   document.querySelectorAll(".pdot").forEach(el=>{
     const num=el.getAttribute("data-num")||"";
     const t=WIN_PRES[num]||0;
-    el.style.background=(t&&now-t<30000)?"#22c55e":"#ef4444";
+    el.style.background=(t&&now-t<30000)?"#2B5FE3":"#ef4444";
   });
 }
 let SIG_PRIMED=false;
@@ -4941,7 +4941,7 @@ function gcUI(){
   if(!el&&GC.min)return; /* v106 (skylar): minimized — only the pill can bring the screen back */
   if(!el){
     GC.min=false; /* v106: building the screen means we are back in it */
-    el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#D7EEE0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";
+    el=document.createElement("div");el.id="gcview";el.style.cssText="position:fixed;inset:0;z-index:80;background:#E8EFFB;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:14px;";
     el.innerHTML='<div style="font-size:30px">👥📞</div><div id="gcname" style="font-weight:700;font-size:17px"></div>'+
     '<div id="gcstat" style="font-size:13px;opacity:.85">Ringing — waiting for members to connect…</div>'+
     '<div id="gcvids" style="display:none;flex-wrap:wrap;gap:8px;justify-content:center;max-width:320px"></div>'+
@@ -5003,7 +5003,7 @@ function gcInvite(from,gid){
   el=document.createElement("div");el.id="gcinv";
   el.style.cssText="position:fixed;top:0;left:0;right:0;z-index:85;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);padding:14px;display:flex;align-items:center;gap:10px;";
   el.innerHTML='<div style="font-size:26px">👥📞</div><div style="flex:1"><div style="font-weight:700;color:#0F172A">'+esc(g?g.name:"Group")+' call</div><div style="font-size:12px;color:#64748B">from '+esc(gcName(from))+'</div></div>'+
-  '<button onclick="gcAccept()" style="border:0;background:#16A34A;color:#fff;border-radius:22px;padding:8px 16px;font-weight:700">Join</button>'+
+  '<button onclick="gcAccept()" style="border:0;background:#2B5FE3;color:#fff;border-radius:22px;padding:8px 16px;font-weight:700">Join</button>'+
   '<button onclick="gcDecline()" style="border:0;background:#E2E8F0;color:#0F172A;border-radius:22px;padding:8px 16px">Ignore</button>';
   document.body.appendChild(el);
   try{navigator.vibrate&&navigator.vibrate([400,200,400]);}catch(e){}
@@ -5138,7 +5138,7 @@ function callBarTick(){
   else{const cv=document.getElementById("callview");onScreen=!!cv&&String(cv.className).indexOf("hide")<0;}
   if(!active||onScreen){if(el)el.remove();return;}
   if(!el){el=document.createElement("div");el.id="callbar";document.body.appendChild(el);}
-  el.style.cssText="position:fixed;left:12px;right:84px;bottom:74px;z-index:95;background:#075E46;color:#fff;font-weight:700;font-size:13.5px;padding:11px 14px;border-radius:26px;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;gap:10px";
+  el.style.cssText="position:fixed;left:12px;right:84px;bottom:74px;z-index:95;background:#1A3FA8;color:#fff;font-weight:700;font-size:13.5px;padding:11px 14px;border-radius:26px;box-shadow:0 6px 18px rgba(0,0,0,.4);cursor:pointer;display:flex;align-items:center;gap:10px";
   let txt;
   if(GC.on)txt=Object.keys(SF.mems||{}).length?"Group call in progress":"Group call ringing…";
   else if(state==="incoming")txt="Incoming call — tap to answer";
@@ -5541,7 +5541,7 @@ function nativeShare(){
 }
 /* ==================== v12: recall · replies · reactions · search · pin/mute/archive · groups · QR · onboarding · PWA ==================== */
 var SEARCH="",REPLY_TO=null,GROUP_OPEN=null;
-function memColor(n){const P=["#2563EB","#7C3AED","#DB2777","#DC2626","#16A34A","#D97706","#0F766E","#B45309"];let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%P.length;return P[h];}
+function memColor(n){const P=["#2B5FE3","#7C3AED","#DB2777","#DC2626","#2B5FE3","#D97706","#0F766E","#B45309"];let h=0;for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%P.length;return P[h];}
 var PINS=JSON.parse(localStorage.getItem("ac_pins")||"[]");
 var PMSG=JSON.parse(localStorage.getItem("ac_pmsg")||"{}"); /* v69: pinned group messages */
 var MUTED=JSON.parse(localStorage.getItem("ac_mutes")||"[]");
@@ -5556,8 +5556,8 @@ function saveV12Mute(id){const i=MUTED.indexOf(id);if(i>=0)MUTED.splice(i,1);els
 function saveV12Arch(id){const i=ARCHS.indexOf(id);if(i>=0)ARCHS.splice(i,1);else ARCHS.push(id);persistV12();renderLists();renderArchived();}
 /* ================= v40: WALLET, MARKETPLACE, TRANSLATE, LITE ================= */
 let LITE=(localStorage.getItem("ac_lite")==="1");
-function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#D7EEE0":"#CBD5E1";$("liteBtn").style.color=LITE?"#075E46":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
-function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#D7EEE0":"#CBD5E1";$("liteBtn").style.color=LITE?"#075E46":"#334155";}}
+function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E8EFFB":"#CBD5E1";$("liteBtn").style.color=LITE?"#1A3FA8":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
+function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E8EFFB":"#CBD5E1";$("liteBtn").style.color=LITE?"#1A3FA8":"#334155";}}
 async function walRefresh(){
   if(!ME)return;
   try{const d=await api("wbal",{node:ME});
@@ -5568,7 +5568,7 @@ async function walRefresh(){
       const h=$("walHist");
       if(h)h.innerHTML=(d.hist||[]).length?d.hist.map(t=>{
         const inn=t.to===ME;
-        return '<div style="padding:7px 0;border-bottom:1px solid #F1F5F9"><span style="color:'+(inn?"#16a34a":"#e2445c")+';font-weight:600">'+(inn?"+":"-")+'₦'+Number(t.amt||0).toLocaleString()+'</span> '+(inn?"from ":"to ")+(t.from===ME?"me":esc(String(t.from)))+(t.note?' · <i>'+esc(String(t.note))+'</i>':'')+'<div style="font-size:10.5px;color:#94A3B8">'+new Date(t.at).toLocaleString()+'</div></div>';
+        return '<div style="padding:7px 0;border-bottom:1px solid #F1F5F9"><span style="color:'+(inn?"#2B5FE3":"#e2445c")+';font-weight:600">'+(inn?"+":"-")+'₦'+Number(t.amt||0).toLocaleString()+'</span> '+(inn?"from ":"to ")+(t.from===ME?"me":esc(String(t.from)))+(t.note?' · <i>'+esc(String(t.note))+'</i>':'')+'<div style="font-size:10.5px;color:#94A3B8">'+new Date(t.at).toLocaleString()+'</div></div>';
       }).join(""):'<div style="color:#64748B;padding:6px 0">No transactions yet.</div>';
     }
   }catch(e){}
@@ -5595,7 +5595,7 @@ async function walAdd(){
   try{await navigator.clipboard.writeText(details);}catch(e){}
   $("walAddTitle").textContent="💳 Add ₦"+amt.toLocaleString();
   $("walAddBody").innerHTML=
-    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#D7EEE0;color:#075E46;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
+    '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#E8EFFB;color:#1A3FA8;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
     '<button class="big blue" style="width:100%;margin-top:12px;font-size:15px;padding:14px" onclick="walRcpGo()">📷 I have paid — upload my receipt</button>'+
     '<div id="walRcpPrev" style="margin-top:10px"></div>'+
     '<button class="big" style="width:100%;margin-top:8px;background:#1E293B" onclick="walAddClose()">Later — my claim is already saved</button>'+
@@ -5606,7 +5606,7 @@ function walAddClose(){$("walAddSheet").className="ovl hide";}
 async function walRcpGo(){
   const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();}); /* v65: no capture attr -> opens gallery first (skylar directive), camera still reachable from the gallery picker */
   if(!f)return;
-  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#075E46">⏳ Uploading receipt…</div>';
+  $("walRcpPrev").innerHTML='<div style="font-size:12.5px;color:#1A3FA8">⏳ Uploading receipt…</div>';
   try{
     const sm=await walRcpShrink(f);
     $("walRcpPrev").innerHTML='<img src="data:image/jpeg;base64,'+sm.b64.slice(0,2000)+'" style="display:none"><div style="font-size:12.5px;color:#94A3B8">📷 '+sm.name+' — sending…</div>';
@@ -5616,7 +5616,7 @@ async function walRcpGo(){
     await fputParallel(st.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
     const r2=await api("wrcpt",{node:ME,fid:st.fid,rcp:sm.name});
     if(!r2||!r2.ok)throw 0;
-    $("walRcpPrev").innerHTML='<div style="background:#14532D;color:#BBF7D0;border-radius:10px;padding:12px;font-size:13.5px">✅ Receipt uploaded — verification in progress. Your wallet will be credited shortly.</div>';
+    $("walRcpPrev").innerHTML='<div style="background:#10294F;color:#D4E0FA;border-radius:10px;padding:12px;font-size:13.5px">✅ Receipt uploaded — verification in progress. Your wallet will be credited shortly.</div>';
     toast("Receipt sent ✓");walRefresh();
     setTimeout(walAddClose,1800);
   }catch(e){$("walRcpPrev").innerHTML='<div style="color:#F87171;font-size:12.5px">Upload failed — tap the upload button to try again.</div>';}
@@ -5920,7 +5920,7 @@ function closeGc(){$("gcsheet").className="ovl hide";}
 function gcPlanCard(){
   if($("gcPlanCard"))return;
   const pc=document.createElement("div");pc.id="gcPlanCard";
-  pc.style.cssText="background:#F0FDF4;border:1px solid #075E46;border-radius:12px;padding:11px;margin:10px 0;font-size:12px;color:#075E46;line-height:1.45";
+  pc.style.cssText="background:#F0FDF4;border:1px solid #1A3FA8;border-radius:12px;padding:11px;margin:10px 0;font-size:12px;color:#1A3FA8;line-height:1.45";
   pc.innerHTML='<b>🌍 Group Language Plan — $3 / ₦4,800 a month</b><br>Speak your language, everyone understands. Every member hears group calls and reads messages in their OWN chosen language — you talk in English, your Chinese member hears Chinese, your Igbo member hears Igbo, live.';
   const lb=document.createElement("label");lb.style.cssText="display:flex;gap:8px;align-items:center;margin-top:8px;cursor:pointer";
   lb.innerHTML='<input type="checkbox" id="gcPlan" style="width:18px;height:18px"> <span><b>Enable the Language Plan for this group</b> <span style="font-weight:400">(payment activates it — you will be guided)</span></span>';
@@ -6108,7 +6108,7 @@ function gMenuMembers(){
   const admin=(r.iAmAdmin!==undefined)?!!r.iAmAdmin:!!me.admin;
   const creator=ME===r.by;
   el.innerHTML="";
-  gRow(el,"‹","Members — back",null,function(){gMenuRoot();},"#2563EB");
+  gRow(el,"‹","Members — back",null,function(){gMenuRoot();},"#2B5FE3");
   for(const m of r.members){
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;cursor:pointer;border-top:1px solid #F8FAFC";
@@ -6127,13 +6127,13 @@ function gMenuAdd(){
   const ids=(r.members||[]).map(m=>String(m.id));
   const cand=(typeof WIN_FRIENDS!=="undefined"?WIN_FRIENDS:[]).filter(f=>ids.indexOf(String(f.id))<0);
   el.innerHTML="";
-  gRow(el,"‹","Add member — back",null,function(){gMenuRoot();},"#2563EB");
+  gRow(el,"‹","Add member — back",null,function(){gMenuRoot();},"#2B5FE3");
   if(!cand.length){const d=document.createElement("div");d.style.cssText="padding:12px 16px;font-size:12px;color:#64748B";d.textContent="All your friends are already members.";el.appendChild(d);}
   for(const f of cand){
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:12.5px;cursor:pointer";
     const nm=(typeof WIN_NAMES!=="undefined"&&WIN_NAMES[f.id])||f.name||("+"+f.id);
-    row.innerHTML='<div style="width:30px;height:30px;border-radius:50%;background:'+memColor(f.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">'+esc(String(nm).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(nm)+'</div><div style="font-size:10.5px;color:#64748B">+'+esc(f.id)+'</div></div><div style="color:#10B981;font-weight:700">Add</div>';
+    row.innerHTML='<div style="width:30px;height:30px;border-radius:50%;background:'+memColor(f.id)+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">'+esc(String(nm).charAt(0).toUpperCase())+'</div><div style="flex:1;min-width:0"><div style="font-weight:600">'+esc(nm)+'</div><div style="font-size:10.5px;color:#64748B">+'+esc(f.id)+'</div></div><div style="color:#2B5FE3;font-weight:700">Add</div>';
     row.onclick=function(){gMenuClose();gadd3(f.id);};
     el.appendChild(row);
   }
@@ -6294,23 +6294,23 @@ function planPay(i){
   '<div style="font-size:12px;color:#64748B;margin-bottom:12px">'+p.usd+' USD / ₦'+p.ngr.toLocaleString()+' per month</div>'+
   '<div style="background:#F1F5F9;border-radius:12px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
   '<div style="flex:1"><div style="font-size:11px;font-weight:700;color:#64748B">PLAN NUMBER</div><div style="font-family:monospace;font-size:15px;font-weight:800;color:#0F172A">'+pn+' · '+p.n.toUpperCase()+'</div></div>'+
-  '<button class="big" style="width:auto;padding:8px 12px;margin:0;background:#D7EEE0;color:#075E46;font-size:12px" onclick="acCopy(\''+pn+' '+p.n+' $'+p.usd+' NGN '+p.ngr+'\');toast(\'Plan number copied ✓\')">📋 Copy</button></div>'+
-  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:12px;margin-bottom:10px">'+
-  '<div style="font-weight:700;font-size:13.5px;color:#075E46;margin-bottom:6px">1 · Pay</div>'+
-  '<div style="font-size:12.5px;color:#075E46;line-height:1.55"><b>Outside Nigeria:</b> USDC on Solana<br><span style="font-family:monospace;word-break:break-all">'+wal+'</span>'+
+  '<button class="big" style="width:auto;padding:8px 12px;margin:0;background:#E8EFFB;color:#1A3FA8;font-size:12px" onclick="acCopy(\''+pn+' '+p.n+' $'+p.usd+' NGN '+p.ngr+'\');toast(\'Plan number copied ✓\')">📋 Copy</button></div>'+
+  '<div style="background:#E8EFFB;border:1px solid #1A3FA8;border-radius:12px;padding:12px;margin-bottom:10px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#1A3FA8;margin-bottom:6px">1 · Pay</div>'+
+  '<div style="font-size:12.5px;color:#1A3FA8;line-height:1.55"><b>Outside Nigeria:</b> USDC on Solana<br><span style="font-family:monospace;word-break:break-all">'+wal+'</span>'+
   '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\''+wal+'\');toast(\'Wallet address copied ✓\')">📋 Copy USDC wallet</button></div>'+
-  '<div style="font-size:12.5px;color:#075E46;line-height:1.55;margin-top:8px"><b>In Nigeria:</b> Rubies MFB · Success Friday · 8881724009'+
+  '<div style="font-size:12.5px;color:#1A3FA8;line-height:1.55;margin-top:8px"><b>In Nigeria:</b> Rubies MFB · Success Friday · 8881724009'+
   '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\'Rubies MFB · Success Friday · 8881724009\');toast(\'Bank details copied ✓\')">📋 Copy bank details</button></div></div>'+
   '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:10px">'+
   '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">2 · Upload your receipt</div>'+
   '<input type="file" id="planRcpIn" class="hide" accept="image/*" onchange="planRcpChosen(this)">'+
-  '<button class="big" style="width:100%;background:#fff;border:1px solid #075E46;color:#075E46" onclick="document.getElementById(\'planRcpIn\').click()">📷 Choose receipt photo</button>'+
+  '<button class="big" style="width:100%;background:#fff;border:1px solid #1A3FA8;color:#1A3FA8" onclick="document.getElementById(\'planRcpIn\').click()">📷 Choose receipt photo</button>'+
   '<div id="planRcpPrev" style="margin-top:8px;font-size:12.5px;color:#64748B"></div>'+
   '<input id="planTxn" placeholder="Transaction number / reference from your payment" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:13px;margin-top:8px"></div>'+
   '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:4px">'+
   '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">3 · Submit</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:8px">Plan number <b>'+pn+'</b> goes in with your receipt. Verification within 30 minutes, then auto-activation.</div>'+
-  '<button id="planPayBtn" class="big" style="width:100%;background:#16A34A;color:#fff;font-size:15px;padding:14px" onclick="planPayGo('+i+')">✅ Submit payment for '+p.n+' ('+pn+')</button></div>'+
+  '<button id="planPayBtn" class="big" style="width:100%;background:#2B5FE3;color:#fff;font-size:15px;padding:14px" onclick="planPayGo('+i+')">✅ Submit payment for '+p.n+' ('+pn+')</button></div>'+
   '<button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="planPayClose()">Close</button></div>';
   document.body.appendChild(el);
 }
@@ -6358,26 +6358,26 @@ function translationPay(gid){
   '<div style="font-size:12px;color:#64748B;margin-bottom:12px">Live voice-call translation for your group — 21 languages, real-time captions.</div>'+
   '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
   '<div style="flex:1"><div style="font-size:11px;font-weight:700;color:#92400E">TRANSLATION NUMBER</div><div style="font-family:monospace;font-size:15px;font-weight:800;color:#78350F">T1 · LANGUAGE PLAN</div></div>'+
-  '<button class="big" style="width:auto;padding:8px 12px;margin:0;background:#D7EEE0;color:#075E46;font-size:12px" onclick="acCopy(\'T1 Language Plan $3 / NGN 4800\');toast(\'Translation number copied ✓\')">📋 Copy</button></div>'+
+  '<button class="big" style="width:auto;padding:8px 12px;margin:0;background:#E8EFFB;color:#1A3FA8;font-size:12px" onclick="acCopy(\'T1 Language Plan $3 / NGN 4800\');toast(\'Translation number copied ✓\')">📋 Copy</button></div>'+
   '<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:10px;margin-bottom:10px;text-align:center">'+
   '<div style="font-size:11px;font-weight:700;color:#B91C1C">PAY WITHIN</div>'+
   '<div id="trTimer" style="font-family:monospace;font-size:26px;font-weight:800;color:#DC2626">30:00</div></div>'+
-  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:12px;margin-bottom:10px">'+
-  '<div style="font-weight:700;font-size:13.5px;color:#075E46;margin-bottom:6px">1 · Pay $3 / ₦4,800</div>'+
-  '<div style="font-size:12.5px;color:#075E46;line-height:1.55"><b>Outside Nigeria:</b> USDC on Solana<br><span style="font-family:monospace;word-break:break-all">'+wal+'</span>'+
+  '<div style="background:#E8EFFB;border:1px solid #1A3FA8;border-radius:12px;padding:12px;margin-bottom:10px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#1A3FA8;margin-bottom:6px">1 · Pay $3 / ₦4,800</div>'+
+  '<div style="font-size:12.5px;color:#1A3FA8;line-height:1.55"><b>Outside Nigeria:</b> USDC on Solana<br><span style="font-family:monospace;word-break:break-all">'+wal+'</span>'+
   '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\''+wal+'\');toast(\'Wallet address copied ✓\')">📋 Copy USDC wallet</button></div>'+
-  '<div style="font-size:12.5px;color:#075E46;line-height:1.55;margin-top:8px"><b>In Nigeria:</b> Rubies MFB · Success Friday · 8881724009'+
+  '<div style="font-size:12.5px;color:#1A3FA8;line-height:1.55;margin-top:8px"><b>In Nigeria:</b> Rubies MFB · Success Friday · 8881724009'+
   '<button class="big" style="width:100%;margin-top:6px;padding:8px" onclick="acCopy(\'Rubies MFB · Success Friday · 8881724009\');toast(\'Bank details copied ✓\')">📋 Copy bank details</button></div></div>'+
   '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:10px">'+
   '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">2 · Upload receipt + transaction number</div>'+
   '<input type="file" id="trRcpIn" class="hide" accept="image/*" onchange="trRcpChosen(this)">'+
-  '<button class="big" style="width:100%;background:#fff;border:1px solid #075E46;color:#075E46" onclick="document.getElementById(\'trRcpIn\').click()">📷 Choose receipt photo</button>'+
+  '<button class="big" style="width:100%;background:#fff;border:1px solid #1A3FA8;color:#1A3FA8" onclick="document.getElementById(\'trRcpIn\').click()">📷 Choose receipt photo</button>'+
   '<div id="trRcpPrev" style="margin-top:8px;font-size:12.5px;color:#64748B"></div>'+
   '<input id="trTxn" placeholder="Transaction number / reference from your payment" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #CBD5E1;border-radius:10px;font-size:13px;margin-top:8px"></div>'+
   '<div style="background:#F1F5F9;border-radius:12px;padding:12px;margin-bottom:4px">'+
   '<div style="font-weight:700;font-size:13.5px;color:#111827;margin-bottom:6px">3 · Submit</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:8px">Agent verification runs automatically — if your transaction number and receipt match within the time, the plan activates on its own.</div>'+
-  '<button id="trPayBtn" class="big" style="width:100%;background:#16A34A;color:#fff;font-size:15px;padding:14px" onclick="trPayGo()">✅ Submit payment (T1)</button></div>'+
+  '<button id="trPayBtn" class="big" style="width:100%;background:#2B5FE3;color:#fff;font-size:15px;padding:14px" onclick="trPayGo()">✅ Submit payment (T1)</button></div>'+
   '<button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="translationPayClose()">Close</button></div>';
   document.body.appendChild(el);
   _TR_T0=Date.now()+30*60*1000;
@@ -6425,28 +6425,28 @@ function plansSheet(){
   let cards="";
   for(let pi=0;pi<AC_PLANS.length;pi++){const p=AC_PLANS[pi];
     cards+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">'+
-    '<div style="display:flex;align-items:center"><div style="flex:1"><span style="font-weight:700;font-size:15px">'+p.n+'</span>'+(p.k==="premium"?' <span style="background:#075E46;color:#fff;border-radius:8px;padding:2px 8px;font-size:10.5px;font-weight:700">COMPLETE</span>':'')+'</div>'+
-    '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#075E46">$'+p.usd+'</div><div style="font-size:11px;color:#64748B">₦'+p.ngr.toLocaleString()+' /month</div></div></div>'+
+    '<div style="display:flex;align-items:center"><div style="flex:1"><span style="font-weight:700;font-size:15px">'+p.n+'</span>'+(p.k==="premium"?' <span style="background:#1A3FA8;color:#fff;border-radius:8px;padding:2px 8px;font-size:10.5px;font-weight:700">COMPLETE</span>':'')+'</div>'+
+    '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#1A3FA8">$'+p.usd+'</div><div style="font-size:11px;color:#64748B">₦'+p.ngr.toLocaleString()+' /month</div></div></div>'+
     '<div style="font-size:12.5px;color:#64748B;margin-top:6px">'+p.d+'</div>'+
-    '<button class="big" style="width:100%;margin-top:8px;background:#D7EEE0;color:#075E46;font-size:13px" onclick="planPay('+pi+')">Choose this plan — Pay & submit receipt</button></div>';
+    '<button class="big" style="width:100%;margin-top:8px;background:#E8EFFB;color:#1A3FA8;font-size:13px" onclick="planPay('+pi+')">Choose this plan — Pay & submit receipt</button></div>';
   }
   cards+='<div style="background:#fff;border:1px solid #99F6E4;border-radius:12px;padding:12px;margin-bottom:8px">'+
   '<div style="display:flex;align-items:center"><div style="flex:1"><span style="font-weight:700;font-size:15px">🌍 Group Language Plan</span></div>'+
-  '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#075E46">$3</div><div style="font-size:11px;color:#64748B">₦4,800 /month</div></div></div>'+
+  '<div style="text-align:right"><div style="font-weight:800;font-size:15px;color:#1A3FA8">$3</div><div style="font-size:11px;color:#64748B">₦4,800 /month</div></div></div>'+
   '<div style="font-size:12.5px;color:#64748B;margin-top:6px">Live voice-call translation for your group — 21 languages, real-time captions.</div>'+
-  '<button class="big" style="width:100%;margin-top:8px;background:#D7EEE0;color:#075E46;font-size:13px" onclick="planPayClose();translationPay()">Choose this plan — Pay & submit receipt</button></div>';
+  '<button class="big" style="width:100%;margin-top:8px;background:#E8EFFB;color:#1A3FA8;font-size:13px" onclick="planPayClose();translationPay()">Choose this plan — Pay & submit receipt</button></div>';
   el.innerHTML='<div class="sheet" style="max-width:480px">'+
   '<div style="font-weight:700;font-size:16px;margin-bottom:2px">💎 AirConnect Premium plans</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:12px">Monthly · cancel anytime · same value in dollars or Naira</div>'+
   cards+
-  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:12px;margin-top:4px">'+
-  '<div style="font-weight:700;font-size:13.5px;color:#075E46;margin-bottom:6px">How to pay</div>'+
-  '<div style="font-size:12.5px;color:#075E46;line-height:1.55"><b>Outside Nigeria:</b> send USDC on Solana<br>'+
+  '<div style="background:#E8EFFB;border:1px solid #1A3FA8;border-radius:12px;padding:12px;margin-top:4px">'+
+  '<div style="font-weight:700;font-size:13.5px;color:#1A3FA8;margin-bottom:6px">How to pay</div>'+
+  '<div style="font-size:12.5px;color:#1A3FA8;line-height:1.55"><b>Outside Nigeria:</b> send USDC on Solana<br>'+
   '<span style="font-family:monospace;word-break:break-all">'+wal+'</span><br>'+
   '<button class="big" style="width:100%;margin-top:6px;padding:9px" onclick="acCopy(\''+wal+'\');toast(\'Wallet address copied ✓\')">📋 Copy USDC wallet address</button></div>'+
-  '<div style="font-size:12.5px;color:#075E46;line-height:1.55;margin-top:10px"><b>In Nigeria:</b> Naira transfer<br>Bank: <b>Rubies MFB</b> · Account: <b>Success Friday</b> · Number: <b>8881724009</b><br>'+
+  '<div style="font-size:12.5px;color:#1A3FA8;line-height:1.55;margin-top:10px"><b>In Nigeria:</b> Naira transfer<br>Bank: <b>Rubies MFB</b> · Account: <b>Success Friday</b> · Number: <b>8881724009</b><br>'+
   '<button class="big" style="width:100%;margin-top:6px;padding:9px" onclick="acCopy(\'Rubies MFB · Success Friday · 8881724009\');toast(\'Bank details copied ✓\')">📋 Copy Naira bank details</button></div>'+
-  '<div style="font-size:11.5px;color:#075E46;margin-top:10px">After paying, send your receipt to SkylarOS to get your activation code. Rubies MFB in-app payment connect is coming soon.</div></div>'+
+  '<div style="font-size:11.5px;color:#1A3FA8;margin-top:10px">After paying, send your receipt to SkylarOS to get your activation code. Rubies MFB in-app payment connect is coming soon.</div></div>'+
   '<button class="big" style="width:100%;background:#CBD5E1;margin-top:10px" onclick="plansClose()">Close</button></div>';
   document.body.appendChild(el);
 }
@@ -6465,8 +6465,8 @@ async function worldCallSheet(){
   const unlocked=["ultra","premium"].indexOf(String(r.tier||""))>=0;
   box.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:2px">🌍 Call any number in the world</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:10px">Any phone on earth — users and non-users. Your agent can also dial for you.</div>'+
-  '<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:10px;font-size:13.5px;color:#075E46;margin-bottom:10px">📞 Minutes left: <b>'+mins+' min</b>'+(String(r.tier)==="premium"?' · 60 free minutes every month':' · top up: 15 min ₦8,000 · 30 min ₦15,000 · 60 min ₦30,000')+'</div>'+
-  (unlocked?'<input id="wcNum" inputmode="tel" placeholder="+234 801 234 5678" style="width:100%;margin-bottom:8px"><button class="big" style="width:100%;background:#16A34A;color:#fff" onclick="worldCallDial()">📞 Call this number</button>':'<button class="big" style="width:100%;background:#D7EEE0;color:#075E46" onclick="worldCallClose();plansSheet()">World calling unlocks from Ultra — see 💎 Premium plans</button>')+
+  '<div style="background:#E8EFFB;border:1px solid #1A3FA8;border-radius:12px;padding:10px;font-size:13.5px;color:#1A3FA8;margin-bottom:10px">📞 Minutes left: <b>'+mins+' min</b>'+(String(r.tier)==="premium"?' · 60 free minutes every month':' · top up: 15 min ₦8,000 · 30 min ₦15,000 · 60 min ₦30,000')+'</div>'+
+  (unlocked?'<input id="wcNum" inputmode="tel" placeholder="+234 801 234 5678" style="width:100%;margin-bottom:8px"><button class="big" style="width:100%;background:#2B5FE3;color:#fff" onclick="worldCallDial()">📞 Call this number</button>':'<button class="big" style="width:100%;background:#E8EFFB;color:#1A3FA8" onclick="worldCallClose();plansSheet()">World calling unlocks from Ultra — see 💎 Premium plans</button>')+
   '<button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="worldCallClose()">Close</button>';
 }
 async function worldCallDial(){
@@ -6493,14 +6493,14 @@ async function payPostsSheet(){
   else for(const p of ps){
     rows+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:10px;margin-bottom:6px">'+
     '<div style="display:flex;align-items:center"><span style="flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.text||"Post")+'</span>'+
-    '<span style="font-weight:800;color:#075E46;font-size:13px">💰 $'+(p.earn||0).toFixed(1)+'</span></div>'+
+    '<span style="font-weight:800;color:#1A3FA8;font-size:13px">💰 $'+(p.earn||0).toFixed(1)+'</span></div>'+
     '<div style="font-size:11.5px;color:#64748B;margin-top:3px">👁 '+(p.vcnt||0).toLocaleString()+' views · earns $1 at every new 1,000</div></div>';
   }
   box.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:2px">💰 Pay posts</div>'+
   '<div style="font-size:12px;color:#64748B;margin-bottom:10px">Every post that reaches 1,000 views pays $1 — again at every new 1,000. Credited to your channel earnings the moment it happens.</div>'+
-  (r.mon?'<div style="background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:10px;font-size:13.5px;color:#075E46;margin-bottom:10px">🎉 Monetized · Pay posts earnings: <b>$'+(r.earn||0)+'</b> — credited to your ₦ wallet automatically</div>':'<div style="background:#F1F5F9;border-radius:12px;padding:10px;font-size:12.5px;color:#64748B;margin-bottom:10px">Monetization unlocks at 1,000 subscribers — '+Math.max(0,1000-(r.subs||0))+' to go. Then every 1,000 views on any post pays $1.</div>')+
+  (r.mon?'<div style="background:#E8EFFB;border:1px solid #1A3FA8;border-radius:12px;padding:10px;font-size:13.5px;color:#1A3FA8;margin-bottom:10px">🎉 Monetized · Pay posts earnings: <b>$'+(r.earn||0)+'</b> — credited to your ₦ wallet automatically</div>':'<div style="background:#F1F5F9;border-radius:12px;padding:10px;font-size:12.5px;color:#64748B;margin-bottom:10px">Monetization unlocks at 1,000 subscribers — '+Math.max(0,1000-(r.subs||0))+' to go. Then every 1,000 views on any post pays $1.</div>')+
   '<div style="font-weight:700;font-size:13px;margin-bottom:6px">Your pay posts ('+ps.length+')</div>'+rows+
-  '<button class="big" style="width:100%;background:#D7EEE0;color:#075E46;margin-top:8px" onclick="payPostsClose();try{wtOpen(\'watch\');wtMyChannel();}catch(e){}">Open My Channel Studio</button>'+
+  '<button class="big" style="width:100%;background:#E8EFFB;color:#1A3FA8;margin-top:8px" onclick="payPostsClose();try{wtOpen(\'watch\');wtMyChannel();}catch(e){}">Open My Channel Studio</button>'+
   '<button class="big" style="width:100%;background:#CBD5E1;margin-top:8px" onclick="payPostsClose()">Close</button>';
 }
 
@@ -6580,14 +6580,14 @@ function renderGBubbles(){
   head.style.cssText="text-align:center;color:#94A3B8;font-size:11.5px;padding:6px 0";
   b.appendChild(head);
   const pm=PMSG[GROUP_OPEN];
-  if(pm&&pm.ts){const pb=document.createElement("div");pb.style.cssText="margin:6px 12px;background:#F0FDFA;border-left:3px solid #00A884;border-radius:8px;padding:6px 10px;font-size:12px;color:#12554A;cursor:pointer";pb.textContent="📌 "+pm.pv;pb.onclick=function(){if(confirm("Unpin this message?")){delete PMSG[GROUP_OPEN];persistV12();renderGBubbles();}};b.appendChild(pb);}
+  if(pm&&pm.ts){const pb=document.createElement("div");pb.style.cssText="margin:6px 12px;background:#F0FDFA;border-left:3px solid #2B5FE3;border-radius:8px;padding:6px 10px;font-size:12px;color:#12554A;cursor:pointer";pb.textContent="📌 "+pm.pv;pb.onclick=function(){if(confirm("Unpin this message?")){delete PMSG[GROUP_OPEN];persistV12();renderGBubbles();}};b.appendChild(pb);}
   for(const m of arr){
     while(ci<cevs.length&&cevs[ci].at<=(m.ts||m.id||0)){b.appendChild(gCallRow(cevs[ci]));ci++;}
     const d=document.createElement("div");
     d.className="bub "+(m.who==="me"?"out":"in");
     const gft=String(m.text||"").match(/^\[gfile:([a-z0-9]+)\]$/);
     if(gft){d.textContent="🎙️ loading voice note…";gFetchFile(gft[1],d);attachMsgEvents(d,m);b.appendChild(d);continue;}
-    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:'+memColor(m.from)+';margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2563EB;word-break:break-all">'+u+"</a>");
+    d.innerHTML=(m.who==="me"?"":'<div style="font-size:10.5px;font-weight:700;color:'+memColor(m.from)+';margin-bottom:2px">'+esc(WIN_NAMES[m.from]||("+"+m.from))+"</div>")+esc(String(m.text).slice(0,1500)).replace(/https?:\/\/[^\s<>"']+/g,u=>'<a href="'+u+'" target="_blank" style="color:#2B5FE3;word-break:break-all">'+u+"</a>");
     const lpG=lpFind(String(m.text||""));if(lpG)lpCard(d,lpG);   /* v126 link preview card */
     if(m.who!=="sys"){const meta=document.createElement("div");meta.className="bmeta";meta.textContent=fmtT(m.ts||m.id);d.appendChild(meta);}
     attachMsgEvents(d,m);
@@ -6717,7 +6717,7 @@ async function loadStudio(){
     const stat=(v,l)=>'<div style="background:#F1F5F9;border-radius:12px;padding:8px 13px;text-align:center"><div style="font-weight:700">'+v+'</div><div style="font-size:11px;color:#64748B">'+l+'</div></div>';
     h+=stat(r.subs||0,"subscribers")+stat(t.views||0,"views")+stat(t.reacts||0,"reactions")+stat(t.comments||0,"comments")+stat(t.posts||0,"posts");h+=stat("$"+(r.earn||0),"pay-post $");
     h+='</div></div>';
-    if(r.mon)h+='<div style="margin-top:10px;background:#D7EEE0;border:1px solid #075E46;border-radius:12px;padding:10px 12px;font-size:13px;color:#075E46"><b>🎉 Monetized!</b> You earn $1 for every 1,000 views · Estimated earnings so far: <b>$'+(r.earn||0)+'</b></div>';
+    if(r.mon)h+='<div style="margin-top:10px;background:#E8EFFB;border:1px solid #1A3FA8;border-radius:12px;padding:10px 12px;font-size:13px;color:#1A3FA8"><b>🎉 Monetized!</b> You earn $1 for every 1,000 views · Estimated earnings so far: <b>$'+(r.earn||0)+'</b></div>';
     else h+='<div style="margin-top:10px;background:#F1F5F9;border-radius:12px;padding:10px 12px;font-size:12.5px;color:#64748B">💰 Monetization unlocks at 1,000 subscribers — '+Math.max(0,1000-(r.subs||0))+' to go. Once monetized you earn $1 per 1,000 views.</div>';
     h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:10px">';
     h+='<div style="font-weight:700;font-size:14px;margin-bottom:8px">📣 Broadcast to subscribers</div>';
@@ -6730,7 +6730,7 @@ async function loadStudio(){
       const ic=p.kind==="text"?"📝":(p.kind==="photo"?"🖼":(p.kind==="long"?"🎬":"📹"));
       h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin-bottom:8px">';
       h+='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">'+ic+'</span><span style="flex:1;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.text||((p.kind==="text")?"Post":"Video post"))+'</span><span style="font-size:11px;color:#94A3B8">'+fmtWT(p.at)+'</span></div>';
-      h+='<div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#64748B"><span>👁 '+(p.vcnt||0)+' views</span><span>❤️ '+(p.rcnt||0)+' reactions</span><span>💬 '+(p.ccnt||0)+' comments</span>'+(((p.vcnt||0)>=1000)?'<span style="color:#075E46;font-weight:700">💰 pay post · $'+Number(p.earn||0).toFixed(1)+'</span>':'')+'</div>';
+      h+='<div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#64748B"><span>👁 '+(p.vcnt||0)+' views</span><span>❤️ '+(p.rcnt||0)+' reactions</span><span>💬 '+(p.ccnt||0)+' comments</span>'+(((p.vcnt||0)>=1000)?'<span style="color:#1A3FA8;font-weight:700">💰 pay post · $'+Number(p.earn||0).toFixed(1)+'</span>':'')+'</div>';
       h+='</div>';
     }
     el.innerHTML=h;
@@ -6754,7 +6754,7 @@ function skillOpen(){
   const p=CHAT_OPEN;if(!p)return;
   $("skillList").innerHTML=SKILL_ITEMS.map(function(s){
     const on=SKILL_ACTIVE[p]===s[0];
-    return '<button class="big" style="width:100%;margin-top:6px;text-align:left;background:'+(on?"#D7EEE0":"#E2E8F0")+';color:'+(on?"#075E46":"#334155")+';border-radius:12px" onclick="skillSet(\''+s[0]+'\')">'+s[1]+' <b>'+s[0]+'</b>'+(on?" · active":"")+'<div style="font-weight:400;font-size:11.5px;opacity:.8">'+s[2]+'</div></button>';
+    return '<button class="big" style="width:100%;margin-top:6px;text-align:left;background:'+(on?"#E8EFFB":"#E2E8F0")+';color:'+(on?"#1A3FA8":"#334155")+';border-radius:12px" onclick="skillSet(\''+s[0]+'\')">'+s[1]+' <b>'+s[0]+'</b>'+(on?" · active":"")+'<div style="font-weight:400;font-size:11.5px;opacity:.8">'+s[2]+'</div></button>';
   }).join("");
   $("skillSheet").className="ovl";
 }
@@ -6780,7 +6780,7 @@ function updateSrChips(){
   else if(/congrat|well done|nice|great/.test(txt))chips=["Thank you 🙏","God bless"];
   else chips=["👍","Sounds good","I'll get back to you"];
   el.className="";
-  el.innerHTML=chips.map(function(c){return '<button style="border:1px solid #C9EBDE;background:#D7EEE0;color:#075E46;border-radius:16px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer" onclick="srSend(this.textContent)">'+esc(c)+'</button>';}).join("");
+  el.innerHTML=chips.map(function(c){return '<button style="border:1px solid #C9EBDE;background:#E8EFFB;color:#1A3FA8;border-radius:16px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer" onclick="srSend(this.textContent)">'+esc(c)+'</button>';}).join("");
 }
 function srSend(t){$("chatbox").value=t;sendChat();}
 const _rb73=renderBubbles;renderBubbles=function(){_rb73();try{if(CHAT_OPEN)updateSrChips();}catch(e){}};
@@ -6946,7 +6946,7 @@ function openProfileSheet(){
   let el=document.getElementById("profSheet");if(el)el.remove();
   el=document.createElement("div");el.id="profSheet";
   el.style.cssText="position:fixed;inset:0;z-index:70;background:#F1F5F9;display:flex;flex-direction:column;";
-  el.innerHTML='<div class="ohdr" style="background:#0D6E52"><button class="bk" onclick="closeProfileSheet()">‹</button><div class="nm" style="flex:1;color:#fff">My profile</div><div style="width:30px"></div></div>'+
+  el.innerHTML='<div class="ohdr"><button class="bk" onclick="closeProfileSheet()">‹</button><div class="nm" style="flex:1;color:#fff">My profile</div><div style="width:30px"></div></div>'+
   '<div id="profSheetBody" style="flex:1;overflow:auto;padding:0 12px 16px"></div>';
   document.body.appendChild(el);
   const body=document.getElementById("profSheetBody");
@@ -6957,16 +6957,16 @@ function openProfileSheet(){
   try{if(typeof FRIENDS!=="undefined"&&FRIENDS)fr=FRIENDS.length;}catch(e){}
   try{if(typeof GROUPS!=="undefined"&&GROUPS)gr=GROUPS.length;}catch(e){}
   body.innerHTML=
-   '<div style="margin:12px 0 0;background:#0D6E52;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px">'+
+   '<div style="margin:12px 0 0;background:#1A3FA8;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px">'+
      '<div class="av" style="width:56px;height:56px;font-size:22px;flex:0 0 56px;background:rgba(255,255,255,.18)">'+picHTML+'</div>'+
      '<div style="flex:1;min-width:0"><div style="color:#fff;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(String(nm))+'</div>'+
-     '<div style="color:#A7F3D0;font-size:12px;margin-top:2px">+'+esc(String(ME))+'</div>'+
+     '<div style="color:#C9D9F7;font-size:12px;margin-top:2px">+'+esc(String(ME))+'</div>'+
      '<div style="display:inline-block;background:rgba(255,255,255,.16);color:#fff;font-size:10.5px;font-weight:700;border-radius:10px;padding:2px 9px;margin-top:5px">PREMIUM</div></div>'+
    '</div>'+
    '<div class="card" style="display:flex;margin-top:12px;text-align:center">'+
-     '<div style="flex:1;padding:10px 0"><div style="font-weight:800;font-size:17px;color:#0D6E52">'+fr+'</div><div style="font-size:10.5px;color:#64748B">Friends</div></div>'+
-     '<div style="flex:1;padding:10px 0;border-left:1px solid #E2E8F0"><div style="font-weight:800;font-size:17px;color:#0D6E52">'+gr+'</div><div style="font-size:10.5px;color:#64748B">Groups</div></div>'+
-     '<div style="flex:1;padding:10px 0;border-left:1px solid #E2E8F0"><div id="pfStatPo" style="font-weight:800;font-size:17px;color:#0D6E52">&hellip;</div><div style="font-size:10.5px;color:#64748B">Posts</div></div>'+
+     '<div style="flex:1;padding:10px 0"><div style="font-weight:800;font-size:17px;color:#1A3FA8">'+fr+'</div><div style="font-size:10.5px;color:#64748B">Friends</div></div>'+
+     '<div style="flex:1;padding:10px 0;border-left:1px solid #E2E8F0"><div style="font-weight:800;font-size:17px;color:#1A3FA8">'+gr+'</div><div style="font-size:10.5px;color:#64748B">Groups</div></div>'+
+     '<div style="flex:1;padding:10px 0;border-left:1px solid #E2E8F0"><div id="pfStatPo" style="font-weight:800;font-size:17px;color:#1A3FA8">&hellip;</div><div style="font-size:10.5px;color:#64748B">Posts</div></div>'+
    '</div>'+
    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">'+
      '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="pfScrollCard()"><div style="font-size:19px">✏️</div><div style="font-weight:700;font-size:12px;margin-top:3px">Edit profile</div></div>'+
@@ -7007,8 +7007,8 @@ function connectSheet(){
   let el=document.getElementById("cnSheet");if(el)el.remove();
   el=document.createElement("div");el.id="cnSheet";el.className="ovl";
   el.innerHTML='<div class="sheet">'+
-   '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:38px;height:38px;border-radius:50%;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">🌍</div><div style="font-weight:700;font-size:16px">Connect</div></div>'+
-   '<button class="big" style="background:#0D6E52;color:#fff;margin:8px 0" onclick="worldCallSheet()">📞 Call any number in the world</button>'+
+   '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:38px;height:38px;border-radius:50%;background:#2B5FE3;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px">🌍</div><div style="font-weight:700;font-size:16px">Connect</div></div>'+
+   '<button class="big" style="background:#1A3FA8;color:#fff;margin:8px 0" onclick="worldCallSheet()">📞 Call any number in the world</button>'+
    '<button class="big" style="background:#F1F5F9;color:#111827;margin:8px 0" onclick="openMyLink()">🔗 My invite link</button>'+
    '<div style="font-weight:600;font-size:13px;margin:12px 0 6px">➕ Add a friend</div>'+
    '<input id="peer" placeholder="Friend number, e.g. 1100000001" inputmode="numeric" style="width:100%;padding:10px;border:1px solid #E2E8F0;border-radius:10px;font-size:13px;box-sizing:border-box">'+
@@ -7045,7 +7045,7 @@ function menuOpen(){
        a transformed/scrolling ancestor made position:fixed scroll with the content before */
     const cb=document.createElement("div");
     cb.id="menuCloseBtn";
-    cb.style.cssText="position:fixed;right:14px;bottom:18px;width:64px;height:64px;border-radius:50%;background:#0D6E52;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.3);cursor:pointer;z-index:99";
+    cb.style.cssText="position:fixed;right:14px;bottom:18px;width:64px;height:64px;border-radius:50%;background:#1A3FA8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.3);cursor:pointer;z-index:99";
     cb.textContent="close";
     cb.onclick=menuClose;
     document.body.appendChild(cb);
@@ -7053,7 +7053,7 @@ function menuOpen(){
     const prow=document.createElement("div");
     prow.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer";
     prow.onclick=function(){menuClose();openProfileSheet();};
-    prow.innerHTML='<div class="av" id="menuProfPic" style="width:52px;height:52px;flex:0 0 52px;font-size:20px">?</div><div style="flex:1;min-width:0"><div id="menuProfName" style="font-weight:700;font-size:16px">—</div><div style="font-size:12px;color:#64748B">View and edit your profile</div></div><div style="color:#075E46;font-size:18px">›</div>';
+    prow.innerHTML='<div class="av" id="menuProfPic" style="width:52px;height:52px;flex:0 0 52px;font-size:20px">?</div><div style="flex:1;min-width:0"><div id="menuProfName" style="font-weight:700;font-size:16px">—</div><div style="font-size:12px;color:#64748B">View and edit your profile</div></div><div style="color:#1A3FA8;font-size:18px">›</div>';
     mv.appendChild(prow);
     try{
       const mp=(typeof PIC_CACHE!=="undefined"&&PIC_CACHE[ME])||null;
@@ -7066,9 +7066,9 @@ function menuOpen(){
       hub.style.cssText="margin-bottom:2px";
       hub.innerHTML=
        doorCard("💰","My Wallet","Balance · Send · Top up · Receipts","#D97706","menuClose();walShow();")+
-       doorCard("💎","My Plans","Free · Pro · Ultra · Premium","#10B981","menuClose();plansSheet();")+
-       doorCard("🎬","Studio","My channel · Videos · Pay posts","#94DDBA","menuClose();wtOpen('studio');")+
-       doorCard("🌍","Connect","World calling · Invite link · Add friend","#2563EB","menuClose();connectSheet();");
+       doorCard("💎","My Plans","Free · Pro · Ultra · Premium","#2B5FE3","menuClose();plansSheet();")+
+       doorCard("🎬","Studio","My channel · Videos · Pay posts","#AFC4F5","menuClose();wtOpen('studio');")+
+       doorCard("🌍","Connect","World calling · Invite link · Add friend","#2B5FE3","menuClose();connectSheet();");
       mv.appendChild(hub);
       const more=document.createElement("div");
       more.style.cssText="margin:12px;background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:6px 12px";
@@ -7099,7 +7099,7 @@ function menuOpen(){
       try{const pc=document.getElementById("profCard");if(pc)pc.style.display="none";}catch(e){}
     } /* v81: settings stay in the menu, the profile card is owned by the top-right avatar sheet */
     const wal=document.createElement("button");
-    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#D7EEE0;color:#075E46;font-size:15px";
+    wal.id="walMenuBtn";wal.className="big";wal.style.cssText="margin:12px;margin-top:auto;background:#E8EFFB;color:#1A3FA8;font-size:15px";
     wal.innerHTML="💰 My Wallet — <b id='walBalMenu'>₦0</b>";wal.onclick=function(){menuClose();walShow();};
     mv.appendChild(wal);
 
@@ -7121,9 +7121,9 @@ function menuClose(){
 }
 </script>
 <style id="crystal-horizon-v136">
-html[data-ac-theme="light"]{color-scheme:light;--ch-bg:#F4FFF9;--ch-surface:#FFFFFF;--ch-surface2:#E4F8ED;--ch-text:#123126;--ch-muted:#5F7D70;--ch-line:#CFE9DA;--ch-cyan:#59D6A2;--ch-blue:#24A873;--ch-violet:#94DDBA;--ch-glass:rgba(255,255,255,.78)}
-html[data-ac-theme="dark"]{color-scheme:dark;--ch-bg:#07150F;--ch-surface:#10271D;--ch-surface2:#18382A;--ch-text:#F3FFF8;--ch-muted:#9BC0AE;--ch-line:#28513E;--ch-cyan:#62E6AF;--ch-blue:#2FC285;--ch-violet:#8CE1B4;--ch-glass:rgba(19,29,51,.82)}
-body,.view{background:radial-gradient(circle at 12% -6%,color-mix(in srgb,var(--ch-cyan) 18%,transparent),transparent 29%),radial-gradient(circle at 103% 22%,color-mix(in srgb,var(--ch-violet) 13%,transparent),transparent 30%),var(--ch-bg)!important;color:var(--ch-text)!important;transition:background .25s,color .25s}.hdr,.ovl .ohdr{background:linear-gradient(118deg,color-mix(in srgb,var(--ch-surface) 92%,var(--ch-cyan)),color-mix(in srgb,var(--ch-surface) 85%,var(--ch-violet)))!important;color:var(--ch-text)!important;border-color:var(--ch-line)!important;box-shadow:0 9px 28px rgba(31,65,104,.13)!important;backdrop-filter:blur(25px)}.hdr .sub,.ohdr .st,.hdr #stxt{color:var(--ch-muted)!important}.ohdr .nm,.ohdr .bk{color:var(--ch-text)!important}.dot.live{background:var(--ch-cyan)!important;box-shadow:0 0 13px var(--ch-cyan)}
+html[data-ac-theme="light"]{color-scheme:light;--ch-bg:#F7F9FC;--ch-surface:#FFFFFF;--ch-surface2:#EAF0FB;--ch-text:#0F172A;--ch-muted:#5F7382;--ch-line:#DCE3EF;--ch-cyan:#2B5FE3;--ch-blue:#1A3FA8;--ch-violet:#F4C04D;--ch-glass:rgba(255,255,255,.78)}
+html[data-ac-theme="dark"]{color-scheme:dark;--ch-bg:#0B1120;--ch-surface:#141D33;--ch-surface2:#1C2742;--ch-text:#E9EEF9;--ch-muted:#8FA0BF;--ch-line:#263452;--ch-cyan:#4C7CF5;--ch-blue:#5B87F0;--ch-violet:#F4C04D;--ch-glass:rgba(13,20,36,.82)}
+body,.view{background:radial-gradient(circle at 12% -6%,color-mix(in srgb,var(--ch-cyan) 18%,transparent),transparent 29%),radial-gradient(circle at 103% 22%,color-mix(in srgb,var(--ch-violet) 13%,transparent),transparent 30%),var(--ch-bg)!important;color:var(--ch-text)!important;transition:background .25s,color .25s}.hdr,.ohdr{background:linear-gradient(118deg,color-mix(in srgb,var(--ch-surface) 92%,var(--ch-cyan)),color-mix(in srgb,var(--ch-surface) 85%,var(--ch-violet)))!important;color:var(--ch-text)!important;border-color:var(--ch-line)!important;box-shadow:0 9px 28px rgba(31,65,104,.13)!important;backdrop-filter:blur(25px)}.hdr .sub,.ohdr .st,.hdr #stxt{color:var(--ch-muted)!important}.ohdr .nm,.ohdr .bk{color:var(--ch-text)!important}.dot.live{background:var(--ch-cyan)!important;box-shadow:0 0 13px var(--ch-cyan)}
 nav{background:var(--ch-glass)!important;border-color:var(--ch-line)!important;backdrop-filter:blur(28px);box-shadow:0 -8px 28px rgba(39,67,106,.13)!important}nav button{color:var(--ch-muted)!important}nav button.on{color:var(--ch-blue)!important;text-shadow:none!important}nav button.on .ico{filter:drop-shadow(0 5px 9px color-mix(in srgb,var(--ch-blue) 30%,transparent))}.badge{background:linear-gradient(135deg,var(--ch-cyan),var(--ch-violet))!important;color:white!important;box-shadow:0 7px 17px color-mix(in srgb,var(--ch-blue) 24%,transparent)!important}
 .row{border-color:var(--ch-line)!important}.row:active{background:color-mix(in srgb,var(--ch-cyan) 8%,var(--ch-surface))!important}.av{border-radius:18px!important;background:linear-gradient(145deg,var(--ch-cyan),var(--ch-blue) 55%,var(--ch-violet))!important;color:white!important;border:1px solid rgba(255,255,255,.45)!important;box-shadow:0 9px 23px color-mix(in srgb,var(--ch-blue) 20%,transparent)!important}.rname,.nm{color:var(--ch-text)!important}.rsub,.rtime,.empty{color:var(--ch-muted)!important}.rtime{color:var(--ch-blue)!important}
 .card,.sheet,#fabsheet .sheet,#menuView{background:var(--ch-glass)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important;box-shadow:0 20px 55px rgba(31,53,87,.15),inset 0 1px rgba(255,255,255,.45)!important;backdrop-filter:blur(26px)}.card{border-radius:24px!important}input,select,textarea{background:var(--ch-surface)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important;border-radius:15px!important;box-shadow:0 5px 16px rgba(45,69,105,.06)!important}input::placeholder,textarea::placeholder{color:var(--ch-muted)!important}option{background:var(--ch-surface);color:var(--ch-text)}
@@ -7136,9 +7136,9 @@ button.big,#fab,.cinput button,.btn,.sendBtn{background:linear-gradient(115deg,v
 <script id="crystal-horizon-theme-js">
 (function(){
  function current(){try{return localStorage.getItem('ac_theme')||'light'}catch(e){return'light'}}
- function apply(t){t=t==='dark'?'dark':'light';document.documentElement.dataset.acTheme=t;try{localStorage.setItem('ac_theme',t)}catch(e){}var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#07150F':'#E4F8ED';var a=document.getElementById('acLoginTheme');if(a)a.textContent=t==='dark'?'☀ Light':'☾ Dark';var b=document.getElementById('acThemeToggle');if(b)b.textContent=t==='dark'?'Use light':'Use dark';var s=document.getElementById('acThemeState');if(s)s.textContent=t==='dark'?'Dark mode active':'Light mode active'}
+ function apply(t){t=t==='dark'?'dark':'light';document.documentElement.dataset.acTheme=t;try{localStorage.setItem('ac_theme',t)}catch(e){}var m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='dark'?'#0B1120':'#F7F9FC';var a=document.getElementById('acLoginTheme');if(a)a.textContent=t==='dark'?'☀ Light':'☾ Dark';var b=document.getElementById('acThemeToggle');if(b)b.textContent=t==='dark'?'Use light':'Use dark';var s=document.getElementById('acThemeState');if(s)s.textContent=t==='dark'?'Dark mode active':'Light mode active'}
  window.acToggleTheme=function(){apply(current()==='dark'?'light':'dark')};
- function controls(){var login=document.getElementById('login');if(login&&!document.getElementById('acLoginTheme')){var x=document.createElement('button');x.id='acLoginTheme';x.className='acLoginTheme';x.onclick=window.acToggleTheme;login.appendChild(x)}var menu=document.getElementById('menuView');if(menu&&menu.classList.contains('on')&&!document.getElementById('acThemeControl')){var c=document.createElement('div');c.id='acThemeControl';c.className='acThemeControl';c.innerHTML='<div><b>Crystal appearance</b><br><span id="acThemeState"></span></div><button id="acThemeToggle" onclick="acToggleTheme()"></button>';var w=document.getElementById('walMenuBtn');menu.insertBefore(c,w||menu.firstChild)}apply(current())}
+ function controls(){var login=document.getElementById('login');if(login&&!document.getElementById('acLoginTheme')){var x=document.createElement('button');x.id='acLoginTheme';x.className='acLoginTheme';x.onclick=window.acToggleTheme;login.appendChild(x)}var menu=document.getElementById('menuView');if(menu&&menu.classList.contains('on')&&!document.getElementById('acThemeControl')){var c=document.createElement('div');c.id='acThemeControl';c.className='acThemeControl';c.innerHTML='<div><b>🌙 Appearance</b><br><span id="acThemeState"></span></div><button id="acThemeToggle" onclick="acToggleTheme()"></button>';var w=document.getElementById('walMenuBtn');menu.insertBefore(c,w||menu.firstChild)}apply(current())}
  apply(current());if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',controls);else controls();setInterval(controls,700);
 })();
 </script>
