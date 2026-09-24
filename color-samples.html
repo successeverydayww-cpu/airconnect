@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>AirConnect · Color Theme Samples</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+body{background:#f2f4f8;padding:16px 12px 40px}
+h1{font-size:20px;color:#0b1d33;text-align:center;margin-bottom:4px}
+.sub{font-size:13px;color:#5a6b80;text-align:center;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:1100px;margin:0 auto}
+.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(15,30,60,.08)}
+.card-head{padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #eef1f5}
+.tname{font-size:14px;font-weight:700;color:#0b1d33}
+.tnum{font-size:11px;color:#8b99ac}
+.swatches{padding:8px 14px;display:flex;gap:6px;align-items:center}
+.sw{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.12)}
+.swl{font-size:10px;color:#8b99ac;margin-left:4px}
+.phone{width:100%;height:250px;display:flex;flex-direction:column;overflow:hidden;border-top:1px solid #e8ecf1}
+.ph-h{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:12px;font-weight:600}
+.ava{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.chats{flex:1;overflow:hidden;padding:10px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;font-size:11px}
+.row .ava{width:28px;height:28px}
+.badge{margin-left:auto;border-radius:10px;font-size:9px;padding:1px 7px;color:#fff;font-weight:700}
+.bubbles{flex:1;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.bub{max-width:75%;padding:7px 10px;border-radius:12px;font-size:11px;line-height:1.35}
+.me{align-self:flex-end;border-bottom-right-radius:4px}
+.them{align-self:flex-start;border-bottom-left-radius:4px}
+.time{font-size:8px;opacity:.6;margin-top:2px}
+.ph-f{display:flex;align-items:center;gap:8px;padding:7px 10px}
+.inp{flex:1;border-radius:18px;padding:7px 12px;font-size:11px}
+.mic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex:none}
+.nav{display:flex;justify-content:space-around;padding:6px 0 8px;font-size:9px;font-weight:600}
+.ni{opacity:.45}.ni.on{opacity:1}
+</style>
+</head>
+<body>
+<h1>AirConnect Theme Samples</h1>
+<div class="sub">10 blue-first options · all calm and restrained · reply with the number you like</div>
+<div class="grid" id="g"></div>
+<script>
+const T=[
+{n:"1 · Sky Classic",d:"Clean WhatsApp-style light UI, confident blue header",c:["#1266f1","#ffffff","#eef3fb","#f5f8fd"],
+ h:"#1266f1",ht:"#ffffff",bg:"#f5f8fd",card:"#ffffff",ct:"#0b1d33",cs:"#5a6b80",row:"#ffffff",
+ me:"#1266f1",met:"#ffffff",them:"#ffffff",tht:"#0b1d33",inp:"#ffffff",inpbr:"#dde5f0",mic:"#1266f1"},
+{n:"2 · Midnight Blue",d:"Deep black chat, glowing blue — the Telegram dark feel",c:["#2f9cf4","#0a1622","#131f2e","#1c2a3d"],
+ h:"#0a1622",ht:"#e8f1fb",bg:"#131f2e",card:"#1c2a3d",ct:"#e8f1fb",cs:"#7f92a8",row:"#1c2a3d",
+ me:"#2f9cf4",met:"#06121f",them:"#1c2a3d",tht:"#dce8f5",inp:"#1c2a3d",inpbr:"#26344a",mic:"#2f9cf4"},
+{n:"3 · Royal + Gold",d:"Royal blue with subtle gold accents on white",c:["#1a3fa8","#f4c04d","#ffffff","#f3f6fb"],
+ h:"#1a3fa8",ht:"#ffffff",bg:"#f3f6fb",card:"#ffffff",ct:"#12213b",cs:"#5a6b80",row:"#ffffff",
+ me:"#1a3fa8",met:"#ffffff",them:"#ffffff",tht:"#12213b",inp:"#ffffff",inpbr:"#dfe6f2",mic:"#f4c04d"},
+{n:"4 · Electric OLED",d:"True black OLED, one vivid electric blue",c:["#2f80ff","#000000","#0d0d0d","#1a1a1a"],
+ h:"#000000",ht:"#eaf2ff",bg:"#0d0d0d",card:"#1a1a1a",ct:"#eaf2ff",cs:"#8b95a5",row:"#1a1a1a",
+ me:"#2f80ff",met:"#ffffff",them:"#1a1a1a",tht:"#e6ecf5",inp:"#1a1a1a",inpbr:"#262626",mic:"#2f80ff"},
+{n:"5 · Ice Minimal",d:"Barely-there ice blue, ultra calm and airy",c:["#5b8def","#f7f9fc","#ffffff","#eaf0f8"],
+ h:"#f7f9fc",ht:"#2b3a55",bg:"#f7f9fc",card:"#ffffff",ct:"#2b3a55",cs:"#8b98ab",row:"#ffffff",
+ me:"#5b8def",met:"#ffffff",them:"#eaf0f8",tht:"#2b3a55",inp:"#ffffff",inpbr:"#e0e7f2",mic:"#5b8def"},
+{n:"6 · Navy & Amber",d:"Serious navy with warm amber signal color",c:["#16294d","#f0a832","#ffffff","#f4f6f9"],
+ h:"#16294d",ht:"#ffffff",bg:"#f4f6f9",card:"#ffffff",ct:"#16294d",cs:"#66788f",row:"#ffffff",
+ me:"#16294d",met:"#ffffff",them:"#ffffff",tht:"#16294d",inp:"#ffffff",inpbr:"#dde3ec",mic:"#f0a832"},
+{n:"7 · Ocean Flow",d:"Soft blue-to-teal gradient header, white everywhere else",c:["#0aa6c2","#1266f1","#ffffff","#f4f9fa"],
+ h:"#1266f1",ht:"#ffffff",bg:"#f4f9fa",card:"#ffffff",ct:"#0b2b33",cs:"#5f7682",row:"#ffffff",
+ me:"#0aa6c2",met:"#ffffff",them:"#ffffff",tht:"#0b2b33",inp:"#ffffff",inpbr:"#dce9ec",mic:"#0aa6c2",grad:"linear-gradient(90deg,#1266f1,#0aa6c2)"},
+{n:"8 · Corporate Slate",d:"Slack-style slate blue, maximum restraint",c:["#3f4ca8","#ffffff","#f0f2f7","#e7eaf3"],
+ h:"#3f4ca8",ht:"#ffffff",bg:"#f0f2f7",card:"#ffffff",ct:"#1f2437",cs:"#7c869e",row:"#ffffff",
+ me:"#3f4ca8",met:"#ffffff",them:"#e7eaf3",tht:"#1f2437",inp:"#ffffff",inpbr:"#d9dee9",mic:"#3f4ca8"},
+{n:"9 · Azure True Dark",d:"WhatsApp-dark inverted: dark bubbles, azure light ones",c:["#4aa3ff","#101822","#182430","#20303f"],
+ h:"#101822",ht:"#dcecff",bg:"#182430",card:"#20303f",ct:"#dcecff",cs:"#7f92a8",row:"#20303f",
+ me:"#4aa3ff",met:"#0c1520",them:"#101822",tht:"#dcecff",inp:"#20303f",inpbr:"#2a3b4d",mic:"#4aa3ff"},
+{n:"10 · Baby Blue Light",d:"Pastel sky theme, friendly and soft",c:["#77b0fa","#eaf3fe","#ffffff","#f8fbff"],
+ h:"#77b0fa",ht:"#ffffff",bg:"#f8fbff",card:"#ffffff",ct:"#274069",cs:"#8b9bb5",row:"#ffffff",
+ me:"#77b0fa",met:"#ffffff",them:"#eaf3fe",tht:"#274069",inp:"#ffffff",inpbr:"#dfeaf8",mic:"#77b0fa"}];
+const g=document.getElementById("g");
+T.forEach(t=>{
+const sw=t.c.map(x=>`<span class="sw" style="background:${x}"></span>`).join("");
+const grad=t.grad||t.h;
+g.insertAdjacentHTML("beforeend",`
+<div class="card">
+ <div class="card-head"><span class="tname">${t.n}</span><span class="tnum">${t.d}</span></div>
+ <div class="swatches">${sw}<span class="swl">theme colors</span></div>
+ <div class="phone" style="background:${t.bg}">
+  <div class="ph-h" style="background:${grad};color:${t.ht}">
+    <span>‹</span><div class="ava" style="background:rgba(255,255,255,.28)">SK</div>
+    <div>Skylar<div style="font-weight:400;font-size:9px;opacity:.8">online</div></div>
+    <span style="margin-left:auto;font-size:13px">⋮</span>
+  </div>
+  <div class="bubbles">
+    <div class="bub them" style="background:${t.them};color:${t.tht}">Hey! Ready for JAMB practice tonight?<div class="time">18:02</div></div>
+    <div class="bub me" style="background:${t.me};color:${t.met}">Yes please, Mathematics first 📚<div class="time">18:03 ✓✓</div></div>
+    <div class="bub them" style="background:${t.them};color:${t.tht}">Perfect. Starting with Logarithms.<div class="time">18:03</div></div>
+  </div>
+  <div class="ph-f" style="background:${t.card}">
+    <div class="inp" style="background:${t.inp};border:1px solid ${t.inpbr};color:${t.cs}">Message</div>
+    <div class="mic" style="background:${t.mic}">🎙</div>
+  </div>
+  <div class="nav" style="background:${t.card};color:${t.h==="#f7f9fc"?"#5b8def":t.h}">
+    <span class="ni on">Chats</span><span class="ni">Updates</span><span class="ni">Calls</span><span class="ni">Profile</span>
+  </div>
+ </div>
+</div>`);
+});
+</script>
+</body>
+</html>
