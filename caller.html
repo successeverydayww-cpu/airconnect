@@ -5890,8 +5890,8 @@ function kycSheet(){
     sh=document.createElement("div");sh.id="kycsheet";sh.className="ovl hide";
     sh.innerHTML='<div class="sheet"><div style="font-weight:700;margin-bottom:8px">✔ Verify your identity</div>'+
       '<div id="kycStatus" style="font-size:13px;color:#334155;line-height:1.5;margin-bottom:10px"></div>'+
-      '<div style="background:#E8EFFB;border-radius:10px;padding:10px;font-size:12.5px;color:#1A3FA8;margin-bottom:10px">How it works:<br>1. Upload a clear photo of your national ID, international passport, or driver’s license.<br>2. Our AI reads the name and ID number on the document.<br>3. Your profile name must match the name on your ID.<br>4. One ID number can verify only one account — ever.<br>Your ID number is stored only as a secure hash, never as text. ✔ verified users are trusted at a glance.</div>'+
-      '<button class="big blue" id="kycBtn" style="width:100%" onclick="kycGo()">📷 Upload your ID document</button>'+
+      '<div style="background:#E8EFFB;border-radius:10px;padding:10px;font-size:12.5px;color:#1A3FA8;margin-bottom:10px">How it works:<br>1. Take ONE photo of yourself <b>holding your ID next to your face</b> — your face and the document must both be clearly visible.<br>2. Our AI reads the name and ID number, and <b>checks your face against the photo on the ID</b> — a borrowed ID will fail.<br>3. Your profile name must match the name on your ID.<br>4. One ID number can verify only one account — ever.<br>Your ID number is stored only as a secure hash, never as text. ✔ verified users are trusted at a glance.</div>'+
+      '<button class="big blue" id="kycBtn" style="width:100%" onclick="kycGo()">📷 Take a photo holding your ID</button>'+
       '<button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeKycSheet()">Close</button><div style="height:8px"></div></div>';
     document.body.appendChild(sh);
     sh.addEventListener("click",function(e){if(e.target===sh)closeKycSheet();});
@@ -6919,7 +6919,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=160;
+const AC_V=161;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
