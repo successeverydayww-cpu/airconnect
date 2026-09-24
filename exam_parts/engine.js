@@ -72,7 +72,7 @@ function renderQ(){
   '<button class="btn o" style="margin-top:10px" onclick="if(confirm(\'Submit now?\'))finish()">End & submit</button></div>');
  if(sel.answers[sel.i]!==undefined){var b2=document.querySelectorAll(".opt")[sel.answers[sel.i]];if(b2)b2.className="opt picked";}
 }
-function pick(k){sel.answers[sel.i]=k;var os=document.querySelectorAll(".opt");for(var j=0;j<os.length;j++)os[j].className="opt";os[k].className="opt picked";}
+function pick(k){sel.answers[sel.i]=k;var os=document.querySelectorAll(".opt");for(var j=0;j<os.length;j++)os[j].className="opt";if(os[k])os[k].className="opt picked";}
 function prev(){if(sel.i>0){sel.i--;renderQ();}}
 function next(){if(sel.i<sel.q.length-1){sel.i++;renderQ();}else finish();}
 function finish(){
