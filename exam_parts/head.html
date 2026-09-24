@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AirConnect · Exam Prep</title>
+<style>
+  :root{--g:#075E46;--g2:#25D366;--bg:#F0F2F5;--card:#fff;--ink:#1F2937;--mut:#64748B}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:80px}
+  .top{background:linear-gradient(135deg,var(--g),#0C7C5A);color:#fff;padding:16px;position:sticky;top:0;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .top h1{margin:0;font-size:18px}
+  .top .sub{font-size:11.5px;opacity:.85;margin-top:3px}
+  .wrap{max-width:720px;margin:0 auto;padding:12px}
+  .card{background:var(--card);border-radius:14px;padding:15px;margin-bottom:11px;box-shadow:0 1px 4px rgba(15,23,42,.08)}
+  .card h2{margin:0 0 10px;font-size:14.5px;color:var(--g)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid #E2E8F0;background:#fff;color:var(--ink);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer}
+  .chip.count{border-color:#BBF7D0;background:#F0FDF4}
+  .btn{display:block;width:100%;border:none;border-radius:12px;padding:12px;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:8px}
+  .btn.g{background:var(--g2);color:#fff}
+  .btn.o{background:#E2E8F0;color:#334155}
+  .note{font-size:12px;color:var(--mut);margin-top:8px;line-height:1.5}
+  .qcard{background:#fff;border-radius:14px;padding:15px;box-shadow:0 1px 4px rgba(15,23,42,.08);margin-bottom:11px}
+  .qhead{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mut);margin-bottom:9px}
+  .timer{background:#FEF3C7;color:#92400E;border-radius:8px;padding:3px 10px;font-weight:700;font-variant-numeric:tabular-nums}
+  .timer.low{background:#FEE2E2;color:#991B1B}
+  .qq{font-size:15.5px;line-height:1.5;margin-bottom:13px;white-space:pre-wrap}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid #E2E8F0;border-radius:12px;background:#fff;padding:11px 13px;font-size:14px;margin-bottom:8px;cursor:pointer}
+  .opt.picked{border-color:var(--g);background:#E8F5F1}
+  .opt.right{border-color:#16A34A;background:#DCFCE7}
+  .opt.wrong{border-color:#DC2626;background:#FEE2E2}
+  .topic{display:inline-block;background:#E0F2FE;color:#075985;border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:600;cursor:pointer;border:none}
+  .expl{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:9px 11px;font-size:13px;line-height:1.5;margin-top:9px}
+  .bar{height:7px;background:#E2E8F0;border-radius:6px;overflow:hidden;margin-bottom:12px}
+  .bar i{display:block;height:100%;background:var(--g2);border-radius:6px;transition:width .3s}
+  .score{font-size:40px;font-weight:800;color:var(--g);text-align:center}
+  .nav{display:flex;gap:8px;justify-content:space-between;margin-top:6px}
+  .nav .btn{margin-top:0;width:auto;flex:1;padding:10px 8px}
+  .back{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:5px 11px;font-size:12.5px;cursor:pointer;margin-bottom:7px}
+  /* v2 in-app lesson player: video plays INSIDE the app, no redirect */
+  .ovl{position:fixed;inset:0;background:rgba(2,6,23,.82);z-index:50;display:flex;align-items:center;justify-content:center;padding:10px}
+  .ovl.hide{display:none}
+  .vbox{width:100%;max-width:640px;background:#0B1220;border-radius:14px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .vhead{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;color:#fff;font-size:13px;font-weight:600}
+  .vclose{background:#334155;border:none;color:#fff;border-radius:8px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
+  .vframe{width:100%;aspect-ratio:16/9;border:none;display:block;background:#000}
+  .hint{font-size:11.5px;color:#94A3B8;padding:8px 12px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="top">
+  <button class="back" onclick="goHome()">← AirConnect</button>
+  <h1>🎓 Exam Prep</h1>
+  <div class="sub">Hard-mode timed CBT · 50-question papers · explanations · video lessons play inside the app</div>
+</div>
+<div class="wrap" id="root"></div>
+<div id="vwrap" class="ovl hide" onclick="if(event.target===this)closeVid()">
+  <div class="vbox">
+    <div class="vhead"><span id="vtitle">Video lesson</span><button class="vclose" onclick="closeVid()">✕ Close</button></div>
+    <iframe id="vframe" class="vframe" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+    <div class="hint">Playing free lessons on this topic inside the app — nothing redirects away. Tap Close to return.</div>
+  </div>
+</div>
+<script>
