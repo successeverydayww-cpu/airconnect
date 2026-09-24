@@ -4217,6 +4217,11 @@ function setAiVoice(g){
   try{toast(g==="m"?"Your AI now speaks with a male voice ✓":"Your AI now speaks with a female voice ✓");}catch(e){}
 }
 function aiVoiceLabel(){try{var e=document.getElementById("aiVoiceLab");if(e){var g=(localStorage.getItem("ac_aivoice")||"f")!=="m"?"Female":"Male";e.textContent=g;}}catch(e){}}
+let AI_SPEAK_SEQ=0,AI_TTS_SRC=null;
+function aiStopTTS(){
+  try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}
+  try{if(AI_TTS_SRC){try{AI_TTS_SRC.stop();}catch(e){}AI_TTS_SRC=null;}}catch(e){}
+}
 function aiSpeak(text){
   const call=AI_CALL;
   if(!call||!call.on||!text)return;
@@ -4234,6 +4239,11 @@ function aiSpeak(text){
     aiSTT();aiSendHeard(call);
     aiVoiceStatus(call,"Listening now. Speak and stay on until I reply.");
   };
+  /* v154 voice-mixing fix: ONE STEADY VOICE PER CALL. The first reply commits the call to a
+     single channel (device voice or cloud voice) and every later reply uses the SAME
+     channel, so two different voices can never mix on one call. Every speak hard-stops
+     BOTH channels first, so no two utterances ever overlap; a watchdog ends playback if
+     the browser's speech events never fire. */
   const cloud=async()=>{
     try{
       const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"xtts",text:String(text).slice(0,600)})});
@@ -4244,24 +4254,30 @@ function aiSpeak(text){
       const buf=await r.arrayBuffer();
       const ab=await AI_AC.decodeAudioData(buf.slice(0));
       if(call!==AI_CALL||!call.on)return;
+      aiStopTTS();
       const src=AI_AC.createBufferSource();src.buffer=ab;src.connect(AI_AC.destination);
+      AI_TTS_SRC=src;
+      call.ttsChannel="cloud";
       aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");
-      src.onended=done;src.start(0);
+      src.onended=()=>{if(src===AI_TTS_SRC)AI_TTS_SRC=null;done();};
+      src.start(0);
     }catch(e){if(call===AI_CALL&&call.on){aiVoiceStatus(call,"Voice playback failed. Listening for you now.");done();}}
   };
-  if(window.speechSynthesis&&window.SpeechSynthesisUtterance){
+  const useLocal=(call.ttsChannel==="local")||(!call.ttsChannel&&window.speechSynthesis&&window.SpeechSynthesisUtterance);
+  if(useLocal){
     try{
       const synth=window.speechSynthesis,utt=new window.SpeechSynthesisUtterance(String(text).slice(0,600));
-      const vs=synth.getVoices();
       utt.voice=aiPickVoice(synth);
       utt.lang=utt.voice?utt.voice.lang:"en-US";utt.rate=1.06;
-      let started=false,finished=false;
-      const fallback=()=>{if(finished||started)return;finished=true;try{synth.cancel();}catch(e){}cloud();};
+      let started=false,finished=false;const seq=++AI_SPEAK_SEQ;
+      const fallback=()=>{if(finished||started)return;finished=true;clearTimeout(timer);clearTimeout(wd);try{synth.cancel();}catch(e){}if(seq===AI_SPEAK_SEQ)cloud();};
       const timer=setTimeout(fallback,1200);
-      utt.onstart=()=>{if(finished)return;started=true;clearTimeout(timer);aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");};
-      utt.onend=()=>{if(finished)return;clearTimeout(timer);if(!started){finished=true;cloud();return;}finished=true;done();};
-      utt.onerror=()=>{if(finished)return;finished=true;clearTimeout(timer);try{synth.cancel();}catch(e){}cloud();};
-      synth.cancel();synth.speak(utt);
+      const wd=setTimeout(()=>{if(finished)return;finished=true;clearTimeout(timer);try{synth.cancel();}catch(e){}done();},2000+Math.min(30000,120*String(text).length));
+      utt.onstart=()=>{if(finished)return;started=true;clearTimeout(timer);call.ttsChannel="local";aiVoiceStatus(call,"AI speaking. Please wait until it finishes.");};
+      utt.onend=()=>{clearTimeout(wd);if(finished)return;clearTimeout(timer);if(!started){finished=true;cloud();return;}finished=true;done();};
+      utt.onerror=()=>{clearTimeout(wd);if(finished)return;finished=true;clearTimeout(timer);try{synth.cancel();}catch(e){}if(seq===AI_SPEAK_SEQ)cloud();};
+      aiStopTTS(); /* cancel any previous utterance AND any cloud source before starting */
+      setTimeout(()=>{if(finished)return;try{synth.cancel();synth.speak(utt);}catch(e){clearTimeout(timer);clearTimeout(wd);cloud();}},40); /* small delay makes cancel reliable on Android */
       return;
     }catch(e){}
   }
