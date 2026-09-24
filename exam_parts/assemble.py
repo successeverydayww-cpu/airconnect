@@ -4,13 +4,25 @@ import json,os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 subs={}
 for f in sorted(os.listdir('.')):
-    if f.endswith('.py') and f not in ('assemble.py','__init__.py'):
+    if f.endswith('.py') and f not in ('assemble.py','diagrams.py','__init__.py'):
         ns={}
         exec(compile(open(f).read(),f,'exec'),ns)
         name,qs=ns['NAME'],ns['Q']
         for i,q in enumerate(qs):
-            assert len(q)==5 and q[2] in (0,1,2,3) and len(str(q[1]).split('|'))==4, (f,name,i)
+            assert len(q) in (5,6) and q[2] in (0,1,2,3) and len(str(q[1]).split('|'))==4, (f,name,i)
         subs[name]=qs
+try:
+    ns={}
+    exec(compile(open('diagrams.py').read(),'diagrams.py','exec'),ns)
+    for subj,extra in ns['DIAG'].items():
+        for i,q in enumerate(extra):
+            assert len(q)==6 and q[2] in (0,1,2,3) and len(str(q[1]).split('|'))==4, ('diagrams',subj,i)
+        subs.setdefault(subj,[])
+        if subs[subj] and len(subs[subj][0])==5:
+            subs[subj]=[list(q)+[""] if len(q)==5 else q for q in subs[subj]]
+        subs[subj]=subs[subj]+extra
+except Exception as e:
+    raise
 jamb={n:subs[n] for n in ["English","Mathematics","Physics","Chemistry","Biology","Economics","Government","Literature","Christian Religious Studies","Geography","History","Agricultural Science"]}
 BANKS={
  "jamb":{"label":"JAMB UTME (Nigeria)","subs":jamb},
@@ -41,7 +53,7 @@ country="""var COUNTRY={
 """
 bank_json=json.dumps(BANKS,ensure_ascii=False,separators=(',',':'))
 head=open('head.html').read(); engine=open('engine.js').read()
-marker="/* ===== Exam Prep engine v2"
+marker="/* ===== Exam Prep engine v3"
 html=head+"\nvar BANKS="+bank_json+";\n"+country+engine+"\n</script>\n</body>\n</html>\n"
 assert marker in html and "var COUNTRY" in html
 open('../exam.html','w',encoding='utf-8').write(html)

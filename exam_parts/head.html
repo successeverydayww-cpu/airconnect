@@ -45,6 +45,8 @@
   .vhead{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;color:#fff;font-size:13px;font-weight:600}
   .vclose{background:#334155;border:none;color:#fff;border-radius:8px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
   .vframe{width:100%;aspect-ratio:16/9;border:none;display:block;background:#000}
+  .dq{background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px;margin:10px 0;text-align:center;overflow-x:auto}
+  .dq svg{max-width:100%;height:auto}
   .hint{font-size:11.5px;color:#94A3B8;padding:8px 12px;line-height:1.5}
 </style>
 </head>
@@ -57,9 +59,9 @@
 <div class="wrap" id="root"></div>
 <div id="vwrap" class="ovl hide" onclick="if(event.target===this)closeVid()">
   <div class="vbox">
-    <div class="vhead"><span id="vtitle">Video lesson</span><button class="vclose" onclick="closeVid()">✕ Close</button></div>
+    <div class="vhead"><span id="vtitle">Video lesson</span><button class="vclose" id="vcloseb" onclick="closeVid()">✕ Close</button></div>
     <iframe id="vframe" class="vframe" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-    <div class="hint">Playing free lessons on this topic inside the app — nothing redirects away. Tap Close to return.</div>
+    <div class="hint" id="vhint">Playing free lessons on this topic inside the app — nothing redirects away. Tap Close to return.</div>
   </div>
 </div>
 <script>
