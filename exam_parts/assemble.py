@@ -52,7 +52,7 @@ country="""var COUNTRY={
 };
 """
 bank_json=json.dumps(BANKS,ensure_ascii=False,separators=(',',':'))
-head=open('head.html').read(); engine=open('engine.js').read()
+head=open('head.html').read(); engine=open('topicvid.js').read()+'\n'+open('engine.js').read()
 marker="/* ===== Exam Prep engine v3"
 html=head+"\nvar BANKS="+bank_json+";\n"+country+engine+"\n</script>\n</body>\n</html>\n"
 assert marker in html and "var COUNTRY" in html

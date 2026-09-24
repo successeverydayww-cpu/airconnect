@@ -45,20 +45,36 @@ function langsel(){return '<select id="langsel" onchange="setLang(this.value)" s
    embeds, which made every lesson show "unavailable". We now play verified lesson
    videos/playlists — embed-friendly and stable. Values starting PL are playlists.) ---------- */
 var VIDS={
- en:{"Physics":"PLXq5W8o-L-ImF_i3TfBusF4bMrihFSCDj","Chemistry":"SBCiu0Yhcv0","Biology":"hXF2szRnJDE","Mathematics":"VKoo_gt-rkM","English":"PLYrtVi_mzfHF3VHxaFBC_26Ycy2HvG-ph","Economics":"PLXq5W8o-L-ImvvWEdfrZp47L6aslNpGQF","Government":"s7uWlSqEtHs","Literature":"PLXq5W8o-L-ImUUPjoEQ3I7p-ZHP58m4WJ","Christian Religious Studies":"Nlf_FeybtZE","Geography":"PLzS23jvg9BVfZ1g7F80xakQdLdy1Xi7sb","History":"zLbbDnJsTX4","Agricultural Science":"r_yrpc-h2CY","Math":"qy9htgwZDkg","Reading & Writing":"F-YsV4IplnA","Academic Practice":"EGBPLDP_qp8"},
+ en:{"Physics":"PLXq5W8o-L-ImF_i3TfBusF4bMrihFSCDj","Chemistry":"PLXq5W8o-L-Ikp9u7afBxjAd9xglewY-m-","Biology":"PLXq5W8o-L-IknBxKkhDr2nkv3D-qWM5kW","Mathematics":"PLXq5W8o-L-ImMNbvccJPWmL7zbm_Fmtp2","English":"PLXq5W8o-L-IkOHMTKeiR8npInzy3Gr5Rz","Economics":"PLXq5W8o-L-ImvvWEdfrZp47L6aslNpGQF","Government":"PLXq5W8o-L-ImYJNnZGhuGVb8KcYAx5q1N","Literature":"PLXq5W8o-L-ImUUPjoEQ3I7p-ZHP58m4WJ","Christian Religious Studies":"PLXq5W8o-L-InlNTwJEHDY9nU9Jwfv9dGl","Geography":"PLzS23jvg9BVfZ1g7F80xakQdLdy1Xi7sb","History":"PLXq5W8o-L-ImbrCccCo4_y1PeO5UC8SDG","Agricultural Science":"PLXq5W8o-L-Ikv5UfN7iEQbOozDuwZoFq7","Math":"qy9htgwZDkg","Reading & Writing":"F-YsV4IplnA","Academic Practice":"EGBPLDP_qp8"},
  zh:{"Mathematics":"6KeJosnt0-4","Physics":"6Za3L1VXPd4","Chemistry":"4UtWCCgkcXk","Biology":"hDiK-8q5Krg","English":"ZaZSlyj8Emw","Academic Practice":"ZaUbTUGzyOQ"}
 };
 var VALIAS={"Agriculture":"Agricultural Science","Christian Religious Education":"Christian Religious Studies"};
 function vurl(id){return id.indexOf("PL")===0?("https://www.youtube-nocookie.com/embed/videoseries?list="+id+"&autoplay=1&rel=0"):("https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0");}
-function playTopic(topic){
+function playTopic(rawTopic){
+  /* v153.3: this topic plays ITS OWN lesson video, start to finish. */
+  var topic=String(rawTopic).replace(/[▶📺​]/g," ").replace(/Revise:/i," ").replace(/\s+/g," ").trim();
   var key=VALIAS[sel.sub]||sel.sub;
   var vl=(VIDS[LANG]&&VIDS[LANG][key])?LANG:"en";
+  var tv=(typeof VTOP!=="undefined"&&VTOP[key]&&VTOP[key][topic])?VTOP[key][topic]:null;
   var id=(VIDS[vl]&&VIDS[vl][key])||VIDS.en[key]||"";
-  if(!id){toastIf("No lesson video for this subject yet.");return;}
+  if(tv&&!(LANG!=="en"&&VIDS[LANG]&&VIDS[LANG][key])){ /* topic-exact lesson wins (localized course wins only when it exists) */
+    document.getElementById("vtitle").textContent=topic+" — "+sel.sub+(LANG!=="en"?" · English":"");
+    document.getElementById("vframe").src="https://www.youtube-nocookie.com/embed/"+tv+"?autoplay=1&rel=0";
+    document.getElementById("vwrap").className="ovl";
+    return;
+  }
+  if(!id&&!tv){toastIf("No lesson video for this subject yet.");return;}
+  if(!id&&tv){ /* no subject video: still use the topic-exact lesson */
+    document.getElementById("vtitle").textContent=topic+" — "+sel.sub+(LANG!=="en"?" · English":"");
+    document.getElementById("vframe").src="https://www.youtube-nocookie.com/embed/"+tv+"?autoplay=1&rel=0";
+    document.getElementById("vwrap").className="ovl";
+    return;
+  }
   document.getElementById("vtitle").textContent=topic+" — "+sel.sub+(vl!==LANG?" · English":"");
   document.getElementById("vframe").src=vurl(id);
   document.getElementById("vwrap").className="ovl";
 }
+
 function toastIf(m){try{var d=document.getElementById("vhint");if(d)d.textContent=m;}catch(e){}}
 function closeVid(){var f=document.getElementById("vframe");f.src="";document.getElementById("vwrap").className="ovl hide";}
 /* ---------- flow ---------- */
