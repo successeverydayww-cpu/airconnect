@@ -170,6 +170,8 @@ footer a{color:#64748B}
     </div>
     <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Your language — your AI agent will always speak it to you</div>
     <select id="regLang" onchange="try{localStorage.setItem('ac_lang',this.value);localStorage.removeItem('ac_langset');}catch(e){}" style="width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:8px;margin-bottom:6px;background:#fff;font-size:13px"><option value="en">English</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="fr">Français — French</option><option value="es">Español — Spanish</option><option value="pt">Português — Portuguese</option><option value="ar">العربية — Arabic</option><option value="zh">中文 — Chinese</option><option value="hi">हिन्दी — Hindi</option><option value="sw">Kiswahili — Swahili</option><option value="de">Deutsch — German</option><option value="ru">Русский — Russian</option><option value="tr">Türkçe — Turkish</option><option value="am">አማርኛ — Amharic</option><option value="so">Soomaali — Somali</option><option value="tw">Twi</option><option value="zu">isiZulu</option><option value="ef">Efịk</option><option value="ib">Ibibio</option></select>
+    <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Wake-up call for your live agent — say it anywhere in the app to wake her</div>
+    <input id="wakein" placeholder="e.g. hey Grace" style="text-transform:lowercase" onchange="try{if(this.value.toLowerCase().trim())localStorage.setItem('ac_wake',this.value.toLowerCase().trim());}catch(e){}">
     <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
     <button class="big blue" onclick="register()">Resume my number</button>
@@ -189,11 +191,11 @@ footer a{color:#64748B}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">📴 No internet: saved chats are available. Text messages queue and send when you reconnect; calls need internet.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A3FA8;flex:0 0 34px">?</button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="My Place" onclick="openMyPlace()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A3FA8;flex:0 0 34px">?</button></div>
   </div>
 
   <style>/* v162 THE FIELD — spatial front door (Samuel directive: migrate everything) */
-#view-field{position:fixed;inset:0;z-index:64;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 60%);color:#F4F7FF;overflow:hidden;padding:0!important;min-height:0!important}
+#view-field{position:fixed;inset:0;z-index:64;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 60%)!important;color:#F4F7FF!important;overflow:hidden;padding:0!important;min-height:0!important}
 #view-field .ringC{fill:none;stroke:#22335F;stroke-width:1;stroke-dasharray:2 7;opacity:.8}
 #view-field .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#3A4E86;opacity:.5;animation:fltw 4s infinite}
 @keyframes fltw{0%,100%{opacity:.15}50%{opacity:.6}}
@@ -227,6 +229,29 @@ footer a{color:#64748B}
 #view-field .fmic.live{background:#E8B84B;color:#060B1C;animation:flbr 1.6s infinite}
 @keyframes flbr{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.55)}50%{box-shadow:0 0 0 18px rgba(232,184,75,0)}}
 #view-field .fhint{position:fixed;bottom:7px;left:0;right:0;text-align:center;font-size:10.5px;color:#8B96B8;z-index:66}
+
+/* v163: always-live wake agent orb + My Place menu */
+#flwrap{position:fixed;right:14px;bottom:82px;z-index:88;display:none;flex-direction:column;align-items:flex-end;gap:6px}
+body.acLive #flwrap{display:flex}
+#florb{width:54px;height:54px;border-radius:50%;border:2px solid #8B96B8;background:#0E1836;color:#F4F7FF;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(2,6,23,.35);position:relative}
+#florb.wake{border-color:#E8B84B;animation:flbreathe 2.6s infinite}
+#florb.active{background:#E8B84B;color:#060B1C;border-color:#fff;animation:flbr2 1.2s infinite}
+@keyframes flbreathe{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.35)}50%{box-shadow:0 0 0 10px rgba(232,184,75,0)}}
+@keyframes flbr2{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.6)}50%{box-shadow:0 0 0 16px rgba(232,184,75,0)}}
+#flheard2{display:none;max-width:60vw;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;color:#F4F7FF;border-radius:16px;padding:5px 10px;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#flwrap.active #flheard2{display:block}
+#flwrap .fltag{font-size:9.5px;color:#8B96B8;background:rgba(14,24,54,.8);border-radius:10px;padding:1px 7px}
+#view-field .fcit .fava{border-color:#8B5CF6;box-shadow:0 0 12px rgba(139,92,246,.45)}
+#myPlaceSheet{position:fixed;inset:0;background:rgba(2,6,23,.62);z-index:80;display:none;align-items:flex-end;justify-content:center}
+#myPlaceSheet.on{display:flex}
+#myPlacePanel{width:100%;max-width:430px;max-height:88vh;overflow-y:auto;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 70%);color:#F4F7FF;border-radius:22px 22px 0 0;padding:18px 16px 22px;border-top:1px solid #22335F}
+.mpHead{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.mpAva{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;border:3px solid #E8B84B;flex:0 0 56px}
+.mpGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mpRoom{background:rgba(14,24,54,.85);border:1px solid #1C2A52;border-radius:14px;padding:12px;font-size:13px;font-weight:600;color:#F4F7FF;cursor:pointer;display:flex;align-items:center;gap:9px}
+.mpRoom:active{transform:scale(.96)}
+.mpRoom .mi{font-size:19px}
+.mpSub{font-size:10.5px;color:#8B96B8;font-weight:400;margin-top:2px}
 </style>
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
@@ -235,11 +260,14 @@ footer a{color:#64748B}
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
-    <button onclick="showTab('chats')">💬 Chats list</button>
+    <button onclick="showTab('chats')">💬 Chats</button>
+    <button onclick="showTab('status')">✧ Updates</button>
+    <button onclick="walShow()">💰 Wallet</button>
+    <button onclick="openMyPlace()">👤 Profile</button>
   </div>
-  <div class="flpill" id="flpill"><div class="ld"></div><div class="ht" id="flheard">listening…</div><button class="stp" onclick="flToggle()">stop</button></div>
+  <div class="flpill" id="flpill"><div class="ld"></div><div class="ht" id="flheard">listening…</div><button class="stp" onclick="flSleep()">sleep</button></div>
   <input id="fltype" placeholder="or type a command — call Grace" style="position:fixed;bottom:98px;left:50%;transform:translateX(-50%);width:80%;max-width:340px;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;border-radius:22px;padding:8px 14px;color:#F4F7FF;font-size:13.5px;outline:none;text-align:center;display:none;z-index:66" onkeydown="if(event.key==='Enter'){const v=this.value.trim();this.value='';if(v)flRun(v);}">
-  <div class="fbar"><button class="fmic" id="flmic" onclick="flToggle()">🎙</button></div>
+  <div class="fbar"><button class="fmic" id="flmic" onclick="flMic()">🎙</button></div>
   <div class="fhint">tap the mic and just speak · tap a presence to open their chat</div>
 </div>
 <div id="view-chats" class="view hide">
@@ -1432,6 +1460,7 @@ async function legacyRegister(){
   const d=await api("register",{name:name,country:country});
   if(!d.id){toast(d.err||"registration failed");return;}
   finishLogin(d);
+  try{setTimeout(function(){flBoot();},600);}catch(e){}
 }
 async function verifyOtp(){
   if(VERIFY_METHOD==="email"){
@@ -1480,6 +1509,7 @@ async function register(){
   }
   if(!d.id){toast(d.err||"registration failed");return;}
   finishLogin(d);
+  try{setTimeout(function(){flBoot();},600);}catch(e){}
   if(d.phrase)showPhraseModal(d.phrase,d.resumed==="new");
 }
 async function finishLogin(d){
@@ -1564,7 +1594,7 @@ function showTab(t){
   if(t==="watch"){wtBoot();}
   if(t==="status"){refreshStories();renderStoryStrip();renderStatusScreen();}
   if(t==="field"){try{refreshStories();}catch(e){}try{flRender();}catch(e){}}
-  if(t!=="field"&&FL_LIVE){try{flToggle();}catch(e){}}
+  try{window.FL_CTX=t;}catch(e){}
   const _sf=$("stFab");if(_sf)_sf.className=t==="status"?"":"hide";
   if(t==="settings"){renderPlan();ensureQR();renderArchived();liteBoot();walRefresh();}
 }
@@ -5533,6 +5563,7 @@ async function phraseLogin(){
   const d=await api("register",{phrase:p,dev:dev});
   if(!d||!d.id){toast((d&&d.err)||"Phrase not recognised — check spelling");return;}
   finishLogin(d);
+  try{setTimeout(function(){flBoot();},600);}catch(e){}
   if(d.phrase)showPhraseModal(d.phrase,d.resumed==="new");
 }
 async function showMyPhrase(){
@@ -7039,7 +7070,8 @@ setInterval(function(){try{checkForcedUpdate();}catch(e){}},45000);
   if(magic){
     try{
       const d=await api("magic_login",{token:magic,dev:await getDevAsync()});
-      if(d&&d.id){const u=new URL(location.href);u.searchParams.delete("login");history.replaceState({},"",u.pathname+u.search+u.hash);await finishLogin(d);return;}
+      if(d&&d.id){const u=new URL(location.href);u.searchParams.delete("login");history.replaceState({},"",u.pathname+u.search+u.hash);await finishLogin(d);
+  try{setTimeout(function(){flBoot();},600);}catch(e){}return;}
       toast((d&&d.err)||"That recovery link could not be used");
     }catch(e){toast("Could not restore the account — check connection");}
   }
@@ -7352,13 +7384,188 @@ body{-webkit-font-smoothing:antialiased}
   new MutationObserver(function(){paint()}).observe(document.body,{childList:true,subtree:true,characterData:true});
   paint();
 
-/* ================= v162: THE FIELD — spatial front door over the real backend =================
-   Samuel directive (26 Sep 2026): migrate everything. The Field renders REAL presences
-   (friends with KYC trust rings, groups, live online dots, unread badges, Updates rings),
-   a live mic that greets once then stays listening, and voice commands that drive real
-   actions (call, open chat/group, Watch, Updates, Exam Prep). The classic Chats list and
-   every existing feature remain untouched, one tap away. Nothing is destroyed. */
-let FL_LIVE=false,FL_REC=null,FL_VOICES=[],FL_ST=null,FL_GREETED=false;
+
+})();
+</script>
+<div id="flwrap"><div id="flheard2">listening…</div><button id="florb" onclick="flOrbTap()" aria-label="Live agent">🎙</button></div>
+<div id="myPlaceSheet" onclick="if(event.target===this)closeMyPlace()"><div id="myPlacePanel"></div></div>
+
+<script id="v163-live-agent">
+/* ================= v163: ALWAYS-LIVE WAKE AGENT + MY PLACE + FIELD FIX =================
+   Samuel directives (26 Sep 2026): (1) mic fixed — engine now top-level (v162 bug: it was
+   trapped inside the avatar-palette IIFE, so flToggle did not exist). (2) Citizens appear in
+   the Field and open REAL chats. (3) Field docks: Friends, Explore, Chats, Updates, Wallet,
+   Profile — each opens the existing page. (4) The agent is ALWAYS LIVE: one wake word wakes
+   her on ANY page (set at login), a persistent orb shows her state everywhere, she knows
+   which page you are on, and spoken commands drive real actions. (5) The menu is now
+   MY PLACE — a spatial sheet of rooms, nothing like other apps' drawers; the classic
+   settings drawer remains reachable from All settings (nothing is ever removed). */
+let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null;
+let AC_WAKE="";
+try{AC_WAKE=(localStorage.getItem("ac_wake")||"").trim()||"grace";}catch(e){AC_WAKE="grace";}
+let FL_VOICES=[];
+function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
+flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
+function flPickVoice(){const ws=[/female/i,/samantha/i,/zira/i,/aria/i,/jenny/i];
+  for(const w of ws){const v=FL_VOICES.find(x=>w.test(x.name));if(v)return v;}
+  return FL_VOICES.find(v=>/^en/i.test(v.lang))||null;}
+function flSpeak(txt,then){try{const u=new SpeechSynthesisUtterance(txt);
+  const v=flPickVoice();if(v){u.voice=v;u.pitch=1.06;}u.rate=1.03;
+  if(then)u.onend=then;speechSynthesis.speak(u);}catch(e){if(then)then();}}
+function flHeard2(t){const e=$("flheard2");if(e)e.textContent=t;}
+function flUI(){
+  const o=$("florb");if(!o)return;
+  o.className=FL_MODE==="active"?"active":(FL_MODE==="wake"?"wake":"");
+  const w=$("flwrap");if(w)w.className=FL_MODE==="active"?"active":"";
+  const tag=w?w.querySelector(".fltag"):null;
+  if(tag)tag.textContent=FL_MODE==="active"?"● live · say anything":("● always live · say \""+AC_WAKE+"\"");
+  const m=$("flmic");if(m)m.classList.toggle("live",FL_MODE==="active");
+}
+function flStartSR(){
+  if(FL_SR)return;
+  const S=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!S){toast("Voice not supported on this browser — type commands in the Field");return;}
+  try{FL_SR=new S();}catch(e){return;}
+  FL_SR.lang="en-NG";FL_SR.continuous=true;FL_SR.interimResults=true;
+  FL_SR.onresult=function(ev){let fin="",int="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
+      else int+=ev.results[i][0].transcript;}
+    if(int)flHeard2(int);
+    if(fin.trim()){flHeard2(fin.trim());
+      if(FL_MODE==="wake"){flWakeCheck(fin.trim());}
+      else if(FL_MODE==="active"){flArmIdle();flRun(fin.trim());}}};
+  FL_SR.onerror=function(e){
+    if(e&&(e.error==="not-allowed"||e.error==="service-not-allowed")){
+      FL_MODE="off";try{if(FL_SR){FL_SR.onend=null;FL_SR.stop();}}catch(_){}
+      FL_SR=null;flUI();toast("Allow microphone access to wake your live agent");}
+  };
+  FL_SR.onend=function(){if(FL_MODE!=="off"){FL_SR=null;setTimeout(function(){flStartSR();},400);}else{FL_SR=null;}};
+  try{FL_SR.start()}catch(e){}
+}
+function flStopSR(){if(FL_SR){const r=FL_SR;FL_SR=null;try{r.onend=null;r.stop()}catch(e){}}}
+function flNorm(t){return String(t).toLowerCase().replace(/[^a-z0-9\s]/g," ");}
+function flWakeCheck(t){
+  const c=flNorm(t),w=flNorm(AC_WAKE);
+  const parts=w.split(/\s+/).filter(Boolean);
+  const hit=parts.some(function(p){return p.length>2&&c.includes(p);})||c.includes(w);
+  if(hit)flActivate("Yes, "+(ME_NAME||"Samuel")+"?");
+}
+function flArmIdle(){clearTimeout(FL_IDLE);
+  FL_IDLE=setTimeout(function(){if(FL_MODE==="active"){FL_MODE="wake";flUI();
+    flSpeak("Going back to standby. Say "+AC_WAKE+" anytime.");}},45000);}
+function flActivate(greet){
+  const wasOff=(FL_MODE==="off");
+  FL_MODE="active";flStartSR();flUI();flArmIdle();
+  if(greet){
+    if(!FL_GREETED){FL_GREETED=true;
+      const hr=new Date().getHours();
+      const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
+      flSpeak(word+" "+(ME_NAME||"Samuel")+". How are you doing today?");}
+    else flSpeak(greet);
+  }
+  if(wasOff)toast("● Live agent active");
+}
+function flSleep(silent){
+  clearTimeout(FL_IDLE);
+  const was=FL_MODE;
+  FL_MODE="off";flStopSR();flUI();
+  if(!silent&&was!=="off")flSpeak("Sleeping. Tap me anytime.");
+}
+function flOrbTap(){
+  if(FL_MODE==="off"){FL_MODE="wake";flStartSR();flUI();
+    toast("● Always live — say \""+AC_WAKE+"\" anytime");}
+  else if(FL_MODE==="wake"){flActivate("I'm listening.");}
+  else{FL_MODE="wake";flUI();flSpeak("Back to standby. Say "+AC_WAKE+" anytime.");}
+}
+function flBoot(){
+  try{document.body.classList.add("acLive");}catch(e){}
+  const w=$("flwrap");
+  if(w&&!w.querySelector(".fltag")){
+    const tg=document.createElement("div");tg.className="fltag";w.appendChild(tg);}
+  try{const wi=$("wakein");if(wi&&wi.value.trim())AC_WAKE=flNorm(wi.value.trim());}catch(e){}
+  flUI();
+  if(FL_MODE==="off"&&$("app")&&$("app").className.indexOf("hide")<0){FL_MODE="wake";flStartSR();flUI();}
+}
+/* field mic: instant active mode with the once-per-session greeting */
+function flMic(){
+  if(FL_MODE==="active"){FL_MODE="wake";flUI();flSpeak("Back to standby.");return;}
+  flActivate(FL_GREETED?"How may I help you?":null);
+}
+/* ============ context + commands (real actions, any page) ============ */
+function flCtxName(){
+  const T={field:"the Field",chats:"your Chats list",watch:"Explore, the Watch feed",status:"Updates",calls:"your Calls history",settings:"Settings"};
+  let d=T[window.FL_CTX||"chats"]||"the app";
+  try{if(typeof CHAT_OPEN!=="undefined"&&CHAT_OPEN)d+=", inside the chat with "+(WIN_NAMES[CHAT_OPEN]||("+"+CHAT_OPEN));}catch(e){}
+  return d;}
+function flFind(cmd){
+  const c=flNorm(cmd);
+  try{for(const g of (GROUPS||[])){const gn=flNorm(g.name||"");
+    if(gn&&c.includes(gn.split(" ")[0]))return{grp:g};}}catch(e){}
+  try{for(const f of (WIN_FRIENDS||[])){const nm=flNorm(WIN_NAMES[f.id]||"");
+    if(nm&&c.includes(nm.split(" ")[0]))return{num:f.id};}}catch(e){}
+  if(c.includes("premium"))return{num:"1100000001"};
+  if(c.includes("citizen")||c.includes("receptionist"))return{num:"1100000004"};
+  return null;}
+function flRun(cmd){
+  const c=flNorm(cmd);const t=flFind(cmd);
+  if(c.includes("how are you")){flSpeak("I'm doing great, "+(ME_NAME||"Samuel")+". Ready when you are. What shall I do?");return;}
+  if(c.includes("where am i")||c.includes("what page")||c.includes("explain this")||c.includes("where am i now")){flSpeak("You are on "+flCtxName()+". Tell me what to do.");return;}
+  if(c.includes("go to sleep")||c.includes("stop listening")||c.includes("sleep now")){flSleep();return;}
+  if(c.includes("home")||c.includes("the field")||c.includes("go home")){flSpeak("Home.");showTab("field");return;}
+  if(c.includes("friend")){flSpeak("Here are your friends.");openFab();return;}
+  if(c.includes("explore")||c.includes("watch")){flSpeak("Here is Explore.");showTab("watch");return;}
+  if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")||c==="chats"){flSpeak("Opening your chats.");showTab("chats");return;}
+  if(c.includes("update")||c.includes("status")){flSpeak("Here are the Updates.");showTab("status");return;}
+  if(c.includes("call log")||c.includes("dayline")||c.includes("my day")||c.includes("calls")){flSpeak("Here are your calls.");showTab("calls");return;}
+  if(c.includes("wallet")||c.includes("money")||c.includes("balance")){flSpeak("Opening your wallet.");try{walShow();}catch(e){menuOpen();}return;}
+  if(c.includes("profile")||c.includes("my place")||c.includes("menu")||c.includes("settings")&&c.includes("open")){flSpeak("Opening My Place.");openMyPlace();return;}
+  if(c.includes("settings")){flSpeak("Opening settings.");menuOpen();return;}
+  if(c.includes("exam")){flSpeak("Opening Exam Prep.");setTimeout(function(){location.href="exam.html";},900);return;}
+  if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+" now.");
+    setTimeout(function(){callNum(t.num);},900);return;}
+  if(t&&t.num){flSpeak("Opening "+(WIN_NAMES[t.num]||"their chat")+".");openChat(t.num);return;}
+  if(t&&t.grp){flSpeak("Opening "+(t.grp.name||"group")+".");openGroup(t.grp.id);return;}
+  if(c.includes("call")){flSpeak("Who shall I call?");return;}
+  flSpeak("I didn't catch that. You can say call a name, open a chat, home, explore, updates, wallet, or exam prep.");}
+/* ============ MY PLACE — the new menu (rooms, not a drawer) ============ */
+function openMyPlace(){
+  const p=$("myPlacePanel");if(!p){menuOpen();return;}
+  const nm=(typeof ME_NAME!=="undefined"&&ME_NAME)||"Me";
+  const nmnum=(typeof ME!=="undefined"&&ME)?("+"+ME):"";
+  const kyc=(typeof KYC_ME!=="undefined"&&KYC_ME)?" · KYC \u2714":"";
+  const wake=AC_WAKE;
+  const rooms=[
+    ["👤","Profile","edit your photo, name, about",function(){closeMyPlace();try{openProfileSheet();}catch(e){menuOpen();}}],
+    ["💰","Wallet","balance · send · add money",function(){closeMyPlace();try{walShow();}catch(e){menuOpen();}}],
+    ["✧","Updates","24h updates for your ring",function(){closeMyPlace();showTab("status");}],
+    ["🎬","Watch","feed · shorts · channels",function(){closeMyPlace();showTab("watch");}],
+    ["💬","Chats","every conversation",function(){closeMyPlace();showTab("chats");}],
+    ["🎓","Exam Prep","JAMB, WAEC, SAT · 50 hard questions",function(){location.href="exam.html";}],
+    ["⭐","Skills","citizen skills marketplace",function(){closeMyPlace();try{skillOpen();}catch(e){toast("Open a citizen chat for skills");}}],
+    ["🛡","Verify identity","KYC \u2714 badge · face-match",function(){closeMyPlace();try{kycSheet();}catch(e){}}],
+    ["🔐","Recovery phrase","your account forever key",function(){closeMyPlace();try{showMyPhrase();}catch(e){}}],
+    ["⚙","All settings","the full classic drawer",function(){closeMyPlace();try{menuOpen();}catch(e){}}]];
+  p.innerHTML='<div class="mpHead"><div class="mpAva">'+esc(String(nm).charAt(0).toUpperCase())+'</div>'+
+    '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:16px">'+esc(nm)+'<span style="color:#E8B84B;font-size:12px">'+kyc+'</span></div>'+
+    '<div style="font-size:12px;color:#8B96B8">'+esc(nmnum)+'</div></div>'+
+    '<button onclick="closeMyPlace()" style="background:rgba(14,24,54,.85);border:1px solid #1C2A52;color:#F4F7FF;border-radius:12px;padding:6px 12px;font-size:12px">close</button></div>'+
+    '<div style="font-size:10.5px;color:#8B96B8;margin:0 0 10px">This is your Place — rooms, not menus. Your live agent hears you from here too.</div>'+
+    '<div class="mpGrid">'+rooms.map(function(r,i){
+      return '<div class="mpRoom" data-i="'+i+'"><span class="mi">'+r[0]+'</span><span>'+r[1]+'<div class="mpSub">'+r[2]+'</div></span></div>';
+    }).join("")+'</div>'+
+    '<div class="mpRoom" style="margin-top:10px" onclick="flSetWake()"><span class="mi">🎙</span><span>Wake-up call: <b style="color:#E8B84B">'+esc(wake)+'</b><div class="mpSub">say it on any page to wake your live agent · tap to change</div></span></div>';
+  const els=p.querySelectorAll(".mpRoom[data-i]");
+  for(let i=0;i<els.length;i++){(function(el){el.onclick=function(){const r=rooms[parseInt(el.getAttribute("data-i"))];r[3]();};})(els[i]);}
+  $("myPlaceSheet").className="on";
+}
+function closeMyPlace(){const s=$("myPlaceSheet");if(s)s.className="";}
+function flSetWake(){
+  const v=prompt("Wake-up call — what will you say to wake your agent?\n(e.g. hey Grace)",AC_WAKE);
+  if(v&&v.trim()){AC_WAKE=flNorm(v.trim());try{localStorage.setItem("ac_wake",AC_WAKE);}catch(e){}
+    toast("Wake-up call set: \""+AC_WAKE+"\"");openMyPlace();}
+}
+/* ============ FIELD render (real presences + citizens) ============ */
 function flRender(){
   const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.46;
   const R1=Math.min(vw,vh)*0.26,R2=Math.min(vw,vh)*0.42;
@@ -7369,17 +7576,15 @@ function flRender(){
   for(let i=0;i<30;i++){const d=document.createElement("div");d.className="star";
     d.style.left=(Math.random()*100)+"%";d.style.top=(Math.random()*100)+"%";
     d.style.animationDelay=(Math.random()*4)+"s";stEl.appendChild(d);}
-  /* you at the center */
   let f=$("flyou");
   if(!f){f=document.createElement("div");f.id="flyou";
     f.style.cssText="position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5;cursor:pointer";
     f.innerHTML='<div class="fava" style="width:72px;height:72px;font-size:26px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);border:3px solid #E8B84B;box-shadow:0 0 24px rgba(232,184,75,.5)">S</div><div class="fname" style="font-weight:700;font-size:13.5px"></div>';
-    f.onclick=function(){menuOpen();};
+    f.onclick=function(){openMyPlace();};
     $("view-field").appendChild(f);}
   f.style.left=cx+"px";f.style.top=cy+"px";
-  f.querySelector(".fname").textContent=(ME_NAME||"Me")+(KYC_ME?" · KYC \u2714":"");
+  f.querySelector(".fname").textContent=(ME_NAME||"Me")+((typeof KYC_ME!=="undefined"&&KYC_ME)?" · KYC \u2714":"");
   f.querySelector(".fava").textContent=String(ME_NAME||"S").charAt(0).toUpperCase();
-  /* real presences */
   const stN={};try{for(const s of STORIES){if(s.num!==ME)stN[s.num]=1;}}catch(e){}
   const kc=(WIN_FRIENDS||[]).filter(x=>WIN_KC&&WIN_KC[x.id]);
   const rest=(WIN_FRIENDS||[]).filter(x=>!(WIN_KC&&WIN_KC[x.id]));
@@ -7387,16 +7592,18 @@ function flRender(){
   kc.forEach((x,i)=>all.push({id:x.id,r:R1,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,kc.length)),k:1}));
   rest.forEach((x,i)=>all.push({id:x.id,r:R2,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,rest.length)),k:0}));
   (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name,r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
+  const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Citizen One"}];
+  cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
   document.querySelectorAll("#view-field .fnode").forEach(n=>n.remove());
   const now=Date.now();
   for(const it of all){
     const n=document.createElement("div");
-    const isGrp=it.k===2;
-    const nm=isGrp?(it.nm||"Group"):(WIN_NAMES[it.id]||("+"+it.id));
+    const isGrp=it.k===2,isCit=it.k===3;
+    const nm=isGrp?(it.nm||"Group"):(it.nm||(WIN_NAMES[it.id]||("+"+it.id)));
     const un=isGrp?((GUNREAD[it.gid]||0)):(UNREAD[it.id]||0);
-    const on=!isGrp&&WIN_PRES&&WIN_PRES[it.id]&&now-WIN_PRES[it.id]<30000;
-    n.className="fnode"+(it.k===1?" fk":(it.k===2?" fgrp":""))+(on?" fon":"");
-    n.innerHTML='<div class="fava">'+(isGrp?"\u25C8":esc(nm).charAt(0).toUpperCase())+
+    const on=!isGrp&&!isCit&&WIN_PRES&&WIN_PRES[it.id]&&now-WIN_PRES[it.id]<30000;
+    n.className="fnode"+(it.k===1?" fk":(it.k===2?" fgrp":(it.k===3?" fcit":"")))+(on?" fon":"");
+    n.innerHTML='<div class="fava">'+(isGrp?"\u25C8":(isCit?"\uD83E\uDD16":esc(nm).charAt(0).toUpperCase()))+
       (un?'<div class="funr">'+un+'</div>':'')+
       '<div class="fdot'+(on?" on":"")+'"></div><div class="fringpulse"></div></div>'+
       '<div class="fname">'+esc(nm)+'</div>';
@@ -7408,70 +7615,8 @@ function flRender(){
 }
 function flResize(){try{const vf=$("view-field");if(vf&&vf.className.indexOf("hide")<0)flRender();}catch(e){}}
 addEventListener("resize",flResize);
-/* live mic — greet once, then always "How may I help you?" and keep listening */
-function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
-flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
-function flPickVoice(){const ws=[/female/i,/samantha/i,/zira/i,/aria/i,/jenny/i];
-  for(const w of ws){const v=FL_VOICES.find(x=>w.test(x.name));if(v)return v;}
-  return FL_VOICES.find(v=>/^en/i.test(v.lang))||null;}
-function flSpeak(txt,then){try{const u=new SpeechSynthesisUtterance(txt);
-  const v=flPickVoice();if(v){u.voice=v;u.pitch=1.06;}u.rate=1.03;
-  if(then)u.onend=then;speechSynthesis.speak(u);}catch(e){if(then)then();}}
-function flStartRec(){if(!FL_LIVE)return;
-  const S=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!S){$("flheard").textContent="voice unavailable — type below";return;}
-  FL_REC=new S();FL_REC.lang="en-NG";FL_REC.continuous=true;FL_REC.interimResults=true;
-  FL_REC.onresult=function(ev){let fin="",int="";
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
-      else int+=ev.results[i][0].transcript;}
-    if(int)$("flheard").textContent=int;
-    if(fin){$("flheard").textContent=fin;flRun(fin.trim());}};
-  FL_REC.onend=function(){if(FL_LIVE&&FL_REC)flStartRec();};
-  FL_REC.onerror=function(){};
-  try{FL_REC.start()}catch(e){}}
-function flStopRec(){if(FL_REC){const r=FL_REC;FL_REC=null;try{r.onend=null;r.stop()}catch(e){}}}
-function flSpeakListen(txt){flStopRec();
-  const est=txt.length*60+2600;
-  flSpeak(txt,function(){clearTimeout(FL_ST);flStartRec();});
-  clearTimeout(FL_ST);FL_ST=setTimeout(function(){if(FL_LIVE&&!FL_REC)flStartRec();},est);}
-function flReply(t){clearTimeout(FL_ST);flSpeakListen(t);}
-function flToggle(){FL_LIVE=!FL_LIVE;
-  $("flmic").classList.toggle("live",FL_LIVE);
-  $("flpill").classList.toggle("on",FL_LIVE);
-  $("fltype").style.display=FL_LIVE?"block":"none";
-  if(FL_LIVE){$("flheard").textContent="listening…";
-    const hr=new Date().getHours();
-    const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
-    if(!FL_GREETED){FL_GREETED=true;
-      flSpeakListen(word+" "+(ME_NAME||"Samuel")+". How are you doing today?");}
-    else flSpeakListen("How may I help you?");
-    toast("● Live — your agent is listening");}
-  else{flStopRec();clearTimeout(FL_ST);}}
-/* voice commands → REAL actions */
-function flFind(cmd){const c=cmd.toLowerCase();
-  try{for(const g of (GROUPS||[])){const gn=String(g.name||"").toLowerCase();
-    if(gn&&c.includes(gn.split(" ")[0]))return{grp:g};}}catch(e){}
-  try{for(const f of (WIN_FRIENDS||[])){const nm=String(WIN_NAMES[f.id]||"").toLowerCase();
-    if(nm&&c.includes(nm.split(" ")[0]))return{num:f.id};}}catch(e){}
-  return null;}
-function flRun(cmd){const c=cmd.toLowerCase();const t=flFind(cmd);
-  if(c.includes("how are you")){flReply("I'm doing great, "+(ME_NAME||"Samuel")+". Ready when you are. What shall I do?");return;}
-  if(c.includes("friend")){flReply("Here are your friends.");openFab();return;}
-  if(c.includes("explore")||c.includes("watch")){flReply("Here is Explore.");showTab("watch");return;}
-  if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")){flReply("Opening your chats.");showTab("chats");return;}
-  if(c.includes("update")){flReply("Here are the Updates.");showTab("status");return;}
-  if(c.includes("call")&&t&&t.num){flReply("Calling "+(WIN_NAMES[t.num]||"them")+" now.");
-    setTimeout(function(){callNum(t.num);},900);return;}
-  if(t&&t.num){flReply("Opening "+(WIN_NAMES[t.num]||"chat")+".");openChat(t.num);return;}
-  if(t&&t.grp){flReply("Opening "+(t.grp.name||"group")+".");openGroup(t.grp.id);return;}
-  if(c.includes("exam")){flReply("Opening Exam Prep.");
-    setTimeout(function(){location.href="exam.html";},900);return;}
-  if(c.includes("wallet")||c.includes("money")){flReply("Opening your wallet.");menuOpen();return;}
-  if(c.includes("call")){flReply("Who shall I call?");return;}
-  flReply("I didn't catch that. You can say call a name, open a chat, watch, updates, or exam prep.");}
-
-})();
 </script>
+
+
 </body>
 </html>
