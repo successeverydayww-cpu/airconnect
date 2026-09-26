@@ -171,7 +171,7 @@ footer a{color:#64748B}
     <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Your language — your AI agent will always speak it to you</div>
     <select id="regLang" onchange="try{localStorage.setItem('ac_lang',this.value);localStorage.removeItem('ac_langset');}catch(e){}" style="width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:8px;margin-bottom:6px;background:#fff;font-size:13px"><option value="en">English</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="fr">Français — French</option><option value="es">Español — Spanish</option><option value="pt">Português — Portuguese</option><option value="ar">العربية — Arabic</option><option value="zh">中文 — Chinese</option><option value="hi">हिन्दी — Hindi</option><option value="sw">Kiswahili — Swahili</option><option value="de">Deutsch — German</option><option value="ru">Русский — Russian</option><option value="tr">Türkçe — Turkish</option><option value="am">አማርኛ — Amharic</option><option value="so">Soomaali — Somali</option><option value="tw">Twi</option><option value="zu">isiZulu</option><option value="ef">Efịk</option><option value="ib">Ibibio</option></select>
     <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Wake-up call for your live agent — say it anywhere in the app to wake her</div>
-    <input id="wakein" placeholder="e.g. hello Premium" style="text-transform:lowercase" onchange="try{if(this.value.toLowerCase().trim())localStorage.setItem('ac_wake',this.value.toLowerCase().trim());}catch(e){}">
+    <input id="wakein" value="hello premium" placeholder="e.g. hello premium" style="text-transform:lowercase" onchange="try{if(this.value.toLowerCase().trim())localStorage.setItem('ac_wake',this.value.toLowerCase().trim());}catch(e){}">
     <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
     <button class="big blue" onclick="register()">Resume my number</button>
@@ -7407,7 +7407,7 @@ body{-webkit-font-smoothing:antialiased}
    settings drawer remains reachable from All settings (nothing is ever removed). */
 let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null;
 let AC_WAKE="";
-try{AC_WAKE=(localStorage.getItem("ac_wake")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
+try{AC_WAKE=(localStorage.getItem("ac_wake2")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
 let FL_VOICES=[];
 function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
 flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
@@ -7599,7 +7599,7 @@ function openMyPlace(){
 function closeMyPlace(){const s=$("myPlaceSheet");if(s)s.className="";}
 function flSetWake(){
   const v=prompt("Wake-up call — what will you say to wake your agent?\n(e.g. hey Grace)",AC_WAKE);
-  if(v&&v.trim()){AC_WAKE=flNorm(v.trim());try{localStorage.setItem("ac_wake",AC_WAKE);}catch(e){}
+  if(v&&v.trim()){AC_WAKE=flNorm(v.trim());try{localStorage.setItem("ac_wake2",AC_WAKE);}catch(e){}
     toast("Wake-up call set: \""+AC_WAKE+"\"");openMyPlace();}
 }
 /* ============ FIELD render (real presences + citizens) ============ */
