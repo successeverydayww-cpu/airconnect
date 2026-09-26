@@ -37,54 +37,71 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
   animation:tw 4s infinite}
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:.6}}
 
-/* ---------- nodes ---------- */
-.node{position:absolute;transform:translate(-50%,-50%);width:64px;text-align:center;cursor:pointer;
+/* ---------- nodes (v1: bigger, clearer) ---------- */
+.node{position:absolute;transform:translate(-50%,-50%);width:82px;text-align:center;cursor:pointer;
   transition:transform .25s ease}
 .node:active{transform:translate(-50%,-50%) scale(.92)}
-.ava{width:52px;height:52px;border-radius:50%;margin:0 auto;display:flex;align-items:center;
-  justify-content:center;font-weight:700;font-size:19px;position:relative;background:#16224A;
+.ava{width:62px;height:62px;border-radius:50%;margin:0 auto;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:23px;position:relative;background:#16224A;
   border:2px solid #2A3B6E}
-.t-kyc .ava{border-color:var(--gold);box-shadow:0 0 14px rgba(232,184,75,.45)}
+.t-kyc .ava{border-color:var(--gold);box-shadow:0 0 16px rgba(232,184,75,.45)}
 .t-known .ava{border-color:var(--blueL);box-shadow:0 0 10px rgba(91,141,239,.35)}
 .t-new .ava{border-color:#3A4670;opacity:.75;box-shadow:none}
 .t-flag .ava{border-color:#5A2A30;background:#120D14;color:#C98A93;opacity:.6}
 .t-citizen .ava{border-color:var(--blue);box-shadow:0 0 12px rgba(26,63,168,.55)}
-.pname{font-size:11px;margin-top:5px;color:var(--ink);white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis}
+.pname{font-size:12.5px;font-weight:600;margin-top:6px;color:var(--ink);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
 .t-new .pname{color:var(--dim)}
 .t-flag .pname{color:#9C7B80;text-decoration:line-through}
-.badge{position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;
-  background:var(--gold);color:#060B1C;font-size:10px;font-weight:800;display:flex;
+.badge{position:absolute;top:-3px;right:-3px;width:17px;height:17px;border-radius:50%;
+  background:var(--gold);color:#060B1C;font-size:11px;font-weight:800;display:flex;
   align-items:center;justify-content:center;border:2px solid var(--bg)}
-.aichip{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:8px;
-  background:var(--blue);color:#fff;border-radius:6px;padding:1px 5px;font-weight:700;letter-spacing:.5px}
-.grpch{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:8px;
-  background:#2A3B6E;color:#CBD6F5;border-radius:6px;padding:1px 5px;font-weight:700}
-.pulse{position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--gold);opacity:0}
+.aichip{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:9px;
+  background:var(--blue);color:#fff;border-radius:6px;padding:1px 6px;font-weight:700;letter-spacing:.5px}
+.grpch{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:9px;
+  background:#2A3B6E;color:#CBD6F5;border-radius:6px;padding:1px 6px;font-weight:700}
+.pulse{position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--gold);opacity:0}
 .node.ringing .pulse{animation:ringpulse 1s infinite}
 @keyframes ringpulse{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.35);opacity:0}}
-.onlineDot{position:absolute;top:-2px;left:-2px;width:11px;height:11px;border-radius:50%;
+.onlineDot{position:absolute;top:-2px;left:-2px;width:12px;height:12px;border-radius:50%;
   background:var(--ok);border:2px solid var(--bg)}
-.awake{font-size:9px;color:var(--gold);margin-top:2px;letter-spacing:.4px}
+.awake{font-size:10px;color:var(--gold);margin-top:2px;letter-spacing:.4px}
 
 /* center you */
-#you{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5}
-#you .ava{width:64px;height:64px;font-size:24px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);
-  border:3px solid var(--gold);box-shadow:0 0 24px rgba(232,184,75,.5)}
-#you .pname{font-weight:700;font-size:13px;margin-top:6px}
-#you .yring{font-size:10px;color:var(--gold);letter-spacing:.4px}
+#you{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5;cursor:pointer}
+#you .ava{width:76px;height:76px;font-size:29px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);
+  border:3px solid var(--gold);box-shadow:0 0 26px rgba(232,184,75,.5)}
+#you .pname{font-weight:700;font-size:15px;margin-top:7px}
+#you .yring{font-size:11px;color:var(--gold);letter-spacing:.4px}
 
-/* ---------- mic ---------- */
-#micbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:20;text-align:center}
-#mic{width:62px;height:62px;border-radius:50%;border:2px solid var(--gold);background:#0E1836;
-  color:var(--ink);font-size:24px;box-shadow:0 0 18px rgba(232,184,75,.25);cursor:pointer;
-  display:flex;align-items:center;justify-content:center}
-#mic.holding{background:var(--gold);color:#060B1C;transform:scale(1.06)}
-#micbar .hint{font-size:11px;color:var(--dim);margin-top:7px;letter-spacing:.4px}
+/* ---------- live mic ---------- */
+#micbar{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:25;text-align:center}
+#mic{width:70px;height:70px;border-radius:50%;border:2px solid var(--gold);background:#0E1836;
+  color:var(--ink);font-size:27px;box-shadow:0 0 22px rgba(232,184,75,.3);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s}
+#mic.live{background:var(--gold);color:#060B1C;animation:breathe 1.6s infinite}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.55)}50%{box-shadow:0 0 0 20px rgba(232,184,75,0)}}
+#micbar .hint{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.4px}
+
+/* live status pill */
+#livePill{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:26;display:none;
+  align-items:center;gap:8px;background:rgba(14,24,54,.92);border:1px solid var(--goldDim);
+  border-radius:24px;padding:7px 14px;font-size:12.5px;max-width:92%}
+#livePill.on{display:flex}
+#livePill .reddot{width:9px;height:9px;border-radius:50%;background:var(--gold);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+#livePill .heardTxt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62vw}
+#livePill .stop{background:none;border:1px solid var(--cardB);color:var(--dim);border-radius:14px;
+  font-size:11px;padding:3px 9px;cursor:pointer}
+#typeCmd{position:fixed;bottom:118px;left:50%;transform:translateX(-50%);z-index:26;display:none;
+  width:78%;max-width:340px;background:rgba(14,24,54,.94);border:1px solid var(--goldDim);
+  border-radius:24px;padding:9px 14px;color:var(--ink);font-size:14px;outline:none;text-align:center}
+#typeCmd.on{display:block}
+#typeCmd::placeholder{color:var(--dim)}
 
 /* dayline handle */
-#dayHandle{position:fixed;bottom:24px;right:16px;z-index:20;background:#0E1836;border:1px solid var(--cardB);
-  color:var(--dim);border-radius:20px;padding:8px 13px;font-size:12px;cursor:pointer}
+#dayHandle{position:fixed;bottom:26px;right:16px;z-index:20;background:#0E1836;border:1px solid var(--cardB);
+  color:var(--dim);border-radius:20px;padding:9px 14px;font-size:13px;cursor:pointer}
 #dayHandle b{color:var(--gold)}
 
 /* ---------- overlays ---------- */
@@ -101,16 +118,16 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
   z-index:30;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto}
 #place.open{transform:none}
 .phead{display:flex;align-items:center;gap:12px;padding:16px 14px 8px}
-.back{width:38px;height:38px;border-radius:50%;background:#0E1836;border:1px solid var(--cardB);
-  color:var(--ink);font-size:17px;cursor:pointer;flex:0 0 38px}
+.back{width:40px;height:40px;border-radius:50%;background:#0E1836;border:1px solid var(--cardB);
+  color:var(--ink);font-size:18px;cursor:pointer;flex:0 0 40px}
 .phead .who{flex:1;min-width:0}
-.phead .who .n{font-weight:700;font-size:16px}
+.phead .who .n{font-weight:700;font-size:17px}
 .phead .who .t{font-size:11px;color:var(--gold)}
 .rooms{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px}
 .room{background:var(--card);border:1px solid var(--cardB);border-radius:14px;padding:14px;cursor:pointer}
-.room .ic{font-size:20px}
-.room .rn{font-weight:700;font-size:13px;margin-top:7px}
-.room .rd{font-size:10.5px;color:var(--dim);margin-top:3px}
+.room .ic{font-size:21px}
+.room .rn{font-weight:700;font-size:14px;margin-top:7px}
+.room .rd{font-size:11px;color:var(--dim);margin-top:3px}
 .room.wide{grid-column:1/-1}
 .msgs{padding:4px 14px 20px}
 .m{max-width:78%;padding:9px 12px;border-radius:12px;font-size:13px;margin-top:8px;line-height:1.45}
@@ -142,19 +159,6 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
 .ev .tx{font-size:13px;margin-top:2px;line-height:1.4}
 .ev .meta{font-size:11px;color:var(--dim);margin-top:1px}
 
-/* listening */
-#listen{position:fixed;inset:0;background:rgba(4,7,18,.85);backdrop-filter:blur(8px);z-index:60;
-  display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
-#listen.on{display:flex}
-#listen .mic2{width:84px;height:84px;border-radius:50%;background:var(--gold);color:#060B1C;
-  font-size:32px;display:flex;align-items:center;justify-content:center;animation:breathe 1.4s infinite}
-@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.5)}50%{box-shadow:0 0 0 22px rgba(232,184,75,0)}}
-#listen .bars{display:flex;gap:4px;margin-top:22px;height:26px;align-items:center}
-#listen .bars i{width:4px;border-radius:3px;background:var(--gold);animation:eq .8s infinite}
-@keyframes eq{0%,100%{height:6px}50%{height:24px}}
-#listen .heard{margin-top:22px;font-size:15px;min-height:24px;color:var(--ink);text-align:center}
-#listen .hint2{margin-top:8px;font-size:11px;color:var(--dim)}
-
 /* legend */
 .legend{padding:6px 18px 26px}
 .legend .row{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:13px}
@@ -162,7 +166,7 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
   justify-content:center;font-size:13px;font-weight:700;background:#16224A}
 .legend .d{color:var(--dim);font-size:11px;margin-top:1px}
 
-#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:#0E1836;
+#toast{position:fixed;left:50%;bottom:126px;transform:translateX(-50%) translateY(20px);background:#0E1836;
   border:1px solid var(--goldDim);color:var(--ink);border-radius:14px;padding:11px 16px;font-size:13px;
   z-index:70;opacity:0;transition:all .3s;max-width:86%;text-align:center;line-height:1.45}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -174,9 +178,9 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
   <svg id="sky"></svg>
   <div id="stars"></div>
   <div id="top">
-    <div class="brand"><div class="dot"></div>AirConnect&nbsp;Field</div>
+    <div class="brand"><div class="dot"></div>AirConnect</div>
     <div style="display:flex;gap:8px;align-items:center">
-      <span class="mock">design mock v0</span>
+      <span class="mock">design mock v1</span>
       <button id="legendBtn" onclick="openLegend()">Rings</button>
     </div>
   </div>
@@ -186,12 +190,17 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
     <div class="yring">◆ owner · KYC ✔</div>
   </div>
   <div id="micbar">
-    <button id="mic" onpointerdown="holdStart(event)" onpointerup="holdEnd(event)"
-      onpointerleave="holdEnd(event)" onpointercancel="holdEnd(event)">🎙</button>
-    <div class="hint">hold &amp; speak</div>
+    <button id="mic" onclick="toggleLive()">🎙</button>
+    <div class="hint">tap to talk — live</div>
   </div>
   <button id="dayHandle" onclick="openDayline()">Dayline <b>▴</b></button>
 </div>
+
+<div id="livePill">
+  <div class="reddot"></div><div class="heardTxt" id="heardTxt">listening…</div>
+  <button class="stop" onclick="toggleLive()">stop</button>
+</div>
+<input id="typeCmd" placeholder="or type a command — call Grace" onkeydown="if(event.key==='Enter'){typed(this)}">
 
 <div id="place"></div>
 
@@ -213,14 +222,6 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
     <div class="row"><div class="sw" style="border:2px solid var(--blue)"><span style="font-size:9px">AI</span></div>
       <div><div>Citizen presence</div><div class="d">Awake AI receptionists of the mesh.</div></div></div>
   </div></div>
-</div>
-
-<div id="listen">
-  <div class="mic2">🎙</div>
-  <div class="bars"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i>
-    <i style="animation-delay:.3s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.25s"></i></div>
-  <div class="heard" id="heard"></div>
-  <div class="hint2">release to send — voice is the front door</div>
 </div>
 
 <div id="toast"></div>
@@ -247,7 +248,7 @@ let CX,CY,R1,R2;
 function layout(){
   const w=innerWidth,h=innerHeight;
   CX=w/2; CY=h*0.46;
-  R1=Math.min(w,h)*0.235; R2=Math.min(w,h)*0.40;
+  R1=Math.min(w,h)*0.245; R2=Math.min(w,h)*0.41;
   sky.setAttribute("viewBox","0 0 "+w+" "+h);
   sky.innerHTML='<circle class="ringC" cx="'+CX+'" cy="'+CY+'" r="'+R1+'"/>'+
     '<circle class="ringC" cx="'+CX+'" cy="'+CY+'" r="'+R2+'" style="opacity:.55"/>';
@@ -328,41 +329,74 @@ function openDayline(){
 function openLegend(){document.getElementById("legSheet").style.display="flex";}
 function closeSheet(id){document.getElementById(id).style.display="none";}
 
-/* ============================ voice front door ============================ */
-let SR=null,heard="",demo=0;
-const demos=["Call Grace","Send Kelechi two thousand naira","Open Exam Prep","Show my Dayline"];
-function holdStart(e){
-  e.preventDefault();
-  document.getElementById("mic").classList.add("holding");
-  document.getElementById("listen").classList.add("on");
-  document.getElementById("heard").textContent="";
-  heard="";
+/* ============================ LIVE voice front door ============================ */
+let live=false,rec=null,voices=[];
+const pill=document.getElementById("livePill"),heardEl=document.getElementById("heardTxt"),
+      micBtn=document.getElementById("mic"),typeEl=document.getElementById("typeCmd");
+function loadVoices(){try{voices=speechSynthesis.getVoices()||[]}catch(e){voices=[]}}
+loadVoices();try{speechSynthesis.onvoiceschanged=loadVoices}catch(e){}
+function pickVoice(){
+  const want=[/female/i,/samantha/i,/zira/i,/aria/i,/jenny/i,/google uk english female/i];
+  for(const w of want){const v=voices.find(x=>w.test(x.name));if(v)return v;}
+  return voices.find(v=>/^en/i.test(v.lang))||null;}
+function speak(txt,then){
+  try{const u=new SpeechSynthesisUtterance(txt);
+  const v=pickVoice(); if(v){u.voice=v;u.pitch=1.06;}
+  u.rate=1.03; if(then)u.onend=then; speechSynthesis.speak(u);}catch(e){if(then)then();}
+}
+function toggleLive(){
+  live=!live;
+  micBtn.classList.toggle("live",live);
+  pill.classList.toggle("on",live);
+  typeEl.classList.toggle("on",live);
+  if(live){
+    heardEl.textContent="listening…";
+    speak("Hello Samuel. How are you doing today?",startRec);
+    toast("● Live — your agent is listening");
+  }else{stopRec(); heardEl.textContent="listening…";}
+}
+function startRec(){
+  if(!live)return;
   const S=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(S){SR=new S();SR.lang="en-NG";SR.interimResults=true;
-    SR.onresult=function(ev){heard=[].slice.call(ev.results).map(function(r){return r[0].transcript}).join("");
-      document.getElementById("heard").textContent=heard;};
-    try{SR.start()}catch(_){}}
+  if(!S){heardEl.textContent="voice input unavailable — type below";return;}
+  rec=new S();rec.lang="en-NG";rec.continuous=true;rec.interimResults=true;
+  rec.onresult=function(ev){
+    let final="",interim="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      if(ev.results[i].isFinal)final+=ev.results[i][0].transcript;
+      else interim+=ev.results[i][0].transcript;}
+    if(interim)heardEl.textContent=interim;
+    if(final){heardEl.textContent=final;run(final.trim());}
+  };
+  rec.onend=function(){if(live&&rec)startRec();};
+  rec.onerror=function(){};
+  try{rec.start()}catch(e){}
 }
-function holdEnd(){
-  const mic=document.getElementById("mic");
-  if(!mic.classList.contains("holding"))return;
-  mic.classList.remove("holding");
-  if(SR){try{SR.stop()}catch(_){} SR=null;}
-  document.getElementById("listen").classList.remove("on");
-  const cmd=(heard||demos[demo++%demos.length]).trim();
-  run(cmd);
-}
+function stopRec(){if(rec){const r=rec;rec=null;try{r.onend=null;r.stop()}catch(e){}}}
+function typed(el){const v=el.value.trim();el.value="";if(v)run(v);}
 function run(cmd){
   const c=cmd.toLowerCase();
-  const t=presences.find(function(p){return c.includes(p.name.toLowerCase())});
-  if(c.indexOf("call")===0&&t){pulse(t);toast("📞 Calling "+t.name+"…");
-    setTimeout(function(){openPlace(t)},900); return;}
+  const t=presences.find(function(p){return c.includes(p.name.toLowerCase())||
+    (p.name==="CEF AKSU"&&c.includes("aksu"))});
+  if(c.includes("how are you")){speak("I'm doing great, Samuel. Ready when you are. What shall I do?");
+    toast("✦ I'm doing great — what shall I do?"); return;}
+  if(c.includes("call")&&t){pulse(t);
+    speak("Calling "+(t.grp?t.name:t.name)+" now.");
+    toast("📞 Calling "+t.name+"…");
+    setTimeout(function(){openPlace(t)},1100); return;}
+  if((c.includes("open")||c.includes("go to")||c.includes("show"))&&t){
+    pulse(t); speak("Opening "+t.name+".");
+    toast("✦ Opening "+t.name); openPlace(t); return;}
   if((c.includes("send")||c.includes("pay"))&&t){
     const m=c.match(/(\d[\d, ]*)/); const amt=m?m[1].trim():"2,000";
-    toast("💰 Sending ₦"+amt+" to "+t.name+" — trust chain verified ✔"); pulse(t); return;}
-  if(c.includes("exam")){toast("✦ Opening Exam Prep — 50 hard questions ready"); return;}
-  if(c.includes("dayline")||c.includes("day")){openDayline(); return;}
-  toast('✦ "'+cmd+'" — in the full build, any presence answers this');
+    pulse(t); speak("Sending "+amt+" naira to "+t.name+". Trust chain verified.");
+    toast("💰 Sending ₦"+amt+" to "+t.name+" — trust chain verified ✔"); return;}
+  if(c.includes("exam")){speak("Opening Exam Prep.");
+    toast("✦ Opening Exam Prep — 50 hard questions ready"); return;}
+  if(c.includes("dayline")||c.includes("my day")){speak("Here is your day.");
+    openDayline(); return;}
+  speak("I didn't catch that, Samuel. You can say call, open, or pay with any name.");
+  toast('✦ "'+cmd+'" — try: "Call Grace" · "Open CEF AKSU" · "Pay Kelechi 2000"');
 }
 function pulse(p){const n=document.getElementById("n"+p.name);
   if(n){n.classList.add("ringing"); setTimeout(function(){n.classList.remove("ringing")},3000);}}
