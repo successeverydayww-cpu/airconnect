@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AirConnect — The Field</title>
+<style>
+:root{
+  --bg:#060B1C; --bg2:#0B1330; --ink:#F4F7FF; --dim:#8B96B8;
+  --gold:#E8B84B; --goldDim:#7a5f2a; --blue:#1A3FA8; --blueL:#5B8DEF;
+  --bad:#B3444E; --ok:#3FBF8F;
+  --card:#0E1836; --cardB:#1C2A52;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  overflow:hidden;user-select:none}
+#field{position:fixed;inset:0;transition:transform .3s ease,opacity .3s ease}
+#field.away{transform:scale(.92);opacity:0;pointer-events:none}
+
+/* ---------- top bar ---------- */
+#top{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 14px;z-index:20}
+#top .brand{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.4px;font-size:15px}
+#top .brand .dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--blue));
+  box-shadow:0 0 12px rgba(232,184,75,.35)}
+#top .mock{font-size:10px;color:var(--dim);border:1px solid var(--cardB);border-radius:20px;padding:3px 8px}
+#legendBtn{background:none;border:1px solid var(--cardB);color:var(--dim);border-radius:20px;
+  padding:5px 10px;font-size:12px}
+
+/* ---------- rings ---------- */
+#sky{position:absolute;inset:0;width:100%;height:100%}
+.ringC{fill:none;stroke:#22335F;stroke-width:1;stroke-dasharray:2 7;opacity:.8}
+#stars{position:absolute;inset:0;pointer-events:none}
+.star{position:absolute;width:2px;height:2px;border-radius:50%;background:#3A4E86;opacity:.5;
+  animation:tw 4s infinite}
+@keyframes tw{0%,100%{opacity:.15}50%{opacity:.6}}
+
+/* ---------- nodes ---------- */
+.node{position:absolute;transform:translate(-50%,-50%);width:64px;text-align:center;cursor:pointer;
+  transition:transform .25s ease}
+.node:active{transform:translate(-50%,-50%) scale(.92)}
+.ava{width:52px;height:52px;border-radius:50%;margin:0 auto;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:19px;position:relative;background:#16224A;
+  border:2px solid #2A3B6E}
+.t-kyc .ava{border-color:var(--gold);box-shadow:0 0 14px rgba(232,184,75,.45)}
+.t-known .ava{border-color:var(--blueL);box-shadow:0 0 10px rgba(91,141,239,.35)}
+.t-new .ava{border-color:#3A4670;opacity:.75;box-shadow:none}
+.t-flag .ava{border-color:#5A2A30;background:#120D14;color:#C98A93;opacity:.6}
+.t-citizen .ava{border-color:var(--blue);box-shadow:0 0 12px rgba(26,63,168,.55)}
+.pname{font-size:11px;margin-top:5px;color:var(--ink);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.t-new .pname{color:var(--dim)}
+.t-flag .pname{color:#9C7B80;text-decoration:line-through}
+.badge{position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;
+  background:var(--gold);color:#060B1C;font-size:10px;font-weight:800;display:flex;
+  align-items:center;justify-content:center;border:2px solid var(--bg)}
+.aichip{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:8px;
+  background:var(--blue);color:#fff;border-radius:6px;padding:1px 5px;font-weight:700;letter-spacing:.5px}
+.grpch{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:8px;
+  background:#2A3B6E;color:#CBD6F5;border-radius:6px;padding:1px 5px;font-weight:700}
+.pulse{position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--gold);opacity:0}
+.node.ringing .pulse{animation:ringpulse 1s infinite}
+@keyframes ringpulse{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+.onlineDot{position:absolute;top:-2px;left:-2px;width:11px;height:11px;border-radius:50%;
+  background:var(--ok);border:2px solid var(--bg)}
+.awake{font-size:9px;color:var(--gold);margin-top:2px;letter-spacing:.4px}
+
+/* center you */
+#you{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5}
+#you .ava{width:64px;height:64px;font-size:24px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);
+  border:3px solid var(--gold);box-shadow:0 0 24px rgba(232,184,75,.5)}
+#you .pname{font-weight:700;font-size:13px;margin-top:6px}
+#you .yring{font-size:10px;color:var(--gold);letter-spacing:.4px}
+
+/* ---------- mic ---------- */
+#micbar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:20;text-align:center}
+#mic{width:62px;height:62px;border-radius:50%;border:2px solid var(--gold);background:#0E1836;
+  color:var(--ink);font-size:24px;box-shadow:0 0 18px rgba(232,184,75,.25);cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+#mic.holding{background:var(--gold);color:#060B1C;transform:scale(1.06)}
+#micbar .hint{font-size:11px;color:var(--dim);margin-top:7px;letter-spacing:.4px}
+
+/* dayline handle */
+#dayHandle{position:fixed;bottom:24px;right:16px;z-index:20;background:#0E1836;border:1px solid var(--cardB);
+  color:var(--dim);border-radius:20px;padding:8px 13px;font-size:12px;cursor:pointer}
+#dayHandle b{color:var(--gold)}
+
+/* ---------- overlays ---------- */
+.sheet{position:fixed;inset:0;background:rgba(4,7,18,.62);backdrop-filter:blur(6px);z-index:40;
+  display:flex;align-items:flex-end}
+.sheet .panel{background:linear-gradient(180deg,var(--bg2),var(--bg));border:1px solid var(--cardB);
+  border-radius:20px 20px 0 0;width:100%;max-height:82%;overflow-y:auto;padding:16px 16px 26px;
+  animation:up .28s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.grab{width:44px;height:4px;border-radius:4px;background:#2A3B6E;margin:0 auto 12px}
+
+/* place view */
+#place{position:fixed;inset:0;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);
+  z-index:30;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto}
+#place.open{transform:none}
+.phead{display:flex;align-items:center;gap:12px;padding:16px 14px 8px}
+.back{width:38px;height:38px;border-radius:50%;background:#0E1836;border:1px solid var(--cardB);
+  color:var(--ink);font-size:17px;cursor:pointer;flex:0 0 38px}
+.phead .who{flex:1;min-width:0}
+.phead .who .n{font-weight:700;font-size:16px}
+.phead .who .t{font-size:11px;color:var(--gold)}
+.rooms{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px}
+.room{background:var(--card);border:1px solid var(--cardB);border-radius:14px;padding:14px;cursor:pointer}
+.room .ic{font-size:20px}
+.room .rn{font-weight:700;font-size:13px;margin-top:7px}
+.room .rd{font-size:10.5px;color:var(--dim);margin-top:3px}
+.room.wide{grid-column:1/-1}
+.msgs{padding:4px 14px 20px}
+.m{max-width:78%;padding:9px 12px;border-radius:12px;font-size:13px;margin-top:8px;line-height:1.45}
+.m.me{background:linear-gradient(135deg,#1A3FA8,#244FBF);margin-left:auto;border-bottom-right-radius:4px}
+.m.them{background:var(--card);border:1px solid var(--cardB);border-bottom-left-radius:4px}
+.evt{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--dim);margin:12px 0 2px}
+.evt .eic{width:26px;height:26px;border-radius:50%;background:#0E1836;border:1px solid var(--cardB);
+  display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 26px}
+.evt.bad .eic{border-color:#5A2A30}
+.evt.gold .eic{border-color:var(--goldDim)}
+.pay{background:var(--card);border:1px solid var(--goldDim);border-radius:12px;padding:11px 12px;
+  font-size:12px;margin-top:8px}
+.pay .amt{font-size:17px;font-weight:800;color:var(--gold)}
+.pay .chk{color:var(--ok);font-size:11px;margin-top:4px}
+
+/* dayline */
+.dl{padding:6px 18px 30px}
+.dl h3{font-size:15px;letter-spacing:.4px;margin-bottom:2px}
+.dl .sub{font-size:11px;color:var(--dim);margin-bottom:16px}
+.river{position:relative;padding-left:22px}
+.river:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(180deg,var(--gold),#22335F)}
+.ev{position:relative;padding:0 0 20px 6px}
+.ev .dot2{position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;
+  background:var(--gold);border:2px solid var(--bg)}
+.ev.b .dot2{background:var(--bad)}
+.ev.c .dot2{background:var(--blueL)}
+.ev .tm{font-size:10px;color:var(--dim);letter-spacing:.5px}
+.ev .tx{font-size:13px;margin-top:2px;line-height:1.4}
+.ev .meta{font-size:11px;color:var(--dim);margin-top:1px}
+
+/* listening */
+#listen{position:fixed;inset:0;background:rgba(4,7,18,.85);backdrop-filter:blur(8px);z-index:60;
+  display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#listen.on{display:flex}
+#listen .mic2{width:84px;height:84px;border-radius:50%;background:var(--gold);color:#060B1C;
+  font-size:32px;display:flex;align-items:center;justify-content:center;animation:breathe 1.4s infinite}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.5)}50%{box-shadow:0 0 0 22px rgba(232,184,75,0)}}
+#listen .bars{display:flex;gap:4px;margin-top:22px;height:26px;align-items:center}
+#listen .bars i{width:4px;border-radius:3px;background:var(--gold);animation:eq .8s infinite}
+@keyframes eq{0%,100%{height:6px}50%{height:24px}}
+#listen .heard{margin-top:22px;font-size:15px;min-height:24px;color:var(--ink);text-align:center}
+#listen .hint2{margin-top:8px;font-size:11px;color:var(--dim)}
+
+/* legend */
+.legend{padding:6px 18px 26px}
+.legend .row{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:13px}
+.legend .sw{width:30px;height:30px;border-radius:50%;flex:0 0 30px;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-weight:700;background:#16224A}
+.legend .d{color:var(--dim);font-size:11px;margin-top:1px}
+
+#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:#0E1836;
+  border:1px solid var(--goldDim);color:var(--ink);border-radius:14px;padding:11px 16px;font-size:13px;
+  z-index:70;opacity:0;transition:all .3s;max-width:86%;text-align:center;line-height:1.45}
+#toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<div id="field">
+  <svg id="sky"></svg>
+  <div id="stars"></div>
+  <div id="top">
+    <div class="brand"><div class="dot"></div>AirConnect&nbsp;Field</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="mock">design mock v0</span>
+      <button id="legendBtn" onclick="openLegend()">Rings</button>
+    </div>
+  </div>
+  <div id="you" onclick="openPlace(you)">
+    <div class="ava">S</div>
+    <div class="pname">Samuel</div>
+    <div class="yring">◆ owner · KYC ✔</div>
+  </div>
+  <div id="micbar">
+    <button id="mic" onpointerdown="holdStart(event)" onpointerup="holdEnd(event)"
+      onpointerleave="holdEnd(event)" onpointercancel="holdEnd(event)">🎙</button>
+    <div class="hint">hold &amp; speak</div>
+  </div>
+  <button id="dayHandle" onclick="openDayline()">Dayline <b>▴</b></button>
+</div>
+
+<div id="place"></div>
+
+<div class="sheet" id="daySheet" style="display:none" onclick="if(event.target===this)closeSheet('daySheet')">
+  <div class="panel"><div class="grab"></div><div class="dl" id="dlBody"></div></div>
+</div>
+
+<div class="sheet" id="legSheet" style="display:none" onclick="if(event.target===this)closeSheet('legSheet')">
+  <div class="panel"><div class="grab"></div><div class="legend">
+    <h3 style="font-size:15px">Trust rings</h3>
+    <div class="row"><div class="sw" style="border:2px solid var(--gold)">G</div>
+      <div><div>Gold ring — KYC verified</div><div class="d">Face-matched ID. Their name is law.</div></div></div>
+    <div class="row"><div class="sw" style="border:2px solid var(--blueL)">K</div>
+      <div><div>Blue ring — known friend</div><div class="d">Linked &amp; trusted, not yet KYC'd.</div></div></div>
+    <div class="row"><div class="sw" style="border:2px solid #3A4670;opacity:.7">N</div>
+      <div><div>Dim edge — new contact</div><div class="d">Sits far out until they verify.</div></div></div>
+    <div class="row"><div class="sw" style="border:2px solid #5A2A30;color:#C98A93">✕</div>
+      <div><div>Dark — flagged number</div><div class="d">Scam reports. The Guardian watches them.</div></div></div>
+    <div class="row"><div class="sw" style="border:2px solid var(--blue)"><span style="font-size:9px">AI</span></div>
+      <div><div>Citizen presence</div><div class="d">Awake AI receptionists of the mesh.</div></div></div>
+  </div></div>
+</div>
+
+<div id="listen">
+  <div class="mic2">🎙</div>
+  <div class="bars"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i>
+    <i style="animation-delay:.3s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.25s"></i></div>
+  <div class="heard" id="heard"></div>
+  <div class="hint2">release to send — voice is the front door</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================ data ============================ */
+const you={name:"Samuel",ini:"S",you:true,trust:"kyc",sub:"◆ owner · KYC ✔"};
+const presences=[
+ {name:"Grace",ini:"G",ring:1,ang:-70,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
+ {name:"Chidi",ini:"C",ring:1,ang:-15,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
+ {name:"Kelechi",ini:"K",ring:1,ang:55,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
+ {name:"Mom",ini:"M",ring:1,ang:130,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
+ {name:"CEF AKSU",ini:"◈",grp:true,ring:1,ang:200,trust:"known",on:true,sub:"group · 42 members"},
+ {name:"Ada",ini:"A",ring:2,ang:20,trust:"known",on:false,sub:"known · not verified"},
+ {name:"Tunde",ini:"T",ring:2,ang:95,trust:"new",on:true,sub:"new contact"},
+ {name:"Blessing",ini:"B",ring:2,ang:170,trust:"new",on:false,sub:"new contact"},
+ {name:"Reception",ini:"R",ring:2,ang:245,ai:true,trust:"citizen",on:true,sub:"citizen · awake",awake:"awake"},
+ {name:"+234 8•• 441",ini:"✕",ring:2,ang:310,trust:"flag",on:false,sub:"flagged · 3 scam reports"}
+];
+
+/* ============================ field layout ============================ */
+const sky=document.getElementById("sky"),field=document.getElementById("field");
+let CX,CY,R1,R2;
+function layout(){
+  const w=innerWidth,h=innerHeight;
+  CX=w/2; CY=h*0.46;
+  R1=Math.min(w,h)*0.235; R2=Math.min(w,h)*0.40;
+  sky.setAttribute("viewBox","0 0 "+w+" "+h);
+  sky.innerHTML='<circle class="ringC" cx="'+CX+'" cy="'+CY+'" r="'+R1+'"/>'+
+    '<circle class="ringC" cx="'+CX+'" cy="'+CY+'" r="'+R2+'" style="opacity:.55"/>';
+  const y=document.getElementById("you"); y.style.left=CX+"px"; y.style.top=CY+"px";
+  document.querySelectorAll(".node").forEach(function(n){
+    const p=presences.find(x=>"n"+x.name===n.id); if(!p)return;
+    const r=p.ring===1?R1:R2, a=p.ang*Math.PI/180;
+    n.style.left=(CX+r*Math.cos(a))+"px";
+    n.style.top=(CY+r*Math.sin(a)*0.92)+"px";
+  });
+}
+presences.forEach(function(p){
+  const n=document.createElement("div");
+  n.className="node t-"+p.trust+(p.on?"":" off"); n.id="n"+p.name;
+  n.innerHTML='<div class="ava">'+p.ini+(p.trust==="kyc"?'<div class="badge">✔</div>':"")+
+    (p.on?'<div class="onlineDot"></div>':"")+(p.ai?'<div class="aichip">AI</div>':"")+
+    (p.grp?'<div class="grpch">GRP</div>':"")+'<div class="pulse"></div></div>'+
+    '<div class="pname">'+p.name+'</div>'+(p.awake?'<div class="awake">● '+p.awake+'</div>':"");
+  n.onclick=function(){openPlace(p)};
+  field.appendChild(n);
+});
+(function(){const s=document.getElementById("stars");
+  for(let i=0;i<34;i++){const d=document.createElement("div");d.className="star";
+    d.style.left=(Math.random()*100)+"%";d.style.top=(Math.random()*100)+"%";
+    d.style.animationDelay=(Math.random()*4)+"s";s.appendChild(d);}})();
+addEventListener("resize",layout); layout();
+
+/* ============================ places ============================ */
+const place=document.getElementById("place");
+function openPlace(p){
+  const t={kyc:["Gold ring · KYC verified","var(--gold)"],
+    known:["Blue ring · known friend","var(--blueL)"],
+    new:["Dim edge · new contact","#8B96B8"],
+    flag:["Flagged number · Guardian watching","var(--bad)"],
+    citizen:["Citizen presence · awake AI","var(--blue)"]}[p.trust];
+  const talk=p.trust==="flag"?'<div class="evt bad"><div class="eic">🛡</div>'+
+      '<div>AI Guardian answered this number at 6:12 AM.<div style="color:var(--dim)">'+
+      'Script pattern matched known scam. Blocked &amp; reported.</div></div></div>'
+    :'<div class="msgs">'+
+      '<div class="evt"><div class="eic">📞</div><div>Voice call · 7:00 AM · 4m 12s</div></div>'+
+      '<div class="m them">'+(p.ai?"Good morning, Samuel. Your 9 AM is confirmed and the day is clear.":"Morning! Did you see the update yet?")+'</div>'+
+      '<div class="m me">'+(p.ai?"Thank you. Keep the line safe today.":"Yes — v161 is live. KYC badges show everywhere now.")+'</div>'+
+      '<div class="evt gold"><div class="eic">💰</div><div>Received ₦2,000</div></div>'+
+      '<div class="pay"><div class="amt">₦2,000</div>from Kelechi · receipt name matched profile'+
+      '<div class="chk">✔ trust chain verified — evidence only, identity never overridden</div></div></div>';
+  place.innerHTML=
+    '<div class="phead">'+
+      '<button class="back" onclick="closePlace()">←</button>'+
+      '<div class="ava" style="width:46px;height:46px;flex:0 0 46px;font-size:17px;border-color:'+t[1]+'">'+p.ini+
+      (p.trust==="kyc"?'<div class="badge">✔</div>':"")+'</div>'+
+      '<div class="who"><div class="n">'+p.name+'</div><div class="t">'+t[0]+'</div></div>'+
+    '</div>'+
+    '<div class="rooms">'+
+      '<div class="room" onclick="toast(\'Talk wall — chat lives here, calls flow in time order\')"><div class="ic">💬</div><div class="rn">Talk Wall</div><div class="rd">chats &amp; calls as one stream</div></div>'+
+      '<div class="room" onclick="toast(\'Calls — ring any presence, citizen answers if you are away\')"><div class="ic">📞</div><div class="rn">Calls</div><div class="rd">voice with the mesh</div></div>'+
+      '<div class="room" onclick="toast(\'Money — wallet, transfers, trust-chain receipts\')"><div class="ic">💰</div><div class="rn">Money</div><div class="rd">wallet ₦12,450 · verified rails</div></div>'+
+      '<div class="room" onclick="toast(\'Moments — shared life, visible to your ring only\')"><div class="ic">📸</div><div class="rn">Moments</div><div class="rd">your ring, your life</div></div>'+
+      '<div class="room wide" onclick="toast(\'Places are rooms inside a person — this is the future of a chat\')"><div class="ic">✦</div><div class="rn">This is a Place</div><div class="rd">you did not open a "chat list" — you travelled to a person\'s space. A structure that has never existed.</div></div>'+
+    '</div>'+ talk;
+  place.classList.add("open"); field.classList.add("away");
+}
+function closePlace(){place.classList.remove("open"); field.classList.remove("away");}
+
+/* ============================ dayline ============================ */
+function openDayline(){
+  document.getElementById("dlBody").innerHTML=
+    '<h3>Dayline</h3><div class="sub">Saturday, 26 September — your day as a river</div>'+
+    '<div class="river">'+
+      '<div class="ev b"><div class="dot2"></div><div class="tm">06:12</div><div class="tx">🛡 Guardian blocked a flagged caller</div><div class="meta">+234 8•• 441 · scam pattern · reported</div></div>'+
+      '<div class="ev c"><div class="dot2"></div><div class="tm">07:00</div><div class="tx">📞 Call with Grace</div><div class="meta">4m 12s · crystal clear</div></div>'+
+      '<div class="ev"><div class="dot2"></div><div class="tm">07:02</div><div class="tx">💬 Grace: "See you at fellowship"</div><div class="meta">talk wall</div></div>'+
+      '<div class="ev gold"><div class="dot2"></div><div class="tm">08:15</div><div class="tx">💰 ₦2,000 received from Kelechi</div><div class="meta">receipt name matched · trust chain ✔</div></div>'+
+      '<div class="ev c"><div class="dot2"></div><div class="tm">09:30</div><div class="tx">🎙 Receptionist took a call for you</div><div class="meta">caller identified by registered name · note saved</div></div>'+
+      '<div class="ev"><div class="dot2"></div><div class="tm">Now</div><div class="tx">✦ You are in the Field</div><div class="meta">102 citizens awake · 42 members in CEF AKSU</div></div>'+
+    '</div>';
+  document.getElementById("daySheet").style.display="flex";
+}
+function openLegend(){document.getElementById("legSheet").style.display="flex";}
+function closeSheet(id){document.getElementById(id).style.display="none";}
+
+/* ============================ voice front door ============================ */
+let SR=null,heard="",demo=0;
+const demos=["Call Grace","Send Kelechi two thousand naira","Open Exam Prep","Show my Dayline"];
+function holdStart(e){
+  e.preventDefault();
+  document.getElementById("mic").classList.add("holding");
+  document.getElementById("listen").classList.add("on");
+  document.getElementById("heard").textContent="";
+  heard="";
+  const S=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(S){SR=new S();SR.lang="en-NG";SR.interimResults=true;
+    SR.onresult=function(ev){heard=[].slice.call(ev.results).map(function(r){return r[0].transcript}).join("");
+      document.getElementById("heard").textContent=heard;};
+    try{SR.start()}catch(_){}}
+}
+function holdEnd(){
+  const mic=document.getElementById("mic");
+  if(!mic.classList.contains("holding"))return;
+  mic.classList.remove("holding");
+  if(SR){try{SR.stop()}catch(_){} SR=null;}
+  document.getElementById("listen").classList.remove("on");
+  const cmd=(heard||demos[demo++%demos.length]).trim();
+  run(cmd);
+}
+function run(cmd){
+  const c=cmd.toLowerCase();
+  const t=presences.find(function(p){return c.includes(p.name.toLowerCase())});
+  if(c.indexOf("call")===0&&t){pulse(t);toast("📞 Calling "+t.name+"…");
+    setTimeout(function(){openPlace(t)},900); return;}
+  if((c.includes("send")||c.includes("pay"))&&t){
+    const m=c.match(/(\d[\d, ]*)/); const amt=m?m[1].trim():"2,000";
+    toast("💰 Sending ₦"+amt+" to "+t.name+" — trust chain verified ✔"); pulse(t); return;}
+  if(c.includes("exam")){toast("✦ Opening Exam Prep — 50 hard questions ready"); return;}
+  if(c.includes("dayline")||c.includes("day")){openDayline(); return;}
+  toast('✦ "'+cmd+'" — in the full build, any presence answers this');
+}
+function pulse(p){const n=document.getElementById("n"+p.name);
+  if(n){n.classList.add("ringing"); setTimeout(function(){n.classList.remove("ringing")},3000);}}
+
+/* ============================ toast ============================ */
+let tT=null;
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("on");
+  clearTimeout(tT); tT=setTimeout(function(){t.classList.remove("on")},3200);}
+</script>
+</body>
+</html>
