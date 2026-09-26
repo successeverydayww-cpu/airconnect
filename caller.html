@@ -247,6 +247,11 @@ body.acLive #flwrap{display:flex}
 #flwrap.active #flheard2{display:block}
 #flwrap .fltag{font-size:9.5px;color:#8B96B8;background:rgba(14,24,54,.8);border-radius:10px;padding:1px 7px}
 #view-field .fcit .fava{border-color:#8B5CF6;box-shadow:0 0 12px rgba(139,92,246,.45)}
+#view-field .fapp{position:absolute;left:12px;width:58px;text-align:center;cursor:pointer;z-index:5}
+#view-field .fappic{width:52px;height:52px;border-radius:14px;background:linear-gradient(145deg,#22356B,#101A3C);border:2px solid #3D5296;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 12px rgba(61,82,150,.35)}
+#view-field .fapp:active .fappic{transform:scale(.93)}
+.mpPanel{width:100%;max-width:430px;max-height:88vh;overflow-y:auto;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 70%);color:#F4F7FF;border-radius:22px 22px 0 0;padding:18px 16px 22px;border-top:1px solid #22335F}
+#myPlacePanel{width:100%;max-width:430px;max-height:88vh;overflow-y:auto;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 70%);color:#F4F7FF;border-radius:22px 22px 0 0;padding:18px 16px 22px;border-top:1px solid #22335F}
 #myPlaceSheet{position:fixed;inset:0;background:rgba(2,6,23,.62);z-index:80;display:none;align-items:flex-end;justify-content:center}
 #myPlaceSheet.on{display:flex}
 #myPlacePanel{width:100%;max-width:430px;max-height:88vh;overflow-y:auto;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 70%);color:#F4F7FF;border-radius:22px 22px 0 0;padding:18px 16px 22px;border-top:1px solid #22335F}
@@ -7405,15 +7410,21 @@ body{-webkit-font-smoothing:antialiased}
    which page you are on, and spoken commands drive real actions. (5) The menu is now
    MY PLACE — a spatial sheet of rooms, nothing like other apps' drawers; the classic
    settings drawer remains reachable from All settings (nothing is ever removed). */
-let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null;
+let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="";
 let AC_WAKE="";
 try{AC_WAKE=(localStorage.getItem("ac_wake2")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
 let FL_VOICES=[];
 function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
 flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
-function flPickVoice(){const ws=[/female/i,/samantha/i,/zira/i,/aria/i,/jenny/i];
-  for(const w of ws){const v=FL_VOICES.find(x=>w.test(x.name));if(v)return v;}
-  return FL_VOICES.find(v=>/^en/i.test(v.lang))||null;}
+function flMyName(){let n="";try{n=(ME_NAME||"").trim();}catch(e){}
+  if(!n){try{n=(localStorage.getItem("ac_name")||"").trim();}catch(e){}}
+  if(!n||n==="AirConnect user")return "friend";
+  return n.split(/\s+/)[0];}
+function flPickVoice(){
+  if(!FL_VOICES||!FL_VOICES.length){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
+  const pref=[/Google US English/i,/Google UK English Female/i,/Samantha/i,/Microsoft (Aria|Jenny|Zira)/i,/female/i];
+  for(const p of pref){const v=FL_VOICES.find(function(x){return p.test(x.name)&&/^en/i.test(x.lang);});if(v)return v;}
+  return FL_VOICES.find(function(v){return /^en/i.test(v.lang);})||null;}
 let FL_UTT=null,FL_TTSERR=0;
 function flShowReply(t){
   let r=$("flreply");
@@ -7426,9 +7437,12 @@ function flSpeak(txt,then){
     if(!("speechSynthesis" in window)){if(then)then();return;}
     try{speechSynthesis.cancel();}catch(e){}
     const u=new SpeechSynthesisUtterance(txt);FL_UTT=u;
-    const v=flPickVoice();if(v){u.voice=v;u.pitch=1.06;}u.rate=1.04;u.lang="en-NG";
-    u.onerror=function(ev){if(FL_TTSERR<2){FL_TTSERR++;toast("voice hiccup: "+((ev&&ev.error)||"?")+" — my replies now show on screen");}};
-    if(then)u.onend=then;
+    const v=flPickVoice();if(v){u.voice=v;u.lang=v.lang;}
+    u.pitch=1.04;u.rate=1.0;
+    u.onerror=function(ev){if(FL_TTSERR<2){FL_TTSERR++;toast("voice hiccup: "+((ev&&ev.error)||"?")+" — my replies now show on screen");}}
+    FL_TALKING=true;
+    u.onend=function(){FL_TALKING=false;if(then)then();};
+    setTimeout(function(){FL_TALKING=false;},(txt.length*70)+2500);
     speechSynthesis.speak(u);
   }catch(e){if(then)then();}}
 function flHeard2(t){const e=$("flheard2");if(e)e.textContent=t;}
@@ -7445,14 +7459,17 @@ function flStartSR(){
   const S=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!S){toast("Voice not supported on this browser — type commands in the Field");return;}
   try{FL_SR=new S();}catch(e){return;}
-  FL_SR.lang="en-NG";FL_SR.continuous=true;FL_SR.interimResults=true;
+  FL_SR.lang="en-US";FL_SR.continuous=true;FL_SR.interimResults=true;
   FL_SR.onresult=function(ev){let fin="",int="";
+    if(FL_TALKING)return;
     for(let i=ev.resultIndex;i<ev.results.length;i++){
       if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
       else int+=ev.results[i][0].transcript;}
     if(int)flHeard2(int);
+    if(int&&FL_MODE==="active")flFastCmd(int);
     if(fin.trim()){flHeard2(fin.trim());
-      if(FL_MODE==="wake"){flWakeCheck(fin.trim());}
+      if(FL_MODE==="wake"){flWakeCheck(FL_ROLL+" "+fin.trim());FL_ROLL=fin.trim();
+        setTimeout(function(){if(FL_MODE==="wake")FL_ROLL="";},2500);}
       else if(FL_MODE==="active"){flArmIdle();flRun(fin.trim());}}};
   FL_SR.onerror=function(e){
     const err=e&&e.error;
@@ -7476,19 +7493,28 @@ function flWakeCheck(t){
   const c=flNorm(t),w=flNorm(AC_WAKE);
   const parts=w.split(/\s+/).filter(Boolean);
   const hit=(parts.length&&parts.every(function(p){return p.length>2&&c.includes(p);}));
-  if(hit)flActivate("Yes, "+(ME_NAME||"Samuel")+"?");
+  if(hit)flActivate("Yes, "+flMyName()+"? How can I help you?");
 }
 function flArmIdle(){clearTimeout(FL_IDLE);
   FL_IDLE=setTimeout(function(){if(FL_MODE==="active"){FL_MODE="wake";flUI();
     flSpeak("Going back to standby. Say "+AC_WAKE+" anytime.");}},45000);}
+function flFastCmd(intext){
+  if(FL_MODE!=="active"||FL_TALKING)return;
+  const c=flNorm(intext);
+  const quick=["go home","home","explore","watch","wallet","money","updates","chats","exam","profile","my place","menu","settings","call log","calls","where am i","go to sleep","stop listening","how are you"];
+  for(const k of quick){if(c.includes(k)&&!FL_FAST[k]){FL_FAST[k]=1;flArmIdle();flRun(c);return;}}
+  if(c.includes("call ")||c.includes("open ")){const t=flFind(c);
+    if(t){const key=t.num||("g"+(t.grp&&t.grp.id));
+      if(!FL_FAST[key]){FL_FAST[key]=1;flArmIdle();flRun(c);return;}}}
+}
 function flActivate(greet){
   const wasOff=(FL_MODE==="off");
-  FL_MODE="active";flStartSR();flUI();flArmIdle();
+  FL_MODE="active";FL_FAST={};FL_ROLL="";flStartSR();flUI();flArmIdle();
   if(greet){
     if(!FL_GREETED){FL_GREETED=true;
       const hr=new Date().getHours();
       const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
-      flSpeak(word+" "+(ME_NAME||"Samuel")+". How are you doing today?");}
+      flSpeak(word+" "+flMyName()+". I am always live now. How are you doing today?");}
     else flSpeak(greet);
   }
   if(wasOff)toast("● Live agent active");
@@ -7545,7 +7571,7 @@ function flFind(cmd){
   return null;}
 function flRun(cmd){
   const c=flNorm(cmd);const t=flFind(cmd);
-  if(c.includes("how are you")){flSpeak("I'm doing great, "+(ME_NAME||"Samuel")+". Ready when you are. What shall I do?");return;}
+  if(c.includes("how are you")){flSpeak("I am doing great, "+flMyName()+". Always live and ready. What shall I do for you?");return;}
   if(c.includes("where am i")||c.includes("what page")||c.includes("explain this")||c.includes("where am i now")){flSpeak("You are on "+flCtxName()+". Tell me what to do.");return;}
   if(c.includes("go to sleep")||c.includes("stop listening")||c.includes("sleep now")){flSleep();return;}
   if(c.includes("home")||c.includes("the field")||c.includes("go home")){flSpeak("Home.");showTab("field");return;}
@@ -7602,6 +7628,21 @@ function flSetWake(){
   if(v&&v.trim()){AC_WAKE=flNorm(v.trim());try{localStorage.setItem("ac_wake2",AC_WAKE);}catch(e){}
     toast("Wake-up call set: \""+AC_WAKE+"\"");openMyPlace();}
 }
+function openMiniApps(){
+  let sh=$("miniAppsSheet");
+  if(!sh){sh=document.createElement("div");sh.id="miniAppsSheet";
+    sh.style.cssText="position:fixed;inset:0;background:rgba(2,6,23,.62);z-index:80;display:none;align-items:flex-end;justify-content:center";
+    sh.onclick=function(e){if(e.target===sh)closeMiniApps();};
+    document.body.appendChild(sh);}
+  sh.innerHTML='<div class="mpPanel">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="font-weight:700;font-size:16px">🧩 Mini Apps</div><button onclick="closeMiniApps()" style="background:rgba(14,24,54,.85);border:1px solid #1C2A52;color:#F4F7FF;border-radius:12px;padding:6px 12px;font-size:12px">close</button></div>'+
+    '<div style="font-size:10.5px;color:#8B96B8;margin:0 0 10px">Apps that live inside AirConnect, on their own ring. Every app passes our terms and review.</div>'+
+    '<div class="mpGrid">'+
+    '<div class="mpRoom" onclick="location.href=\'exam.html\'"><span class="mi">🎓</span><span>Exam Prep<div class="mpSub">by AirConnect · 50 hard questions · all JAMB subjects</div></span></div>'+
+    '<div class="mpRoom" onclick="location.href=\'miniapps.html\'"><span class="mi">➕</span><span>Your app here<div class="mpSub">developers · terms & review process</div></span></div>'+
+    '</div></div>';
+  sh.style.display="flex";}
+function closeMiniApps(){const sh=$("miniAppsSheet");if(sh)sh.style.display="none";}
 /* ============ FIELD render (real presences + citizens) ============ */
 function flRender(){
   const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.46;
@@ -7631,6 +7672,17 @@ function flRender(){
   (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name,r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
   const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Citizen One"}];
   cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
+  const apps=[{ic:"\uD83C\uDF93",nm:"Exam Prep",go:function(){location.href="exam.html";}},
+              {ic:"\uD83E\uDDE9",nm:"Mini Apps",go:function(){openMiniApps();}}];
+  apps.forEach(function(a,i){
+    let t=$("fapp"+i);
+    if(!t){t=document.createElement("div");t.id="fapp"+i;t.className="fapp";
+      t.innerHTML='<div class="fappic"></div><div class="fname"></div>';
+      t.onclick=a.go;$("view-field").appendChild(t);}
+    t.querySelector(".fappic").textContent=a.ic;
+    t.querySelector(".fname").textContent=a.nm;
+    t.style.top=((cy-64)+i*88)+"px";
+  });
   document.querySelectorAll("#view-field .fnode").forEach(n=>n.remove());
   const now=Date.now();
   for(const it of all){
