@@ -7454,6 +7454,9 @@ function flUI(){
   const tag=w?w.querySelector(".fltag"):null;
   if(tag)tag.textContent=FL_MODE==="active"?"● live · say anything":("● always live · say \""+AC_WAKE+"\"");
   const m=$("flmic");if(m)m.classList.toggle("live",FL_MODE==="active");
+  const ti=$("fltype");
+  if(ti){const vf=$("view-field");
+    ti.style.display=(FL_MODE==="active"&&vf&&vf.className.indexOf("hide")<0)?"block":"none";}
 }
 function flStartSR(){
   if(FL_SR)return;
