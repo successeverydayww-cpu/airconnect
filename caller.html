@@ -171,7 +171,7 @@ footer a{color:#64748B}
     <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Your language — your AI agent will always speak it to you</div>
     <select id="regLang" onchange="try{localStorage.setItem('ac_lang',this.value);localStorage.removeItem('ac_langset');}catch(e){}" style="width:100%;padding:9px;border:1px solid #CBD5E1;border-radius:8px;margin-bottom:6px;background:#fff;font-size:13px"><option value="en">English</option><option value="yo">Yorùbá</option><option value="ig">Igbo</option><option value="ha">Hausa</option><option value="pcm">Nigerian Pidgin</option><option value="fr">Français — French</option><option value="es">Español — Spanish</option><option value="pt">Português — Portuguese</option><option value="ar">العربية — Arabic</option><option value="zh">中文 — Chinese</option><option value="hi">हिन्दी — Hindi</option><option value="sw">Kiswahili — Swahili</option><option value="de">Deutsch — German</option><option value="ru">Русский — Russian</option><option value="tr">Türkçe — Turkish</option><option value="am">አማርኛ — Amharic</option><option value="so">Soomaali — Somali</option><option value="tw">Twi</option><option value="zu">isiZulu</option><option value="ef">Efịk</option><option value="ib">Ibibio</option></select>
     <div style="font-size:11.5px;color:#64748B;margin:10px 0 4px;text-align:center">Wake-up call for your live agent — say it anywhere in the app to wake her</div>
-    <input id="wakein" placeholder="e.g. hey Grace" style="text-transform:lowercase" onchange="try{if(this.value.toLowerCase().trim())localStorage.setItem('ac_wake',this.value.toLowerCase().trim());}catch(e){}">
+    <input id="wakein" placeholder="e.g. hello Premium" style="text-transform:lowercase" onchange="try{if(this.value.toLowerCase().trim())localStorage.setItem('ac_wake',this.value.toLowerCase().trim());}catch(e){}">
     <div style="font-size:11.5px;color:#64748B;margin:10px 0;text-align:center">— or resume an existing number —</div>
     <input id="oldnum" placeholder="(optional) existing number to resume">
     <button class="big blue" onclick="register()">Resume my number</button>
@@ -231,6 +231,11 @@ footer a{color:#64748B}
 #view-field .fhint{position:fixed;bottom:7px;left:0;right:0;text-align:center;font-size:10.5px;color:#8B96B8;z-index:66}
 
 /* v163: always-live wake agent orb + My Place menu */
+
+#flreply{display:none;max-width:72vw;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;color:#F4F7FF;border-radius:16px;border-bottom-right-radius:4px;padding:8px 12px;font-size:12.5px;line-height:1.4;white-space:normal}
+#flreply.on{display:block}
+#florb.err{border-color:#EF4444;animation:none}
+
 #flwrap{position:fixed;right:14px;bottom:82px;z-index:88;display:none;flex-direction:column;align-items:flex-end;gap:6px}
 body.acLive #flwrap{display:flex}
 #florb{width:54px;height:54px;border-radius:50%;border:2px solid #8B96B8;background:#0E1836;color:#F4F7FF;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(2,6,23,.35);position:relative}
@@ -7402,16 +7407,30 @@ body{-webkit-font-smoothing:antialiased}
    settings drawer remains reachable from All settings (nothing is ever removed). */
 let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null;
 let AC_WAKE="";
-try{AC_WAKE=(localStorage.getItem("ac_wake")||"").trim()||"grace";}catch(e){AC_WAKE="grace";}
+try{AC_WAKE=(localStorage.getItem("ac_wake")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
 let FL_VOICES=[];
 function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
 flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
 function flPickVoice(){const ws=[/female/i,/samantha/i,/zira/i,/aria/i,/jenny/i];
   for(const w of ws){const v=FL_VOICES.find(x=>w.test(x.name));if(v)return v;}
   return FL_VOICES.find(v=>/^en/i.test(v.lang))||null;}
-function flSpeak(txt,then){try{const u=new SpeechSynthesisUtterance(txt);
-  const v=flPickVoice();if(v){u.voice=v;u.pitch=1.06;}u.rate=1.03;
-  if(then)u.onend=then;speechSynthesis.speak(u);}catch(e){if(then)then();}}
+let FL_UTT=null,FL_TTSERR=0;
+function flShowReply(t){
+  let r=$("flreply");
+  if(!r){r=document.createElement("div");r.id="flreply";$("flwrap").appendChild(r);}
+  r.textContent=t;r.className="on";
+  clearTimeout(r._t);r._t=setTimeout(function(){r.className="";},7000);}
+function flSpeak(txt,then){
+  flShowReply(txt);
+  try{
+    if(!("speechSynthesis" in window)){if(then)then();return;}
+    try{speechSynthesis.cancel();}catch(e){}
+    const u=new SpeechSynthesisUtterance(txt);FL_UTT=u;
+    const v=flPickVoice();if(v){u.voice=v;u.pitch=1.06;}u.rate=1.04;u.lang="en-NG";
+    u.onerror=function(ev){if(FL_TTSERR<2){FL_TTSERR++;toast("voice hiccup: "+((ev&&ev.error)||"?")+" — my replies now show on screen");}};
+    if(then)u.onend=then;
+    speechSynthesis.speak(u);
+  }catch(e){if(then)then();}}
 function flHeard2(t){const e=$("flheard2");if(e)e.textContent=t;}
 function flUI(){
   const o=$("florb");if(!o)return;
@@ -7436,9 +7455,17 @@ function flStartSR(){
       if(FL_MODE==="wake"){flWakeCheck(fin.trim());}
       else if(FL_MODE==="active"){flArmIdle();flRun(fin.trim());}}};
   FL_SR.onerror=function(e){
-    if(e&&(e.error==="not-allowed"||e.error==="service-not-allowed")){
+    const err=e&&e.error;
+    if(err==="not-allowed"||err==="service-not-allowed"){
       FL_MODE="off";try{if(FL_SR){FL_SR.onend=null;FL_SR.stop();}}catch(_){}
-      FL_SR=null;flUI();toast("Allow microphone access to wake your live agent");}
+      FL_SR=null;flUI();
+      const o=$("florb");if(o)o.classList.add("err");
+      toast("Microphone blocked — tap the orb and Allow the mic, then say "+AC_WAKE);
+      try{localStorage.setItem("ac_live","0");}catch(_){}
+    }else if(err==="network"||err==="audio-capture"){
+      try{if(FL_SR){FL_SR.onend=null;FL_SR.stop();}}catch(_){}
+      FL_SR=null;setTimeout(function(){flStartSR();},800);
+    }
   };
   FL_SR.onend=function(){if(FL_MODE!=="off"){FL_SR=null;setTimeout(function(){flStartSR();},400);}else{FL_SR=null;}};
   try{FL_SR.start()}catch(e){}
@@ -7448,7 +7475,7 @@ function flNorm(t){return String(t).toLowerCase().replace(/[^a-z0-9\s]/g," ");}
 function flWakeCheck(t){
   const c=flNorm(t),w=flNorm(AC_WAKE);
   const parts=w.split(/\s+/).filter(Boolean);
-  const hit=parts.some(function(p){return p.length>2&&c.includes(p);})||c.includes(w);
+  const hit=(parts.length&&parts.every(function(p){return p.length>2&&c.includes(p);}));
   if(hit)flActivate("Yes, "+(ME_NAME||"Samuel")+"?");
 }
 function flArmIdle(){clearTimeout(FL_IDLE);
@@ -7473,7 +7500,7 @@ function flSleep(silent){
   if(!silent&&was!=="off")flSpeak("Sleeping. Tap me anytime.");
 }
 function flOrbTap(){
-  if(FL_MODE==="off"){FL_MODE="wake";flStartSR();flUI();
+  if(FL_MODE==="off"){FL_MODE="wake";flLiveOn();flStartSR();flUI();
     toast("● Always live — say \""+AC_WAKE+"\" anytime");}
   else if(FL_MODE==="wake"){flActivate("I'm listening.");}
   else{FL_MODE="wake";flUI();flSpeak("Back to standby. Say "+AC_WAKE+" anytime.");}
@@ -7485,12 +7512,21 @@ function flBoot(){
     const tg=document.createElement("div");tg.className="fltag";w.appendChild(tg);}
   try{const wi=$("wakein");if(wi&&wi.value.trim())AC_WAKE=flNorm(wi.value.trim());}catch(e){}
   flUI();
-  if(FL_MODE==="off"&&$("app")&&$("app").className.indexOf("hide")<0){FL_MODE="wake";flStartSR();flUI();}
+  let live=0;try{live=localStorage.getItem("ac_live")==="1";}catch(e){}
+  if(live&&FL_MODE==="off"&&$("app")&&$("app").className.indexOf("hide")<0){FL_MODE="wake";flStartSR();flUI();}
 }
+function flLiveOn(){try{localStorage.setItem("ac_live","1");}catch(e){}}
+function flVoiceCheck(){
+  const S=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let mic="unknown";
+  try{navigator.permissions.query({name:"microphone"}).then(function(p){mic=p.state;
+    toast("voice check — mic "+mic+" · SR "+(S?"ok":"unsupported")+" · "+FL_VOICES.length+" voices · mode "+FL_MODE);
+  })}catch(e){toast("voice check — SR "+(S?"ok":"unsupported")+" · "+FL_VOICES.length+" voices · mode "+FL_MODE);}
+  flSpeak("Hello. "+AC_WAKE+" is my wake-up call. Can you hear me now?");}
 /* field mic: instant active mode with the once-per-session greeting */
 function flMic(){
   if(FL_MODE==="active"){FL_MODE="wake";flUI();flSpeak("Back to standby.");return;}
-  flActivate(FL_GREETED?"How may I help you?":null);
+  flLiveOn();flActivate(FL_GREETED?"How may I help you?":null);
 }
 /* ============ context + commands (real actions, any page) ============ */
 function flCtxName(){
@@ -7545,7 +7581,8 @@ function openMyPlace(){
     ["⭐","Skills","citizen skills marketplace",function(){closeMyPlace();try{skillOpen();}catch(e){toast("Open a citizen chat for skills");}}],
     ["🛡","Verify identity","KYC \u2714 badge · face-match",function(){closeMyPlace();try{kycSheet();}catch(e){}}],
     ["🔐","Recovery phrase","your account forever key",function(){closeMyPlace();try{showMyPhrase();}catch(e){}}],
-    ["⚙","All settings","the full classic drawer",function(){closeMyPlace();try{menuOpen();}catch(e){}}]];
+    ["⚙","All settings","the full classic drawer",function(){closeMyPlace();try{menuOpen();}catch(e){}}],
+    ["🎙","Voice check","test her voice + diagnostics",function(){closeMyPlace();flVoiceCheck();}]];
   p.innerHTML='<div class="mpHead"><div class="mpAva">'+esc(String(nm).charAt(0).toUpperCase())+'</div>'+
     '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:16px">'+esc(nm)+'<span style="color:#E8B84B;font-size:12px">'+kyc+'</span></div>'+
     '<div style="font-size:12px;color:#8B96B8">'+esc(nmnum)+'</div></div>'+
