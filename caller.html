@@ -231,6 +231,7 @@ footer a{color:#64748B}
 #view-field .fhint{position:fixed;bottom:7px;left:0;right:0;text-align:center;font-size:10.5px;color:#8B96B8;z-index:66}
 
 /* v163: always-live wake agent orb + My Place menu */
+@keyframes flspot{0%,100%{opacity:.95}50%{opacity:.4}}
 
 #flreply{display:none;max-width:72vw;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;color:#F4F7FF;border-radius:16px;border-bottom-right-radius:4px;padding:8px 12px;font-size:12.5px;line-height:1.4;white-space:normal}
 #flreply.on{display:block}
@@ -7410,7 +7411,7 @@ body{-webkit-font-smoothing:antialiased}
    which page you are on, and spoken commands drive real actions. (5) The menu is now
    MY PLACE — a spatial sheet of rooms, nothing like other apps' drawers; the classic
    settings drawer remains reachable from All settings (nothing is ever removed). */
-let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="";
+let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="",FL_PEND="",FL_PENDT=null,FL_DUP={};
 let AC_WAKE="";
 try{AC_WAKE=(localStorage.getItem("ac_wake2")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
 let FL_VOICES=[];
@@ -7442,7 +7443,7 @@ function flSpeak(txt,then){
     u.onerror=function(ev){if(FL_TTSERR<2){FL_TTSERR++;toast("voice hiccup: "+((ev&&ev.error)||"?")+" — my replies now show on screen");}}
     FL_TALKING=true;
     u.onend=function(){FL_TALKING=false;if(then)then();};
-    setTimeout(function(){FL_TALKING=false;},(txt.length*70)+2500);
+    setTimeout(function(){FL_TALKING=false;},Math.max(3500,(txt.length*80)+2500));
     speechSynthesis.speak(u);
   }catch(e){if(then)then();}}
 function flHeard2(t){const e=$("flheard2");if(e)e.textContent=t;}
@@ -7466,11 +7467,12 @@ function flStartSR(){
       if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
       else int+=ev.results[i][0].transcript;}
     if(int)flHeard2(int);
-    if(int&&FL_MODE==="active")flFastCmd(int);
+    if(int&&FL_MODE==="wake"&&flWakeHit(int))flActivate(flGreetLine());
+    if(int&&FL_MODE==="active")flStableRun(int);
     if(fin.trim()){flHeard2(fin.trim());
       if(FL_MODE==="wake"){flWakeCheck(FL_ROLL+" "+fin.trim());FL_ROLL=fin.trim();
         setTimeout(function(){if(FL_MODE==="wake")FL_ROLL="";},2500);}
-      else if(FL_MODE==="active"){flArmIdle();flRun(fin.trim());}}};
+      else if(FL_MODE==="active"){clearTimeout(FL_PENDT);FL_PEND="";flExec(fin.trim());}}};
   FL_SR.onerror=function(e){
     const err=e&&e.error;
     if(err==="not-allowed"||err==="service-not-allowed"){
@@ -7489,34 +7491,42 @@ function flStartSR(){
 }
 function flStopSR(){if(FL_SR){const r=FL_SR;FL_SR=null;try{r.onend=null;r.stop()}catch(e){}}}
 function flNorm(t){return String(t).toLowerCase().replace(/[^a-z0-9\s]/g," ");}
-function flWakeCheck(t){
+function flWakeHit(t){
   const c=flNorm(t),w=flNorm(AC_WAKE);
   const parts=w.split(/\s+/).filter(Boolean);
-  const hit=(parts.length&&parts.every(function(p){return p.length>2&&c.includes(p);}));
-  if(hit)flActivate("Yes, "+flMyName()+"? How can I help you?");
+  return !!(parts.length&&parts.every(function(p){return p.length>2&&c.includes(p);}));
+}
+function flGreetLine(){
+  const hr=new Date().getHours();
+  const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
+  return word+", "+flMyName()+". How may I help you today?";
+}
+function flWakeCheck(t){
+  if(flWakeHit(t))flActivate(flGreetLine());
 }
 function flArmIdle(){clearTimeout(FL_IDLE);
   FL_IDLE=setTimeout(function(){if(FL_MODE==="active"){FL_MODE="wake";flUI();
     flSpeak("Going back to standby. Say "+AC_WAKE+" anytime.");}},45000);}
-function flFastCmd(intext){
+/* v167 (his review): she lets you FINISH. A command runs when your voice has
+   paused for ~0.7s (stability window) or when the final transcript lands — never
+   mid-sentence. Duplicate transcripts within 3.5s never fire twice. */
+function flStableRun(txt){
   if(FL_MODE!=="active"||FL_TALKING)return;
-  const c=flNorm(intext);
-  const quick=["go home","home","explore","watch","wallet","money","updates","chats","exam","profile","my place","menu","settings","call log","calls","where am i","go to sleep","stop listening","how are you"];
-  for(const k of quick){if(c.includes(k)&&!FL_FAST[k]){FL_FAST[k]=1;flArmIdle();flRun(c);return;}}
-  if(c.includes("call ")||c.includes("open ")){const t=flFind(c);
-    if(t){const key=t.num||("g"+(t.grp&&t.grp.id));
-      if(!FL_FAST[key]){FL_FAST[key]=1;flArmIdle();flRun(c);return;}}}
+  clearTimeout(FL_PENDT);FL_PEND=txt;
+  FL_PENDT=setTimeout(function(){
+    if(FL_MODE==="active"&&FL_PEND){FL_PEND="";flExec(txt);}
+  },700);
+}
+function flExec(txt){
+  const c=flNorm(txt),now=Date.now();
+  if(FL_DUP[c]&&now-FL_DUP[c]<3500)return;
+  FL_DUP[c]=now;
+  flArmIdle();flRun(txt);
 }
 function flActivate(greet){
   const wasOff=(FL_MODE==="off");
-  FL_MODE="active";FL_FAST={};FL_ROLL="";flStartSR();flUI();flArmIdle();
-  if(greet){
-    if(!FL_GREETED){FL_GREETED=true;
-      const hr=new Date().getHours();
-      const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
-      flSpeak(word+" "+flMyName()+". I am always live now. How are you doing today?");}
-    else flSpeak(greet);
-  }
+  FL_MODE="active";FL_FAST={};FL_ROLL="";FL_PEND="";clearTimeout(FL_PENDT);flStartSR();flUI();flArmIdle();
+  if(greet)flSpeak(greet);
   if(wasOff)toast("● Live agent active");
 }
 function flSleep(silent){
@@ -7552,7 +7562,9 @@ function flVoiceCheck(){
 /* field mic: instant active mode with the once-per-session greeting */
 function flMic(){
   if(FL_MODE==="active"){FL_MODE="wake";flUI();flSpeak("Back to standby.");return;}
-  flLiveOn();flActivate(FL_GREETED?"How may I help you?":null);
+  flLiveOn();
+  flActivate(FL_GREETED?"How may I help you today?":flGreetLine());
+  FL_GREETED=true;
 }
 /* ============ context + commands (real actions, any page) ============ */
 function flCtxName(){
@@ -7571,8 +7583,10 @@ function flFind(cmd){
   return null;}
 function flRun(cmd){
   const c=flNorm(cmd);const t=flFind(cmd);
+  if(c.includes("passphrase")||c.includes("pass phrase")||(c.includes("phrase")&&(c.includes("how do i")||c.includes("how can i")||c.includes("get my")||c.includes("where is")))){flWalkPhrase();return;}
+  if((c.includes("call")||c.includes("talk to")||c.includes("speak to"))&&c.includes("premium user")){flSpeak("Calling Premium User now.");setTimeout(function(){location.href="skylar.html";},1200);return;}
   if(c.includes("how are you")){flSpeak("I am doing great, "+flMyName()+". Always live and ready. What shall I do for you?");return;}
-  if(c.includes("where am i")||c.includes("what page")||c.includes("explain this")||c.includes("where am i now")){flSpeak("You are on "+flCtxName()+". Tell me what to do.");return;}
+  if(c.includes("where am i")||c.includes("what page")||c.includes("what is this")||c.includes("meaning of this")||c.includes("explain this")||c.includes("explain this page")){flExplain();return;}
   if(c.includes("go to sleep")||c.includes("stop listening")||c.includes("sleep now")){flSleep();return;}
   if(c.includes("home")||c.includes("the field")||c.includes("go home")){flSpeak("Home.");showTab("field");return;}
   if(c.includes("friend")){flSpeak("Here are your friends.");openFab();return;}
@@ -7581,15 +7595,60 @@ function flRun(cmd){
   if(c.includes("update")||c.includes("status")){flSpeak("Here are the Updates.");showTab("status");return;}
   if(c.includes("call log")||c.includes("dayline")||c.includes("my day")||c.includes("calls")){flSpeak("Here are your calls.");showTab("calls");return;}
   if(c.includes("wallet")||c.includes("money")||c.includes("balance")){flSpeak("Opening your wallet.");try{walShow();}catch(e){menuOpen();}return;}
-  if(c.includes("profile")||c.includes("my place")||c.includes("menu")||c.includes("settings")&&c.includes("open")){flSpeak("Opening My Place.");openMyPlace();return;}
+  if(c.includes("my profile")||c.includes("open profile")){flSpeak("Opening your profile — here it is.");setTimeout(function(){try{openProfileSheet();}catch(e){openMyPlace();}},800);return;}
+  if(c.includes("profile")||c.includes("my place")||c.includes("menu")||(c.includes("settings")&&c.includes("open"))){flSpeak("Opening My Place.");setTimeout(function(){openMyPlace();},800);return;}
   if(c.includes("settings")){flSpeak("Opening settings.");menuOpen();return;}
   if(c.includes("exam")){flSpeak("Opening Exam Prep.");setTimeout(function(){location.href="exam.html";},900);return;}
-  if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+" now.");
-    setTimeout(function(){callNum(t.num);},900);return;}
-  if(t&&t.num){flSpeak("Opening "+(WIN_NAMES[t.num]||"their chat")+".");openChat(t.num);return;}
+  if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+" now — one moment.");
+    setTimeout(function(){callNum(t.num);},1100);return;}
+  if(t&&t.num){flSpeak("Opening "+(WIN_NAMES[t.num]||"their chat")+" — here it is.");openChat(t.num);return;}
   if(t&&t.grp){flSpeak("Opening "+(t.grp.name||"group")+".");openGroup(t.grp.id);return;}
   if(c.includes("call")){flSpeak("Who shall I call?");return;}
   flSpeak("I didn't catch that. You can say call a name, open a chat, home, explore, updates, wallet, or exam prep.");}
+/* ============ v167: VISIBLE HANDS — she moves the screen like you would ============ */
+function flSpot(el,dur){
+  if(!el)return;
+  try{el.scrollIntoView({behavior:"smooth",block:"center"});}catch(e){}
+  let sp=$("flspot");
+  if(!sp){sp=document.createElement("div");sp.id="flspot";document.body.appendChild(sp);}
+  const r=el.getBoundingClientRect();
+  sp.style.cssText="position:fixed;left:"+(r.left-6)+"px;top:"+(r.top-6)+"px;width:"+(r.width+12)+"px;height:"+(r.height+12)+"px;border:3px solid #E8B84B;border-radius:14px;box-shadow:0 0 18px rgba(232,184,75,.65);z-index:95;pointer-events:none;display:block;animation:flspot 1s infinite";
+  clearTimeout(sp._t);sp._t=setTimeout(function(){sp.style.display="none";},dur||2600);
+}
+function flExplain(){
+  const t=window.FL_CTX||"chats";
+  const D={field:"This is your Field — your home in AirConnect. You are at the center, the people you trust orbit around you, and the docks take you everywhere: Friends, Explore, Chats, Updates, Wallet and Profile.",
+  chats:"This is your Chats list — every conversation, the most recent on top.",
+  watch:"This is Explore — the Watch feed of channels, videos and posts from around AirConnect.",
+  status:"These are Updates — what your circle has shared in the last 24 hours.",
+  calls:"This is your Calls history — the last 7 days of calls.",
+  settings:"This is Settings — your account, privacy and preferences."};
+  let d=D[t]||("This is "+flCtxName()+".");
+  try{if(typeof CHAT_OPEN!=="undefined"&&CHAT_OPEN)d="You are inside the chat with "+(WIN_NAMES[CHAT_OPEN]||("+"+CHAT_OPEN))+". Type, speak, call or pay from here.";}catch(e){}
+  flSpeak(d);
+}
+function flWalkPhrase(){
+  flSpeak("Of course, "+flMyName()+". Let me show you step by step — watch the screen move with me.");
+  setTimeout(function(){
+    openMyPlace();
+    setTimeout(function(){
+      let room=null;
+      try{document.querySelectorAll("#myPlacePanel .mpRoom").forEach(function(r){if(r.textContent.indexOf("Recovery phrase")>=0)room=r;});}catch(e){}
+      if(room)flSpot(room,2400);
+      flSpeak("First — I have opened your Place. See the Recovery phrase room lighting up? I will tap it for you now.");
+      setTimeout(function(){
+        try{closeMyPlace();showMyPhrase();}catch(e){}
+        setTimeout(function(){
+          let ph=null;
+          try{ph=document.querySelector("[id*=hrase]");}catch(e){}
+          if(!ph){try{ph=document.querySelector(".sheet");}catch(e){}}
+          flSpeak("Here it is. Your recovery phrase — write it down and keep it safe. It is forever tied to your number, and it brings your account back on any device.");
+          if(ph)flSpot(ph,3200);
+        },1500);
+      },3800);
+    },900);
+  },1400);
+}
 /* ============ MY PLACE — the new menu (rooms, not a drawer) ============ */
 function openMyPlace(){
   const p=$("myPlacePanel");if(!p){menuOpen();return;}
