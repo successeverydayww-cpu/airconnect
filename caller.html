@@ -7615,6 +7615,21 @@ function flRender(){
 }
 function flResize(){try{const vf=$("view-field");if(vf&&vf.className.indexOf("hide")<0)flRender();}catch(e){}}
 addEventListener("resize",flResize);
+
+/* v163b: boot watcher — every login path (OTP, resume, phrase, device auto-restore)
+   ends with the app visible; the watcher guarantees the orb boots and the Field renders,
+   no matter which path brought the user in. */
+let FL_BOOTED=false;
+function flWatch(){
+  try{
+    const app=$("app");
+    if(app&&app.className.indexOf("hide")<0&&!FL_BOOTED){FL_BOOTED=true;flBoot();}
+    const vf=$("view-field");
+    if(vf&&vf.className.indexOf("hide")<0&&!$("flyou")){flRender();}
+  }catch(e){}
+}
+setInterval(flWatch,1200);
+setTimeout(flWatch,300);
 </script>
 
 
