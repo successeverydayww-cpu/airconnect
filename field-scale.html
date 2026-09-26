@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AirConnect Field — Scale Test</title>
+<style>
+:root{--bg:#060B1C;--ink:#F4F7FF;--dim:#8B96B8;--gold:#E8B84B;--blueL:#5B8DEF;--card:#0E1836;--cardB:#1C2A52}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);color:var(--ink);
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;user-select:none}
+canvas{position:fixed;inset:0;touch-action:none}
+#top{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;justify-content:
+ space-between;padding:0 14px;z-index:20;pointer-events:none}
+#top .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:.4px}
+#top .brand .dot{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#1A3FA8);
+ box-shadow:0 0 12px rgba(232,184,75,.35)}
+#top .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
+#top .mock{font-size:10px;color:var(--dim);border:1px solid var(--cardB);border-radius:20px;padding:3px 8px}
+#counter{font-size:11px;color:var(--dim);background:rgba(14,24,54,.85);border:1px solid var(--cardB);
+ border-radius:20px;padding:4px 10px;white-space:nowrap}
+#counter b{color:var(--gold)}
+#levels{position:fixed;left:50%;transform:translateX(-50%);top:60px;z-index:20;display:flex;gap:6px}
+#levels button{background:rgba(14,24,54,.85);border:1px solid var(--cardB);color:var(--dim);
+ border-radius:20px;padding:6px 12px;font-size:11px;cursor:pointer}
+#levels button.on{border-color:var(--gold);color:var(--gold)}
+#hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;font-size:11px;
+ color:var(--dim);background:rgba(14,24,54,.85);border:1px solid var(--cardB);border-radius:20px;
+ padding:7px 14px;text-align:center;max-width:92%}
+#reset{position:fixed;bottom:16px;right:14px;z-index:20;background:var(--card);border:1px solid var(--cardB);
+ color:var(--dim);border-radius:20px;padding:8px 12px;font-size:11px;cursor:pointer}
+#mic{position:fixed;bottom:16px;left:14px;z-index:20;width:48px;height:48px;border-radius:50%;
+ border:2px solid var(--gold);background:var(--card);color:var(--ink);font-size:19px;cursor:pointer;
+ display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(232,184,75,.25)}
+#mic.holding{background:var(--gold);color:#060B1C}
+#card{position:fixed;left:12px;right:12px;bottom:70px;z-index:30;background:rgba(11,19,48,.96);
+ border:1px solid var(--cardB);border-radius:16px;padding:13px 15px;display:none;max-width:420px;margin:0 auto}
+#card.on{display:block}
+#card .nm{font-weight:700;font-size:15px}
+#card .tr{font-size:11px;margin-top:2px}
+#card .tr.gold{color:var(--gold)}#card .tr.blue{color:var(--blueL)}#card .tr.dim{color:var(--dim)}
+#card .tr.bad{color:#B3444E}
+#card .acts{display:flex;gap:8px;margin-top:10px}
+#card button{flex:1;background:var(--card);border:1px solid var(--goldDim,#7a5f2a);color:var(--ink);
+ border-radius:10px;padding:8px;font-size:12px;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--card);
+ border:1px solid #7a5f2a;color:var(--ink);border-radius:14px;padding:10px 16px;font-size:12.5px;z-index:70;
+ opacity:0;transition:all .3s;max-width:86%;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="top">
+  <div class="brand"><div class="dot"></div>AirConnect&nbsp;Field</div>
+  <div class="right"><span id="counter"></span><span class="mock">scale test</span></div>
+</div>
+<div id="levels">
+  <button data-l="120" class="on" onclick="setLevel(120)">120</button>
+  <button data-l="5000" onclick="setLevel(5000)">5,000</button>
+  <button data-l="50000" onclick="setLevel(50000)">50,000</button>
+</div>
+<div id="hint">pinch to zoom · drag to travel · tap a world to bloom it open</div>
+<button id="reset" onclick="flyHome()">home</button>
+<button id="mic" onpointerdown="holdStart(event)" onpointerup="holdEnd()"
+ onpointerleave="holdEnd()" onpointercancel="holdEnd()">🎙</button>
+<div id="card"></div>
+<div id="toast"></div>
+<script>
+const GOLD="#E8B84B",BLUEL="#5B8DEF",BLUE="#1A3FA8",DIM="#8B96B8",BAD="#B3444E",
+ INK="#F4F7FF",CARD="#16224A",DARK="#5A2A30";
+const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
+let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+ cv.width=W*DPR;cv.height=H*DPR;}
+addEventListener("resize",resize);resize();
+
+/* ---------------- world generation ---------------- */
+let nodes=[],crowd=[],clusters=[],total=0;
+let rnd=(function(){let s=42;return function(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff}})();
+const NAMES=["Grace","Chidi","Kelechi","Mom","Ada","Tunde","Blessing","Emma","Ngozi","Ifeoma",
+ "David","Ruth","Precious","Victor","Esther","Paul","Joy","James","Amaka","Peter",
+ "Sarah","Daniel","Rebecca","Samuel J.","Martha","Philip","Deborah","Gideon","Hannah","Caleb"];
+const WORLDS=[["Family",14],["Campus Crew",22],["Work",9],["CEF AKSU",42],["Worship Team",18],
+ ["Basketball",11],["NYSC Friends",16],["Tech Guild",13]];
+
+function makeLevel(N){
+ nodes=[];crowd=[];clusters=[];rnd=(function(){let s=N;return function(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff}})();
+ function polar(a,spread){const ang=rnd()*Math.PI*2;
+  const r=40+(1-a)*(Math.sqrt(rnd())*spread);
+  return{x:Math.cos(ang)*r,y:Math.sin(ang)*r};}
+ /* you */
+ nodes.push({kind:"you",name:"Samuel",x:0,y:0,r:14});
+ /* named friends — gravity: affinity high = close */
+ const nF=N<=200?20:30;
+ for(let i=0;i<nF;i++){
+  const a=0.75+rnd()*0.25;const p=polar(a,N<=200?60:260);
+  const t=rnd();nodes.push({kind:"friend",name:NAMES[i],x:p.x,y:p.y,r:8,
+   trust:t<0.55?"kyc":t<0.85?"known":"new",aff:a});}
+ /* worlds/clusters — sized to an exact budget */
+ const nc=N<=200?WORLDS.length:(N<=5000?24:Math.min(200,Math.floor(N/280)));
+ const nCit=N<=200?4:Math.min(20,4+Math.floor(N/2500));
+ const nFl=N<=200?2:10;
+ for(let i=0;i<nCit;i++){const p=polar(0.6+rnd()*0.3,N<=200?70:300);
+  nodes.push({kind:"citizen",name:["Reception","Guardian","Scribe","Guide","Herald","Anchor"][i%6]+" "+(i+1),
+   x:p.x,y:p.y,r:8});}
+ for(let i=0;i<nFl;i++){const p=polar(0.1+rnd()*0.2,N<=200?90:380);
+  nodes.push({kind:"flag",name:"",x:p.x,y:p.y,r:6});}
+ const others=1+nF+nCit+nFl;
+ const budget=Math.max(0,N-others);
+ const sumW=WORLDS.reduce((t,w)=>t+w[1],0);
+ const mems=[];
+ for(let i=0;i<nc;i++){
+  if(N<=200){mems.push(Math.max(3,Math.round(WORLDS[i][1]*budget/sumW)));}
+  else{const avg=budget*0.75/nc;
+   mems.push(Math.max(6,Math.floor(40+rnd()*2*(avg-40))));}}
+ const sumM=mems.reduce((a,b)=>a+b,0);
+ for(let i=0;i<nc;i++){
+  const nm=N<=200?WORLDS[i][0]:"World "+(i+1);
+  const mem=N<=200?mems[i]:Math.max(6,Math.floor(mems[i]*Math.min(1,budget*0.78/sumM)));
+  const a=0.35+rnd()*0.55;const p=polar(a,320);
+  clusters.push({kind:"cluster",name:nm,x:p.x,y:p.y,r:11,mem:mem,aff:a,bloom:0,opening:false});}
+ /* crowd fills the exact remainder */
+ const named=others+clusters.reduce((s,c)=>s+c.mem,0);
+ const nCrowd=Math.max(0,N-named);
+ for(let i=0;i<nCrowd;i++){const ang=rnd()*Math.PI*2;
+  const r=70+Math.sqrt(rnd())*(N<=200?130:620);
+  const t=rnd();
+  crowd.push({x:Math.cos(ang)*r,y:Math.sin(ang)*r,
+   c:t<0.35?"#E8B84B":t<0.65?"#5B8DEF":t<0.9?"#46527A":"#3A2A34"});}
+ total=others+clusters.reduce((s,c)=>s+c.mem,0)+nCrowd;
+ document.getElementById("counter").innerHTML="<b>"+total.toLocaleString()+"</b> presences · "+
+  clusters.length.toLocaleString()+" worlds";
+}
+let LEVEL=120;
+function setLevel(n){LEVEL=n;makeLevel(n);
+ document.querySelectorAll("#levels button").forEach(b=>b.classList.toggle("on",+b.dataset.l===n));
+ flyHome();toast("The Field at "+n.toLocaleString()+" presences — still breathing");}
+makeLevel(LEVEL);
+
+/* ---------------- camera ---------------- */
+const cam={x:0,y:0,s:1,tx:0,ty:0,ts:1,t0:0,dur:0};
+function flyTo(x,y,s,dur){cam.tx=x;cam.ty=y;cam.ts=s;cam.t0=performance.now();cam.dur=dur||650;}
+function flyHome(){flyTo(0,0,Math.min(W,H)/720,650);}
+flyHome();
+function camNow(){if(cam.dur){const k=Math.min(1,(performance.now()-cam.t0)/cam.dur);
+ const e=1-Math.pow(1-k,3);cam.x=cam.x+(cam.tx-cam.x)*e;cam.y=cam.y+(cam.ty-cam.y)*e;
+ cam.s=cam.s+(cam.ts-cam.s)*e;cam.dur=k<1?cam.dur:0;}return cam;}
+function s2w(px,py){const c=camNow();return{x:(px-W/2)/c.s+c.x,y:(py-H*0.46)/c.s+c.y};}
+
+/* ---------------- gestures ---------------- */
+let ptrs=new Map(),tap=null,last=null,pinch=null;
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);
+ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(ptrs.size===1){tap={x:e.clientX,y:e.clientY,t:performance.now()};last={x:e.clientX,y:e.clientY};
+  cam.dur=0;}
+ if(ptrs.size===2){const a=[...ptrs.values()];
+  pinch={d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),s:cam.s};tap=null;}});
+cv.addEventListener("pointermove",e=>{
+ if(!ptrs.has(e.pointerId))return;
+ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(ptrs.size===2&&pinch){const a=[...ptrs.values()];
+  const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+  cam.s=cam.ts=Math.max(0.05,Math.min(24,pinch.s*d/pinch.d));cam.dur=0;return;}
+ if(ptrs.size===1&&last){const dx=e.clientX-last.x,dy=e.clientY-last.y;
+  if(tap&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>8)tap=null;
+  cam.x-=dx/cam.s;cam.y-=dy/cam.s;cam.tx=cam.x;cam.ty=cam.y;
+  last={x:e.clientX,y:e.clientY};}});
+function up(e){ptrs.delete(e.pointerId);
+ if(ptrs.size<2)pinch=null;
+ if(ptrs.size===1)last=[...ptrs.values()][0];
+ if(tap&&performance.now()-tap.t<450){handleTap(tap.x,tap.y);}tap=null;last=null;}
+cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+cv.addEventListener("wheel",e=>{e.preventDefault();cam.dur=0;
+ cam.s=cam.ts=Math.max(0.05,Math.min(24,cam.s*(e.deltaY<0?1.15:0.87)));
+ cam.x=cam.tx;cam.y=cam.ty;},{passive:false});
+
+function handleTap(px,py){
+ const c=camNow();const wx=(px-W/2)/c.s+c.x,wy=(py-H*0.46)/c.s+c.y;
+ const hitR=30/c.s;let best=null,bd=1e9;
+ clusters.concat(nodes).forEach(function(n){
+  if(n.kind==="crowd")return;
+  const d=Math.hypot(n.x-wx,n.y-wy)-(n.r||8);
+  if(d<bd&&d<hitR){bd=d;best=n;}});
+ if(best){if(best.kind==="cluster"){best.opening=!best.opening;openCard(best);}
+  else if(best.kind==="you")openCard({kind:"you",name:"Samuel",trust:"kyc"});
+  else openCard(best);best.pulse=performance.now();}
+ else closeCard();}
+
+/* ---------------- card ---------------- */
+const card=document.getElementById("card");
+function openCard(n){card.classList.add("on");
+ const tr=n.kind==="you"||n.trust==="kyc"?["Gold ring · KYC verified","gold"]:
+  n.kind==="citizen"?["Citizen presence · awake AI","blue"]:
+  n.kind==="cluster"?["A world — tap to bloom its "+n.mem.toLocaleString()+" members open","gold"]:
+  n.kind==="flag"?["Flagged number · Guardian watching","bad"]:
+  n.trust==="known"?["Blue ring · known friend","blue"]:["Dim edge · new contact","dim"];
+ card.innerHTML='<div class="nm">'+(n.name||"Unknown number")+'</div>'+
+  '<div class="tr '+tr[1]+'">'+tr[0]+'</div>'+
+  '<div class="acts"><button onclick="closeCard()">back to the Field</button></div>';}
+function closeCard(){card.classList.remove("on");}
+
+/* ---------------- render ---------------- */
+let stars=[];function mkStars(){stars=[];const n=90;
+ for(let i=0;i<n;i++)stars.push({x:rnd()*W,y:rnd()*H,p:rnd()*6.28});}
+mkStars();addEventListener("resize",mkStars);
+function draw(){
+ const c=camNow();ctx.setTransform(DPR,0,0,DPR,0,0);
+ ctx.clearRect(0,0,W,H);
+ /* stars (screen space) */
+ const now=performance.now()/1000;
+ stars.forEach(function(s){ctx.globalAlpha=0.15+0.45*Math.abs(Math.sin(now+s.p));
+  ctx.fillStyle="#3A4E86";ctx.fillRect(s.x,s.y,2,2);});
+ ctx.globalAlpha=1;
+ /* world transform */
+ ctx.save();ctx.translate(W/2,H*0.46);ctx.scale(c.s,c.s);ctx.translate(-c.x,-c.y);
+ /* rings */
+ if(LEVEL<=200){ctx.strokeStyle="#22335F";ctx.lineWidth=1.2/c.s;ctx.setLineDash([3,9]);
+  [85,170,300].forEach(function(r){ctx.beginPath();ctx.arc(0,0,r,0,6.29);ctx.stroke();});ctx.setLineDash([]);}
+ /* crowd */
+ crowd.forEach(function(p){if(p.x<c.x-W/c.s/2-20||p.x>c.x+W/c.s/2+20||p.y<c.y-H/c.s/2-20||p.y>c.y+H/c.s/2+20)return;
+  ctx.fillStyle=p.c;const sz=LEVEL<=200?5:Math.min(5,Math.max(1.2,c.s*1.2));
+  ctx.beginPath();ctx.arc(p.x,p.y,sz,0,6.29);ctx.fill();});
+ /* clusters */
+ clusters.forEach(function(cl){
+  cl.bloom+=((cl.opening?1:0)-cl.bloom)*0.12;
+  const ring=cl.bloom>0.02;
+  /* bloom members */
+  if(ring){for(let i=0;i<cl.mem;i++){
+   const a=i*2.39996;const rr=6+Math.sqrt(i/(cl.mem||1))*46*cl.bloom;
+   const mx=cl.x+Math.cos(a)*rr,my=cl.y+Math.sin(a)*rr;
+   ctx.fillStyle=i%3===0?GOLD:(i%3===1?BLUEL:"#46527A");
+   ctx.beginPath();ctx.arc(mx,my,2.6,0,6.29);ctx.fill();}}
+  /* halo */
+  const g=ctx.createRadialGradient(cl.x,cl.y,2,cl.x,cl.y,cl.r+16+cl.bloom*10);
+  g.addColorStop(0,"rgba(232,184,75,"+(0.30+cl.bloom*0.35)+")");g.addColorStop(1,"rgba(232,184,75,0)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(cl.x,cl.y,cl.r+16+cl.bloom*10,0,6.29);ctx.fill();
+  ctx.fillStyle=CARD;ctx.strokeStyle=GOLD;ctx.lineWidth=2.5/c.s+1;
+  ctx.beginPath();ctx.arc(cl.x,cl.y,cl.r,0,6.29);ctx.fill();ctx.stroke();
+  ctx.fillStyle=GOLD;ctx.font="700 "+(9)+"px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(cl.mem>=1000?(cl.mem/1000).toFixed(1)+"k":cl.mem,cl.x,cl.y+0.5);
+  if(c.s>0.5||cl.aff>0.7){ctx.fillStyle=INK;ctx.font="600 "+(9)+"px sans-serif";
+   ctx.fillText(cl.name,cl.x,cl.y+cl.r+11);}});
+ /* nodes */
+ nodes.forEach(function(n){
+  const isYou=n.kind==="you";
+  const col=n.kind==="you"||n.trust==="kyc"?GOLD:n.kind==="citizen"?BLUE:
+   n.kind==="flag"?BAD:n.trust==="known"?BLUEL:"#5B6484";
+  /* pulse */
+  if(n.pulse&&performance.now()-n.pulse<3000){
+   const k=((performance.now()-n.pulse)%1000)/1000;
+   ctx.strokeStyle=GOLD;ctx.globalAlpha=1-k;ctx.lineWidth=2/c.s+0.5;
+   ctx.beginPath();ctx.arc(n.x,n.y,n.r+8+k*26,0,6.29);ctx.stroke();ctx.globalAlpha=1;}
+  const g=ctx.createRadialGradient(n.x,n.y,1,n.x,n.y,n.r+14);
+  g.addColorStop(0,n.kind==="flag"?"rgba(179,68,78,.25)":n.kind==="citizen"?
+   "rgba(26,63,168,.4)":"rgba(232,184,75,.4)");g.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,n.r+14,0,6.29);ctx.fill();
+  ctx.fillStyle=n.kind==="flag"?"#120D14":n.kind==="you"?"#1A3FA8":CARD;
+  ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,6.29);ctx.fill();
+  ctx.strokeStyle=col;ctx.lineWidth=isYou?3:2.2;ctx.stroke();
+  ctx.fillStyle=n.kind==="flag"?"#C98A93":INK;ctx.font="700 "+n.r+"px sans-serif";
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(isYou?"S":n.kind==="citizen"?"AI":n.kind==="flag"?"✕":n.name[0],n.x,n.y+1);
+  if(isYou||c.s>0.35){ctx.font="600 8.5px sans-serif";
+   ctx.fillStyle=n.kind==="flag"?"#9C7B80":INK;
+   ctx.fillText(isYou?"Samuel · ◆ owner":(n.name||""),n.x,n.y+n.r+11);}});
+ ctx.restore();
+ requestAnimationFrame(draw);}
+draw();
+
+/* ---------------- voice ---------------- */
+let heard="",demo=0;
+const demos=["Call Grace","Open Family","Zoom out","Show me CEF AKSU"];
+function holdStart(e){e.preventDefault();document.getElementById("mic").classList.add("holding");heard="";}
+function holdEnd(){const mic=document.getElementById("mic");
+ if(!mic.classList.contains("holding"))return;mic.classList.remove("holding");
+ run((heard||demos[demo++%demos.length]).trim());}
+function run(cmd){const c=cmd.toLowerCase();
+ const f=nodes.find(n=>c.includes(n.name.toLowerCase()));
+ if(c.indexOf("call")===0&&f){f.pulse=performance.now();toast("📞 Calling "+f.name+"… at any scale, voice is one step");return;}
+ const cl=clusters.find(x=>c.includes(x.name.toLowerCase().split(" ")[0]));
+ if(c.includes("open")&&cl){cl.opening=true;flyTo(cl.x,cl.y,Math.max(cam.s,1.4),700);
+  toast("✦ "+cl.name+" bloomed open — "+cl.mem.toLocaleString()+" members");return;}
+ if(c.includes("zoom out")){flyTo(0,0,Math.min(W,H)/1400,700);toast("pinch reality back — the whole world in one sky");return;}
+ toast('✦ "'+cmd+'"');}
+let tT=null;
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("on");
+ clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("on"),2800);}
+</script>
+</body>
+</html>
