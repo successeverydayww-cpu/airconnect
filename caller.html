@@ -7411,7 +7411,7 @@ body{-webkit-font-smoothing:antialiased}
    which page you are on, and spoken commands drive real actions. (5) The menu is now
    MY PLACE — a spatial sheet of rooms, nothing like other apps' drawers; the classic
    settings drawer remains reachable from All settings (nothing is ever removed). */
-let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="",FL_PEND="",FL_PENDT=null,FL_DUP={};
+let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="",FL_PEND="",FL_PENDT=null,FL_DUP={},FL_SENT="";
 let AC_WAKE="";
 try{AC_WAKE=(localStorage.getItem("ac_wake2")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
 let FL_VOICES=[];
@@ -7469,13 +7469,30 @@ function flStartSR(){
     for(let i=ev.resultIndex;i<ev.results.length;i++){
       if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
       else int+=ev.results[i][0].transcript;}
-    if(int)flHeard2(int);
-    if(int&&FL_MODE==="wake"&&flWakeHit(int))flActivate(flGreetLine());
-    if(int&&FL_MODE==="active")flStableRun(int);
-    if(fin.trim()){flHeard2(fin.trim());
-      if(FL_MODE==="wake"){flWakeCheck(FL_ROLL+" "+fin.trim());FL_ROLL=fin.trim();
-        setTimeout(function(){if(FL_MODE==="wake")FL_ROLL="";},2500);}
-      else if(FL_MODE==="active"){clearTimeout(FL_PENDT);FL_PEND="";flExec(fin.trim());}}};
+    flOnResult(int,fin);};
+  /* v168 (his device report): she never fires on fragments. Chrome sends "Call" as a
+     final transcript BEFORE "Albert" arrives — both interims and finals now flow into
+     ONE utterance buffer, and nothing executes until the voice has been silent for
+     0.9s. The full sentence always runs as one command. */
+  function flOnResult(int,fin){
+    const I=String(int||"").trim(),F=String(fin||"").trim();
+    if(I)flHeard2(I);
+    if(I&&FL_MODE==="wake"&&flWakeHit(I)){flActivate(flGreetLine());return;}
+    if(FL_MODE==="active"){
+      if(F){
+        if(FL_SENT&&F.indexOf(FL_SENT)===0)FL_SENT=F;
+        else if(FL_SENT&&FL_SENT.indexOf(F)>=0){}
+        else FL_SENT=(FL_SENT+" "+F).trim();}
+      let cand=FL_SENT;
+      if(I){if(cand&&I.indexOf(cand)===0)cand=I;
+        else if(cand&&cand.indexOf(I)>=0){}
+        else cand=(cand+" "+I).trim();}
+      if(cand){flArmIdle();flStableRun(cand);}
+      return;}
+    if(F){flHeard2(F);
+      if(FL_MODE==="wake"){flWakeCheck(FL_ROLL+" "+F);FL_ROLL=F;
+        setTimeout(function(){if(FL_MODE==="wake")FL_ROLL="";},2500);}}
+  };
   FL_SR.onerror=function(e){
     const err=e&&e.error;
     if(err==="not-allowed"||err==="service-not-allowed"){
@@ -7517,18 +7534,18 @@ function flStableRun(txt){
   if(FL_MODE!=="active"||FL_TALKING)return;
   clearTimeout(FL_PENDT);FL_PEND=txt;
   FL_PENDT=setTimeout(function(){
-    if(FL_MODE==="active"&&FL_PEND){FL_PEND="";flExec(txt);}
-  },700);
+    if(FL_MODE==="active"&&FL_PEND){const c=FL_PEND;FL_PEND="";FL_SENT="";flExec(c);}
+  },900);
 }
 function flExec(txt){
   const c=flNorm(txt),now=Date.now();
   if(FL_DUP[c]&&now-FL_DUP[c]<3500)return;
-  FL_DUP[c]=now;
+  FL_DUP[c]=now;FL_SENT="";
   flArmIdle();flRun(txt);
 }
 function flActivate(greet){
   const wasOff=(FL_MODE==="off");
-  FL_MODE="active";FL_FAST={};FL_ROLL="";FL_PEND="";clearTimeout(FL_PENDT);flStartSR();flUI();flArmIdle();
+  FL_MODE="active";FL_FAST={};FL_ROLL="";FL_PEND="";FL_SENT="";clearTimeout(FL_PENDT);flStartSR();flUI();flArmIdle();
   if(greet)flSpeak(greet);
   if(wasOff)toast("● Live agent active");
 }
