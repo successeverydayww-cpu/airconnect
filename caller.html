@@ -192,7 +192,57 @@ footer a{color:#64748B}
     <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="Menu" onclick="menuOpen()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A3FA8;flex:0 0 34px">?</button></div>
   </div>
 
-  <div id="view-chats" class="view">
+  <style>/* v162 THE FIELD — spatial front door (Samuel directive: migrate everything) */
+#view-field{position:fixed;inset:0;z-index:64;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 60%);color:#F4F7FF;overflow:hidden;padding:0!important;min-height:0!important}
+#view-field .ringC{fill:none;stroke:#22335F;stroke-width:1;stroke-dasharray:2 7;opacity:.8}
+#view-field .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#3A4E86;opacity:.5;animation:fltw 4s infinite}
+@keyframes fltw{0%,100%{opacity:.15}50%{opacity:.6}}
+#view-field .fnode{position:absolute;transform:translate(-50%,-50%);width:74px;text-align:center;cursor:pointer;transition:transform .2s ease;z-index:4}
+#view-field .fnode:active{transform:translate(-50%,-50%) scale(.92)}
+#view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
+#view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
+#view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+#view-field .fon .fava{border-color:#5B8DEF;box-shadow:0 0 9px rgba(91,141,239,.35)}
+#view-field .fgrp .fava{border-color:#5B8DEF}
+#view-field .fname{font-size:11.5px;font-weight:600;margin-top:5px;color:#F4F7FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#view-field .funr{position:absolute;top:-3px;left:-3px;min-width:18px;height:18px;border-radius:9px;background:#00A884;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+#view-field .fdot{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:#3A4670;border:2px solid #060B1C}
+#view-field .fdot.on{background:#22c55e}
+#view-field .fringpulse{position:absolute;inset:-8px;border-radius:50%;border:2px solid #E8B84B;opacity:0}
+#view-field .fnode.ringing .fringpulse{animation:flring 1s infinite}
+@keyframes flring{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.3);opacity:0}}
+#view-field .fbrand{position:fixed;top:10px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;z-index:66;pointer-events:none}
+#view-field .fmock{font-size:10px;color:#8B96B8;border:1px solid #1C2A52;border-radius:20px;padding:3px 8px}
+#view-field .fldock{position:fixed;top:56px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:66;flex-wrap:wrap;justify-content:center}
+#view-field .fldock button{background:rgba(14,24,54,.88);border:1px solid #1C2A52;color:#F4F7FF;border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:600}
+#view-field .fldock button:active{transform:scale(.94)}
+#view-field .flpill{position:fixed;top:96px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:8px;background:rgba(14,24,54,.92);border:1px solid #7a5f2a;border-radius:24px;padding:6px 12px;font-size:12px;z-index:67;max-width:92%}
+#view-field .flpill.on{display:flex}
+#view-field .flpill .ld{width:8px;height:8px;border-radius:50%;background:#E8B84B;animation:flbl 1s infinite;flex:0 0 8px}
+@keyframes flbl{0%,100%{opacity:1}50%{opacity:.3}}
+#view-field .flpill .ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw}
+#view-field .flpill .stp{background:none;border:1px solid #1C2A52;color:#8B96B8;border-radius:14px;font-size:11px;padding:3px 8px}
+#view-field .fbar{position:fixed;bottom:24px;left:0;right:0;display:flex;justify-content:center;z-index:66}
+#view-field .fmic{width:64px;height:64px;border-radius:50%;border:2px solid #E8B84B;background:#0E1836;color:#F4F7FF;font-size:24px;box-shadow:0 0 18px rgba(232,184,75,.3);cursor:pointer}
+#view-field .fmic.live{background:#E8B84B;color:#060B1C;animation:flbr 1.6s infinite}
+@keyframes flbr{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.55)}50%{box-shadow:0 0 0 18px rgba(232,184,75,0)}}
+#view-field .fhint{position:fixed;bottom:7px;left:0;right:0;text-align:center;font-size:10.5px;color:#8B96B8;z-index:66}
+</style>
+<div id="view-field" class="view">
+  <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
+  <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v162 · your new front door</span></div>
+  <div class="fldock">
+    <button onclick="openFab()">◈ Friends</button>
+    <button onclick="showTab('watch')">✦ Explore</button>
+    <button onclick="showTab('chats')">💬 Chats list</button>
+  </div>
+  <div class="flpill" id="flpill"><div class="ld"></div><div class="ht" id="flheard">listening…</div><button class="stp" onclick="flToggle()">stop</button></div>
+  <input id="fltype" placeholder="or type a command — call Grace" style="position:fixed;bottom:98px;left:50%;transform:translateX(-50%);width:80%;max-width:340px;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;border-radius:22px;padding:8px 14px;color:#F4F7FF;font-size:13.5px;outline:none;text-align:center;display:none;z-index:66" onkeydown="if(event.key==='Enter'){const v=this.value.trim();this.value='';if(v)flRun(v);}">
+  <div class="fbar"><button class="fmic" id="flmic" onclick="flToggle()">🎙</button></div>
+  <div class="fhint">tap the mic and just speak · tap a presence to open their chat</div>
+</div>
+<div id="view-chats" class="view hide">
         <input type="file" id="storyinput" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
     <input type="file" id="stCamIn" class="hide" accept="image/*" capture="environment" onchange="stPhotoChosen(this)">
     <input type="file" id="stPhotoIn" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
@@ -622,6 +672,7 @@ footer a{color:#64748B}
     </div>
   </div>
   <nav>
+    <button id="tab-field" onclick="showTab('field')" aria-label="Field"><span class="ico">✦</span>Field</button>
     <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
     <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#1A3FA8"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg></span>Watch</button>
     <button id="tab-status" aria-label="Updates" onclick="showTab('status')"><span class="ico">◉</span>Updates</button>
@@ -1506,12 +1557,14 @@ function showTab(t){
   if(t==="settings"){menuOpen();return;}
   try{localStorage.setItem("ac_tab","tab-"+t);}catch(e){}
   if(t!=="watch"){document.querySelectorAll("#wtfeed video").forEach(function(v){try{v.pause();}catch(e){}});}
-  for(const v of["chats","watch","status","calls","settings"]){$("view-"+v).className="view"+(v===t?"":" hide");$("tab-"+v).className=v===t?"on":"";}
-  const TITLES={chats:"🛰️ AirConnect",watch:"Watch",status:"Updates",calls:"Calls",settings:"Settings"};
+  for(const v of["field","chats","watch","status","calls","settings"]){const _v=$("view-"+v),_t=$("tab-"+v);if(_v)_v.className="view"+(v===t?"":" hide");if(_t)_t.className=v===t?"on":"";}
+  const TITLES={field:"✦ AirConnect Field",chats:"🛰️ AirConnect",watch:"Watch",status:"Updates",calls:"Calls",settings:"Settings"};
   $("hdrTitle").textContent=TITLES[t]||"AirConnect";
   if(t==="chats")UNREAD={},renderUnread();
   if(t==="watch"){wtBoot();}
   if(t==="status"){refreshStories();renderStoryStrip();renderStatusScreen();}
+  if(t==="field"){try{refreshStories();}catch(e){}try{flRender();}catch(e){}}
+  if(t!=="field"&&FL_LIVE){try{flToggle();}catch(e){}}
   const _sf=$("stFab");if(_sf)_sf.className=t==="status"?"":"hide";
   if(t==="settings"){renderPlan();ensureQR();renderArchived();liteBoot();walRefresh();}
 }
@@ -7298,6 +7351,126 @@ body{-webkit-font-smoothing:antialiased}
   }
   new MutationObserver(function(){paint()}).observe(document.body,{childList:true,subtree:true,characterData:true});
   paint();
+
+/* ================= v162: THE FIELD — spatial front door over the real backend =================
+   Samuel directive (26 Sep 2026): migrate everything. The Field renders REAL presences
+   (friends with KYC trust rings, groups, live online dots, unread badges, Updates rings),
+   a live mic that greets once then stays listening, and voice commands that drive real
+   actions (call, open chat/group, Watch, Updates, Exam Prep). The classic Chats list and
+   every existing feature remain untouched, one tap away. Nothing is destroyed. */
+let FL_LIVE=false,FL_REC=null,FL_VOICES=[],FL_ST=null,FL_GREETED=false;
+function flRender(){
+  const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.46;
+  const R1=Math.min(vw,vh)*0.26,R2=Math.min(vw,vh)*0.42;
+  const sky=$("flsky");
+  sky.setAttribute("viewBox","0 0 "+vw+" "+vh);
+  sky.innerHTML='<circle class="ringC" cx="'+cx+'" cy="'+cy+'" r="'+R1+'"/><circle class="ringC" cx="'+cx+'" cy="'+cy+'" r="'+R2+'" style="opacity:.55"/>';
+  const stEl=$("flstars");stEl.innerHTML="";
+  for(let i=0;i<30;i++){const d=document.createElement("div");d.className="star";
+    d.style.left=(Math.random()*100)+"%";d.style.top=(Math.random()*100)+"%";
+    d.style.animationDelay=(Math.random()*4)+"s";stEl.appendChild(d);}
+  /* you at the center */
+  let f=$("flyou");
+  if(!f){f=document.createElement("div");f.id="flyou";
+    f.style.cssText="position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5;cursor:pointer";
+    f.innerHTML='<div class="fava" style="width:72px;height:72px;font-size:26px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);border:3px solid #E8B84B;box-shadow:0 0 24px rgba(232,184,75,.5)">S</div><div class="fname" style="font-weight:700;font-size:13.5px"></div>';
+    f.onclick=function(){menuOpen();};
+    $("view-field").appendChild(f);}
+  f.style.left=cx+"px";f.style.top=cy+"px";
+  f.querySelector(".fname").textContent=(ME_NAME||"Me")+(KYC_ME?" · KYC \u2714":"");
+  f.querySelector(".fava").textContent=String(ME_NAME||"S").charAt(0).toUpperCase();
+  /* real presences */
+  const stN={};try{for(const s of STORIES){if(s.num!==ME)stN[s.num]=1;}}catch(e){}
+  const kc=(WIN_FRIENDS||[]).filter(x=>WIN_KC&&WIN_KC[x.id]);
+  const rest=(WIN_FRIENDS||[]).filter(x=>!(WIN_KC&&WIN_KC[x.id]));
+  const all=[];
+  kc.forEach((x,i)=>all.push({id:x.id,r:R1,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,kc.length)),k:1}));
+  rest.forEach((x,i)=>all.push({id:x.id,r:R2,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,rest.length)),k:0}));
+  (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name,r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
+  document.querySelectorAll("#view-field .fnode").forEach(n=>n.remove());
+  const now=Date.now();
+  for(const it of all){
+    const n=document.createElement("div");
+    const isGrp=it.k===2;
+    const nm=isGrp?(it.nm||"Group"):(WIN_NAMES[it.id]||("+"+it.id));
+    const un=isGrp?((GUNREAD[it.gid]||0)):(UNREAD[it.id]||0);
+    const on=!isGrp&&WIN_PRES&&WIN_PRES[it.id]&&now-WIN_PRES[it.id]<30000;
+    n.className="fnode"+(it.k===1?" fk":(it.k===2?" fgrp":""))+(on?" fon":"");
+    n.innerHTML='<div class="fava">'+(isGrp?"\u25C8":esc(nm).charAt(0).toUpperCase())+
+      (un?'<div class="funr">'+un+'</div>':'')+
+      '<div class="fdot'+(on?" on":"")+'"></div><div class="fringpulse"></div></div>'+
+      '<div class="fname">'+esc(nm)+'</div>';
+    n.onclick=function(){if(isGrp)openGroup(it.gid);else openChat(it.id);};
+    n.style.left=(cx+it.r*Math.cos(it.a))+"px";
+    n.style.top=(cy+it.r*Math.sin(it.a)*0.92)+"px";
+    $("view-field").appendChild(n);
+  }
+}
+function flResize(){try{const vf=$("view-field");if(vf&&vf.className.indexOf("hide")<0)flRender();}catch(e){}}
+addEventListener("resize",flResize);
+/* live mic — greet once, then always "How may I help you?" and keep listening */
+function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
+flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
+function flPickVoice(){const ws=[/female/i,/samantha/i,/zira/i,/aria/i,/jenny/i];
+  for(const w of ws){const v=FL_VOICES.find(x=>w.test(x.name));if(v)return v;}
+  return FL_VOICES.find(v=>/^en/i.test(v.lang))||null;}
+function flSpeak(txt,then){try{const u=new SpeechSynthesisUtterance(txt);
+  const v=flPickVoice();if(v){u.voice=v;u.pitch=1.06;}u.rate=1.03;
+  if(then)u.onend=then;speechSynthesis.speak(u);}catch(e){if(then)then();}}
+function flStartRec(){if(!FL_LIVE)return;
+  const S=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!S){$("flheard").textContent="voice unavailable — type below";return;}
+  FL_REC=new S();FL_REC.lang="en-NG";FL_REC.continuous=true;FL_REC.interimResults=true;
+  FL_REC.onresult=function(ev){let fin="",int="";
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
+      else int+=ev.results[i][0].transcript;}
+    if(int)$("flheard").textContent=int;
+    if(fin){$("flheard").textContent=fin;flRun(fin.trim());}};
+  FL_REC.onend=function(){if(FL_LIVE&&FL_REC)flStartRec();};
+  FL_REC.onerror=function(){};
+  try{FL_REC.start()}catch(e){}}
+function flStopRec(){if(FL_REC){const r=FL_REC;FL_REC=null;try{r.onend=null;r.stop()}catch(e){}}}
+function flSpeakListen(txt){flStopRec();
+  const est=txt.length*60+2600;
+  flSpeak(txt,function(){clearTimeout(FL_ST);flStartRec();});
+  clearTimeout(FL_ST);FL_ST=setTimeout(function(){if(FL_LIVE&&!FL_REC)flStartRec();},est);}
+function flReply(t){clearTimeout(FL_ST);flSpeakListen(t);}
+function flToggle(){FL_LIVE=!FL_LIVE;
+  $("flmic").classList.toggle("live",FL_LIVE);
+  $("flpill").classList.toggle("on",FL_LIVE);
+  $("fltype").style.display=FL_LIVE?"block":"none";
+  if(FL_LIVE){$("flheard").textContent="listening…";
+    const hr=new Date().getHours();
+    const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
+    if(!FL_GREETED){FL_GREETED=true;
+      flSpeakListen(word+" "+(ME_NAME||"Samuel")+". How are you doing today?");}
+    else flSpeakListen("How may I help you?");
+    toast("● Live — your agent is listening");}
+  else{flStopRec();clearTimeout(FL_ST);}}
+/* voice commands → REAL actions */
+function flFind(cmd){const c=cmd.toLowerCase();
+  try{for(const g of (GROUPS||[])){const gn=String(g.name||"").toLowerCase();
+    if(gn&&c.includes(gn.split(" ")[0]))return{grp:g};}}catch(e){}
+  try{for(const f of (WIN_FRIENDS||[])){const nm=String(WIN_NAMES[f.id]||"").toLowerCase();
+    if(nm&&c.includes(nm.split(" ")[0]))return{num:f.id};}}catch(e){}
+  return null;}
+function flRun(cmd){const c=cmd.toLowerCase();const t=flFind(cmd);
+  if(c.includes("how are you")){flReply("I'm doing great, "+(ME_NAME||"Samuel")+". Ready when you are. What shall I do?");return;}
+  if(c.includes("friend")){flReply("Here are your friends.");openFab();return;}
+  if(c.includes("explore")||c.includes("watch")){flReply("Here is Explore.");showTab("watch");return;}
+  if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")){flReply("Opening your chats.");showTab("chats");return;}
+  if(c.includes("update")){flReply("Here are the Updates.");showTab("status");return;}
+  if(c.includes("call")&&t&&t.num){flReply("Calling "+(WIN_NAMES[t.num]||"them")+" now.");
+    setTimeout(function(){callNum(t.num);},900);return;}
+  if(t&&t.num){flReply("Opening "+(WIN_NAMES[t.num]||"chat")+".");openChat(t.num);return;}
+  if(t&&t.grp){flReply("Opening "+(t.grp.name||"group")+".");openGroup(t.grp.id);return;}
+  if(c.includes("exam")){flReply("Opening Exam Prep.");
+    setTimeout(function(){location.href="exam.html";},900);return;}
+  if(c.includes("wallet")||c.includes("money")){flReply("Opening your wallet.");menuOpen();return;}
+  if(c.includes("call")){flReply("Who shall I call?");return;}
+  flReply("I didn't catch that. You can say call a name, open a chat, watch, updates, or exam prep.");}
+
 })();
 </script>
 </body>
