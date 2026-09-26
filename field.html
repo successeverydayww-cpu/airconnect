@@ -278,6 +278,7 @@ addEventListener("resize",layout); layout();
 
 /* ============================ places ============================ */
 const place=document.getElementById("place");
+let curPlace=null;
 function openPlace(p){
   const t={kyc:["Gold ring · KYC verified","var(--gold)"],
     known:["Blue ring · known friend","var(--blueL)"],
@@ -304,13 +305,17 @@ function openPlace(p){
     '<div class="rooms">'+
       '<div class="room" onclick="toast(\'Talk wall — chat lives here, calls flow in time order\')"><div class="ic">💬</div><div class="rn">Talk Wall</div><div class="rd">chats &amp; calls as one stream</div></div>'+
       '<div class="room" onclick="toast(\'Calls — ring any presence, citizen answers if you are away\')"><div class="ic">📞</div><div class="rn">Calls</div><div class="rd">voice with the mesh</div></div>'+
-      '<div class="room" onclick="toast(\'Money — wallet, transfers, trust-chain receipts\')"><div class="ic">💰</div><div class="rn">Money</div><div class="rd">wallet ₦12,450 · verified rails</div></div>'+
+      '<div class="room" onclick="moneyTap()"><div class="ic">💰</div><div class="rn">Money</div><div class="rd">'+(p.you?'wallet ₦12,450 · verified rails':'🔒 balances stay private')+'</div></div>'+
       '<div class="room" onclick="toast(\'Moments — shared life, visible to your ring only\')"><div class="ic">📸</div><div class="rn">Moments</div><div class="rd">your ring, your life</div></div>'+
       '<div class="room wide" onclick="toast(\'Places are rooms inside a person — this is the future of a chat\')"><div class="ic">✦</div><div class="rn">This is a Place</div><div class="rd">you did not open a "chat list" — you travelled to a person\'s space. A structure that has never existed.</div></div>'+
     '</div>'+ talk;
-  place.classList.add("open"); field.classList.add("away");
+  curPlace=p;   place.classList.add("open"); field.classList.add("away");
 }
 function closePlace(){place.classList.remove("open"); field.classList.remove("away");}
+function moneyTap(){
+  if(curPlace&&curPlace.you){toast("Money — your wallet, transfers, trust-chain receipts");}
+  else{toast("Money — transfers & receipts. Balances are private: only you ever see your own balance.");}
+}
 
 /* ============================ dayline ============================ */
 function openDayline(){
@@ -330,7 +335,7 @@ function openLegend(){document.getElementById("legSheet").style.display="flex";}
 function closeSheet(id){document.getElementById(id).style.display="none";}
 
 /* ============================ LIVE voice front door ============================ */
-let live=false,rec=null,voices=[];
+let live=false,rec=null,voices=[],greeted=false;
 const pill=document.getElementById("livePill"),heardEl=document.getElementById("heardTxt"),
       micBtn=document.getElementById("mic"),typeEl=document.getElementById("typeCmd");
 function loadVoices(){try{voices=speechSynthesis.getVoices()||[]}catch(e){voices=[]}}
@@ -351,7 +356,11 @@ function toggleLive(){
   typeEl.classList.toggle("on",live);
   if(live){
     heardEl.textContent="listening…";
-    speak("Hello Samuel. How are you doing today?",startRec);
+    const hr=new Date().getHours();
+    const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
+    if(!greeted){greeted=true;
+      speak(word+" Samuel. How are you doing today?",startRec);}
+    else{startRec(); speak("How may I help you?");}
     toast("● Live — your agent is listening");
   }else{stopRec(); heardEl.textContent="listening…";}
 }
