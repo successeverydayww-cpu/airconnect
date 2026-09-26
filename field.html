@@ -166,6 +166,27 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
   justify-content:center;font-size:13px;font-weight:700;background:#16224A}
 .legend .d{color:var(--dim);font-size:11px;margin-top:1px}
 
+
+#dock{position:fixed;top:98px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:22}
+.dockbtn{background:rgba(14,24,54,.88);border:1px solid var(--cardB);color:var(--ink);
+ border-radius:22px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.dockbtn:active{transform:scale(.94)}
+.frgrid{padding:2px 0 4px}
+.frrow{display:flex;align-items:center;gap:12px;padding:9px 2px}
+.fring{width:56px;height:56px;border-radius:50%;padding:4px;background:#22335F;flex:0 0 56px}
+.fring.hasupd{background:conic-gradient(var(--gold) 0 62%,#22335F 62% 100%)}
+.fava{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;
+ justify-content:center;font-weight:700;font-size:18px;background:#16224A}
+.frmeta{font-size:10.5px;color:var(--dim)}
+.updchip{margin-left:auto;font-size:10.5px;color:var(--gold);border:1px solid var(--goldDim);
+ border-radius:12px;padding:3px 8px;white-space:nowrap}
+.post{background:var(--card);border:1px solid var(--cardB);border-radius:14px;padding:13px;margin-top:10px}
+.post .ch{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.post .vb{color:var(--gold);border:1px solid var(--goldDim);border-radius:10px;padding:1px 6px;font-size:10px;font-weight:600}
+.post .tx{font-size:12.5px;margin-top:6px;line-height:1.5}
+.post .meta{font-size:10.5px;color:var(--dim);margin-top:7px}
+.mkch{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1A3FA8,#244FBF);
+ border-radius:14px;padding:13px;font-size:13px;font-weight:700;cursor:pointer}
 #toast{position:fixed;left:50%;bottom:126px;transform:translateX(-50%) translateY(20px);background:#0E1836;
   border:1px solid var(--goldDim);color:var(--ink);border-radius:14px;padding:11px 16px;font-size:13px;
   z-index:70;opacity:0;transition:all .3s;max-width:86%;text-align:center;line-height:1.45}
@@ -194,6 +215,11 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
     <div class="hint">tap to talk — live</div>
   </div>
   <button id="dayHandle" onclick="openDayline()">Dayline <b>▴</b></button>
+  <div id="dock">
+    <button class="dockbtn" onclick="openFriends()">◈ Friends</button>
+    <button class="dockbtn" onclick="openExplore()">✦ Explore</button>
+  </div>
+
 </div>
 
 <div id="livePill">
@@ -224,16 +250,22 @@ body{background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,var(--bg) 60%);col
   </div></div>
 </div>
 
+<div class="sheet" id="frSheet" style="display:none" onclick="if(event.target===this)closeSheet('frSheet')">
+  <div class="panel"><div class="grab"></div><div id="frBody"></div></div>
+</div>
+<div class="sheet" id="exSheet" style="display:none" onclick="if(event.target===this)closeSheet('exSheet')">
+  <div class="panel"><div class="grab"></div><div id="exBody"></div></div>
+</div>
 <div id="toast"></div>
 
 <script>
 /* ============================ data ============================ */
 const you={name:"Samuel",ini:"S",you:true,trust:"kyc",sub:"◆ owner · KYC ✔"};
 const presences=[
- {name:"Grace",ini:"G",ring:1,ang:-70,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
+ {name:"Grace",ini:"G",ring:1,ang:-70,trust:"kyc",on:true,st:2,sub:"KYC ✔ · inner circle"},
  {name:"Chidi",ini:"C",ring:1,ang:-15,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
  {name:"Kelechi",ini:"K",ring:1,ang:55,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
- {name:"Mom",ini:"M",ring:1,ang:130,trust:"kyc",on:true,sub:"KYC ✔ · inner circle"},
+ {name:"Mom",ini:"M",ring:1,ang:130,trust:"kyc",on:true,st:1,sub:"KYC ✔ · inner circle"},
  {name:"CEF AKSU",ini:"◈",grp:true,ring:1,ang:200,trust:"known",on:true,sub:"group · 42 members"},
  {name:"Ada",ini:"A",ring:2,ang:20,trust:"known",on:false,sub:"known · not verified"},
  {name:"Tunde",ini:"T",ring:2,ang:95,trust:"new",on:true,sub:"new contact"},
@@ -335,7 +367,7 @@ function openLegend(){document.getElementById("legSheet").style.display="flex";}
 function closeSheet(id){document.getElementById(id).style.display="none";}
 
 /* ============================ LIVE voice front door ============================ */
-let live=false,rec=null,voices=[],greeted=false;
+let live=false,rec=null,voices=[],greeted=false,speakT=null;
 const pill=document.getElementById("livePill"),heardEl=document.getElementById("heardTxt"),
       micBtn=document.getElementById("mic"),typeEl=document.getElementById("typeCmd");
 function loadVoices(){try{voices=speechSynthesis.getVoices()||[]}catch(e){voices=[]}}
@@ -349,6 +381,15 @@ function speak(txt,then){
   const v=pickVoice(); if(v){u.voice=v;u.pitch=1.06;}
   u.rate=1.03; if(then)u.onend=then; speechSynthesis.speak(u);}catch(e){if(then)then();}
 }
+/* always listen again after the agent speaks — onend AND a guaranteed timer */
+function speakThenListen(txt){
+  stopRec();
+  const est=txt.length*60+2600;
+  speak(txt,function(){clearTimeout(speakT); startRec();});
+  clearTimeout(speakT);
+  speakT=setTimeout(function(){if(live&&!rec)startRec();},est);
+}
+function speakReply(txt){clearTimeout(speakT); speakThenListen(txt);}
 function toggleLive(){
   live=!live;
   micBtn.classList.toggle("live",live);
@@ -359,15 +400,15 @@ function toggleLive(){
     const hr=new Date().getHours();
     const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
     if(!greeted){greeted=true;
-      speak(word+" Samuel. How are you doing today?",startRec);}
-    else{startRec(); speak("How may I help you?");}
-    toast("● Live — your agent is listening");
-  }else{stopRec(); heardEl.textContent="listening…";}
+      speakThenListen(word+" Samuel. How are you doing today?");}
+    else{speakThenListen("How may I help you?");}
+    toast("\u25CF Live \u2014 your agent is listening");
+  }else{stopRec(); clearTimeout(speakT); heardEl.textContent="listening\u2026";}
 }
 function startRec(){
   if(!live)return;
   const S=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!S){heardEl.textContent="voice input unavailable — type below";return;}
+  if(!S){heardEl.textContent="voice input unavailable \u2014 type below";return;}
   rec=new S();rec.lang="en-NG";rec.continuous=true;rec.interimResults=true;
   rec.onresult=function(ev){
     let final="",interim="";
@@ -383,29 +424,66 @@ function startRec(){
 }
 function stopRec(){if(rec){const r=rec;rec=null;try{r.onend=null;r.stop()}catch(e){}}}
 function typed(el){const v=el.value.trim();el.value="";if(v)run(v);}
+function openFriend(nm){const p=presences.find(x=>x.name===nm);if(p){openPlace(p);}}
+function openFriends(){
+  const fr=presences.filter(p=>p.trust==="kyc"||p.trust==="known"||p.trust==="new");
+  document.getElementById("frBody").innerHTML=
+    '<h3 style="font-size:15px">Friends</h3>'+
+    '<div style="font-size:11px;color:var(--dim);margin:2px 0 8px">every friend with their live Updates ring \u2014 gold arc = new update</div>'+
+    '<div class="frgrid">'+fr.map(function(p){
+      const tr=p.trust==="kyc"?"KYC \u2714":(p.trust==="known"?"known":"new");
+      return '<div class="frrow" onclick="openFriend(\''+p.name+'\')">'+
+        '<div class="fring'+(p.st?" hasupd":"")+'"><div class="fava">'+p.ini+'</div></div>'+
+        '<div><div style="font-size:14px;font-weight:600">'+p.name+'</div>'+
+        '<div class="frmeta">'+tr+' \u00b7 '+(p.on?"online now":"last seen 2h ago")+'</div></div>'+
+        (p.st?'<div class="updchip">\u25CF '+p.st+' update'+(p.st>1?'s':'')+'</div>':'')+
+        '</div>';}).join("")+'</div>'+
+    '<div class="frmeta" style="margin-top:12px;text-align:center">the classic Chats page stays one tap away \u2014 nothing is removed in migration</div>';
+  document.getElementById("frSheet").style.display="flex";
+}
+function openExplore(){
+  document.getElementById("exBody").innerHTML=
+    '<h3 style="font-size:15px">Explore</h3>'+
+    '<div style="font-size:11px;color:var(--dim);margin:2px 0 10px">the public square \u2014 watch, follow, build your channel</div>'+
+    '<div class="mkch" onclick="toast(\'Channel studio \u2014 create your channel, post to your subscribers\')">\u2726 Create your channel</div>'+
+    '<div class="post"><div class="ch">Daily Light <span class="vb">\u2714 verified</span></div>'+
+    '<div class="tx">Faith confessions for winners \u2014 today\u2019s confession is up. \ud83d\udde3</div>'+
+    '<div class="meta">12,408 views \u00b7 1,204 loves \u00b7 86 comments</div></div>'+
+    '<div class="post"><div class="ch">Akwa Tech Hub</div>'+
+    '<div class="tx">Watch: building a mesh of AI receptionists, live from Uyo.</div>'+
+    '<div class="meta">8,911 views \u00b7 642 loves \u00b7 53 comments</div></div>'+
+    '<div class="post"><div class="ch">CEF AKSU Media <span class="vb">\u2714 verified</span></div>'+
+    '<div class="tx">Sunday service replay is live \u2014 42 subscribers.</div>'+
+    '<div class="meta">3,120 views \u00b7 402 loves \u00b7 31 comments</div></div>';
+  document.getElementById("exSheet").style.display="flex";
+}
 function run(cmd){
   const c=cmd.toLowerCase();
   const t=presences.find(function(p){return c.includes(p.name.toLowerCase())||
     (p.name==="CEF AKSU"&&c.includes("aksu"))});
-  if(c.includes("how are you")){speak("I'm doing great, Samuel. Ready when you are. What shall I do?");
-    toast("✦ I'm doing great — what shall I do?"); return;}
+  if(c.includes("how are you")){speakReply("I'm doing great, Samuel. Ready when you are. What shall I do?");
+    toast("\u2726 I'm doing great \u2014 what shall I do?"); return;}
+  if(c.includes("friend")){speakReply("Here are your friends, with their Updates.");
+    openFriends(); return;}
+  if(c.includes("explore")){speakReply("Here is Explore.");
+    openExplore(); return;}
   if(c.includes("call")&&t){pulse(t);
-    speak("Calling "+(t.grp?t.name:t.name)+" now.");
-    toast("📞 Calling "+t.name+"…");
+    speakReply("Calling "+t.name+" now.");
+    toast("\ud83d\udcde Calling "+t.name+"\u2026");
     setTimeout(function(){openPlace(t)},1100); return;}
   if((c.includes("open")||c.includes("go to")||c.includes("show"))&&t){
-    pulse(t); speak("Opening "+t.name+".");
-    toast("✦ Opening "+t.name); openPlace(t); return;}
+    pulse(t); speakReply("Opening "+t.name+".");
+    toast("\u2726 Opening "+t.name); openPlace(t); return;}
   if((c.includes("send")||c.includes("pay"))&&t){
     const m=c.match(/(\d[\d, ]*)/); const amt=m?m[1].trim():"2,000";
-    pulse(t); speak("Sending "+amt+" naira to "+t.name+". Trust chain verified.");
-    toast("💰 Sending ₦"+amt+" to "+t.name+" — trust chain verified ✔"); return;}
-  if(c.includes("exam")){speak("Opening Exam Prep.");
-    toast("✦ Opening Exam Prep — 50 hard questions ready"); return;}
-  if(c.includes("dayline")||c.includes("my day")){speak("Here is your day.");
+    pulse(t); speakReply("Sending "+amt+" naira to "+t.name+". Trust chain verified.");
+    toast("\ud83d\udcb0 Sending \u20a6"+amt+" to "+t.name+" \u2014 trust chain verified \u2714"); return;}
+  if(c.includes("exam")){speakReply("Opening Exam Prep.");
+    toast("\u2726 Opening Exam Prep \u2014 50 hard questions ready"); return;}
+  if(c.includes("dayline")||c.includes("my day")){speakReply("Here is your day.");
     openDayline(); return;}
-  speak("I didn't catch that, Samuel. You can say call, open, or pay with any name.");
-  toast('✦ "'+cmd+'" — try: "Call Grace" · "Open CEF AKSU" · "Pay Kelechi 2000"');
+  speakReply("I didn't catch that, Samuel. You can say call, open, friends, explore, or pay with any name.");
+  toast('\u2726 "'+cmd+'" \u2014 try: "Call Grace" \u00b7 "Friends" \u00b7 "Explore"');
 }
 function pulse(p){const n=document.getElementById("n"+p.name);
   if(n){n.classList.add("ringing"); setTimeout(function(){n.classList.remove("ringing")},3000);}}
