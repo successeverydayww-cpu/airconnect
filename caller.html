@@ -1124,7 +1124,40 @@ async function e2eDec(peer,text){
   }catch(e){return "🔒 (encrypted message)";}
 }
 
-async function api(act,body){if(AID&&!(body||{}).aid){body=Object.assign({aid:AID},body||{});}const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});return r.json();}
+async function api(act,body){if(AID&&!(body||{}).aid){body=Object.assign({aid:AID},body||{});}const r=await fetch(FN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({act:act},body||{}))});const j=await r.json();try{if(j&&j.err==="banned"&&typeof ME!=="undefined"&&ME)acBannedNotify();}catch(e){}return j;}
+/* ===== v171 (skylar directive): NO SILENT BANS — a banned user is TOLD, sees the reason,
+   verifies they are a real human (5 simple questions), and is restored within 5 hours. ===== */
+let AC_BAN_SEEN=false;
+function acBannedNotify(){
+  if(AC_BAN_SEEN)return;AC_BAN_SEEN=true;
+  const o=document.createElement("div");o.id="acBanOv";
+  o.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(4,10,22,.96);color:#fff;display:flex;align-items:center;justify-content:center;padding:20px;";
+  o.innerHTML='<div style="max-width:340px;width:100%;text-align:center;font-family:inherit">'+
+    '<div style="font-size:42px;line-height:1">🚫</div>'+
+    '<h3 style="margin:10px 0 6px;font-size:18px">Your number is banned</h3>'+
+    '<p style="opacity:.8;font-size:13px;line-height:1.55;margin:0 0 14px">This account has been blocked from AirConnect. If you are a real person, verify below — pass the check and your account is restored within 5 hours (usually within a minute).</p>'+
+    '<button id="acBanGo" style="padding:12px 22px;border:0;border-radius:22px;background:#0c9a6e;color:#fff;font-weight:600">Verify I\'m human</button>'+
+    '<div id="acBanQs" style="text-align:left;margin-top:14px"></div></div>';
+  document.body.appendChild(o);
+  try{if(typeof stopRing==="function")stopRing("all");}catch(e){}
+  try{if(typeof hangup==="function")hangup(true);}catch(e){}
+  $("acBanGo").onclick=async()=>{
+    $("acBanGo").textContent="Loading...";
+    const d=await api("appealstart",{num:ME});
+    if(!d||!d.ok){$("acBanQs").innerHTML='<p style="font-size:13px;opacity:.85;margin:0">'+(d&&d.err==="not banned"?"This account is no longer banned — close this and refresh the app.":("Could not start verification ("+(d&&d.err||"?")+"). Try again later."))+'</p>';$("acBanGo").textContent="Verify I\'m human";return;}
+    let h='<p style="font-size:12px;opacity:.85;margin:0 0 10px">Answer at least 4 of 5 correctly:</p>';
+    (d.questions||[]).forEach(function(q,i){h+='<div style="margin:8px 0"><div style="font-size:13px">'+(i+1)+'. '+q+'</div><input data-acq="'+i+'" placeholder="your answer" style="width:100%;margin-top:4px;padding:9px 12px;border-radius:9px;border:1px solid #2c3f5a;background:#0b1626;color:#fff;font-size:14px"></div>';});
+    h+='<button id="acBanSubmit" style="margin-top:8px;width:100%;padding:12px;border:0;border-radius:22px;background:#0c9a6e;color:#fff;font-weight:600">Submit verification</button><p id="acBanRes" style="font-size:13px;margin:10px 0 0;opacity:.85"></p>';
+    $("acBanQs").innerHTML=h;
+    $("acBanSubmit").onclick=async()=>{
+      const ans=[];document.querySelectorAll("[data-acq]").forEach(function(el){ans.push(el.value);});
+      $("acBanRes").textContent="Checking...";
+      const r2=await api("appealanswer",{num:ME,answers:ans});
+      if(r2&&r2.passed){$("acBanRes").textContent="✓ Verification passed — your account will be restored shortly (within 5 hours at most). Then refresh the app.";}
+      else{$("acBanRes").textContent=(r2&&r2.err)?String(r2.err):("Not quite — "+((r2&&r2.score)||0)+" of 5 correct. Read carefully and try again.");}
+    };
+  };
+}
 /* ===== AI RECEPTIONIST — Citizen One answers calls you miss (20s) ===== */
 const AI_VM="1100000004";
 let VM_MODE=false,vmRingTimer=null,vmRec=null,vmEndTimer=null,vmSpeaking=false,vmWantEnd=false,vmEndAt=0,vmSTTTries=0;
@@ -7019,7 +7052,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=170;
+const AC_V=171;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
