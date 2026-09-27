@@ -3846,7 +3846,7 @@ async function cvDown(e){
     if(CVR_PAUSED)return;
     const s=Math.floor((Date.now()-CVR_T0)/1000);
     $("cvRec").textContent="● "+fmtT(s);
-    if(s>=60)cvSendNow();
+    if(s>=1800)cvSendNow(); /* v169 skylar: record as long as he wants — 30-min safety only */
   },200);
 }
 function cvPause(){
@@ -3883,6 +3883,7 @@ async function cvSend(){
   chatBusy=true;
   try{
     const enc=await e2eEnc(CHAT_OPEN,b64);
+    if(enc.length>2950000){toast("Voice note too long — keep it under about 30 minutes");chatBusy=false;return;} /* v169 */
     toast("Sending voice note…");
     const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:enc});
     if(r&&r.ok){(CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",aud:b64,ts:r.id});renderBubbles();cvClose();}
@@ -3953,6 +3954,7 @@ async function sendChat(){
   const box=$("chatbox"),t=box.value.trim();
   if(!t||!CHAT_OPEN)return;
   let t2=t;
+  if(t2.length>20000){toast("Message too long — up to 20,000 characters (about 3,000 words)");return;} /* v169: 1000+ word messages fully supported */
   if(REPLY_TO){t2="r:"+REPLY_TO.id+"|"+REPLY_TO.pv+"|"+t;clearReply();}
   /* v131: no network? NEVER lose the message — queue it, show it with a 🕓 clock,
      and auto-send the moment the connection returns (WhatsApp-style). */
@@ -4259,6 +4261,9 @@ async function aiProcessSpeech(call,blob){
     const normalized=t.toLocaleLowerCase();
     if(normalized===call.lastTranscript&&Date.now()-(call.lastTranscriptAt||0)<8000)return;
     call.lastTranscript=normalized;call.lastTranscriptAt=Date.now();
+    /* v169 (skylar): always alive in-call — "end the call" hangs up instantly */
+    if(/\b(end|stop|cut|cancel)\s+(the\s+)?call\b|\bhang\s*up\b|\bend\s+it\b|\bend\s+the\s+line\b/.test(normalized)){
+      aiSpeak("Ending the call now.");setTimeout(function(){try{aiStop(true);}catch(e){try{hangup(true);}catch(e2){}}},700);return;}
     call.said=(call.said?call.said+" ":"")+t.slice(0,400);
     call.pending=(call.pending?call.pending+" ":"")+t.slice(0,400);
     aiVoiceStatus(call,"Words recognized. Sending to the AI...");aiSendHeard(call);
@@ -5175,7 +5180,7 @@ async function gvDown(){
   $("gvRec").className="";
   $("gvMic").style.display="none";$("gvBtns").className="";
   try{$("gvPauseBtn").textContent="⏸";}catch(e){}
-  GV.timer=setInterval(function(){if(GV.paused)return;const s=Math.floor((Date.now()-GV.t0)/1000);$("gvRec").textContent="● Recording "+s+"s";if(s>=60)gvSendNow();},200);
+  GV.timer=setInterval(function(){if(GV.paused)return;const s=Math.floor((Date.now()-GV.t0)/1000);$("gvRec").textContent="● Recording "+s+"s";if(s>=1800)gvSendNow(); /* v169: group voice notes unlimited too */},200);
 }
 function gvPause(){
   if(!GV.rec)return;
@@ -5202,7 +5207,7 @@ function gvTrash(){
 function gvUp(){if(GV.timer){clearInterval(GV.timer);GV.timer=null;}try{if(GV.rec&&GV.rec.state!=="inactive")GV.rec.stop();}catch(e){}$("gvRec").className="hide";}
 async function gvSend(){
   if(!GV.b64||!GROUP_OPEN)return;
-  if(GV.b64.length>255000){toast("Voice note too long — keep it under 60 seconds");return;}
+  if(GV.b64.length>2900000){toast("Voice note too long — keep it under about 30 minutes");return;}
   const r=await api("gfile",{from:ME,g:GROUP_OPEN,text:GV.b64});
   if(r&&r.ok){gvClose();toast("Voice note sent ✓");}
   else toast((r&&r.err)||"Could not send voice note");
@@ -7014,7 +7019,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=161;
+const AC_V=169;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7607,6 +7612,11 @@ function flRun(cmd){
   if((c.includes("call")||c.includes("talk to")||c.includes("speak to"))&&c.includes("premium user")){flSpeak("Calling Premium User now.");setTimeout(function(){location.href="skylar.html";},1200);return;}
   if(c.includes("how are you")){flSpeak("I am doing great, "+flMyName()+". Always live and ready. What shall I do for you?");return;}
   if(c.includes("where am i")||c.includes("what page")||c.includes("what is this")||c.includes("meaning of this")||c.includes("explain this")||c.includes("explain this page")){flExplain();return;}
+  /* v169 (skylar): the live agent obeys during live calls — always alive, never deaf */
+  const flInCall=(typeof state!=="undefined"&&(state==="live"||state==="dialing"))||(typeof AI_CALL!=="undefined"&&AI_CALL&&AI_CALL.on);
+  if(flInCall&&(c.includes("end the call")||c.includes("end call")||c.includes("stop the call")||c.includes("cut the call")||c.includes("hang up")||c.includes("hangup")||c.includes("end it")||c==="stop"||c.includes("stop it")||c.includes("cancel the call"))){
+    flSpeak("Ending the call now.");setTimeout(function(){try{if(typeof AI_CALL!=="undefined"&&AI_CALL){aiStop(true);return;}hangup(true);}catch(e){}},800);return;}
+  if(!flInCall&&(c.includes("end the call")||c.includes("end call")||c.includes("hang up")||c.includes("hangup")||c.includes("stop the call"))){flSpeak("There is no call right now. Say call a name whenever you are ready.");return;}
   if(c.includes("go to sleep")||c.includes("stop listening")||c.includes("sleep now")){flSleep();return;}
   if(c.includes("home")||c.includes("the field")||c.includes("go home")){flSpeak("Home.");showTab("field");return;}
   if(c.includes("friend")){flSpeak("Here are your friends.");openFab();return;}

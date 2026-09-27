@@ -3699,7 +3699,7 @@ async function cvDown(e){
     if(CVR_PAUSED)return;
     const s=Math.floor((Date.now()-CVR_T0)/1000);
     $("cvRec").textContent="● "+fmtT(s);
-    if(s>=60)cvSendNow();
+    if(s>=1800)cvSendNow(); /* v169: record as long as he wants */
   },200);
 }
 function cvPause(){
@@ -5012,7 +5012,7 @@ async function gvDown(){
   $("gvRec").className="";
   $("gvMic").style.display="none";$("gvBtns").className="";
   try{$("gvPauseBtn").textContent="⏸";}catch(e){}
-  GV.timer=setInterval(function(){if(GV.paused)return;const s=Math.floor((Date.now()-GV.t0)/1000);$("gvRec").textContent="● Recording "+s+"s";if(s>=60)gvSendNow();},200);
+  GV.timer=setInterval(function(){if(GV.paused)return;const s=Math.floor((Date.now()-GV.t0)/1000);$("gvRec").textContent="● Recording "+s+"s";if(s>=1800)gvSendNow();},200);
 }
 function gvPause(){
   if(!GV.rec)return;
