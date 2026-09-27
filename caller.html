@@ -7019,7 +7019,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=169;
+const AC_V=170;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7524,7 +7524,7 @@ function flWakeHit(t){
 function flGreetLine(){
   const hr=new Date().getHours();
   const word=hr<12?"Good morning":(hr<17?"Good afternoon":"Good evening");
-  return word+", "+flMyName()+". How may I help you today?";
+  return word+", "+flMyName()+". I'm listening."; /* v170 skylar: she never lists what she can do — she just listens and obeys */
 }
 function flWakeCheck(t){
   if(flWakeHit(t))flActivate(flGreetLine());
@@ -7588,7 +7588,7 @@ function flVoiceCheck(){
 function flMic(){
   if(FL_MODE==="active"){FL_MODE="wake";flUI();flSpeak("Back to standby.");return;}
   flLiveOn();
-  flActivate(FL_GREETED?"How may I help you today?":flGreetLine());
+  flActivate(FL_GREETED?"I'm listening.":flGreetLine());
   FL_GREETED=true;
 }
 /* ============ context + commands (real actions, any page) ============ */
@@ -7609,32 +7609,32 @@ function flFind(cmd){
 function flRun(cmd){
   const c=flNorm(cmd);const t=flFind(cmd);
   if(c.includes("passphrase")||c.includes("pass phrase")||(c.includes("phrase")&&(c.includes("how do i")||c.includes("how can i")||c.includes("get my")||c.includes("where is")))){flWalkPhrase();return;}
-  if((c.includes("call")||c.includes("talk to")||c.includes("speak to"))&&c.includes("premium user")){flSpeak("Calling Premium User now.");setTimeout(function(){location.href="skylar.html";},1200);return;}
-  if(c.includes("how are you")){flSpeak("I am doing great, "+flMyName()+". Always live and ready. What shall I do for you?");return;}
+  if((c.includes("call")||c.includes("talk to")||c.includes("speak to"))&&c.includes("premium user")){flSpeak("Calling Premium User.");setTimeout(function(){location.href="skylar.html";},1200);return;}
+  if(c.includes("how are you")){flSpeak("Doing great, "+flMyName()+".");return;}
   if(c.includes("where am i")||c.includes("what page")||c.includes("what is this")||c.includes("meaning of this")||c.includes("explain this")||c.includes("explain this page")){flExplain();return;}
   /* v169 (skylar): the live agent obeys during live calls — always alive, never deaf */
   const flInCall=(typeof state!=="undefined"&&(state==="live"||state==="dialing"))||(typeof AI_CALL!=="undefined"&&AI_CALL&&AI_CALL.on);
   if(flInCall&&(c.includes("end the call")||c.includes("end call")||c.includes("stop the call")||c.includes("cut the call")||c.includes("hang up")||c.includes("hangup")||c.includes("end it")||c==="stop"||c.includes("stop it")||c.includes("cancel the call"))){
-    flSpeak("Ending the call now.");setTimeout(function(){try{if(typeof AI_CALL!=="undefined"&&AI_CALL){aiStop(true);return;}hangup(true);}catch(e){}},800);return;}
-  if(!flInCall&&(c.includes("end the call")||c.includes("end call")||c.includes("hang up")||c.includes("hangup")||c.includes("stop the call"))){flSpeak("There is no call right now. Say call a name whenever you are ready.");return;}
+    flSpeak("Ending the call.");setTimeout(function(){try{if(typeof AI_CALL!=="undefined"&&AI_CALL){aiStop(true);return;}hangup(true);}catch(e){}},700);return;}
+  if(!flInCall&&(c.includes("end the call")||c.includes("end call")||c.includes("hang up")||c.includes("hangup")||c.includes("stop the call"))){flSpeak("There is no call right now.");return;}
   if(c.includes("go to sleep")||c.includes("stop listening")||c.includes("sleep now")){flSleep();return;}
   if(c.includes("home")||c.includes("the field")||c.includes("go home")){flSpeak("Home.");showTab("field");return;}
-  if(c.includes("friend")){flSpeak("Here are your friends.");openFab();return;}
-  if(c.includes("explore")||c.includes("watch")){flSpeak("Here is Explore.");showTab("watch");return;}
-  if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")||c==="chats"){flSpeak("Opening your chats.");showTab("chats");return;}
-  if(c.includes("update")||c.includes("status")){flSpeak("Here are the Updates.");showTab("status");return;}
-  if(c.includes("call log")||c.includes("dayline")||c.includes("my day")||c.includes("calls")){flSpeak("Here are your calls.");showTab("calls");return;}
-  if(c.includes("wallet")||c.includes("money")||c.includes("balance")){flSpeak("Opening your wallet.");try{walShow();}catch(e){menuOpen();}return;}
-  if(c.includes("my profile")||c.includes("open profile")){flSpeak("Opening your profile — here it is.");setTimeout(function(){try{openProfileSheet();}catch(e){openMyPlace();}},800);return;}
-  if(c.includes("profile")||c.includes("my place")||c.includes("menu")||(c.includes("settings")&&c.includes("open"))){flSpeak("Opening My Place.");setTimeout(function(){openMyPlace();},800);return;}
-  if(c.includes("settings")){flSpeak("Opening settings.");menuOpen();return;}
-  if(c.includes("exam")){flSpeak("Opening Exam Prep.");setTimeout(function(){location.href="exam.html";},900);return;}
-  if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+" now — one moment.");
+  if(c.includes("friend")){flSpeak("Friends.");openFab();return;}
+  if(c.includes("explore")||c.includes("watch")){flSpeak("Explore.");showTab("watch");return;}
+  if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")||c==="chats"){flSpeak("Chats.");showTab("chats");return;}
+  if(c.includes("update")||c.includes("status")){flSpeak("Updates.");showTab("status");return;}
+  if(c.includes("call log")||c.includes("dayline")||c.includes("my day")||c.includes("calls")){flSpeak("Calls.");showTab("calls");return;}
+  if(c.includes("wallet")||c.includes("money")||c.includes("balance")){flSpeak("Wallet.");try{walShow();}catch(e){menuOpen();}return;}
+  if(c.includes("my profile")||c.includes("open profile")){flSpeak("Profile.");setTimeout(function(){try{openProfileSheet();}catch(e){openMyPlace();}},800);return;}
+  if(c.includes("profile")||c.includes("my place")||c.includes("menu")||(c.includes("settings")&&c.includes("open"))){flSpeak("My Place.");setTimeout(function(){openMyPlace();},800);return;}
+  if(c.includes("settings")){flSpeak("Settings.");menuOpen();return;}
+  if(c.includes("exam")){flSpeak("Exam Prep.");setTimeout(function(){location.href="exam.html";},900);return;}
+  if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+".");
     setTimeout(function(){callNum(t.num);},1100);return;}
-  if(t&&t.num){flSpeak("Opening "+(WIN_NAMES[t.num]||"their chat")+" — here it is.");openChat(t.num);return;}
-  if(t&&t.grp){flSpeak("Opening "+(t.grp.name||"group")+".");openGroup(t.grp.id);return;}
-  if(c.includes("call")){flSpeak("Who shall I call?");return;}
-  flSpeak("I didn't catch that. You can say call a name, open a chat, home, explore, updates, wallet, or exam prep.");}
+  if(t&&t.num){flSpeak(WIN_NAMES[t.num]||"Chat.");openChat(t.num);return;}
+  if(t&&t.grp){flSpeak((t.grp.name||"Group")+".");openGroup(t.grp.id);return;}
+  if(c.includes("call")){flSpeak("Call who?");return;}
+  flSpeak("I didn't catch that.");} /* v170: no capability listing — she follows instructions, she doesn't advertise */
 /* ============ v167: VISIBLE HANDS — she moves the screen like you would ============ */
 function flSpot(el,dur){
   if(!el)return;
