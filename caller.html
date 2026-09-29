@@ -5725,7 +5725,7 @@ async function walRefresh(){
       if(h)h.innerHTML='<div style="font-size:11px;color:#94A3B8;padding:2px 0 8px">'+esc(airLine())+'</div>'+((d.hist||[]).length?d.hist.map(t=>{
         const inn=t.to===ME;
         return '<div style="padding:7px 0;border-bottom:1px solid #F1F5F9"><span style="color:'+(inn?"#2B5FE3":"#e2445c")+';font-weight:600">'+(inn?"+":"-")+'₦'+Number(t.amt||0).toLocaleString()+'</span> '+(inn?"from ":"to ")+(t.from===ME?"me":esc(String(t.from)))+(t.note?' · <i>'+esc(String(t.note))+'</i>':'')+'<div style="font-size:10.5px;color:#94A3B8">'+new Date(t.at).toLocaleString()+'</div></div>';
-      }).join("")):'<div style="color:#64748B;padding:6px 0">No transactions yet.</div>';
+      }).join(""):'<div style="color:#64748B;padding:6px 0">No transactions yet.</div>');
     }
   }catch(e){}
 }
