@@ -212,6 +212,15 @@ body.fldplace #chatview .cinput{background:#0E1836!important;border-top:1px soli
 body.fldplace #chatview .cinput input[type=text],body.fldplace #chatview .cinput input:not([type]){background:#16224A!important;color:#F4F7FF!important;border:1px solid #2A3B6E!important}
 body.fldplace #chatview .ohdr .nm{color:#F4F7FF!important}
 body.fldplace #chatview .ohdr .st{color:#8B96B8!important}
+/* v177 FIELD CALLS (stage 2): a call from the Field stays inside the Field's
+   world — starlit backdrop, gold-ringed avatar. The call engine itself is
+   untouched (same WebRTC, same AI lane, same controls). */
+body.fldcall #callview{background:#060B1C!important;background-image:radial-gradient(1.5px 1.5px at 14% 18%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 74% 12%,#3A4E86,transparent),radial-gradient(1px 1px at 33% 42%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 88% 55%,#3A4E86,transparent),radial-gradient(1px 1px at 55% 24%,#3A4E86,transparent),radial-gradient(1px 1px at 8% 70%,#3A4E86,transparent),radial-gradient(1px 1px at 64% 78%,#3A4E86,transparent),radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%)!important}
+body.fldcall #callview .cname{color:#F4F7FF!important}
+body.fldcall #callview .cstat{color:#8B96B8!important}
+body.fldcall #callview .top{background:linear-gradient(rgba(6,11,28,.72),transparent)!important}
+body.fldcall #callview .av{background:linear-gradient(135deg,#1A3FA8,#244FBF)!important;border:2px solid #E8B84B!important;box-shadow:0 0 24px rgba(232,184,75,.45)!important}
+body.fldcall #callview .meters .m{color:#8B96B8!important}
 #view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
 #view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
@@ -280,7 +289,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v176 · Chats in the Field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v177 · Calls in the Field</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -335,7 +344,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v176</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v177</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -3389,6 +3398,13 @@ function flOpenChat(p){
   openChat(p);
   try{$("cvSub").textContent="\u2726 Place \u00b7 AirConnect \u00b7 + "+p;}catch(e){}
 }
+/* v177: FIELD STAGE 2 (Calls) — "call X" from the Field opens the call inside
+   the Field's world. Zero protocol change: dial() and the whole call engine
+   stay exactly as they are. */
+function flFieldActive(){
+  try{return document.body.classList.contains("fldplace")||($("view-field")&&$("view-field").className.indexOf("hide")<0);}catch(e){return false;}
+}
+async function flDial(p){try{if(flFieldActive())document.body.classList.add("fldcall");}catch(e){}await dial(p);}
 function closeChat(){try{document.body.classList.remove("fldplace");}catch(e){}CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
 
 /* ---------- chat themes & wallpapers (WhatsApp-style) ---------- */
@@ -4228,6 +4244,7 @@ function setVLayout(stage){ // "off" | "ring" | "live" | "swap"
   w.className="vwrap "+stage+(cam?"":" nocam");
 }
 async function dial(p){
+  try{if(document.body.classList.contains("fldplace"))document.body.classList.add("fldcall");}catch(e){} /* v177: calls launched from an open Place stay in the Field */
   if(!navigator.onLine){toast("Connect to the internet first");return;}
     PEER=p;CALL_ROLE="offerer";RING_ACKED=false;EXT_WAIT=false;clAdd(p,"out",0);
   const gate=await api("can_call",{from:ME,to:PEER});
@@ -4654,6 +4671,7 @@ function showCall(txt){
   $("callview").className="ovl";
 }
 function acceptCall(){
+  try{if(flFieldActive())document.body.classList.add("fldcall");}catch(e){} /* v177 */
   vmDisarm();
   pushHist();
   stopRing();
@@ -4742,6 +4760,7 @@ async function toggleCam(){
   }catch(e){toast("Camera unavailable");}
 }
 function callCleanup(){
+  try{document.body.classList.remove("fldcall");}catch(e){} /* v177: leave the Field call space */
   if(AI_CALL)aiStop(false);
   if(VM_MODE){vmStop();vmEndNote();}
   stopRing();
@@ -7764,7 +7783,7 @@ function flRun(cmd){
   if(c.includes("settings")){flSpeak("Settings.");menuOpen();return;}
   if(c.includes("exam")){flSpeak("Exam Prep.");setTimeout(function(){location.href="exam.html";},900);return;}
   if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+".");
-    setTimeout(function(){callNum(t.num);},1100);return;}
+    setTimeout(function(){flDial(t.num);},1100);return;}
   if(t&&t.num){flSpeak(WIN_NAMES[t.num]||"Place.");flOpenChat(t.num);return;}
   if(t&&t.grp){flSpeak((t.grp.name||"Group")+".");openGroup(t.grp.id);return;}
   if(c.includes("call")){flSpeak("Call who?");return;}
