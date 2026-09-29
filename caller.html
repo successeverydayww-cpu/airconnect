@@ -322,7 +322,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v196 · readable names</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v197 · category arcs</span></div>
   <div class="fldock"> <!-- v194: rings on top, everything docked below (Samuel's voice directive) -->
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('chats')">💬 Chats</button>
@@ -379,7 +379,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v196</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v197</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -684,7 +684,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v196</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v197</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -7469,7 +7469,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=196;
+const AC_V=197;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -8403,11 +8403,19 @@ function openMiniApps(){
 function closeMiniApps(){const sh=$("miniAppsSheet");if(sh)sh.style.display="none";}
 /* ============ FIELD render (real presences + citizens) ============ */
 function flRender(){
-  const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.40; /* v194: ring rides high — dock owns the bottom */
-  const R1=Math.min(vw,vh)*0.19,R2=Math.min(vw,vh)*0.28;
+  const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.40; /* v197: ring rides high — dock owns the bottom */
+  const R=Math.min(vw*0.42,Math.min(vw,vh)*0.34); /* v197: fitted — fits width, clears brand on top and dock below */
+  const RY=0.92; /* gentle ellipse so the ring breathes with the screen */
   const sky=$("flsky");
   sky.setAttribute("viewBox","0 0 "+vw+" "+vh);
-  sky.innerHTML='<circle class="ringC" cx="'+cx+'" cy="'+cy+'" r="'+R1+'"/><circle class="ringC" cx="'+cx+'" cy="'+cy+'" r="'+R2+'" style="opacity:.55"/>';
+  sky.innerHTML='<ellipse class="ringC" cx="'+cx+'" cy="'+cy+'" rx="'+R+'" ry="'+(R*RY)+'"/><ellipse class="ringC" cx="'+cx+'" cy="'+cy+'" rx="'+(R*0.55)+'" ry="'+(R*0.55*RY)+'" style="opacity:.45"/>'; /* two rings, inner one purely decorative */
+  /* v197: colour-coded sector tints — friends top · groups right · citizens bottom, with clear gaps between */
+  let sec=$("flArcs");
+  if(!sec){sec=document.createElement("div");sec.id="flArcs";sec.style.cssText="position:absolute;pointer-events:none;z-index:1";$("view-field").insertBefore(sec,$("flsky").nextSibling);}
+  const AW=R*2.5,AH=R*RY*2.5;
+  sec.style.left=(cx-AW/2)+"px";sec.style.top=(cy-AH/2)+"px";sec.style.width=AW+"px";sec.style.height=AH+"px";
+  sec.style.borderRadius="50%";
+  sec.style.background="conic-gradient(from -221deg,rgba(91,141,239,.10) 0deg 103deg,transparent 103deg 116deg,rgba(43,95,227,.13) 116deg 208deg,transparent 208deg 221deg,rgba(176,132,245,.10) 221deg 285deg,transparent 285deg 360deg)";
   const stEl=$("flstars");stEl.innerHTML="";
   for(let i=0;i<30;i++){const d=document.createElement("div");d.className="star";
     d.style.left=(Math.random()*100)+"%";d.style.top=(Math.random()*100)+"%";
@@ -8422,14 +8430,15 @@ function flRender(){
   f.querySelector(".fname").textContent=(ME_NAME||"Me")+((typeof KYC_ME!=="undefined"&&KYC_ME)?" · KYC \u2714":"");
   f.querySelector(".fava").textContent=String(ME_NAME||"S").charAt(0).toUpperCase();
   const stN={};try{for(const s of STORIES){if(s.num!==ME)stN[s.num]=1;}}catch(e){}
-  const kc=(WIN_FRIENDS||[]).filter(x=>WIN_KC&&WIN_KC[x.id]);
-  const rest=(WIN_FRIENDS||[]).filter(x=>!(WIN_KC&&WIN_KC[x.id]));
+  /* v197 (Samuel picked Sample 2 — Category Arcs): one ring, three sectors, gaps between.
+     FRIENDS own the top arc (closest friends first, gold border); GROUPS own the right arc;
+     CITIZENS own the bottom arc. Angles in screen space: -90° is up, 0° right, +90° down. */
   const all=[];
-  kc.forEach((x,i)=>all.push({id:x.id,r:R1,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,kc.length)),k:1}));
-  rest.forEach((x,i)=>all.push({id:x.id,r:R2,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,rest.length)),k:0}));
-  (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name||("Group "+String(g.id||"").slice(-4)),r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
+  const fr=(WIN_FRIENDS||[]).slice();
+  fr.forEach((x,i)=>all.push({id:x.id,r:R,a:fr.length===1?-Math.PI/2:(-Math.PI/2-0.85+i*(1.7/(fr.length-1))),k:(WIN_KC&&WIN_KC[x.id])?1:0}));
+  (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name||("Group "+String(g.id||"").slice(-4)),r:R,a:(GROUPS||[]).length===1?0.87:(0.12+i*(1.5/((GROUPS||[]).length-1))),k:2}));
   const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Receptionist"},{num:"11000000133",nm:"Master Predictor"}]; /* v186: true citizen roster */
-  cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
+  cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R,a:cits.length===1?(Math.PI/2+0.85):(Math.PI/2+0.35+i*(1.0/(cits.length-1))),k:3}));
   /* v194: mini apps moved into the bottom dock — the ring carries people only */
   document.querySelectorAll("#view-field .fnode").forEach(n=>n.remove());
   const now=Date.now();
@@ -8446,7 +8455,7 @@ function flRender(){
       '<div class="fname">'+esc(nm)+'</div>';
     n.onclick=function(){if(isGrp)flOpenGroup(it.gid);else flOpenChat(it.id);};
     n.style.left=(cx+it.r*Math.cos(it.a))+"px";
-    n.style.top=(cy+it.r*Math.sin(it.a)*0.92)+"px";
+    n.style.top=(cy+it.r*Math.sin(it.a)*RY)+"px"; /* RY ellipse — nodes sit exactly ON the ring line */
     $("view-field").appendChild(n);
   }
 }
