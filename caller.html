@@ -6359,7 +6359,7 @@ async function kycGo(){
         try{meProfileRefresh();}catch(e){}
         try{renderLists();}catch(e){}
       }
-      st.innerHTML='✅ <b>Face marked successfully.</b> Your account is now locked to your face — on any new phone, only YOUR live face can open it. Your verified name "<b>"+esc(r.name||"")+'</b>" (from your card) now shows on your profile. The ✔ badge is next to your name for everyone.';
+      st.innerHTML="✅ <b>Face marked successfully.</b> Your account is now locked to your face — on any new phone, only YOUR live face can open it. Your verified name \"<b>"+esc(r.name||"")+"</b>\" (from your card) now shows on your profile. The ✔ badge is next to your name for everyone.";
       toast("Face marked ✔ — name verified from card");
     }else{
       st.innerHTML="❌ "+esc((r&&r.err)||"Verification failed — try again.");
