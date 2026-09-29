@@ -28,10 +28,10 @@ nav button .ico{display:block;font-size:20px;position:relative}
 .badge{position:absolute;top:-2px;right:calc(50% - 18px);background:#E8EFFB;color:#1A3FA8;font-size:10px;border-radius:10px;padding:1px 6px;font-weight:700}
 /* lists */
 .view{padding-bottom:64px;min-height:100vh}
-.row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #E2E8F0}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid #E2E8F0;background:var(--ch-surface,#fff)}
 .row:active{background:#E2E8F0}
 .av{width:46px;height:46px;border-radius:50%;background:#E8EFFB;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#fff;flex-shrink:0}
-.rname{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rname{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ch-text,#0F172A)}
 .rsub{font-size:13px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rtime{font-size:11px;color:#64748B;margin-left:auto;flex-shrink:0}
 .empty{padding:40px 20px;text-align:center;color:#64748B;font-size:14px}
@@ -322,7 +322,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v195 · strong KYC</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v196 · readable names</span></div>
   <div class="fldock"> <!-- v194: rings on top, everything docked below (Samuel's voice directive) -->
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('chats')">💬 Chats</button>
@@ -379,7 +379,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v195</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v196</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -684,7 +684,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v195</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v196</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -7469,7 +7469,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=195;
+const AC_V=196;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
