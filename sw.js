@@ -1,5 +1,5 @@
-/* AirConnect service worker v82 (v188: Face Lock): ultra-strong auto-update — every app open fetches the TRUE latest shell from origin (cache-bust query kills browser + CDN staleness), offline still works */
-const CACHE = 'airconnect-v188';
+/* AirConnect service worker v82 (v189: Live Face Marking): ultra-strong auto-update — every app open fetches the TRUE latest shell from origin (cache-bust query kills browser + CDN staleness), offline still works */
+const CACHE = 'airconnect-v189';
 const SHELL = ['./caller.html', './caller5.html', './manifest.json', './icon-192.png', './icon-512.png', './qrcode.min.js'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

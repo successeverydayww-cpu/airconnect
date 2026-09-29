@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v188 · face-locked</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v189 · live face-marked</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v188</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v189</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -680,7 +680,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v187</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v189</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -1646,16 +1646,16 @@ async function faceChallenge(d,phrase){
 function faceCancel(){const el=$("faceSheet");if(el)el.remove();try{window.__FACERES(null);}catch(e){}window.__FACERES=null;}
 async function faceGo(){
   const st=$("faceStat");if(!st)return;
-  st.textContent="Waiting for your selfie…";
-  const sm=await kycSnap("user");
-  if(!sm){st.textContent="";return;}
-  st.textContent="Checking your face…";
+  st.textContent="Live face check…";
+  const sm=await faceMarkLive();
+  if(!sm||!sm.ok){st.textContent=(sm&&sm.err)||"Live check failed — try again.";return;}
+  const smB64=sm.b64;
   try{
     const CH=300000;
-    const n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
+    const n=Math.max(1,Math.min(900,Math.ceil(smB64.length/CH)));
     const up=await api("fstart",{from:window.__FACE.id,to:window.__FACE.id,name:"face-check.jpg",n:n,pub:1});
     if(!up||!up.fid)throw 0;
-    await fputParallel(up.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
+    await fputParallel(up.fid,n,function(i){return smB64.slice(i*CH,(i+1)*CH);},null);
     let dev="";try{dev=await getDevAsync();}catch(e){}
     const r=await api("facecheck",{id:window.__FACE.id,phrase:window.__FACE.phrase,fid:up.fid,dev:dev});
     if(r&&r.ok){
@@ -6253,6 +6253,72 @@ function kycSheet(){
   sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeKycSheet(){$("kycsheet").className="ovl hide";}
+/* ===== v189 (Samuel, voice directive 29 Sep evening): LIVE face marking. The voice
+   directs you — look at the camera, open your mouth, blink your eyes — the camera
+   verifies each action live, then: "Face marked successfully". Only the CARD is a
+   photo. No still-selfie snapping anywhere. ===== */
+function faceSpeak(t){
+  try{if(typeof flSpeak==="function"){flSpeak(t);return;}}catch(e){}
+  try{const u=new SpeechSynthesisUtterance(t);u.rate=1.02;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}
+}
+function faceFrame(vid){ /* 64x64 grayscale fingerprint of the current camera frame */
+  const c=document.createElement("canvas");c.width=64;c.height=64;
+  const x=c.getContext("2d");x.drawImage(vid,0,0,64,64);
+  const id=x.getImageData(0,0,64,64).data;
+  const g=new Float32Array(4096);
+  for(let i=0;i<4096;i++){g[i]=id[i*4]*0.3+id[i*4+1]*0.59+id[i*4+2]*0.11;}
+  return g;
+}
+function faceDiff(a,b,y0,y1){ /* mean abs difference over a horizontal band of the face */
+  let s=0,n=0;
+  for(let y=y0;y<y1;y++)for(let x=0;x<64;x++){s+=Math.abs(a[y*64+x]-b[y*64+x]);n++;}
+  return n?s/n:0;
+}
+async function faceMarkLive(){
+  return new Promise(async function(res){
+    let stream=null,el=null,vid=null;
+    const close=function(){try{if(stream)stream.getTracks().forEach(function(t){t.stop();});}catch(e){}if(el&&el.parentNode)el.parentNode.removeChild(el);};
+    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:640}},audio:false});}
+    catch(e){res({ok:false,cam:true});return;} /* camera denied/unavailable */
+    el=document.createElement("div");el.id="faceLive";
+    el.style.cssText="position:fixed;inset:0;z-index:96;background:#060B1C;color:#F4F7FF;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px";
+    el.innerHTML='<div style="font-weight:700;font-size:17px;color:#E8B84B">Live face verification</div>'+
+    '<div style="position:relative;margin-top:14px;border-radius:18px;overflow:hidden;border:2px solid #E8B84B;width:min(70vw,270px);height:min(70vw,270px);box-shadow:0 0 30px rgba(232,184,75,.25)">'+
+    '<video autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1)"></video></div>'+
+    '<div id="faceDir" style="font-size:16px;font-weight:700;margin-top:16px;min-height:24px">Starting camera…</div>'+
+    '<div id="faceSub" style="font-size:12px;color:#8B96B8;margin-top:4px;min-height:16px"></div>';
+    document.body.appendChild(el);
+    vid=el.querySelector("video");vid.srcObject=stream;
+    try{await vid.play();}catch(e){}
+    await new Promise(function(r){setTimeout(r,800);});
+    const dir=function(t){const d=el.querySelector("#faceDir");if(d)d.textContent=t;faceSpeak(t);};
+    const sub=function(t){const d=el.querySelector("#faceSub");if(d)d.textContent=t;};
+    const snap=function(w){const c=document.createElement("canvas");const vw=vid.videoWidth||640,vh=vid.videoHeight||640;const s=Math.min(vw,vh)*0.95;c.width=w;c.height=w;const x=c.getContext("2d");x.drawImage(vid,(vw-s)/2,(vh-s)/2,s,s,0,0,w,w);return c.toDataURL("image/jpeg",0.82).split(",")[1];};
+    try{
+      dir("Look straight at the camera.");sub("Live check 1 of 3 — hold your face in the circle");
+      await new Promise(function(r){setTimeout(r,1500);});
+      const neutral=faceFrame(vid);
+      if(faceDiff(neutral,faceFrame(vid),0,64)<0.5){close();res({ok:false,err:"Camera is not showing your face — try again in better light."});return;}
+      dir("Open your mouth.");sub("Live check 2 of 3 — open your mouth now");
+      let mouthOK=false;
+      for(let t=0;t<14&&!mouthOK;t++){await new Promise(function(r){setTimeout(r,450);});if(faceDiff(neutral,faceFrame(vid),40,62)>=6.5)mouthOK=true;}
+      if(!mouthOK){dir("Mouth check failed.");close();res({ok:false,err:"Open your mouth wide when the voice asks you. Try again."});return;}
+      dir("Blink your eyes.");sub("Live check 3 of 3 — blink now");
+      let blinkOK=false;
+      for(let t=0;t<30&&!blinkOK;t++){await new Promise(function(r){setTimeout(r,150);});const bf=faceFrame(vid);const eye=faceDiff(neutral,bf,14,36),all=faceDiff(neutral,bf,0,64);if(eye>=4.5&&all<42)blinkOK=true;}
+      if(!blinkOK){dir("Blink check failed.");close();res({ok:false,err:"Blink clearly when the voice asks you. Try again."});return;}
+      dir("Hold still…");sub("Marking your face");
+      await new Promise(function(r){setTimeout(r,600);});
+      const fin=faceFrame(vid);
+      if(faceDiff(neutral,fin,0,64)>55){close();res({ok:false,err:"Hold still at the end — your face must stay in the circle."});return;}
+      const b64=snap(560);
+      dir("Face marked successfully ✔");sub("You are verified — finishing up…");
+      await new Promise(function(r){setTimeout(r,1100);});
+      close();
+      res({ok:true,b64:b64});
+    }catch(e){close();res({ok:false,err:"Live check interrupted — try again."});}
+  });
+}
 /* ===== v188 (Samuel, voice directive 29 Sep): FACE + CARD verification ===== */
 async function kycSnap(capture){ /* opens the camera and returns a shrunk photo */
   const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(capture)inp.setAttribute("capture",capture);inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
@@ -6265,9 +6331,10 @@ async function kycGo(){
   st.innerHTML="📷 <b>Step 1 of 2</b> — snap a clear photo of your ID card…";
   const card=await kycSnap("environment");
   if(!card){st.innerHTML="Cancelled — tap the button to try again.";$("kycBtn").style.display="";return;}
-  st.innerHTML='<img src="data:image/jpeg;base64,'+card.b64+'" style="max-height:100px;border-radius:8px;border:1px solid #E2E8F0"><div style="margin-top:6px">🤳 <b>Step 2 of 2</b> — now snap your face. Good light, look straight at the camera.</div>';
-  const self=await kycSnap("user");
-  if(!self){st.innerHTML="Cancelled — tap the button to try again.";$("kycBtn").style.display="";return;}
+  st.innerHTML='<img src="data:image/jpeg;base64,'+card.b64+'" style="max-height:100px;border-radius:8px;border:1px solid #E2E8F0"><div style="margin-top:6px">🤳 <b>Step 2 of 2</b> — LIVE face marking. The voice will direct you: look, open your mouth, blink. Keep the camera on your face.</div>';
+  const self=await faceMarkLive();
+  if(!self||!self.ok){st.innerHTML="❌ "+esc((self&&self.err)||"Live check failed — try again.");$("kycBtn").style.display="";return;}
+  const selfB64=self.b64;
   st.innerHTML="⏳ Verifying your card and your face…";
   try{
     const CH=300000;
@@ -6280,13 +6347,20 @@ async function kycGo(){
     }
     let dev="";try{dev=await getDevAsync();}catch(e){}
     const fid=await kycUp(card.b64,"kyc-card.jpg");
-    const sfid=await kycUp(self.b64,"kyc-face.jpg");
+    const sfid=await kycUp(selfB64,"kyc-face.jpg");
     const r=await api("kyc",{node:ME,fid:fid,sfid:sfid,dev:dev});
     if(r&&r.verified){
       KYC_ME=true;
       try{localStorage.setItem("ac_facelock","1");}catch(e){}
-      st.innerHTML='✅ <b>Verified — face + card.</b> Your account is now locked to your face: on any new phone, only YOUR face can open it. The ✔ badge is next to your name for everyone. Thank you, '+(esc(r.name||"friend"))+".";
-      toast("Identity verified ✔ — face-locked");
+      /* v189: the name on the CARD now becomes the profile name */
+      if(r.name&&r.name!==ME_NAME){
+        ME_NAME=r.name;try{localStorage.setItem("ac_name",r.name);}catch(e){}
+        try{WIN_NAMES[ME]=r.name;}catch(e){}
+        try{meProfileRefresh();}catch(e){}
+        try{renderLists();}catch(e){}
+      }
+      st.innerHTML='✅ <b>Face marked successfully.</b> Your account is now locked to your face — on any new phone, only YOUR live face can open it. Your verified name "<b>"+esc(r.name||"")+'</b>" (from your card) now shows on your profile. The ✔ badge is next to your name for everyone.';
+      toast("Face marked ✔ — name verified from card");
     }else{
       st.innerHTML="❌ "+esc((r&&r.err)||"Verification failed — try again.");
       $("kycBtn").style.display="";
