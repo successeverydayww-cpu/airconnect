@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v192 · verification flow</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v193 · Continuity mini app</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v192</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v193</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -680,7 +680,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v192</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v193</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -7438,7 +7438,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=192;
+const AC_V=193;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -8264,6 +8264,7 @@ function flRun(cmd){
   if(c.includes("profile")||c.includes("my place")||c.includes("menu")||(c.includes("settings")&&c.includes("open"))){flSpeak("My Place.");setTimeout(function(){openMyPlace();},800);return;}
   if(c.includes("settings")){flSpeak("Settings.");menuOpen();return;}
   if(c.includes("exam")){flSpeak("Exam Prep.");setTimeout(function(){location.href="exam.html?field=1";},900);return;}
+  if(c.includes("continuity")||c.includes("capsule")){flSpeak("Opening Continuity.");setTimeout(function(){location.href="https://successeverydayww-cpu.github.io/continuity-layer/app.html";},900);return;} /* v193 */
   if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+".");
     setTimeout(function(){flDial(t.num);},1100);return;}
   if(t&&t.num){flSpeak(WIN_NAMES[t.num]||"Place.");flOpenChat(t.num);return;}
@@ -8364,6 +8365,7 @@ function openMiniApps(){
     '<div style="font-size:10.5px;color:#8B96B8;margin:0 0 10px">Apps that live inside AirConnect, on their own ring. Every app passes our terms and review.</div>'+
     '<div class="mpGrid">'+
     '<div class="mpRoom" onclick="location.href=\'exam.html?field=1\'"><span class="mi">🎓</span><span>Exam Prep<div class="mpSub">by AirConnect · 50 hard questions · all JAMB subjects</div></span></div>'+
+    '<div class="mpRoom" onclick="location.href=\'https://successeverydayww-cpu.github.io/continuity-layer/app.html\'"><span class="mi">\U0001FAC2</span><span>Continuity<div class="mpSub">by Skylar Forge · your identity & memory capsule, always with you</div></span></div>'+
     '<div class="mpRoom" onclick="location.href=\'miniapps.html\'"><span class="mi">➕</span><span>Your app here<div class="mpSub">developers · terms & review process</div></span></div>'+
     '</div></div>';
   sh.style.display="flex";}
@@ -8398,6 +8400,7 @@ function flRender(){
   const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Receptionist"},{num:"11000000133",nm:"Master Predictor"}]; /* v186: true citizen roster */
   cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
   const apps=[{ic:"\uD83C\uDF93",nm:"Exam Prep",go:function(){location.href="exam.html?field=1";}},
+              {ic:"\uD83E\uDEC2",nm:"Continuity",go:function(){toast("Opening Continuity…");location.href="https://successeverydayww-cpu.github.io/continuity-layer/app.html";}}, /* v193: Continuity Layer mini app */
               {ic:"\uD83E\uDDE9",nm:"Mini Apps",go:function(){openMiniApps();}}];
   apps.forEach(function(a,i){
     let t=$("fapp"+i);
