@@ -330,7 +330,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v200 · gold list names</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v201 · inline gold names</span></div>
   <div class="fldock"> <!-- v194: rings on top, everything docked below (Samuel's voice directive) -->
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('chats')">💬 Chats</button>
@@ -387,7 +387,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v200</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v201</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -692,7 +692,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v200</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v201</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -1768,7 +1768,7 @@ function showTab(t){
 }
 function openFab(){
   const l=$("fabList");
-  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#64748B;font-size:13px">No friends yet — add one above.</div>';
+  l.innerHTML=WIN_FRIENDS.length?WIN_FRIENDS.map(f=>'<div class="row" onclick="closeFab();openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div></div>').join(""):'<div style="padding:10px 0;color:#64748B;font-size:13px">No friends yet — add one above.</div>';
   $("fabsheet").className="ovl";
 }
 function closeFab(){$("fabsheet").className="ovl hide";}
@@ -2313,7 +2313,7 @@ function renderLists(){
       const gp=(lg&&lg.unsent)?"🚫 Message unsent":(gpRaw.indexOf("FW|")===0?"↪ "+gpRaw.slice(3):gpRaw);
       const row=document.createElement("div");row.className="row";
       const gpAv=GPIC_CACHE[g.id];
-      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name||("Group "+String(g.id||"").slice(-4)))+'<span style="color:#2B5FE3;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#2B5FE3;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
+      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important">'+esc(g.name||("Group "+String(g.id||"").slice(-4)))+'<span style="color:#5B8DEF;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#2B5FE3;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
       row.onclick=function(){openGroup(g.id);};
       try{gFetchPic(g.id);}catch(e){}
       cl.appendChild(row);
@@ -2325,7 +2325,7 @@ function renderLists(){
     const rawPrev=l?(l.img?"📷 Photo":(l.aud?"🎙️ Voice note":(l.vid?"🎬 Video":(l.fileId?"📎 Attachment":(l.f2?("📎 "+(l.f2.name||"Attachment")):esc(l.text).slice(0,40)))))):"Tap to message";
     const prev=(ARCHS.includes(f.id)?rawPrev+" · archived":rawPrev);
     const row=document.createElement("div");row.className="row";
-    row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
+    row.innerHTML=avatarHTML(f.id,n)+'<div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div style="min-width:0;flex:1"><div class="rname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important">'+esc(n)+'</div><div class="rsub">'+prev+'</div></div><div class="rtime">'+(l?ago(l.ts):"")+'</div>'+(UNREAD[f.id]?'<span class="badge">'+UNREAD[f.id]+'</span>':'');
     row.onclick=()=>openChat(f.id);
     row.oncontextmenu=e=>{e.preventDefault();openRs(f.id);};
     row.addEventListener("touchstart",()=>{row._lp=setTimeout(()=>openRs(f.id),550);},{passive:true});
@@ -2338,7 +2338,7 @@ function renderLists(){
     cl.appendChild(hd);
     for(const p of WIN_BLOCKS){
       const row=document.createElement("div");row.className="row";
-      row.innerHTML='<div class="av">🚫</div><div style="min-width:0;flex:1"><div class="rname">'+esc(WIN_NAMES[p]||("+"+p))+'</div><div class="rsub">Tap to unblock</div></div>';
+      row.innerHTML='<div class="av">🚫</div><div style="min-width:0;flex:1"><div class="rname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important">'+esc(WIN_NAMES[p]||("+"+p))+'</div><div class="rsub">Tap to unblock</div></div>';
       row.onclick=()=>unblockPeer(p);
       cl.appendChild(row);
     }
@@ -2346,7 +2346,7 @@ function renderLists(){
   $("nochat").className=(allFr.length||WIN_BLOCKS.length)?"empty hide":"empty";
   renderCallLog();
   const fl=$("flist");
-  if(fl)fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
+  if(fl)fl.innerHTML=fr.length?fr.map(f=>'<div class="row" onclick="openChat(\''+f.id+'\')"><div class="av">'+(WIN_NAMES[f.id]||"?").charAt(0).toUpperCase()+'</div><div style="min-width:0;flex:1;display:flex;align-items:center">'+dotHTML(f.id)+'<div class="rname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important">'+esc(WIN_NAMES[f.id]||"?")+'</div><div class="rsub">+ '+f.id+'</div></div><div class="rtime">💬</div></div>').join(""):'No friends yet — send a request above.';
   renderUnread();
 }
 
@@ -7478,7 +7478,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=200;
+const AC_V=201;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7837,7 +7837,7 @@ html[data-ac-theme="light"]{color-scheme:light;--ch-bg:#F7F9FC;--ch-surface:#FFF
 html[data-ac-theme="dark"]{color-scheme:dark;--ch-bg:#0B1120;--ch-surface:#141D33;--ch-surface2:#1C2742;--ch-text:#E9EEF9;--ch-muted:#8FA0BF;--ch-line:#263452;--ch-cyan:#4C7CF5;--ch-blue:#5B87F0;--ch-violet:#F4C04D;--ch-glass:#141D33}
 body,.view{background:var(--ch-bg)!important;color:var(--ch-text)!important;transition:background .25s,color .25s}.hdr,.ohdr{background:var(--ch-surface)!important;color:var(--ch-text)!important;border-color:var(--ch-line)!important;border-bottom:1px solid var(--ch-line)!important;box-shadow:none!important;}.hdr .sub,.ohdr .st,.hdr #stxt{color:var(--ch-muted)!important}.ohdr .nm,.ohdr .bk{color:var(--ch-text)!important}.dot.live{background:var(--ch-blue)!important;box-shadow:none}
 nav{background:var(--ch-surface)!important;border-top:1px solid var(--ch-line)!important;box-shadow:none!important}nav button{color:var(--ch-muted)!important}nav button.on{color:var(--ch-blue)!important;text-shadow:none!important}nav button.on .ico{filter:none}.badge{background:var(--ch-violet)!important;color:#10294F!important;box-shadow:none!important}
-.row{border-color:var(--ch-line)!important}.row:active{background:color-mix(in srgb,var(--ch-cyan) 8%,var(--ch-surface))!important}.av{border-radius:18px!important;border:1px solid var(--ch-line)!important;box-shadow:none!important}.rname,.nm{color:var(--ch-text)!important}.rsub,.rtime,.empty{color:var(--ch-muted)!important}.rtime{color:var(--ch-blue)!important}
+.row{border-color:var(--ch-line)!important}.row:active{background:color-mix(in srgb,var(--ch-cyan) 8%,var(--ch-surface))!important}.av{border-radius:18px!important;border:1px solid var(--ch-line)!important;box-shadow:none!important}.nm{color:var(--ch-text)!important}.rname{color:#FFE08A!important;background:rgba(6,11,28,.95)!important;padding:2px 9px;border-radius:10px;display:inline-block;max-width:100%;font-weight:800}.rsub,.rtime,.empty{color:var(--ch-muted)!important}.rtime{color:var(--ch-blue)!important}
 .card,.sheet,#fabsheet .sheet,#menuView{background:var(--ch-glass)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important;box-shadow:0 8px 20px rgba(15,23,42,.08)!important;}.card{border-radius:24px!important}input,select,textarea{background:var(--ch-surface)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important;border-radius:15px!important;box-shadow:0 5px 16px rgba(45,69,105,.06)!important}input::placeholder,textarea::placeholder{color:var(--ch-muted)!important}option{background:var(--ch-surface);color:var(--ch-text)}
 button.big,#fab,.cinput button,.btn,.sendBtn{background:var(--ch-blue)!important;color:white!important;border:0!important;border-radius:17px!important;box-shadow:none!important;animation:none!important}button.big.red{background:linear-gradient(135deg,#FF5373,#FF765F)!important}.cb1{color:var(--ch-blue)!important}.cb2{color:var(--ch-text)!important}
 .ovl{background:var(--ch-bg)!important}.bubbles,#wpg{background:var(--ch-bg)!important}.bub{border-radius:18px!important;box-shadow:0 7px 20px rgba(34,54,86,.11)!important}.bub.out{background:var(--ch-blue)!important;color:white!important;border:0!important;border-bottom-right-radius:5px!important}.bub.in{background:var(--ch-surface)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important;border-bottom-left-radius:5px!important}.bub.sys{background:color-mix(in srgb,var(--ch-violet) 16%,var(--ch-surface))!important;color:var(--ch-text)!important}.cinput{background:var(--ch-glass)!important;border-color:var(--ch-line)!important;}.qbox,.rchip{background:color-mix(in srgb,var(--ch-cyan) 7%,var(--ch-surface))!important;border-color:var(--ch-line)!important;color:var(--ch-muted)!important}.qbox{border-left-color:var(--ch-blue)!important}
@@ -8432,7 +8432,7 @@ function flRender(){
   let f=$("flyou");
   if(!f){f=document.createElement("div");f.id="flyou";
     f.style.cssText="position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:5;cursor:pointer";
-    f.innerHTML='<div class="fava" style="width:72px;height:72px;font-size:26px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);border:3px solid #E8B84B;box-shadow:0 0 24px rgba(232,184,75,.5)">S</div><div class="fname" style="font-weight:700;font-size:13.5px"></div>';
+    f.innerHTML='<div class="fava" style="width:72px;height:72px;font-size:26px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);border:3px solid #E8B84B;box-shadow:0 0 24px rgba(232,184,75,.5)">S</div><div class="fname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important;font-weight:700;font-size:13.5px"></div>';
     f.onclick=function(){openMyPlace();};
     $("view-field").appendChild(f);}
   f.style.left=cx+"px";f.style.top=cy+"px";
@@ -8461,7 +8461,7 @@ function flRender(){
     n.innerHTML='<div class="fava">'+(isGrp?"\u25C8":(isCit?"\uD83E\uDD16":esc(nm).charAt(0).toUpperCase()))+
       (un?'<div class="funr">'+un+'</div>':'')+
       '<div class="fdot'+(on?" on":"")+'"></div><div class="fringpulse"></div></div>'+
-      '<div class="fname">'+esc(nm)+'</div>';
+      '<div class="fname" style="display:inline-block;max-width:100%;padding:2px 9px;border-radius:10px;background:rgba(6,11,28,.95)!important;color:#FFE08A!important;font-weight:800!important;text-shadow:0 1px 2px #000!important">'+esc(nm)+'</div>';
     n.onclick=function(){if(isGrp)flOpenGroup(it.gid);else flOpenChat(it.id);};
     n.style.left=(cx+it.r*Math.cos(it.a))+"px";
     n.style.top=(cy+it.r*Math.sin(it.a)*RY)+"px"; /* RY ellipse — nodes sit exactly ON the ring line */
