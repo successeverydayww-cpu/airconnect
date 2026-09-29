@@ -289,7 +289,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v177 · Calls in the Field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v178 · Places</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -344,7 +344,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v177</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v178</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -904,6 +904,7 @@ body.acLive #flwrap{display:flex}
       <button class="bk" onclick="openThemeSheet()">🎨</button>
     </div>
   </div>
+  <div id="placeRooms" style="display:none;gap:8px;padding:8px 12px 0"></div>
   <div class="bubbles" id="bubbles"></div>
   <div id="chipsrow" style="display:none;gap:6px;padding:6px 10px 0;overflow-x:auto"></div>
   <div id="srChips" class="hide" style="display:flex;gap:6px;padding:6px 10px;background:#F0F2F5;overflow-x:auto;white-space:nowrap"></div>
@@ -1029,6 +1030,23 @@ body.acLive #flwrap{display:flex}
   </div>
 </div>
 
+<!-- v178: PLACE ABOUT room — a person's space: their face, their name, their
+     trust ring, their presence. Built from data the app already holds (no new acts). -->
+<div id="placeAbout" class="ovl hide" style="background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%);z-index:40;align-items:center;justify-content:center;text-align:center;padding:24px">
+  <button onclick="closePlaceAbout()" style="position:absolute;top:14px;left:14px;background:#16224A;color:#F4F7FF;border:1px solid #2A3B6E;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer">&#10094;</button>
+  <div style="max-width:320px;width:100%">
+    <div id="paAv" style="width:110px;height:110px;border-radius:50%;margin:0 auto 14px;font-size:42px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1A3FA8,#244FBF);border:3px solid #E8B84B;box-shadow:0 0 34px rgba(232,184,75,.4)"></div>
+    <div id="paName" style="font-size:23px;font-weight:700;color:#F4F7FF"></div>
+    <div id="paPlace" style="font-size:13px;color:#E8B84B;margin-top:4px"></div>
+    <div id="paMeta" style="font-size:13px;color:#8B96B8;margin-top:10px;line-height:1.7"></div>
+    <div id="paPres" style="font-size:13px;color:#8B96B8;margin-top:6px"></div>
+    <div style="display:flex;gap:10px;margin-top:22px;justify-content:center;flex-wrap:wrap">
+      <button id="paMom" onclick="paOpenMoments()" style="background:#16224A;color:#F4F7FF;border:1px solid #2A3B6E;border-radius:999px;padding:11px 18px;font-size:14px;cursor:pointer">&#9673; Moments</button>
+      <button id="paCall" onclick="paCall()" style="background:#16224A;color:#F4F7FF;border:1px solid #2A3B6E;border-radius:999px;padding:11px 18px;font-size:14px;cursor:pointer">&#128222; Call</button>
+      <button onclick="closePlaceAbout()" style="background:linear-gradient(135deg,#E8B84B,#F4C04D);color:#151b26;border:0;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer">&#128172; Talk Wall</button>
+    </div>
+  </div>
+</div>
 <!-- app PIN lock overlay -->
 <div id="lockview" class="ovl hide" style="z-index:80;align-items:center;justify-content:center;text-align:center">
   <div style="font-size:40px">🔒</div>
@@ -3397,6 +3415,39 @@ function flOpenChat(p){
   try{document.body.classList.add("fldplace");}catch(e){}
   openChat(p);
   try{$("cvSub").textContent="\u2726 Place \u00b7 AirConnect \u00b7 + "+p;}catch(e){}
+  flPlaceRooms(p);
+}
+/* v178: FIELD STAGE 3 (Friends/Places) — a Place is a person's space. The
+   rooms bar appears inside their Place: About (their face, trust ring,
+   presence) and Moments (their Updates). Zero protocol change: everything is
+   read from data the app already holds; the Talk Wall (chat) stays untouched. */
+let PA_NUM=null;
+function openPlaceAbout(p){
+  PA_NUM=p;
+  const nm=WIN_NAMES[p]||("+"+p);
+  try{
+    const av=$("paAv");
+    if(PIC_CACHE[p]&&String(PIC_CACHE[p]).indexOf("data:image")===0){av.style.backgroundImage="url("+PIC_CACHE[p]+")";av.style.backgroundSize="cover";av.style.backgroundPosition="center";av.textContent="";}
+    else{av.style.backgroundImage="";av.textContent=String(nm).charAt(0).toUpperCase();}
+    $("paName").textContent=nm;
+    $("paPlace").textContent="\u2726 Place \u00b7 you are in "+nm+"'s space";
+    $("paMeta").innerHTML="AirConnect \u00b7 +"+p+((WIN_KC&&WIN_KC[p])?"<br>\u2714 Identity verified":"");
+    const pt=(WIN_PRES&&WIN_PRES[p])||0;
+    $("paPres").textContent=(pt&&Date.now()-pt<30000)?("In the Field now"):("Away from the Field \u00b7 a message always lands");
+    $("paMom").style.display=((STORIES||[]).some(s=>s.num===p))?"":"none";
+    $("placeAbout").className="ovl";
+  }catch(e){}
+}
+function closePlaceAbout(){try{$("placeAbout").className="ovl hide";}catch(e){}}
+function paOpenMoments(){if(PA_NUM)openStatusViewer(PA_NUM);}
+function paCall(){closePlaceAbout();if(PA_NUM)flDial(PA_NUM);}
+function flPlaceRooms(p){
+  const bar=$("placeRooms");if(!bar)return;
+  const chip=(txt,fn)=>{const b=document.createElement("button");b.style.cssText="background:#16224A;color:#F4F7FF;border:1px solid #2A3B6E;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer";b.textContent=txt;b.onclick=fn;bar.appendChild(b);};
+  bar.innerHTML="";
+  chip("\u2726 About "+String(WIN_NAMES[p]||"").split(" ")[0],function(){openPlaceAbout(p);});
+  if((STORIES||[]).some(s=>s.num===p))chip("\u25C9 Moments",function(){openStatusViewer(p);});
+  bar.style.display="flex";
 }
 /* v177: FIELD STAGE 2 (Calls) — "call X" from the Field opens the call inside
    the Field's world. Zero protocol change: dial() and the whole call engine
@@ -3405,7 +3456,7 @@ function flFieldActive(){
   try{return document.body.classList.contains("fldplace")||($("view-field")&&$("view-field").className.indexOf("hide")<0);}catch(e){return false;}
 }
 async function flDial(p){try{if(flFieldActive())document.body.classList.add("fldcall");}catch(e){}await dial(p);}
-function closeChat(){try{document.body.classList.remove("fldplace");}catch(e){}CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
+function closeChat(){try{document.body.classList.remove("fldplace");$("placeRooms").style.display="none";}catch(e){}CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
 
 /* ---------- chat themes & wallpapers (WhatsApp-style) ---------- */
 const THEME_SWATCHES=["linear-gradient(135deg,#0f766e,#134e4a)","linear-gradient(135deg,#1e3a8a,#0c2461)","linear-gradient(135deg,#7c1d6f,#441054)","linear-gradient(135deg,#b45309,#71320a)","linear-gradient(135deg,#153580,#022c22)","linear-gradient(135deg,#9f1239,#4c0519)","linear-gradient(135deg,#334155,#0f172a)","linear-gradient(135deg,#c2410c,#7c2d12)"];
