@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v187b · zoom locked</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v188 · face-locked</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v187</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v188</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -1607,11 +1607,11 @@ async function register(){
   const resume=$("oldnum").value.trim()||readLoginSync()||"";
   const dev=await getDevAsync();
   let d=null;
-  if(resume){d=await api("register",{id:resume,name:name,dev:dev});if(d&&d.id)await log('resumed my number');}
+  if(resume){d=await api("register",{id:resume,name:name,dev:dev});if(d&&d.need==="face"){d=await faceChallenge(d,getPhraseSync());}if(d&&d.id)await log('resumed my number');}
   if(!d||!d.id){d=await api("register",{dev:dev,name:name});if(d&&d.id)await log('resumed by device');}
   if(!d||!d.id){
     const sp=getPhraseSync();
-    if(sp){d=await api("register",{phrase:sp,dev:dev});if(d&&d.id)await log('resumed by saved phrase');}
+    if(sp){d=await api("register",{phrase:sp,dev:dev});if(d&&d.need==="face"){d=await faceChallenge(d,sp);}if(d&&d.id)await log('resumed by saved phrase');}
   }
   if(!d||!d.id){
     if(resume||ME){
@@ -1626,6 +1626,46 @@ async function register(){
   finishLogin(d);
   try{setTimeout(function(){flBoot();},600);}catch(e){}
   if(d.phrase)showPhraseModal(d.phrase,d.resumed==="new");
+}
+/* ===== v188 (Samuel): FACE-LOCK — a face-verified account on a NEW phone must
+   prove the owner's face before it opens. Nothing else can get in. ===== */
+async function faceChallenge(d,phrase){
+  let el=$("faceSheet");if(el)el.remove();
+  el=document.createElement("div");el.id="faceSheet";
+  el.style.cssText="position:fixed;inset:0;z-index:95;background:#0B1330;color:#F4F7FF;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center";
+  el.innerHTML='<div style="font-size:40px">🤳</div>'+
+  '<div style="font-weight:700;font-size:18px;margin-top:10px">Face verification</div>'+
+  '<div style="font-size:13px;color:#C9D9F7;margin-top:8px;max-width:340px;line-height:1.5">This account is locked to its owner\'s face. Snap a selfie to prove it is you — good light, looking straight at the camera.</div>'+
+  '<div id="faceStat" style="font-size:13px;margin-top:14px;min-height:20px"></div>'+
+  '<button class="big blue" id="faceGo" style="width:100%;max-width:320px;margin-top:12px" onclick="faceGo()">📷 Take my selfie</button>'+
+  '<button class="big" style="width:100%;max-width:320px;margin-top:8px;background:transparent;color:#8B96B8" onclick="faceCancel()">Cancel</button>';
+  document.body.appendChild(el);
+  window.__FACE={id:String(d.id||""),phrase:phrase||""};
+  return new Promise(function(res){window.__FACERES=res;});
+}
+function faceCancel(){const el=$("faceSheet");if(el)el.remove();try{window.__FACERES(null);}catch(e){}window.__FACERES=null;}
+async function faceGo(){
+  const st=$("faceStat");if(!st)return;
+  st.textContent="Waiting for your selfie…";
+  const sm=await kycSnap("user");
+  if(!sm){st.textContent="";return;}
+  st.textContent="Checking your face…";
+  try{
+    const CH=300000;
+    const n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
+    const up=await api("fstart",{from:window.__FACE.id,to:window.__FACE.id,name:"face-check.jpg",n:n,pub:1});
+    if(!up||!up.fid)throw 0;
+    await fputParallel(up.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
+    let dev="";try{dev=await getDevAsync();}catch(e){}
+    const r=await api("facecheck",{id:window.__FACE.id,phrase:window.__FACE.phrase,fid:up.fid,dev:dev});
+    if(r&&r.ok){
+      const el=$("faceSheet");if(el)el.remove();
+      const res=window.__FACERES;window.__FACERES=null;
+      if(res)res(r);
+    }else{
+      st.textContent=(r&&r.err)||"Face check failed — try again";
+    }
+  }catch(e){st.textContent="Upload failed — check connection and try again";}
 }
 async function finishLogin(d){
   ME=d.id;ME_NAME=d.name||localStorage.getItem("ac_name")||"AirConnect user";
@@ -6202,8 +6242,8 @@ function kycSheet(){
     sh=document.createElement("div");sh.id="kycsheet";sh.className="ovl hide";
     sh.innerHTML='<div class="sheet"><div style="font-weight:700;margin-bottom:8px">✔ Verify your identity</div>'+
       '<div id="kycStatus" style="font-size:13px;color:#334155;line-height:1.5;margin-bottom:10px"></div>'+
-      '<div style="background:#E8EFFB;border-radius:10px;padding:10px;font-size:12.5px;color:#1A3FA8;margin-bottom:10px">How it works:<br>1. Take ONE photo of yourself <b>holding your ID next to your face</b> — your face and the document must both be clearly visible.<br>2. Our AI reads the name and ID number, and <b>checks your face against the photo on the ID</b> — a borrowed ID will fail.<br>3. Your profile name must match the name on your ID.<br>4. One ID number can verify only one account — ever.<br>Your ID number is stored only as a secure hash, never as text. ✔ verified users are trusted at a glance.</div>'+
-      '<button class="big blue" id="kycBtn" style="width:100%" onclick="kycGo()">📷 Take a photo holding your ID</button>'+
+      '<div style="background:#E8EFFB;border-radius:10px;padding:10px;font-size:12.5px;color:#1A3FA8;margin-bottom:10px">How it works:<br>1. 📷 Snap a clear photo of your <b>ID card</b> — national ID, passport or driver\'s license.<br>2. 🤳 Snap your <b>face</b> — a clear selfie, good light, looking at the camera.<br>3. Our AI reads your card and <b>locks this account to YOUR face</b> — on any new phone, only your face can open it. No other face can ever use your account.<br>4. One ID verifies one account — ever.<br>Your ID number is stored only as a secure hash, never as text. ✔ verified users are trusted at a glance.</div>'+
+      '<button class="big blue" id="kycBtn" style="width:100%" onclick="kycGo()">🛡 Verify me — snap card + face</button>'+
       '<button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeKycSheet()">Close</button><div style="height:8px"></div></div>';
     document.body.appendChild(sh);
     sh.addEventListener("click",function(e){if(e.target===sh)closeKycSheet();});
@@ -6213,25 +6253,42 @@ function kycSheet(){
   sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeKycSheet(){$("kycsheet").className="ovl hide";}
+/* ===== v188 (Samuel, voice directive 29 Sep): FACE + CARD verification ===== */
+async function kycSnap(capture){ /* opens the camera and returns a shrunk photo */
+  const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(capture)inp.setAttribute("capture",capture);inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
+  if(!f)return null;
+  try{return await walRcpShrink(f);}catch(e){return null;}
+}
 async function kycGo(){
-  const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
-  if(!f)return;
   const st=$("kycStatus");
-  st.innerHTML="⏳ Uploading and reading your ID…";
   $("kycBtn").style.display="none";
+  st.innerHTML="📷 <b>Step 1 of 2</b> — snap a clear photo of your ID card…";
+  const card=await kycSnap("environment");
+  if(!card){st.innerHTML="Cancelled — tap the button to try again.";$("kycBtn").style.display="";return;}
+  st.innerHTML='<img src="data:image/jpeg;base64,'+card.b64+'" style="max-height:100px;border-radius:8px;border:1px solid #E2E8F0"><div style="margin-top:6px">🤳 <b>Step 2 of 2</b> — now snap your face. Good light, look straight at the camera.</div>';
+  const self=await kycSnap("user");
+  if(!self){st.innerHTML="Cancelled — tap the button to try again.";$("kycBtn").style.display="";return;}
+  st.innerHTML="⏳ Verifying your card and your face…";
   try{
-    const sm=await walRcpShrink(f);
-    const CH=300000,n=Math.max(1,Math.min(900,Math.ceil(sm.b64.length/CH)));
-    const up=await api("fstart",{from:ME,to:ME,name:"kyc-id.jpg",n,pub:1});
-    if(!up||!up.fid)throw 0;
-    await fputParallel(up.fid,n,function(i){return sm.b64.slice(i*CH,(i+1)*CH);},null);
-    const r=await api("kyc",{node:ME,fid:up.fid});
+    const CH=300000;
+    async function kycUp(b64,name){
+      const n=Math.max(1,Math.min(900,Math.ceil(b64.length/CH)));
+      const up=await api("fstart",{from:ME,to:ME,name:name,n:n,pub:1});
+      if(!up||!up.fid)throw 0;
+      await fputParallel(up.fid,n,function(i){return b64.slice(i*CH,(i+1)*CH);},null);
+      return up.fid;
+    }
+    let dev="";try{dev=await getDevAsync();}catch(e){}
+    const fid=await kycUp(card.b64,"kyc-card.jpg");
+    const sfid=await kycUp(self.b64,"kyc-face.jpg");
+    const r=await api("kyc",{node:ME,fid:fid,sfid:sfid,dev:dev});
     if(r&&r.verified){
       KYC_ME=true;
-      st.innerHTML='✅ <b>Identity verified!</b> The ✔ badge is now next to your name for everyone. Thank you, '+(esc(r.name||"friend"))+".";
-      toast("Identity verified ✔");
+      try{localStorage.setItem("ac_facelock","1");}catch(e){}
+      st.innerHTML='✅ <b>Verified — face + card.</b> Your account is now locked to your face: on any new phone, only YOUR face can open it. The ✔ badge is next to your name for everyone. Thank you, '+(esc(r.name||"friend"))+".";
+      toast("Identity verified ✔ — face-locked");
     }else{
-      st.innerHTML="❌ "+esc((r&&r.err)||"Verification failed — try again with a clearer photo.");
+      st.innerHTML="❌ "+esc((r&&r.err)||"Verification failed — try again.");
       $("kycBtn").style.display="";
     }
   }catch(e){st.innerHTML="❌ Upload failed — check your connection and try again.";$("kycBtn").style.display="";}
@@ -7382,14 +7439,16 @@ function openProfileSheet(){
   if(!c){menuOpen();return;}
   let el=document.getElementById("profSheet");if(el)el.remove();
   el=document.createElement("div");el.id="profSheet";
-  el.style.cssText="position:fixed;inset:0;z-index:70;background:#F1F5F9;display:flex;flex-direction:column;";
+  el.style.cssText="position:fixed;inset:0;z-index:70;background:#F1F5F9;display:flex;flex-direction:column;touch-action:pan-y"; /* v188: no sideways drag */
   el.innerHTML='<div class="ohdr"><button class="bk" onclick="closeProfileSheet()">‹</button><div class="nm" style="flex:1;color:#fff">My profile</div><div style="width:30px"></div></div>'+
-  '<div id="profSheetBody" style="flex:1;overflow:auto;padding:0 12px 16px"></div>';
+  '<div id="profSheetBody" style="flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:0 12px 16px"></div>'; /* v188: one full page, zero horizontal movement */
   document.body.appendChild(el);
   const body=document.getElementById("profSheetBody");
-  const pic=document.getElementById("myPic");
-  const picHTML=pic?pic.innerHTML:"?";
-  let nm="Me";try{const nr=document.getElementById("meNameRow");if(nr&&nr.textContent)nm=nr.textContent;}catch(e){}
+  /* v188 (Samuel): the sheet must carry his REAL registered name and his REAL
+     profile picture — not a stale placeholder. */
+  let nm=(typeof ME_NAME!=="undefined"&&ME_NAME)||"Me";
+  const mp=(typeof PIC_CACHE!=="undefined"&&PIC_CACHE&&typeof ME!=="undefined"&&PIC_CACHE[ME])||null;
+  const picHTML=mp?('<img src="'+mp+'" style="width:100%;height:100%;object-fit:cover">'):esc(String(nm||"?").charAt(0).toUpperCase());
   let fr=0,gr=0;
   try{fr=(WIN_FRIENDS||[]).length;}catch(e){} /* v187: FRIENDS was never defined — the count was always 0 */
   try{if(typeof GROUPS!=="undefined"&&GROUPS)gr=GROUPS.length;}catch(e){}
@@ -7407,15 +7466,38 @@ function openProfileSheet(){
    '</div>'+
    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">'+
      '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="pfScrollCard()"><div style="font-size:19px">✏️</div><div style="font-weight:700;font-size:12px;margin-top:3px">Edit profile</div></div>'+
-     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="plansSheet()"><div style="font-size:19px">💎</div><div style="font-weight:700;font-size:12px;margin-top:3px">My plans</div></div>'+
-     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="pfScrollCard()"><div style="font-size:19px">🔐</div><div style="font-weight:700;font-size:12px;margin-top:3px">Security</div></div>'+
-     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="openMyLink()"><div style="font-size:19px">🔗</div><div style="font-weight:700;font-size:12px;margin-top:3px">My link</div></div>'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="profGoPlans()"><div style="font-size:19px">💎</div><div style="font-weight:700;font-size:12px;margin-top:3px">My plans</div></div>'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="profGoSecurity()"><div style="font-size:19px">🔐</div><div style="font-weight:700;font-size:12px;margin-top:3px">Security</div></div>'+
+     '<div class="card" style="text-align:center;padding:12px 6px;cursor:pointer" onclick="profGoMyLink()"><div style="font-size:19px">🔗</div><div style="font-weight:700;font-size:12px;margin-top:3px">My link</div></div>'+
    '</div>';
   body.appendChild(c);
   c.style.display="block";
   api("studio",{node:ME}).then(function(r){const p=document.getElementById("pfStatPo");if(p)p.textContent=(r&&r.ok&&r.posts)?String(r.posts.length):"0";}).catch(function(){const p=document.getElementById("pfStatPo");if(p)p.textContent="0";});
 }
 function pfScrollCard(){try{const c=document.getElementById("profCard");if(c)c.scrollIntoView({behavior:"smooth"});}catch(e){}}
+
+/* v188 (Samuel, voice directive 29 Sep): the four profile buttons do exactly what he said. */
+function profGoPlans(){closeProfileSheet();plansSheet();} /* out of profile, straight to the plans page */
+function profGoMyLink(){ /* one click = your link is copied */
+  try{AC_MYLINK=buildShareLink();}catch(e){AC_MYLINK=(location.origin+location.pathname)+"?ref="+ME;}
+  try{acCopy(AC_MYLINK);}catch(e){}
+  toast("Your link copied ✓ — paste it anywhere");
+}
+function profGoSecurity(){ /* out of profile, straight to the Security page */
+  closeProfileSheet();
+  let el=$("secSheet");if(el)el.remove();
+  el=document.createElement("div");el.id="secSheet";
+  el.style.cssText="position:fixed;inset:0;z-index:70;background:#F1F5F9;display:flex;flex-direction:column;touch-action:pan-y";
+  el.innerHTML='<div class="ohdr"><button class="bk" onclick="secSheetClose()">‹</button><div class="nm" style="flex:1;color:#fff">Security</div><div style="width:30px"></div></div>'+
+  '<div style="flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px">'+
+  '<div class="card" onclick="secSheetClose();showMyPhrase()"><div style="font-weight:600">🔐 Recovery phrase <span style="color:#1A3FA8;float:right">›</span></div><div style="font-size:12px;color:#64748B;margin-top:4px">Your account forever key — keeps your account if you change phone</div></div>'+
+  '<div class="card" onclick="secSheetClose();ppOpen()"><div style="font-weight:600">🔑 Change passphrase <span style="color:#1A3FA8;float:right">›</span></div><div style="font-size:12px;color:#64748B;margin-top:4px">Enter your current passphrase to set a new one</div></div>'+
+  '<div class="card" onclick="secSheetClose();kycSheet()"><div style="font-weight:600">🛡 Verify identity <span style="color:#1A3FA8;float:right">›</span></div><div style="font-size:12px;color:#64748B;margin-top:4px">Snap your ID card + your face — locks this account to YOUR face only</div></div>'+
+  '<div class="card" onclick="secSheetClose();openProfileSheet()"><div style="font-weight:600">👤 Back to profile <span style="color:#1A3FA8;float:right">›</span></div></div>'+
+  '</div>';
+  document.body.appendChild(el);
+}
+function secSheetClose(){const el=$("secSheet");if(el)el.remove();}
 
 function closeProfileSheet(){
   const el=document.getElementById("profSheet");if(!el)return;
