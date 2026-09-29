@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v191 · names fixed</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v192 · verification flow</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v191</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v192</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -680,7 +680,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v191</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v192</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -6261,13 +6261,17 @@ function kycSheet(){
     sh.innerHTML='<div class="sheet"><div style="font-weight:700;margin-bottom:8px">✔ Verify your identity</div>'+
       '<div id="kycStatus" style="font-size:13px;color:#334155;line-height:1.5;margin-bottom:10px"></div>'+
       '<div style="background:#E8EFFB;border-radius:10px;padding:10px;font-size:12.5px;color:#1A3FA8;margin-bottom:10px">How it works:<br>1. 📷 Snap a clear photo of your <b>ID card</b> — national ID, passport or driver\'s license.<br>2. 🤳 Snap your <b>face</b> — a clear selfie, good light, looking at the camera.<br>3. Our AI reads your card and <b>locks this account to YOUR face</b> — on any new phone, only your face can open it. No other face can ever use your account.<br>4. One ID verifies one account — ever.<br>Your ID number is stored only as a secure hash, never as text. ✔ verified users are trusted at a glance.</div>'+
+      '<div style="background:#FFF7E0;border-radius:10px;padding:10px;font-size:12.5px;color:#8a6d1a;margin-bottom:10px">🕒 Verification completes within <b>2 business days</b> of submission. Your card name becomes your profile name when it finalizes.</div>'+
       '<button class="big blue" id="kycBtn" style="width:100%" onclick="kycGo()">🛡 Verify me — snap card + face</button>'+
       '<button class="big" style="width:100%;margin-top:8px;background:#CBD5E1" onclick="closeKycSheet()">Close</button><div style="height:8px"></div></div>';
     document.body.appendChild(sh);
     sh.addEventListener("click",function(e){if(e.target===sh)closeKycSheet();});
   }
-  $("kycStatus").innerHTML=KYC_ME?'✅ <b>Your identity is verified</b> — the ✔ badge shows next to your name for everyone.':'You are not verified yet. Verified users get a <b>✔ badge</b> next to their name everywhere — more trust in calls, chats, and payments.';
+  $("kycStatus").innerHTML=KYC_ME?'✅ <b>Your identity is verified</b> — the ✔ badge shows next to your name for everyone.':(function(){try{if(localStorage.getItem("ac_kyc_pending")==="1")return '🕒 <b>Verification in review</b> — your card and face are received. It completes within <b>2 business days</b>; we will message you when the ✔ badge goes live.';}catch(e){}return 'You are not verified yet. Verified users get a <b>✔ badge</b> next to their name everywhere — more trust in calls, chats, and payments.';})();
   $("kycBtn").style.display=KYC_ME?"none":"";
+  if(!KYC_ME){try{api("kycstate",{node:ME}).then(function(r2){ /* v192: live truth from the trunk - clears the local flag once finalized */
+    if(r2&&r2.v){try{localStorage.removeItem("ac_kyc_pending");}catch(e){}try{KYC_ME=true;kycSheet();}catch(e){}}
+  }).catch(function(){});}catch(e){}}
   sh.className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
 function closeKycSheet(){$("kycsheet").className="ovl hide";}
@@ -6338,20 +6342,62 @@ async function faceMarkLive(){
   });
 }
 /* ===== v188 (Samuel, voice directive 29 Sep): FACE + CARD verification ===== */
-async function kycSnap(capture){ /* opens the camera and returns a shrunk photo */
-  const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";if(capture)inp.setAttribute("capture",capture);inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
+async function kycSnap(capture){ /* v192: IN-PAGE camera — the user never leaves the app, so nothing can reload or relog underneath them */
+  if(!kycSnap.gallery){
+    const got=await kycCardLive();
+    if(got)return got;
+  }
+  kycSnap.gallery=0;
+  /* fallback: plain file picker (stays inside the browser, no system camera) */
+  const f=await new Promise(res=>{const inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.onchange=()=>res(inp.files&&inp.files[0]||null);inp.click();});
   if(!f)return null;
   try{return await walRcpShrink(f);}catch(e){return null;}
 }
+async function kycCardLive(){
+  return new Promise(async function(res){
+    let stream=null,el=null,facing="environment";
+    const open=async function(){
+      try{if(stream)stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1600},height:{ideal:1600}},audio:false});
+      const v=el.querySelector("video");v.srcObject=stream;try{await v.play();}catch(e){}
+    };
+    const done=function(b64){try{if(stream)stream.getTracks().forEach(function(t){t.stop();});}catch(e){}if(el&&el.parentNode)el.parentNode.removeChild(el);res(b64?{b64:b64}:null);};
+    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1600},height:{ideal:1600}},audio:false});}
+    catch(e){res(null);return;}
+    el=document.createElement("div");el.id="cardLive";
+    el.style.cssText="position:fixed;inset:0;z-index:96;background:#060B1C;color:#F4F7FF;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px";
+    el.innerHTML='<div style="font-weight:700;font-size:17px;color:#E8B84B">\U0001F4F8 Snap your ID card</div>'+
+      '<div style="font-size:12px;color:#8B96B8;margin-top:4px;text-align:center">Fill the frame with the card \u2014 good light, no glare</div>'+
+      '<div style="position:relative;margin-top:14px;border-radius:18px;overflow:hidden;border:2px solid #E8B84B;width:min(88vw,340px);height:min(60vw,240px);box-shadow:0 0 30px rgba(232,184,75,.25)"><video autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video></div>'+
+      '<div style="display:flex;gap:10px;margin-top:16px">'+
+      '<button id="cardShot" style="background:#E8B84B;border:0;border-radius:14px;padding:12px 22px;font-weight:700;color:#060B1C;font-size:15px">\U0001F4F8 Capture</button>'+
+      '<button id="cardFlip" style="background:rgba(14,24,54,.85);border:1px solid #2A3B6E;color:#F4F7FF;border-radius:14px;padding:12px 14px;font-size:15px">\U0001F504</button></div>'+
+      '<button id="cardGal" style="background:none;border:0;color:#8B96B8;margin-top:12px;font-size:13px;text-decoration:underline">or pick a photo from your gallery</button>';
+    document.body.appendChild(el);
+    const v=el.querySelector("video");v.srcObject=stream;try{await v.play();}catch(e){}
+    el.querySelector("#cardFlip").onclick=async function(){facing=facing==="environment"?"user":"environment";try{await open();}catch(e){}};
+    el.querySelector("#cardGal").onclick=function(){kycSnap.gallery=1;done(null);};
+    el.querySelector("#cardShot").onclick=function(){
+      try{
+        const vw=v.videoWidth||1600,vh=v.videoHeight||1600;const s=Math.min(vw,vh);
+        const c=document.createElement("canvas");c.width=900;c.height=900;
+        c.getContext("2d").drawImage(v,Math.max(0,(vw-s)/2),Math.max(0,(vh-s)/2),s,s,0,0,900,900);
+        done(c.toDataURL("image/jpeg",0.85).split(",")[1]);
+      }catch(e){done(null);}
+    };
+  });
+}
 async function kycGo(){
+  AC_FLOW=true; /* v192: nothing may reload the page until this flow is finished */
+  const fin=function(){AC_FLOW=false;};
   const st=$("kycStatus");
   $("kycBtn").style.display="none";
   st.innerHTML="📷 <b>Step 1 of 2</b> — snap a clear photo of your ID card…";
   const card=await kycSnap("environment");
-  if(!card){st.innerHTML="Cancelled — tap the button to try again.";$("kycBtn").style.display="";return;}
+  if(!card){st.innerHTML="Cancelled — tap the button to try again.";$("kycBtn").style.display="";fin();return;}
   st.innerHTML='<img src="data:image/jpeg;base64,'+card.b64+'" style="max-height:100px;border-radius:8px;border:1px solid #E2E8F0"><div style="margin-top:6px">🤳 <b>Step 2 of 2</b> — LIVE face marking. The voice will direct you: look, open your mouth, blink. Keep the camera on your face.</div>';
   const self=await faceMarkLive();
-  if(!self||!self.ok){st.innerHTML="❌ "+esc((self&&self.err)||"Live check failed — try again.");$("kycBtn").style.display="";return;}
+  if(!self||!self.ok){st.innerHTML="❌ "+esc((self&&self.err)||"Live check failed — try again.");$("kycBtn").style.display="";fin();return;}
   const selfB64=self.b64;
   st.innerHTML="⏳ Verifying your card and your face…";
   try{
@@ -6367,8 +6413,15 @@ async function kycGo(){
     const fid=await kycUp(card.b64,"kyc-card.jpg");
     const sfid=await kycUp(selfB64,"kyc-face.jpg");
     const r=await api("kyc",{node:ME,fid:fid,sfid:sfid,dev:dev});
+    if(r&&r.pending){ /* v192 (Samuel): everyone except the owner is verified after 2 business days */
+      try{localStorage.setItem("ac_kyc_pending","1");}catch(e){}
+      st.innerHTML="✅ <b>Face marked successfully.</b> Your card and face are received and locked to your account. <b>Verification completes within 2 business days</b> — we will message you the moment your ✔ badge goes live. Your card name will then show on your profile for everyone.";
+      toast("Received — verification completes in 2 business days");
+      fin();return;
+    }
     if(r&&r.verified){
       KYC_ME=true;
+      try{localStorage.removeItem("ac_kyc_pending");}catch(e){}
       try{localStorage.setItem("ac_facelock","1");}catch(e){}
       /* v189: the name on the CARD now becomes the profile name */
       if(r.name&&r.name!==ME_NAME){
@@ -7381,7 +7434,11 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=175;
+/* v192 (Samuel: "once I select the picture it should take me to that page"): every
+   auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
+   or KYC flow is in progress. The user is never bounced out mid-verification. */
+let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
+const AC_V=192;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7401,6 +7458,7 @@ async function checkForcedUpdate(){
   try{
     const v=await api("vcheck",{});
     const newer=(v&&((v.minv&&v.minv>AC_V)||(v.v&&v.v>AC_V)));
+    if(newer&&AC_FLOW){ setTimeout(checkForcedUpdate,60000); return; } /* v192: never reload mid-flow */
     if(newer){
       const o=document.createElement("div");
       o.id="fupd";o.style.cssText="position:fixed;inset:0;z-index:99999;background:#0B141A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;font-family:inherit";
@@ -7431,7 +7489,8 @@ try{
       navigator.serviceWorker.addEventListener("controllerchange", function(){
         if(!HAD_CTL) return; /* first-ever install: no reload */
         try{ if(sessionStorage.getItem("ac_swreloaded")==="1") return; sessionStorage.setItem("ac_swreloaded","1"); }catch(e){}
-        setTimeout(function(){ location.reload(); }, 600); /* silent one-time refresh */
+        const go=function(){ if(AC_FLOW||document.visibilityState!=="visible"){ setTimeout(go,1500); return; } location.reload(); }; /* v192: never reload mid-flow */
+        setTimeout(go,600);
       });
     }).catch(function(){});
     setTimeout(function(){ try{ sessionStorage.removeItem("ac_swreloaded"); }catch(e){} }, 20000);
