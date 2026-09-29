@@ -1,0 +1,108 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AirConnect Field — Ring Layout Samples</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#060B1C;color:#F4F7FF;font-family:system-ui,-apple-system,sans-serif;overflow-x:hidden}
+h1{font-size:16px;text-align:center;padding:14px 10px 4px;margin:0}
+p.sub{text-align:center;color:#8B96B8;font-size:12.5px;margin:0 0 10px;padding:0 16px}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:0 10px 10px;justify-content:center;flex-wrap:wrap}
+.tabs button{background:rgba(14,24,54,.9);border:1px solid #1C2A52;color:#F4F7FF;border-radius:18px;padding:8px 14px;font-size:12px;font-weight:600;white-space:nowrap}
+.tabs button.on{background:#E8B84B;color:#060B1C;border-color:#E8B84B}
+.stage{position:relative;width:100%;max-width:460px;height:520px;margin:0 auto;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 60%);border-radius:18px;overflow:hidden;border:1px solid #1C2A52}
+.ringC{position:absolute;border:1px dashed #22335F;border-radius:50%;opacity:.7}
+.node{position:absolute;transform:translate(-50%,-50%);text-align:center;width:64px}
+.av{width:44px;height:44px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;background:#16224A;border:2px solid #2A3B6E}
+.av.me{width:60px;height:60px;font-size:20px;background:linear-gradient(135deg,#1A3FA8,#5B8DEF);border:3px solid #E8B84B;box-shadow:0 0 18px rgba(232,184,75,.5)}
+.av.kc{border-color:#E8B84B}.av.grp{border-color:#5B8DEF;border-radius:14px}.av.cit{border-color:#B084F5}
+.lbl{font-size:9.5px;margin-top:3px;color:#C7D0EA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.desc{max-width:460px;margin:12px auto 30px;padding:0 16px;font-size:13px;color:#B9C2E2;line-height:1.5}
+.desc b{color:#F4F7FF}
+.sector{position:absolute;border-radius:50%}
+.pin{position:absolute;transform:translate(-50%,-50%);background:rgba(14,24,54,.94);border:1px solid #7a5f2a;border-radius:20px;padding:10px 16px;text-align:center;min-width:74px}
+.pin .n{font-weight:800;font-size:16px;color:#E8B84B}.pin .t{font-size:10px;color:#8B96B8;margin-top:2px}
+</style></head><body>
+<h1>✦ AirConnect Field — 5 Ring Layout Concepts</h1>
+<p class="sub">Same roster (you, close friends, other friends, groups, AI citizens) — five different ways to arrange it so it never looks crowded. Tap a sample.</p>
+<div class="tabs" id="tabs"></div>
+<div class="stage" id="stage"></div>
+<div class="desc" id="desc"></div>
+<script>
+const cx=230, cy=250;
+const KC=[{n:"Grace"},{n:"David"}], FR=[{n:"Musa"},{n:"Tolu"},{n:"Chidi"},{n:"Bola"}];
+const GR=[{n:"CEF AKSU"},{n:"JAMB Prep"},{n:"Exam Papers"},{n:"CV Writing"},{n:"Biz Plans"}];
+const CIT=[{n:"Master Pred..."},{n:"Premium AI"},{n:"Receptionist"}];
+function av(cls,txt){return '<div class="av '+cls+'">'+txt+'</div>';}
+function node(x,y,cls,letter,label,size){
+  return '<div class="node" style="left:'+x+'px;top:'+y+'px;width:'+(size||64)+'px">'+av(cls,letter)+'<div class="lbl">'+label+'</div></div>';
+}
+function ring(r,op){return '<div class="ringC" style="left:'+(cx-r)+'px;top:'+(cy-r)+'px;width:'+(r*2)+'px;height:'+(r*2)+'px;opacity:'+(op||0.7)+'"></div>';}
+const SAMPLES=[
+{ name:"1 · Concentric Lanes",
+  desc:"The classic you asked about — <b>inner ring = closest friends</b>, <b>middle ring = other friends</b>, <b>outer ring = groups</b>, and <b>citizens sit in their own arc below</b>. Each lane has its own radius so nothing overlaps; more people just spread further round the same lane instead of piling up.",
+  build(){
+    let h=ring(60)+ring(120)+ring(178);
+    h+=node(cx,cy,"me","A","AirConnect user",64);
+    KC.forEach((f,i)=>{const a=-Math.PI/2+i*(Math.PI*2/KC.length);h+=node(cx+60*Math.cos(a),cy+60*Math.sin(a)*.9,"kc",f.n[0],f.n);});
+    FR.forEach((f,i)=>{const a=-Math.PI/2+i*(Math.PI*2/FR.length);h+=node(cx+120*Math.cos(a),cy+120*Math.sin(a)*.9,"",f.n[0],f.n);});
+    GR.forEach((g,i)=>{const a=-Math.PI/2+i*(Math.PI*2/GR.length);h+=node(cx+178*Math.cos(a),cy+178*Math.sin(a)*.85,"grp","◈",g.n);});
+    CIT.forEach((c,i)=>{const a=Math.PI/2+(i-1)*0.6;h+=node(cx+95*Math.cos(a),cy+95*Math.sin(a)*.9+70,"cit","🤖",c.n);});
+    return h;
+  }},
+{ name:"2 · Category Arcs",
+  desc:"One single ring, but split into <b>colour-coded sectors</b> with a gap between them — friends occupy the top arc, groups the right arc, citizens the bottom arc. Same ring, zero clutter, and you instantly know what you're looking at just from the position.",
+  build(){
+    let h='<div class="sector" style="left:20px;top:40px;width:420px;height:420px;background:conic-gradient(from -100deg,rgba(91,141,239,.10) 0deg 150deg,transparent 150deg 165deg,rgba(43,95,227,.10) 165deg 255deg,transparent 255deg 270deg,rgba(176,132,245,.10) 270deg 340deg,transparent 340deg 360deg)"></div>';
+    h+=ring(150);
+    h+=node(cx,cy,"me","A","AirConnect user",64);
+    const all=[...KC,...FR];
+    all.forEach((f,i)=>{const a=-Math.PI/2-0.9+i*(1.8/(all.length-1));h+=node(cx+150*Math.cos(a),cy+150*Math.sin(a)*.9,i<KC.length?"kc":"",f.n[0],f.n);});
+    GR.forEach((g,i)=>{const a=0.15+i*((1.5)/(GR.length-1));h+=node(cx+150*Math.cos(a),cy+150*Math.sin(a)*.9,"grp","◈",g.n);});
+    CIT.forEach((c,i)=>{const a=Math.PI/2+0.4+i*(1.0/(CIT.length-1));h+=node(cx+150*Math.cos(a),cy+150*Math.sin(a)*.9,"cit","🤖",c.n);});
+    return h;
+  }},
+{ name:"3 · Quiet Orbits",
+  desc:"Every lane is real, but at rest you see <b>only the avatar icons — no text</b>. Names appear beneath a node only while your finger/tap is on it. This is the cleanest-looking option since 12+ people never means 12+ overlapping labels at once.",
+  build(){
+    let h=ring(65)+ring(125)+ring(180);
+    h+=node(cx,cy,"me","A","",64);
+    KC.forEach((f,i)=>{const a=-Math.PI/2+i*(Math.PI*2/KC.length);h+=node(cx+65*Math.cos(a),cy+65*Math.sin(a)*.9,"kc",f.n[0],"");});
+    FR.forEach((f,i)=>{const a=-Math.PI/2+i*(Math.PI*2/FR.length);h+=node(cx+125*Math.cos(a),cy+125*Math.sin(a)*.9,"",f.n[0],"");});
+    GR.forEach((g,i)=>{const a=-Math.PI/2+i*(Math.PI*2/GR.length);h+=node(cx+180*Math.cos(a),cy+180*Math.sin(a)*.85,"grp","◈","");});
+    CIT.forEach((c,i)=>{const a=Math.PI/2+(i-1)*0.6;h+=node(cx+95*Math.cos(a),cy+95*Math.sin(a)*.9+70,"cit","🤖","");});
+    h+='<div style="position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:11px;color:#8B96B8">tap any circle to see its name</div>';
+    return h;
+  }},
+{ name:"4 · Favorites + Category Pins",
+  desc:"Only your <b>2-3 true favourites</b> orbit you up close. Everyone else collapses into <b>three pill counters</b> — Friends, Groups, Citizens — around the edge. Tap a pill and it fans open into that group's list. This scales to hundreds of friends without EVER looking crowded.",
+  build(){
+    let h=ring(70);
+    h+=node(cx,cy,"me","A","AirConnect user",64);
+    KC.forEach((f,i)=>{const a=-Math.PI/2+i*(Math.PI*2/KC.length);h+=node(cx+70*Math.cos(a),cy+70*Math.sin(a)*.9,"kc",f.n[0],f.n);});
+    h+='<div class="pin" style="left:'+(cx-140)+'px;top:'+(cy+130)+'px"><div class="n">'+FR.length+'</div><div class="t">◈ Friends</div></div>';
+    h+='<div class="pin" style="left:'+(cx+140)+'px;top:'+(cy+130)+'px"><div class="n">'+GR.length+'</div><div class="t">◈ Groups</div></div>';
+    h+='<div class="pin" style="left:'+cx+'px;top:'+(cy-160)+'px"><div class="n">'+CIT.length+'</div><div class="t">🤖 Citizens</div></div>';
+    return h;
+  }},
+{ name:"5 · Recency Spiral",
+  desc:"One gentle spiral arm, ordered by <b>who you spoke to most recently</b> — closest to you at the centre, older contacts drifting outward where the spacing naturally widens. Groups and citizens keep their own icon shape so they're still easy to spot inside the same flow.",
+  build(){
+    let h="";
+    h+=node(cx,cy,"me","A","AirConnect user",64);
+    const all=[...KC.map(f=>({...f,cls:"kc",ic:f.n[0]})),...FR.map(f=>({...f,cls:"",ic:f.n[0]})),...GR.map(g=>({...g,cls:"grp",ic:"◈"})),...CIT.map(c=>({...c,cls:"cit",ic:"🤖"}))];
+    all.forEach((it,i)=>{
+      const t=i+1, ang=-Math.PI/2+t*1.05, r=42+t*17;
+      h+=node(cx+r*Math.cos(ang),cy+r*Math.sin(ang)*.85,it.cls,it.ic,it.n);
+    });
+    return h;
+  }}
+];
+let cur=0;
+function render(){
+  document.getElementById("stage").innerHTML=SAMPLES[cur].build();
+  document.getElementById("desc").innerHTML="<b>"+SAMPLES[cur].name+"</b><br>"+SAMPLES[cur].desc;
+  document.querySelectorAll(".tabs button").forEach((b,i)=>b.className=i===cur?"on":"");
+}
+const tabs=document.getElementById("tabs");
+SAMPLES.forEach((s,i)=>{const b=document.createElement("button");b.textContent=s.name;b.onclick=()=>{cur=i;render();};tabs.appendChild(b);});
+render();
+</script>
+</body></html>
