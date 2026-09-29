@@ -5709,17 +5709,19 @@ function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$(
 function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E8EFFB":"#CBD5E1";$("liteBtn").style.color=LITE?"#1A3FA8":"#334155";}}
 /* ===== v172 (skylar, 29 Sep): ACOIN CURRENCY — 1 Acoin = ₦1,050 (his instruction).
        Ledger stays in naira server-side; this layer converts for display + top-up. ===== */
-let AC_CUR={name:"Acoin",ticker:"AIRC",rate:1050};
-async function curLoad(){try{const d=await api("cur");if(d&&d.ok&&d.rate)AC_CUR={name:d.name||"Acoin",ticker:d.ticker||"AIRC",rate:Number(d.rate)||1050};}catch(e){}}
+let AC_CUR={name:"Acoin",ticker:"AIRC",rate:1050,disp:"naira"};
+async function curLoad(){try{const d=await api("cur");if(d&&d.ok&&d.rate)AC_CUR={name:d.name||"Acoin",ticker:d.ticker||"AIRC",rate:Number(d.rate)||1050,disp:d.disp==="acoin"?"acoin":"naira"};}catch(e){}}
 curLoad();
-function airFmt(ngn){const c=Number(ngn||0)/Number(AC_CUR.rate||1050);return (Math.round(c*100)/100).toLocaleString()+" "+(AC_CUR.ticker||"AIRC");}
-function airLine(){return AC_CUR.name+" rate: 1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString();}
+/* v174 (skylar, 29 Sep): Acoin paused as a FUTURE plan — wallet shows Naira.
+   When he relaunches (aircfg disp=acoin), every flow speaks Acoin again with zero further edits. */
+function airFmt(ngn){if(AC_CUR.disp!=="acoin")return "₦"+Number(ngn||0).toLocaleString();const c=Number(ngn||0)/Number(AC_CUR.rate||1050);return (Math.round(c*100)/100).toLocaleString()+" "+(AC_CUR.ticker||"AIRC");}
+function airLine(){if(AC_CUR.disp!=="acoin")return "Wallet in Naira (₦)";return AC_CUR.name+" rate: 1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString();}
 async function walRefresh(){
   if(!ME)return;
   try{const d=await api("wbal",{node:ME});
     if(d&&d.ok){
       $("walBal").textContent=airFmt(d.bal);
-      $("walBal2").textContent=airFmt(d.bal)+" · ≈₦"+(d.bal||0).toLocaleString();
+      $("walBal2").textContent=airFmt(d.bal)+(AC_CUR.disp==="acoin"?(" · ≈₦"+(d.bal||0).toLocaleString()):"");
       const wm=$("walBalMenu");if(wm)wm.textContent=airFmt(d.bal);
       const h=$("walHist");
       if(h)h.innerHTML='<div style="font-size:11px;color:#94A3B8;padding:2px 0 8px">'+esc(airLine())+'</div>'+((d.hist||[]).length?d.hist.map(t=>{
@@ -5742,15 +5744,15 @@ async function walRcpShrink(file){
   }catch(e){ return {b64:dt.split(",")[1],name:(file.name||"receipt").slice(0,40)}; }
 }
 async function walAdd(){
-  const v=prompt("How many "+AC_CUR.name+" do you want?\n1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString()+"\nMin 1 "+AC_CUR.ticker);if(!v)return;
+  const v=prompt(AC_CUR.disp==="acoin"?("How many "+AC_CUR.name+" do you want?\n1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString()+"\nMin 1 "+AC_CUR.ticker):"How much do you want to add? (₦)\nMin ₦100");if(!v)return;
   const coins=Math.round(Number(String(v).replace(/[^0-9.]/g,""))*100)/100;
-  const amt=Math.round(coins*Number(AC_CUR.rate||1050));
-  if(!coins||coins<1||amt<100){toast("Minimum is 1 "+AC_CUR.ticker);return;}
+  const amt=AC_CUR.disp==="acoin"?Math.round(coins*Number(AC_CUR.rate||1050)):Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
+  if(!amt||amt<100){toast("Minimum is ₦100");return;}
   const d=await api("wtopup",{node:ME,amt});
   if(!d||!d.ok){toast("Could not start top-up");return;}
   const details="BANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\nREFERENCE: "+d.ref+"\nAMOUNT: ₦"+amt.toLocaleString()+" ("+coins.toLocaleString()+" "+AC_CUR.ticker+")";
   try{await navigator.clipboard.writeText(details);}catch(e){}
-  $("walAddTitle").textContent="💳 Add "+coins.toLocaleString()+" "+AC_CUR.ticker+" (₦"+amt.toLocaleString()+")";
+  $("walAddTitle").textContent=AC_CUR.disp==="acoin"?("💳 Add "+coins.toLocaleString()+" "+AC_CUR.ticker+" (₦"+amt.toLocaleString()+")"):("💳 Add ₦"+amt.toLocaleString());
   $("walAddBody").innerHTML=
     '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#E8EFFB;color:#1A3FA8;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
     '<button class="big blue" style="width:100%;margin-top:12px;font-size:15px;padding:14px" onclick="walRcpGo()">📷 I have paid — upload my receipt</button>'+
@@ -5781,13 +5783,13 @@ async function walRcpGo(){
 async function walSend(){
   const num=prompt("Send to which number?\n(friend or citizen number)");if(!num)return;
   const to=String(num).replace(/[^0-9]/g,"");
-  const v=prompt("Amount in "+AC_CUR.name+" (1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString()+")");if(!v)return;
+  const v=prompt(AC_CUR.disp==="acoin"?("Amount in "+AC_CUR.name+" (1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString()+")"):"Amount (₦)");if(!v)return;
   const coins=Number(String(v).replace(/[^0-9.]/g,""));
-  const amt=Math.round(coins*Number(AC_CUR.rate||1050));
+  const amt=AC_CUR.disp==="acoin"?Math.round(coins*Number(AC_CUR.rate||1050)):Math.round(coins);
   if(!coins||coins<=0||amt<1){toast("Enter a valid amount");return;}
   const note=prompt("What is it for? (optional)","")||"";
   const d=await api("wsend",{from:ME,to,amt,note});
-  if(d&&d.ok){toast("Sent "+coins.toLocaleString()+" "+AC_CUR.ticker+" ✓");walRefresh();}
+  if(d&&d.ok){toast(AC_CUR.disp==="acoin"?("Sent "+coins.toLocaleString()+" "+AC_CUR.ticker+" ✓"):("Sent ₦"+amt.toLocaleString()+" ✓"));walRefresh();}
   else toast((d&&d.err)||"Could not send");
 }
 const MK_SERVICES=[
@@ -5839,12 +5841,12 @@ async function msTranslate(){
 }
 /* v40: tip a channel from the Watch channel page */
 async function wtTip(num){
-  const v=prompt("Support this channel ("+AC_CUR.ticker+"):","1");if(!v)return;
+  const v=prompt(AC_CUR.disp==="acoin"?("Support this channel ("+AC_CUR.ticker+"):"):"Support this channel (₦):",AC_CUR.disp==="acoin"?"1":"200");if(!v)return;
   const coins=Number(String(v).replace(/[^0-9.]/g,""));
-  const amt=Math.round(coins*Number(AC_CUR.rate||1050));
-  if(!amt||amt<50){toast("Minimum tip is ₦"+50+" (about 0.05 "+AC_CUR.ticker+")");return;}
+  const amt=AC_CUR.disp==="acoin"?Math.round(coins*Number(AC_CUR.rate||1050)):Math.round(coins);
+  if(!amt||amt<50){toast("Minimum tip is ₦50");return;}
   const d=await api("wsend",{from:ME,to:num,amt,note:"Channel tip 🎁"});
-  if(d&&d.ok)toast("Sent "+coins.toLocaleString()+" "+AC_CUR.ticker+" — thank you 🎁");
+  if(d&&d.ok)toast(AC_CUR.disp==="acoin"?("Sent "+coins.toLocaleString()+" "+AC_CUR.ticker+" — thank you 🎁"):("Sent ₦"+amt.toLocaleString()+" — thank you 🎁"));
   else toast((d&&d.err)||"Could not send — check your wallet");
 }
 
@@ -7062,7 +7064,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=173;
+const AC_V=174;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
