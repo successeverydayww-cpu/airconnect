@@ -239,7 +239,9 @@ footer a{color:#64748B}
 
 #flwrap{position:fixed;right:14px;bottom:82px;z-index:88;display:none;flex-direction:column;align-items:flex-end;gap:6px}
 body.acLive #flwrap{display:flex}
-#florb{width:54px;height:54px;border-radius:50%;border:2px solid #8B96B8;background:#0E1836;color:#F4F7FF;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(2,6,23,.35);position:relative}
+#florb{width:54px;height:54px;border-radius:50%;border:2px solid #8B96B8;background:#0E1836;color:#F4F7FF;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(2,6,23,.35);position:relative;overflow:hidden}
+#florb img{width:70%;height:70%;border-radius:50%;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+#florb.active img{filter:drop-shadow(0 1px 2px rgba(0,0,0,.65)) brightness(1.08)}
 #florb.wake{border-color:#E8B84B;animation:flbreathe 2.6s infinite}
 #florb.active{background:#E8B84B;color:#060B1C;border-color:#fff;animation:flbr2 1.2s infinite}
 @keyframes flbreathe{0%,100%{box-shadow:0 0 0 0 rgba(232,184,75,.35)}50%{box-shadow:0 0 0 10px rgba(232,184,75,0)}}
@@ -7064,7 +7066,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=174;
+const AC_V=175;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7448,7 +7450,7 @@ body{-webkit-font-smoothing:antialiased}
 
 })();
 </script>
-<div id="flwrap"><div id="flheard2">listening…</div><button id="florb" onclick="flOrbTap()" aria-label="Live agent">🎙</button></div>
+<div id="flwrap"><div id="flheard2">listening…</div><button id="florb" onclick="flOrbTap()" aria-label="Live agent"><img id="florblogo" src="logo.svg" alt="AirConnect"></button></div>
 <div id="myPlaceSheet" onclick="if(event.target===this)closeMyPlace()"><div id="myPlacePanel"></div></div>
 
 <script id="v163-live-agent">
@@ -7476,7 +7478,7 @@ function flPickVoice(){
   const pref=[/Google US English/i,/Google UK English Female/i,/Samantha/i,/Microsoft (Aria|Jenny|Zira)/i,/female/i];
   for(const p of pref){const v=FL_VOICES.find(function(x){return p.test(x.name)&&/^en/i.test(x.lang);});if(v)return v;}
   return FL_VOICES.find(function(v){return /^en/i.test(v.lang);})||null;}
-let FL_UTT=null,FL_TTSERR=0;
+let FL_UTT=null,FL_TTSERR=0,FL_SAYING="";
 function flShowReply(t){
   let r=$("flreply");
   if(!r){r=document.createElement("div");r.id="flreply";$("flwrap").appendChild(r);}
@@ -7491,9 +7493,9 @@ function flSpeak(txt,then){
     const v=flPickVoice();if(v){u.voice=v;u.lang=v.lang;}
     u.pitch=1.04;u.rate=1.0;
     u.onerror=function(ev){if(FL_TTSERR<2){FL_TTSERR++;toast("voice hiccup: "+((ev&&ev.error)||"?")+" — my replies now show on screen");}}
-    FL_TALKING=true;
-    u.onend=function(){FL_TALKING=false;if(then)then();};
-    setTimeout(function(){FL_TALKING=false;},Math.max(3500,(txt.length*80)+2500));
+    FL_SAYING=txt;FL_TALKING=true;
+    u.onend=function(){FL_TALKING=false;FL_SAYING="";if(then)then();};
+    setTimeout(function(){FL_TALKING=false;FL_SAYING="";},Math.max(3500,(txt.length*80)+2500));
     speechSynthesis.speak(u);
   }catch(e){if(then)then();}}
 function flHeard2(t){const e=$("flheard2");if(e)e.textContent=t;}
@@ -7515,7 +7517,20 @@ function flStartSR(){
   try{FL_SR=new S();}catch(e){return;}
   FL_SR.lang="en-US";FL_SR.continuous=true;FL_SR.interimResults=true;
   FL_SR.onresult=function(ev){let fin="",int="";
-    if(FL_TALKING)return;
+    /* v175 (skylar, "Gemini-Live standard"): the mic NEVER closes while she speaks.
+       If HIS voice arrives mid-sentence, she stops instantly and listens — but her
+       own voice echoing back is filtered out so she can never interrupt herself. */
+    if(FL_TALKING){
+      let all="";for(let i=ev.resultIndex;i<ev.results.length;i++){all+=ev.results[i][0].transcript+" ";}
+      const h=flNorm(all).trim(),sy=flNorm(FL_SAYING||"").trim();
+      if(!h)return;
+      if(sy&&(sy.indexOf(h)>=0||h.indexOf(sy)>=0))return; /* echo of her own words */
+      if(h.length<2&&sy)return;
+      try{speechSynthesis.cancel();}catch(e){}
+      FL_TALKING=false;FL_SAYING="";
+      if(FL_MODE==="wake"&&flWakeHit(all))flActivate(flGreetLine());
+      return;
+    }
     for(let i=ev.resultIndex;i<ev.results.length;i++){
       if(ev.results[i].isFinal)fin+=ev.results[i][0].transcript;
       else int+=ev.results[i][0].transcript;}
@@ -7618,8 +7633,22 @@ function flBoot(){
     const tg=document.createElement("div");tg.className="fltag";w.appendChild(tg);}
   try{const wi=$("wakein");if(wi&&wi.value.trim())AC_WAKE=flNorm(wi.value.trim());}catch(e){}
   flUI();
-  let live=0;try{live=localStorage.getItem("ac_live")==="1";}catch(e){}
-  if(live&&FL_MODE==="off"&&$("app")&&$("app").className.indexOf("hide")<0){FL_MODE="wake";flStartSR();flUI();}
+  /* v175 (skylar directive): ALWAYS LIVE — no tap to activate. If the mic is already
+     permitted, she is listening from the moment the app loads; "hello premium" wakes her.
+     First-ever visit: the browser's own one-time Allow box appears; after that Allow,
+     she is live on every load forever. */
+  flAutoLive();
+}
+function flAutoLive(){
+  if(FL_MODE!=="off")return;
+  if(!$("app")||$("app").className.indexOf("hide")>=0){setTimeout(flAutoLive,1500);return;}
+  const go=function(){FL_MODE="wake";flLiveOn();flStartSR();flUI();
+    toast("● Always live — say \""+AC_WAKE+"\" anytime");};
+  try{navigator.permissions.query({name:"microphone"}).then(function(p){
+    if(p.state==="granted"){go();}
+    else{try{localStorage.setItem("ac_live","1");}catch(_){}
+      FL_MODE="wake";flStartSR();flUI();} /* attempt: Chrome shows its own prompt; orb asks only if blocked */
+  })}catch(e){go();}
 }
 function flLiveOn(){try{localStorage.setItem("ac_live","1");}catch(e){}}
 function flVoiceCheck(){
