@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v183 · Citizens of the Field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v184 · Quiet live agent</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -332,8 +332,7 @@ body.acLive #flwrap{display:flex}
   </div>
   <div class="flpill" id="flpill"><div class="ld"></div><div class="ht" id="flheard">listening…</div><button class="stp" onclick="flSleep()">sleep</button></div>
   <input id="fltype" placeholder="or type a command — call Grace" style="position:fixed;bottom:98px;left:50%;transform:translateX(-50%);width:80%;max-width:340px;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;border-radius:22px;padding:8px 14px;color:#F4F7FF;font-size:13.5px;outline:none;text-align:center;display:none;z-index:66" onkeydown="if(event.key==='Enter'){const v=this.value.trim();this.value='';if(v)flRun(v);}">
-  <div class="fbar"><button class="fmic" id="flmic" onclick="flMic()">🎙</button></div>
-  <div class="fhint">tap the mic and just speak · tap a presence to open their chat</div>
+  <div class="fhint">tap the orb and just speak · tap a presence to open their chat</div>
 </div>
 <div id="view-chats" class="view hide">
         <input type="file" id="storyinput" class="hide" accept="image/*" onchange="stPhotoChosen(this)">
@@ -376,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v183</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v184</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -7634,7 +7633,7 @@ body{-webkit-font-smoothing:antialiased}
 let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="",FL_PEND="",FL_PENDT=null,FL_DUP={},FL_SENT="";
 let AC_WAKE="";
 try{AC_WAKE=(localStorage.getItem("ac_wake2")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
-let FL_VOICES=[];
+let FL_VOICES=[];let FL_SRLAST=0,FL_SRSPEECH=0; /* v184: SR session bookkeeping — a quiet mic never thrashes */
 function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
 flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
 function flMyName(){let n="";try{n=(ME_NAME||"").trim();}catch(e){}
@@ -7653,6 +7652,9 @@ function flShowReply(t){
   r.textContent=t;r.className="on";
   clearTimeout(r._t);r._t=setTimeout(function(){r.className="";},7000);}
 function flSpeak(txt,then){
+  /* v184: she speaks ONLY real replies — never empty/noise text, and only
+     when asked or instructed. Silence is her default state. */
+  txt=String(txt==null?"":txt).trim();if(!txt){if(then)then();return;}
   flShowReply(txt);
   try{
     if(!("speechSynthesis" in window)){if(then)then();return;}
@@ -7683,8 +7685,9 @@ function flStartSR(){
   const S=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!S){toast("Voice not supported on this browser — type commands in the Field");return;}
   try{FL_SR=new S();}catch(e){return;}
+  FL_SRLAST=Date.now(); /* v184 */
   FL_SR.lang="en-US";FL_SR.continuous=true;FL_SR.interimResults=true;
-  FL_SR.onresult=function(ev){let fin="",int="";
+  FL_SR.onresult=function(ev){FL_SRSPEECH=Date.now();let fin="",int=""; /* v184: real speech was heard */
     /* v175 (skylar, "Gemini-Live standard"): the mic NEVER closes while she speaks.
        If HIS voice arrives mid-sentence, she stops instantly and listens — but her
        own voice echoing back is filtered out so she can never interrupt herself. */
@@ -7739,7 +7742,13 @@ function flStartSR(){
       FL_SR=null;setTimeout(function(){flStartSR();},800);
     }
   };
-  FL_SR.onend=function(){if(FL_MODE!=="off"){FL_SR=null;setTimeout(function(){flStartSR();},400);}else{FL_SR=null;}};
+  FL_SR.onend=function(){ /* v184: the endless 400ms restart loop made a device
+    blip every few seconds in standby ("bok bok"). A session that heard NOTHING
+    now waits quietly; only a live conversation restarts fast. */
+    if(FL_MODE==="off"){FL_SR=null;return;}
+    const quiet=Date.now()-(FL_SRSPEECH||0)>8000;
+    FL_SR=null;
+    setTimeout(function(){if(FL_MODE!=="off")flStartSR();},quiet?4000:400);};
   try{FL_SR.start()}catch(e){}
 }
 function flStopSR(){if(FL_SR){const r=FL_SR;FL_SR=null;try{r.onend=null;r.stop()}catch(e){}}}
@@ -7758,8 +7767,7 @@ function flWakeCheck(t){
   if(flWakeHit(t))flActivate(flGreetLine());
 }
 function flArmIdle(){clearTimeout(FL_IDLE);
-  FL_IDLE=setTimeout(function(){if(FL_MODE==="active"){FL_MODE="wake";flUI();
-    flSpeak("Going back to standby. Say "+AC_WAKE+" anytime.");}},45000);}
+  FL_IDLE=setTimeout(function(){if(FL_MODE==="active"){FL_MODE="wake";flUI();}},45000);} /* v184: standby is silent */
 /* v167 (his review): she lets you FINISH. A command runs when your voice has
    paused for ~0.7s (stability window) or when the final transcript lands — never
    mid-sentence. Duplicate transcripts within 3.5s never fire twice. */
@@ -7786,7 +7794,7 @@ function flSleep(silent){
   clearTimeout(FL_IDLE);
   const was=FL_MODE;
   FL_MODE="off";flStopSR();flUI();
-  if(!silent&&was!=="off")flSpeak("Sleeping. Tap me anytime.");
+  if(!silent&&was!=="off")toast("Sleeping. Tap me anytime."); /* v184: silent */
 }
 function flOrbTap(){
   if(FL_MODE==="off"){FL_MODE="wake";flLiveOn();flStartSR();flUI();
