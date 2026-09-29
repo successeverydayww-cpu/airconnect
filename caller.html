@@ -238,6 +238,13 @@ body.fldgrp #callview .cname{color:#F4F7FF!important}
 body.fldgrp #callview .cstat{color:#8B96B8!important}
 body.fldgrp #callview .top{background:linear-gradient(rgba(6,11,28,.72),transparent)!important}
 body.fldgrp #callview .av{background:linear-gradient(135deg,#1A3FA8,#244FBF)!important;border:2px solid #E8B84B!important;box-shadow:0 0 24px rgba(232,184,75,.45)!important}
+/* v180 FIELD STAGE 5 (Channels/Posts): the Watch world — feed, channels,
+   studio — opened from the Field sits inside the Field's night sky. Posts,
+   videos and channel pages keep their card look (floating in the sky).
+   Watch engine untouched: same composer, same share links, same promotion. */
+body.fldwatch #view-watch{background:#060B1C!important;background-image:radial-gradient(1.5px 1.5px at 14% 18%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 74% 12%,#3A4E86,transparent),radial-gradient(1px 1px at 33% 42%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 88% 55%,#3A4E86,transparent),radial-gradient(1px 1px at 55% 24%,#3A4E86,transparent),radial-gradient(1px 1px at 8% 70%,#3A4E86,transparent),radial-gradient(1px 1px at 64% 78%,#3A4E86,transparent),radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%)!important}
+body.fldwatch #view-watch > div:first-child{background:#0E1836!important}
+body.fldwatch #wtcatbar{background:#0E1836!important}
 #view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
 #view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
@@ -306,7 +313,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v179 · Groups in the Field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v180 · Watch in the Field</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -361,7 +368,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v179</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v180</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -1686,6 +1693,7 @@ window.addEventListener("popstate",()=>{
 });
 pushHist();
 function showTab(t){
+  if(t!=="watch"){try{document.body.classList.remove("fldwatch");}catch(e){}} /* v180 */
   if(t==="settings"){menuOpen();return;}
   try{localStorage.setItem("ac_tab","tab-"+t);}catch(e){}
   if(t!=="watch"){document.querySelectorAll("#wtfeed video").forEach(function(v){try{v.pause();}catch(e){}});}
@@ -3466,6 +3474,14 @@ function flPlaceRooms(p){
   chip("\u2726 About "+String(WIN_NAMES[p]||"").split(" ")[0],function(){openPlaceAbout(p);});
   if((STORIES||[]).some(s=>s.num===p))chip("\u25C9 Moments",function(){openStatusViewer(p);});
   bar.style.display="flex";
+}
+/* v180: FIELD STAGE 5 (Channels/Posts) — Watch opened from the Field sits
+   inside the Field world. Zero protocol change: composer, share links,
+   promotion engine and studio all stay exactly as they are. */
+function flOpenWatch(){
+  try{if(flFieldActive())document.body.classList.add("fldwatch");}catch(e){}
+  showTab("watch");
+  try{if(document.body.classList.contains("fldwatch"))$("hdrTitle").textContent="\u2726 Watch \u00b7 Field";}catch(e){}
 }
 /* v179: FIELD STAGE 4 (Groups) — a group opened from the Field is a shared
    Place: the whole group space sits inside the Field world. Zero protocol
@@ -7864,7 +7880,7 @@ function flRun(cmd){
   if(c.includes("go to sleep")||c.includes("stop listening")||c.includes("sleep now")){flSleep();return;}
   if(c.includes("home")||c.includes("the field")||c.includes("go home")){flSpeak("Home.");showTab("field");return;}
   if(c.includes("friend")){flSpeak("Friends.");openFab();return;}
-  if(c.includes("explore")||c.includes("watch")){flSpeak("Explore.");showTab("watch");return;}
+  if(c.includes("explore")||c.includes("watch")){flSpeak("Explore.");flOpenWatch();return;}
   if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")||c==="chats"){flSpeak("Chats.");showTab("chats");return;}
   if(c.includes("update")||c.includes("status")){flSpeak("Updates.");showTab("status");return;}
   if(c.includes("call log")||c.includes("dayline")||c.includes("my day")||c.includes("calls")){flSpeak("Calls.");showTab("calls");return;}
@@ -7934,7 +7950,7 @@ function openMyPlace(){
     ["👤","Profile","edit your photo, name, about",function(){closeMyPlace();try{openProfileSheet();}catch(e){menuOpen();}}],
     ["💰","Wallet","balance · send · add money",function(){closeMyPlace();try{walShow();}catch(e){menuOpen();}}],
     ["✧","Updates","24h updates for your ring",function(){closeMyPlace();showTab("status");}],
-    ["🎬","Watch","feed · shorts · channels",function(){closeMyPlace();showTab("watch");}],
+    ["🎬","Watch","feed · shorts · channels",function(){closeMyPlace();flOpenWatch();}],
     ["💬","Chats","every conversation",function(){closeMyPlace();showTab("chats");}],
     ["🎓","Exam Prep","JAMB, WAEC, SAT · 50 hard questions",function(){location.href="exam.html";}],
     ["⭐","Skills","citizen skills marketplace",function(){closeMyPlace();try{skillOpen();}catch(e){toast("Open a citizen chat for skills");}}],
