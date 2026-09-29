@@ -191,7 +191,7 @@ footer a{color:#64748B}
   <div id="offbanner" class="hide" style="background:#6b5203;color:#ffd27d;text-align:center;font-size:12px;padding:5px">📴 No internet: saved chats are available. Text messages queue and send when you reconnect; calls need internet.</div>
   <div class="hdr">
     <div><span id="hdrTitle"><img src="logo.svg" style="width:22px;height:22px;border-radius:6px;vertical-align:-5px" alt=""> AirConnect</span> <span class="sub" id="mynum"></span></div>
-    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="meBtn" aria-label="My Place" onclick="openMyPlace()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A3FA8;flex:0 0 34px">?</button></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="dot" id="dot"></span><span id="stxt" class="sub" style="color:#fff">Ready</span><button id="homeBtn" aria-label="Field home" onclick="showTab('field')" style="background:linear-gradient(135deg,#1A3FA8,#244FBF);border:1px solid #E8B84B;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;color:#E8B84B;font-size:16px;font-weight:700;flex:0 0 34px">✦<span class="badge hide" id="unreadBadge" style="position:absolute;transform:translate(12px,-12px)">0</span></button><button id="meBtn" aria-label="My Place" onclick="openMyPlace()" style="background:#fff;border:0;border-radius:50%;width:34px;height:34px;padding:0;cursor:pointer;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#1A3FA8;flex:0 0 34px">?</button></div>
   </div>
 
   <style>/* v162 THE FIELD — spatial front door (Samuel directive: migrate everything) */
@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v184 · Quiet live agent</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v185 · Field only · legacy retired</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v184</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v185</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -763,14 +763,11 @@ body.acLive #flwrap{display:flex}
       </div>
     </div>
   </div>
-  <nav>
-    <button id="tab-field" onclick="showTab('field')" aria-label="Field"><span class="ico">✦</span>Field</button>
-    <button id="tab-chats" class="on" onclick="showTab('chats')" aria-label="Chats"><span class="ico">💬<span class="badge hide" id="unreadBadge">0</span></span>Chats</button>
-    <button id="tab-watch" aria-label="Watch" onclick="showTab('watch')"><span class="ico"><svg viewBox="0 0 24 24" width="22" height="22" style="display:block;margin:0 auto"><rect x="1" y="1" width="22" height="22" rx="7" fill="#1A3FA8"/><path d="M9.5 7.2v9.6l7.6-4.8z" fill="#fff"/></svg></span>Watch</button>
-    <button id="tab-status" aria-label="Updates" onclick="showTab('status')"><span class="ico">◉</span>Updates</button>
-    <button id="tab-calls" aria-label="Calls" onclick="showTab('calls')"><span class="ico">📞</span>Calls</button>
-    <button id="tab-settings" aria-label="Settings" onclick="menuOpen()"><span class="ico">⚙️</span>Menu</button>
-  </nav>
+  <!-- v185: LEGACY SHELL RETIRED (Samuel: do away with the old one).
+       The bottom tab bar is gone. The Field ring and My Place rooms are the
+       only doors. Home is the gold star in the header; the unread badge
+       rides on it. Every engine - chats, calls, watch, updates, wallet,
+       exam, citizens - lives untouched behind the rooms. -->
 </div>
 
 <!-- v12: message action sheet -->
@@ -1657,7 +1654,7 @@ async function finishLogin(d){
   restoreChats();
   restoreFriendCache();
   renderLists();
-  try{const lt=localStorage.getItem("ac_tab");if(lt&&$(lt)&&lt!=="tab-settings"){showTab(lt.replace("tab-",""));}}catch(e){}
+  try{showTab("field");}catch(e){} /* v185: the Field is the only front door */
   refreshShare();
   await log("app ready");
   (async()=>{
@@ -7984,6 +7981,7 @@ function openMyPlace(){
     ["✧","Updates","24h updates for your ring",function(){closeMyPlace();showTab("status");}],
     ["🎬","Watch","feed · shorts · channels",function(){closeMyPlace();flOpenWatch();}],
     ["💬","Chats","every conversation",function(){closeMyPlace();showTab("chats");}],
+    ["📞","Calls","7-day history · missed calls",function(){closeMyPlace();showTab("calls");}],
     ["🎓","Exam Prep","JAMB, WAEC, SAT · 50 hard questions",function(){location.href="exam.html?field=1";}],
     ["⭐","Skills","citizen skills marketplace",function(){closeMyPlace();try{skillOpen();}catch(e){toast("Open a citizen chat for skills");}}],
     ["🛡","Verify identity","KYC \u2714 badge · face-match",function(){closeMyPlace();try{kycSheet();}catch(e){}}],
