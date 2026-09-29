@@ -195,7 +195,7 @@ footer a{color:#64748B}
   </div>
 
   <style>/* v162 THE FIELD — spatial front door (Samuel directive: migrate everything) */
-#view-field{position:fixed;inset:0;z-index:64;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 60%)!important;color:#F4F7FF!important;overflow:hidden;padding:0!important;min-height:0!important}
+#view-field{position:fixed;inset:0;z-index:20;background:radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 60%)!important;color:#F4F7FF!important;overflow:hidden;padding:0!important;min-height:0!important} /* v186: z 64->20 — every Place, chat, group and sheet now opens ABOVE the Field (they were opening invisibly beneath it) */
 #view-field .ringC{fill:none;stroke:#22335F;stroke-width:1;stroke-dasharray:2 7;opacity:.8}
 #view-field .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#3A4E86;opacity:.5;animation:fltw 4s infinite}
 @keyframes fltw{0%,100%{opacity:.15}50%{opacity:.6}}
@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v185 · Field only · legacy retired</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v186 · silent always-live</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v185</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v186</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -7630,7 +7630,53 @@ body{-webkit-font-smoothing:antialiased}
 let FL_MODE="off",FL_SR=null,FL_GREETED=false,FL_ST=null,FL_IDLE=null,FL_FAST={},FL_TALKING=false,FL_ROLL="",FL_PEND="",FL_PENDT=null,FL_DUP={},FL_SENT="";
 let AC_WAKE="";
 try{AC_WAKE=(localStorage.getItem("ac_wake2")||"").trim()||"hello premium";}catch(e){AC_WAKE="hello premium";}
-let FL_VOICES=[];let FL_SRLAST=0,FL_SRSPEECH=0; /* v184: SR session bookkeeping — a quiet mic never thrashes */
+let FL_VOICES=[];let FL_SRLAST=0,FL_SRSPEECH=0,FL_TTSEND=0;
+/* v186 (Samuel: "silence the noise perfectly" + "it should be always live"):
+   VOICE-ACTIVITY-GATED LISTENING. In standby NO recognition session runs at
+   all — zero device blips, perfect silence. A silent Web-Audio mic watcher
+   starts the recognizer the instant VOICE ENERGY is detected (under ~250ms),
+   so "hello premium" is always heard. During a live conversation the
+   recognizer stays hot with fast restarts — phone-call feel. */
+let FL_VADA=null,FL_VADS=null,FL_VADON=false,FL_VADF=0.012,FL_VADOK=null;
+async function flVadStart(){
+  if(FL_VADOK===false)return; /* device can't — legacy continuous mode already runs */
+  if(FL_VADON)return;
+  try{
+    FL_VADS=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    try{await ac.resume();}catch(e){}
+    const src=ac.createMediaStreamSource(FL_VADS);
+    FL_VADA=ac.createAnalyser();FL_VADA.fftSize=512;FL_VADA.smoothingTimeConstant=.55;
+    src.connect(FL_VADA);
+    FL_VADON=true;FL_VADOK=true;
+    flVadLoop();
+  }catch(e){FL_VADON=false;FL_VADOK=false;flVadFallback();}
+}
+function flVadLevel(){
+  if(!FL_VADA)return 0;
+  try{const n=new Float32Array(FL_VADA.fftSize);FL_VADA.getFloatTimeDomainData(n);
+    let s=0;for(let i=0;i<n.length;i++)s+=n[i]*n[i];
+    return Math.sqrt(s/n.length);}catch(e){return 0;}
+}
+function flVadLoop(){
+  if(!FL_VADON)return;
+  try{
+    const lv=flVadLevel();
+    if(lv>FL_VADF)FL_VADF=Math.min(0.06,FL_VADF*0.97+lv*0.03); /* adaptive noise floor */
+    const calm=Date.now()-(FL_TTSEND||0)>700; /* her own voice tail never wakes her */
+    const talk=!FL_TALKING&&calm&&(FL_MODE==="wake"||FL_MODE==="active")&&lv>FL_VADF*2.6&&lv>0.014;
+    if(talk){FL_SRSPEECH=Date.now();if(!FL_SR)flStartSR();}
+  }catch(e){}
+  setTimeout(flVadLoop,220);
+}
+function flVadFallback(){ /* no Web Audio on this device: keep the mic open the v184 way */
+  if(FL_MODE!=="off"&&!FL_SR)flStartSR();
+}
+function flVadStop(){
+  FL_VADON=false;
+  try{if(FL_VADS)FL_VADS.getTracks().forEach(function(t){t.stop();});}catch(e){}
+  FL_VADS=null;FL_VADA=null;
+}
 function flLoadVoices(){try{FL_VOICES=speechSynthesis.getVoices()||[]}catch(e){}}
 flLoadVoices();try{speechSynthesis.onvoiceschanged=flLoadVoices}catch(e){}
 function flMyName(){let n="";try{n=(ME_NAME||"").trim();}catch(e){}
@@ -7661,8 +7707,8 @@ function flSpeak(txt,then){
     u.pitch=1.04;u.rate=1.0;
     u.onerror=function(ev){if(FL_TTSERR<2){FL_TTSERR++;toast("voice hiccup: "+((ev&&ev.error)||"?")+" — my replies now show on screen");}}
     FL_SAYING=txt;FL_TALKING=true;
-    u.onend=function(){FL_TALKING=false;FL_SAYING="";if(then)then();};
-    setTimeout(function(){FL_TALKING=false;FL_SAYING="";},Math.max(3500,(txt.length*80)+2500));
+    u.onend=function(){FL_TALKING=false;FL_SAYING="";FL_TTSEND=Date.now();if(then)then();};
+    setTimeout(function(){if(FL_TALKING){FL_TALKING=false;FL_SAYING="";FL_TTSEND=Date.now();}},Math.max(3500,(txt.length*80)+2500));
     speechSynthesis.speak(u);
   }catch(e){if(then)then();}}
 function flHeard2(t){const e=$("flheard2");if(e)e.textContent=t;}
@@ -7739,13 +7785,14 @@ function flStartSR(){
       FL_SR=null;setTimeout(function(){flStartSR();},800);
     }
   };
-  FL_SR.onend=function(){ /* v184: the endless 400ms restart loop made a device
-    blip every few seconds in standby ("bok bok"). A session that heard NOTHING
-    now waits quietly; only a live conversation restarts fast. */
+  FL_SR.onend=function(){ /* v186: idle = ZERO sessions = zero blips. The silent
+     VAD watcher owns standby; a live conversation (speech < 20s ago) keeps the
+     recognizer hot so it feels like a phone call. */
     if(FL_MODE==="off"){FL_SR=null;return;}
-    const quiet=Date.now()-(FL_SRSPEECH||0)>8000;
+    const fresh=Date.now()-(FL_SRSPEECH||0)<20000;
     FL_SR=null;
-    setTimeout(function(){if(FL_MODE!=="off")flStartSR();},quiet?4000:400);};
+    if(!fresh&&FL_VADON)return; /* release to silent voice watch */
+    setTimeout(function(){if(FL_MODE!=="off"&&!FL_SR)flStartSR();},400);};
   try{FL_SR.start()}catch(e){}
 }
 function flStopSR(){if(FL_SR){const r=FL_SR;FL_SR=null;try{r.onend=null;r.stop()}catch(e){}}}
@@ -7790,11 +7837,11 @@ function flActivate(greet){
 function flSleep(silent){
   clearTimeout(FL_IDLE);
   const was=FL_MODE;
-  FL_MODE="off";flStopSR();flUI();
+  FL_MODE="off";flStopSR();flVadStop();flUI();
   if(!silent&&was!=="off")toast("Sleeping. Tap me anytime."); /* v184: silent */
 }
 function flOrbTap(){
-  if(FL_MODE==="off"){FL_MODE="wake";flLiveOn();flStartSR();flUI();
+  if(FL_MODE==="off"){FL_MODE="wake";flLiveOn();flVadStart();flUI();
     toast("● Always live — say \""+AC_WAKE+"\" anytime");}
   else if(FL_MODE==="wake"){flActivate("I'm listening.");}
   else{FL_MODE="wake";flUI();flSpeak("Back to standby. Say "+AC_WAKE+" anytime.");}
@@ -7815,7 +7862,7 @@ function flBoot(){
 function flAutoLive(){
   if(FL_MODE!=="off")return;
   if(!$("app")||$("app").className.indexOf("hide")>=0){setTimeout(flAutoLive,1500);return;}
-  const go=function(){FL_MODE="wake";flLiveOn();flStartSR();flUI();
+  const go=function(){FL_MODE="wake";flLiveOn();flVadStart();flUI();
     toast("● Always live — say \""+AC_WAKE+"\" anytime");};
   try{navigator.permissions.query({name:"microphone"}).then(function(p){
     if(p.state==="granted"){go();}
@@ -8049,7 +8096,7 @@ function flRender(){
   kc.forEach((x,i)=>all.push({id:x.id,r:R1,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,kc.length)),k:1}));
   rest.forEach((x,i)=>all.push({id:x.id,r:R2,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,rest.length)),k:0}));
   (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name,r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
-  const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Citizen One"}];
+  const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Receptionist"},{num:"11000000133",nm:"Master Predictor"}]; /* v186: true citizen roster */
   cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
   const apps=[{ic:"\uD83C\uDF93",nm:"Exam Prep",go:function(){location.href="exam.html?field=1";}},
               {ic:"\uD83E\uDDE9",nm:"Mini Apps",go:function(){openMiniApps();}}];
