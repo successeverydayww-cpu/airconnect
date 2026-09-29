@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"> <!-- v187b: locks out accidental pinch-zoom, which was scrolling the whole app sideways and clipping every row on-screen -->
 <meta name="theme-color" content="#F7F9FC"><script>try{document.documentElement.dataset.acTheme=localStorage.getItem("ac_theme")||"light"}catch(e){document.documentElement.dataset.acTheme="light"}</script>
 <meta name="description" content="AirConnect — free voice & video calling and chat with phone-number IDs.">
 <link rel="manifest" href="manifest.json">
@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v187 · unblocked taps</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v187b · zoom locked</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
