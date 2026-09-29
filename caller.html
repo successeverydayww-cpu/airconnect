@@ -267,8 +267,9 @@ body.fldplace #skillSheet .sheet{border:1px solid #7a5f2a!important;box-shadow:0
 @keyframes flring{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.3);opacity:0}}
 #view-field .fbrand{position:fixed;top:10px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;z-index:66;pointer-events:none}
 #view-field .fmock{font-size:10px;color:#8B96B8;border:1px solid #1C2A52;border-radius:20px;padding:3px 8px}
-#view-field .fldock{position:fixed;top:56px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:66;flex-wrap:wrap;justify-content:center}
-#view-field .fldock button{background:rgba(14,24,54,.88);border:1px solid #1C2A52;color:#F4F7FF;border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:600}
+#view-field .fldock{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,auto);gap:7px;z-index:66;justify-content:center}
+#view-field .fldock button{background:rgba(14,24,54,.88);border:1px solid #1C2A52;color:#F4F7FF;border-radius:20px;padding:7px 13px;font-size:12px;font-weight:600}
+#view-field .fldock button.fmini{border-color:#7a5f2a;color:#E8D9A8;font-size:11.5px;padding:6px 12px}
 #view-field .fldock button:active{transform:scale(.94)}
 #view-field .flpill{position:fixed;top:96px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:8px;background:rgba(14,24,54,.92);border:1px solid #7a5f2a;border-radius:24px;padding:6px 12px;font-size:12px;z-index:67;max-width:92%}
 #view-field .flpill.on{display:flex}
@@ -321,17 +322,20 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v193 · Continuity mini app</span></div>
-  <div class="fldock">
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v194 · rings up · dock down</span></div>
+  <div class="fldock"> <!-- v194: rings on top, everything docked below (Samuel's voice directive) -->
     <button onclick="openFab()">◈ Friends</button>
-    <button onclick="showTab('watch')">✦ Explore</button>
     <button onclick="showTab('chats')">💬 Chats</button>
-    <button onclick="showTab('status')">✧ Updates</button>
     <button onclick="walShow()">💰 Wallet</button>
+    <button onclick="showTab('watch')">✦ Explore</button>
+    <button onclick="showTab('status')">✧ Updates</button>
     <button onclick="openMyPlace()">👤 Profile</button>
+    <button class="fmini" onclick="location.href='exam.html?field=1'">🎓 Exam Prep</button>
+    <button class="fmini" onclick="location.href='https://successeverydayww-cpu.github.io/continuity-layer/app.html'">🪢 Continuity</button>
+    <button class="fmini" onclick="openMiniApps()">🧩 Mini Apps</button>
   </div>
   <div class="flpill" id="flpill"><div class="ld"></div><div class="ht" id="flheard">listening…</div><button class="stp" onclick="flSleep()">sleep</button></div>
-  <input id="fltype" placeholder="or type a command — call Grace" style="position:fixed;bottom:98px;left:50%;transform:translateX(-50%);width:80%;max-width:340px;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;border-radius:22px;padding:8px 14px;color:#F4F7FF;font-size:13.5px;outline:none;text-align:center;display:none;z-index:66" onkeydown="if(event.key==='Enter'){const v=this.value.trim();this.value='';if(v)flRun(v);}">
+  <input id="fltype" placeholder="or type a command — call Grace" style="position:fixed;bottom:246px;left:50%;transform:translateX(-50%);width:80%;max-width:340px;background:rgba(14,24,54,.94);border:1px solid #7a5f2a;border-radius:22px;padding:8px 14px;color:#F4F7FF;font-size:13.5px;outline:none;text-align:center;display:none;z-index:66" onkeydown="if(event.key==='Enter'){const v=this.value.trim();this.value='';if(v)flRun(v);}">
   <div class="fhint">tap the orb and just speak · tap a presence to open their chat</div>
 </div>
 <div id="view-chats" class="view hide">
@@ -375,7 +379,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v193</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v194</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -680,7 +684,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v193</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v194</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -7438,7 +7442,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=193;
+const AC_V=194;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -8372,8 +8376,8 @@ function openMiniApps(){
 function closeMiniApps(){const sh=$("miniAppsSheet");if(sh)sh.style.display="none";}
 /* ============ FIELD render (real presences + citizens) ============ */
 function flRender(){
-  const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.46;
-  const R1=Math.min(vw,vh)*0.26,R2=Math.min(vw,vh)*0.42;
+  const vw=innerWidth,vh=innerHeight,cx=vw/2,cy=vh*0.40; /* v194: ring rides high — dock owns the bottom */
+  const R1=Math.min(vw,vh)*0.19,R2=Math.min(vw,vh)*0.28;
   const sky=$("flsky");
   sky.setAttribute("viewBox","0 0 "+vw+" "+vh);
   sky.innerHTML='<circle class="ringC" cx="'+cx+'" cy="'+cy+'" r="'+R1+'"/><circle class="ringC" cx="'+cx+'" cy="'+cy+'" r="'+R2+'" style="opacity:.55"/>';
@@ -8399,18 +8403,7 @@ function flRender(){
   (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name||("Group "+String(g.id||"").slice(-4)),r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
   const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Receptionist"},{num:"11000000133",nm:"Master Predictor"}]; /* v186: true citizen roster */
   cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
-  const apps=[{ic:"\uD83C\uDF93",nm:"Exam Prep",go:function(){location.href="exam.html?field=1";}},
-              {ic:"\uD83E\uDEC2",nm:"Continuity",go:function(){toast("Opening Continuity…");location.href="https://successeverydayww-cpu.github.io/continuity-layer/app.html";}}, /* v193: Continuity Layer mini app */
-              {ic:"\uD83E\uDDE9",nm:"Mini Apps",go:function(){openMiniApps();}}];
-  apps.forEach(function(a,i){
-    let t=$("fapp"+i);
-    if(!t){t=document.createElement("div");t.id="fapp"+i;t.className="fapp";
-      t.innerHTML='<div class="fappic"></div><div class="fname"></div>';
-      t.onclick=a.go;$("view-field").appendChild(t);}
-    t.querySelector(".fappic").textContent=a.ic;
-    t.querySelector(".fname").textContent=a.nm;
-    t.style.top=((cy-64)+i*88)+"px";
-  });
+  /* v194: mini apps moved into the bottom dock — the ring carries people only */
   document.querySelectorAll("#view-field .fnode").forEach(n=>n.remove());
   const now=Date.now();
   for(const it of all){
