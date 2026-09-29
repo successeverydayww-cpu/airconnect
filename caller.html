@@ -245,6 +245,11 @@ body.fldgrp #callview .av{background:linear-gradient(135deg,#1A3FA8,#244FBF)!imp
 body.fldwatch #view-watch{background:#060B1C!important;background-image:radial-gradient(1.5px 1.5px at 14% 18%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 74% 12%,#3A4E86,transparent),radial-gradient(1px 1px at 33% 42%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 88% 55%,#3A4E86,transparent),radial-gradient(1px 1px at 55% 24%,#3A4E86,transparent),radial-gradient(1px 1px at 8% 70%,#3A4E86,transparent),radial-gradient(1px 1px at 64% 78%,#3A4E86,transparent),radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%)!important}
 body.fldwatch #view-watch > div:first-child{background:#0E1836!important}
 body.fldwatch #wtcatbar{background:#0E1836!important}
+/* v181 FIELD STAGE 6 (Money): your wallet, opened from your own Place or the
+   Field voice, sits inside the Field world. The privacy rule stands: balances
+   are visible ONLY on the owner's own Place — never on anyone else's. */
+body.fldmoney #walSheet{background:radial-gradient(120% 90% at 50% 0%,rgba(11,19,48,.94) 0%,rgba(6,11,28,.96) 62%)!important}
+body.fldmoney #walSheet .sheet{border:1px solid #7a5f2a!important;box-shadow:0 0 34px rgba(232,184,75,.18)!important}
 #view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
 #view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
@@ -313,7 +318,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v180 · Watch in the Field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v181 · Money on your Place</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -368,7 +373,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v180</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v181</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -3473,7 +3478,16 @@ function flPlaceRooms(p){
   bar.innerHTML="";
   chip("\u2726 About "+String(WIN_NAMES[p]||"").split(" ")[0],function(){openPlaceAbout(p);});
   if((STORIES||[]).some(s=>s.num===p))chip("\u25C9 Moments",function(){openStatusViewer(p);});
+  chip("\uD83D\uDCB0 Money",function(){toast("Balances stay private \u2014 they live only on each person\u2019s own Place.");});
   bar.style.display="flex";
+}
+/* v181: FIELD STAGE 6 (Money) — the wallet opened from the Field lives in
+   the Field world. Zero protocol change: the naira ledger, add-money flow,
+   send flow and history stay exactly as they are. Privacy rule: balances
+   show only on the owner's own Place — never on anyone else's. */
+function flOpenWallet(){
+  try{if(flFieldActive())document.body.classList.add("fldmoney");}catch(e){}
+  try{walShow();}catch(e){menuOpen();}
 }
 /* v180: FIELD STAGE 5 (Channels/Posts) — Watch opened from the Field sits
    inside the Field world. Zero protocol change: composer, share links,
@@ -5877,7 +5891,7 @@ async function walRefresh(){
   }catch(e){}
 }
 function walShow(){curLoad();walRefresh();$("walSheet").className="ovl";}
-function walClose(){$("walSheet").className="ovl hide";}
+function walClose(){try{document.body.classList.remove("fldmoney");}catch(e){} /* v181 */$("walSheet").className="ovl hide";}
 async function walRcpShrink(file){
   const dt=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result));fr.readAsDataURL(file);});
   try{
@@ -7884,7 +7898,7 @@ function flRun(cmd){
   if(c.includes("chats list")||c.includes("chat list")||c.includes("open chats")||c==="chats"){flSpeak("Chats.");showTab("chats");return;}
   if(c.includes("update")||c.includes("status")){flSpeak("Updates.");showTab("status");return;}
   if(c.includes("call log")||c.includes("dayline")||c.includes("my day")||c.includes("calls")){flSpeak("Calls.");showTab("calls");return;}
-  if(c.includes("wallet")||c.includes("money")||c.includes("balance")){flSpeak("Wallet.");try{walShow();}catch(e){menuOpen();}return;}
+  if(c.includes("wallet")||c.includes("money")||c.includes("balance")){flSpeak("Wallet.");flOpenWallet();return;}
   if(c.includes("my profile")||c.includes("open profile")){flSpeak("Profile.");setTimeout(function(){try{openProfileSheet();}catch(e){openMyPlace();}},800);return;}
   if(c.includes("profile")||c.includes("my place")||c.includes("menu")||(c.includes("settings")&&c.includes("open"))){flSpeak("My Place.");setTimeout(function(){openMyPlace();},800);return;}
   if(c.includes("settings")){flSpeak("Settings.");menuOpen();return;}
@@ -7948,7 +7962,7 @@ function openMyPlace(){
   const wake=AC_WAKE;
   const rooms=[
     ["👤","Profile","edit your photo, name, about",function(){closeMyPlace();try{openProfileSheet();}catch(e){menuOpen();}}],
-    ["💰","Wallet","balance · send · add money",function(){closeMyPlace();try{walShow();}catch(e){menuOpen();}}],
+    ["💰","Wallet","balance · send · add money · your Place only",function(){closeMyPlace();flOpenWallet();}],
     ["✧","Updates","24h updates for your ring",function(){closeMyPlace();showTab("status");}],
     ["🎬","Watch","feed · shorts · channels",function(){closeMyPlace();flOpenWatch();}],
     ["💬","Chats","every conversation",function(){closeMyPlace();showTab("chats");}],
