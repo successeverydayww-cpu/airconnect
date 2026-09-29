@@ -258,7 +258,7 @@ body.fldplace #skillSheet .sheet{border:1px solid #7a5f2a!important;box-shadow:0
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
 #view-field .fon .fava{border-color:#5B8DEF;box-shadow:0 0 9px rgba(91,141,239,.35)}
 #view-field .fgrp .fava{border-color:#5B8DEF}
-#view-field .fname{font-size:11.5px;font-weight:600;margin-top:5px;color:#F4F7FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#view-field .fname{font-size:11.5px;font-weight:600;margin-top:5px;color:#F4F7FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 3px rgba(0,0,0,.6),0 0 8px rgba(0,0,0,.4)}
 #view-field .funr{position:absolute;top:-3px;left:-3px;min-width:18px;height:18px;border-radius:9px;background:#00A884;color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
 #view-field .fdot{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:#3A4670;border:2px solid #060B1C}
 #view-field .fdot.on{background:#22c55e}
@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v190 · glow field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v191 · names fixed</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v190</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v191</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -680,7 +680,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v190</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v191</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -2301,7 +2301,7 @@ function renderLists(){
       const gp=(lg&&lg.unsent)?"🚫 Message unsent":(gpRaw.indexOf("FW|")===0?"↪ "+gpRaw.slice(3):gpRaw);
       const row=document.createElement("div");row.className="row";
       const gpAv=GPIC_CACHE[g.id];
-      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name)+'<span style="color:#2B5FE3;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#2B5FE3;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
+      row.innerHTML=(gpAv?'<div class="av" style="background-image:url('+gpAv+');background-size:cover;background-position:center"></div>':'<div class="av" style="background:#E0F2FE;overflow:hidden;position:relative"><div style="position:absolute;left:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;right:4px;top:11px;width:13px;height:13px;border-radius:50%;background:#93C5FD;border:1.5px solid #fff"></div><div style="position:absolute;left:13px;top:5px;width:15px;height:15px;border-radius:50%;background:#60A5FA;border:1.5px solid #fff"></div><div style="position:absolute;left:8px;right:8px;bottom:7px;height:11px;border-radius:8px 8px 4px 4px;background:#60A5FA"></div></div>')+'<div style="min-width:0;flex:1"><div style="min-width:0" class="rwrap"><div class="rname">'+esc(g.name||("Group "+String(g.id||"").slice(-4)))+'<span style="color:#2B5FE3;font-weight:700"> 👥</span></div><div class="rprev">'+esc(gp)+'</div></div></div>'+(GUNREAD[g.id]?'<div style="background:#2B5FE3;color:#fff;border-radius:10px;font-size:11px;font-weight:700;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;padding:0 6px">'+GUNREAD[g.id]+'</div>':'');
       row.onclick=function(){openGroup(g.id);};
       try{gFetchPic(g.id);}catch(e){}
       cl.appendChild(row);
@@ -5478,7 +5478,7 @@ function renderStGroups(){
     const l=lastG(g);
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #E2E8F0;cursor:pointer";
-    row.innerHTML='<div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0;flex:0 0 44px;width:44px;height:44px"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div><div style="min-width:0;flex:1"><div style="font-weight:600;font-size:14.5px;color:#0F172A">'+esc(g.name)+'</div><div style="font-size:12px;color:#64748B">'+(l?esc(String(l.text||"Update").slice(0,40)):(g.members.length+" members"))+'</div></div>'+(GUNREAD[g.id]?'<span class="badge">'+GUNREAD[g.id]+'</span>':'')+'<div style="color:#64748B;font-size:18px">›</div>';
+    row.innerHTML='<div class="av" style="background:#E0F2FE;display:flex;align-items:center;justify-content:center;font-size:0;flex:0 0 44px;width:44px;height:44px"><svg viewBox="0 0 48 48" style="width:66%;height:66%;opacity:.9"><circle cx="10" cy="22" r="5.2" fill="#BCC9D6"/><path d="M2.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="38" cy="22" r="5.2" fill="#BCC9D6"/><path d="M30.5 43c1.2-6.6 4.6-10 7.5-10s6.3 3.4 7.5 10z" fill="#BCC9D6"/><circle cx="24" cy="17" r="7" fill="#98A9B8"/><path d="M11 42c1.6-8.4 7-12.6 13-12.6s11.4 4.2 13 12.6z" fill="#98A9B8"/></svg></div><div style="min-width:0;flex:1"><div style="font-weight:600;font-size:14.5px;color:#0F172A">'+esc(g.name||("Group "+String(g.id||"").slice(-4)))+'</div><div style="font-size:12px;color:#64748B">'+(l?esc(String(l.text||"Update").slice(0,40)):(g.members.length+" members"))+'</div></div>'+(GUNREAD[g.id]?'<span class="badge">'+GUNREAD[g.id]+'</span>':'')+'<div style="color:#64748B;font-size:18px">›</div>';
     row.onclick=function(){openGroup(g.id);};
     el.appendChild(row);
   }
@@ -5905,6 +5905,24 @@ var ARCHS=JSON.parse(localStorage.getItem("ac_archs")||"[]");
 var GROUPS=[],GMS={},GUNREAD={},REACTS={};
 var OPENS={};try{OPENS=JSON.parse(localStorage.getItem("ac_opens")||"{}");}catch(e){}
 try{GROUPS=JSON.parse(localStorage.getItem("ac_groups")||"[]");GMS=JSON.parse(localStorage.getItem("ac_gms")||"{}");}catch(e){}
+/* v191 (Samuel: "the names are not showing", 29 Sep) — fixed at the source: any
+   group that somehow lost/never had a display name (older local data, an
+   interrupted create) is healed once here, on load, and saved back so it
+   never shows blank again. */
+(function(){
+  try{
+    let changed=false;
+    for(const g of GROUPS){
+      if(!g||typeof g!=="object")continue;
+      if(!g.name||!String(g.name).trim()){
+        const others=(g.members||[]).filter(function(m){return m!==ME;}).slice(0,2).map(function(m){return WIN_NAMES[m]||("+"+m);});
+        g.name=others.length?("Group: "+others.join(", ")):("Group "+String(g.id||"").slice(-4));
+        changed=true;
+      }
+    }
+    if(changed)localStorage.setItem("ac_groups",JSON.stringify(GROUPS));
+  }catch(e){}
+})();
 function persistV12(){try{localStorage.setItem("ac_pins",JSON.stringify(PINS));localStorage.setItem("ac_mutes",JSON.stringify(MUTED));localStorage.setItem("ac_archs",JSON.stringify(ARCHS));localStorage.setItem("ac_groups",JSON.stringify(GROUPS));localStorage.setItem("ac_gms",JSON.stringify(GMS));localStorage.setItem("ac_pmsg",JSON.stringify(PMSG));localStorage.setItem("ac_opens",JSON.stringify(OPENS));}catch(e){}}
 function lastG(g){const a=GMS[g.id];return a&&a.length?a[a.length-1]:null;}
 function saveV12Pin(id){const i=PINS.indexOf(id);if(i>=0)PINS.splice(i,1);else PINS.push(id);persistV12();renderLists();}
@@ -8317,7 +8335,7 @@ function flRender(){
   const all=[];
   kc.forEach((x,i)=>all.push({id:x.id,r:R1,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,kc.length)),k:1}));
   rest.forEach((x,i)=>all.push({id:x.id,r:R2,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,rest.length)),k:0}));
-  (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name,r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
+  (GROUPS||[]).forEach((g,i)=>all.push({gid:g.id,nm:g.name||("Group "+String(g.id||"").slice(-4)),r:R2*0.72,a:-Math.PI/2+i*(Math.PI*2/Math.max(1,GROUPS.length)),k:2}));
   const cits=[{num:"1100000001",nm:"Premium AI"},{num:"1100000004",nm:"Receptionist"},{num:"11000000133",nm:"Master Predictor"}]; /* v186: true citizen roster */
   cits.forEach((c2,i)=>all.push({id:c2.num,nm:c2.nm,r:R2*0.9,a:Math.PI/2+(i-0.5)*0.7,k:3}));
   const apps=[{ic:"\uD83C\uDF93",nm:"Exam Prep",go:function(){location.href="exam.html?field=1";}},
