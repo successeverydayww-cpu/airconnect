@@ -5781,12 +5781,13 @@ async function walRcpGo(){
 async function walSend(){
   const num=prompt("Send to which number?\n(friend or citizen number)");if(!num)return;
   const to=String(num).replace(/[^0-9]/g,"");
-  const v=prompt("Amount (₦)");if(!v)return;
-  const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
-  if(!amt||amt<1){toast("Enter a valid amount");return;}
+  const v=prompt("Amount in "+AC_CUR.name+" (1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString()+")");if(!v)return;
+  const coins=Number(String(v).replace(/[^0-9.]/g,""));
+  const amt=Math.round(coins*Number(AC_CUR.rate||1050));
+  if(!coins||coins<=0||amt<1){toast("Enter a valid amount");return;}
   const note=prompt("What is it for? (optional)","")||"";
   const d=await api("wsend",{from:ME,to,amt,note});
-  if(d&&d.ok){toast("Sent ₦"+amt.toLocaleString()+" ✓");walRefresh();}
+  if(d&&d.ok){toast("Sent "+coins.toLocaleString()+" "+AC_CUR.ticker+" ✓");walRefresh();}
   else toast((d&&d.err)||"Could not send");
 }
 const MK_SERVICES=[
@@ -5799,13 +5800,13 @@ const MK_SERVICES=[
 ];
 function mkShow(){
   const el=$("mkList");
-  el.innerHTML=MK_SERVICES.map((x,i)=>'<div style="padding:10px 0;border-bottom:1px solid #F1F5F9"><div style="font-weight:600;font-size:14px">'+x.n+'</div><div style="font-size:12.5px;color:#64748B">'+x.d+'</div><button class="big blue" style="margin-top:6px;padding:7px 12px;font-size:12px;border-radius:10px" onclick="mkHire('+i+')">Hire · ₦'+x.p.toLocaleString()+'</button></div>').join("");
+  el.innerHTML=MK_SERVICES.map((x,i)=>'<div style="padding:10px 0;border-bottom:1px solid #F1F5F9"><div style="font-weight:600;font-size:14px">'+x.n+'</div><div style="font-size:12.5px;color:#64748B">'+x.d+'</div><button class="big blue" style="margin-top:6px;padding:7px 12px;font-size:12px;border-radius:10px" onclick="mkHire('+i+')">Hire · '+airFmt(x.p)+'</button></div>').join("");
   $("mkSheet").className="ovl";
 }
 function mkClose(){$("mkSheet").className="ovl hide";}
 async function mkHire(i){
   const x=MK_SERVICES[i];
-  if(!confirm("Hire "+x.n+" for ₦"+x.p.toLocaleString()+"?\nPaid from your wallet."))return;
+  if(!confirm("Hire "+x.n+" for "+airFmt(x.p)+" (≈₦"+x.p.toLocaleString()+")?\nPaid from your wallet."))return;
   const d=await api("wsend",{from:ME,to:"1100000004",amt:x.p,note:"Marketplace: "+x.n});
   if(!d||!d.ok){toast((d&&d.err)||"Could not hire — add money to your wallet");return;}
   toast("Hired ✓ — opening your citizen chat");
@@ -5838,11 +5839,12 @@ async function msTranslate(){
 }
 /* v40: tip a channel from the Watch channel page */
 async function wtTip(num){
-  const v=prompt("Support this channel (₦):","200");if(!v)return;
-  const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
-  if(!amt||amt<50){toast("Minimum tip is ₦50");return;}
+  const v=prompt("Support this channel ("+AC_CUR.ticker+"):","1");if(!v)return;
+  const coins=Number(String(v).replace(/[^0-9.]/g,""));
+  const amt=Math.round(coins*Number(AC_CUR.rate||1050));
+  if(!amt||amt<50){toast("Minimum tip is ₦"+50+" (about 0.05 "+AC_CUR.ticker+")");return;}
   const d=await api("wsend",{from:ME,to:num,amt,note:"Channel tip 🎁"});
-  if(d&&d.ok)toast("Sent ₦"+amt.toLocaleString()+" — thank you 🎁");
+  if(d&&d.ok)toast("Sent "+coins.toLocaleString()+" "+AC_CUR.ticker+" — thank you 🎁");
   else toast((d&&d.err)||"Could not send — check your wallet");
 }
 
@@ -7060,7 +7062,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=172;
+const AC_V=173;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
