@@ -221,6 +221,23 @@ body.fldcall #callview .cstat{color:#8B96B8!important}
 body.fldcall #callview .top{background:linear-gradient(rgba(6,11,28,.72),transparent)!important}
 body.fldcall #callview .av{background:linear-gradient(135deg,#1A3FA8,#244FBF)!important;border:2px solid #E8B84B!important;box-shadow:0 0 24px rgba(232,184,75,.45)!important}
 body.fldcall #callview .meters .m{color:#8B96B8!important}
+/* v179 FIELD GROUPS (stage 4): a group opened from the Field is a shared
+   Place — the whole group space sits inside the Field world. Group engine
+   untouched (same server engine, same calls, same admin tools). */
+body.fldgrp #gview{background:#060B1C!important;background-image:radial-gradient(1.5px 1.5px at 14% 18%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 74% 12%,#3A4E86,transparent),radial-gradient(1px 1px at 33% 42%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 88% 55%,#3A4E86,transparent),radial-gradient(1px 1px at 55% 24%,#3A4E86,transparent),radial-gradient(1px 1px at 8% 70%,#3A4E86,transparent),radial-gradient(1px 1px at 64% 78%,#3A4E86,transparent),radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%)!important}
+body.fldgrp #gview .ohdr{background:#0E1836!important;border-bottom:1px solid #7a5f2a!important}
+body.fldgrp #gview .ohdr .nm{color:#F4F7FF!important}
+body.fldgrp #gview .ohdr .st{color:#8B96B8!important}
+body.fldgrp #gview .bubbles{background:transparent!important}
+body.fldgrp #gview .cinput{background:#0E1836!important;border-top:1px solid #1C2A52!important}
+body.fldgrp #gview .cinput input[type=text],body.fldgrp #gview .cinput input:not([type]){background:#16224A!important;color:#F4F7FF!important;border:1px solid #2A3B6E!important}
+body.fldgrp #gview #greplychip{background:#16224A!important;color:#8B96B8!important;border:0!important}
+/* group call placed from inside the Field group also lives in the Field world */
+body.fldgrp #callview{background:#060B1C!important;background-image:radial-gradient(1.5px 1.5px at 14% 18%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 74% 12%,#3A4E86,transparent),radial-gradient(1px 1px at 33% 42%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 88% 55%,#3A4E86,transparent),radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%)!important}
+body.fldgrp #callview .cname{color:#F4F7FF!important}
+body.fldgrp #callview .cstat{color:#8B96B8!important}
+body.fldgrp #callview .top{background:linear-gradient(rgba(6,11,28,.72),transparent)!important}
+body.fldgrp #callview .av{background:linear-gradient(135deg,#1A3FA8,#244FBF)!important;border:2px solid #E8B84B!important;box-shadow:0 0 24px rgba(232,184,75,.45)!important}
 #view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
 #view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
@@ -289,7 +306,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v178 · Places</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v179 · Groups in the Field</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -344,7 +361,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v178</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v179</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -831,6 +848,7 @@ body.acLive #flwrap{display:flex}
     <div style="flex:1;min-width:0;cursor:pointer" onclick="openGInfo()"><div class="nm" id="gvName">Group</div><div class="st" id="gvSub">—</div></div>
     <button class="bk" onclick="openGInfo()" title="Group options">⋮</button><button class="bk" onclick="gCall()" title="Group call">📞</button>
   </div>
+  <div id="grpRooms" style="display:none;gap:8px;padding:8px 12px 0"></div>
   <div class="bubbles" id="gbubbles"></div>
   <div class="cinput">
     <div id="greplychip" class="hide" style="background:#F8FAFC;margin:0 10px;border-left:3px solid #2B5FE3;border-radius:8px;padding:8px 10px;font-size:12px;color:#64748B"></div>
@@ -3449,6 +3467,26 @@ function flPlaceRooms(p){
   if((STORIES||[]).some(s=>s.num===p))chip("\u25C9 Moments",function(){openStatusViewer(p);});
   bar.style.display="flex";
 }
+/* v179: FIELD STAGE 4 (Groups) — a group opened from the Field is a shared
+   Place: the whole group space sits inside the Field world. Zero protocol
+   change: the group server engine, calls and admin tools stay untouched. */
+function flOpenGroup(gid){
+  try{document.body.classList.add("fldgrp");}catch(e){}
+  openGroup(gid);
+  try{
+    const g=GROUPS.find(x=>x.id===gid);
+    const bar=$("grpRooms");
+    if(bar&&g){
+      bar.innerHTML="";
+      const b=document.createElement("button");
+      b.style.cssText="background:#16224A;color:#F4F7FF;border:1px solid #2A3B6E;border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer";
+      b.textContent="\u2726 About "+String(g.name||"Group").split(" ")[0];
+      b.onclick=function(){openGInfo();};
+      bar.appendChild(b);
+      bar.style.display="flex";
+    }
+  }catch(e){}
+}
 /* v177: FIELD STAGE 2 (Calls) — "call X" from the Field opens the call inside
    the Field's world. Zero protocol change: dial() and the whole call engine
    stay exactly as they are. */
@@ -4932,6 +4970,7 @@ function fmtT(ts){try{const d=new Date(normTs(ts||""));if(isNaN(d.getTime()))ret
 var GC={g:null,pcs:{},stream:null,on:false,muted:false,t0:0,gcTick:null};
 var SF={sid:null,pc:null,mems:{},subs:{},poll:null,busy:false,vOn:false,vmid:null,vtrack:null,tiles:{},pendVidNode:null};
 async function gCall(){
+  try{if(document.body.classList.contains("fldgrp"))document.body.classList.add("fldcall");}catch(e){} /* v179 */
   /* Only one live call at a time; group calls require an internet connection. */
   if(GC.on){toast("Already in a group call");return;}
   if(!navigator.onLine){toast("Calls need an internet connection");return;}
@@ -6312,7 +6351,8 @@ function openGroup(gid){
   try{if(g.server)gBackfill(gid);}catch(e){} /* v108: one-time old-message import so reactions work */
   $("gview").className="ovl";try{history.pushState({ac:1},"");}catch(e){}
 }
-function closeGroup(){GROUP_OPEN=null;$("gview").className="ovl hide";renderLists();}
+function closeGroup(){try{document.body.classList.remove("fldgrp");$("grpRooms").style.display="none";}catch(e){} /* v179 */
+GROUP_OPEN=null;$("gview").className="ovl hide";renderLists();}
 /* v90: upgrade an old-engine (phone-only) group to the server engine — keeps the name, members and chat history */
 async function gBackfill(gid){
   /* v108 (skylar): old-engine groups kept messages ONLY on the local device — the server had never
@@ -7836,7 +7876,7 @@ function flRun(cmd){
   if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+".");
     setTimeout(function(){flDial(t.num);},1100);return;}
   if(t&&t.num){flSpeak(WIN_NAMES[t.num]||"Place.");flOpenChat(t.num);return;}
-  if(t&&t.grp){flSpeak((t.grp.name||"Group")+".");openGroup(t.grp.id);return;}
+  if(t&&t.grp){flSpeak((t.grp.name||"Group")+".");flOpenGroup(t.grp.id);return;}
   if(c.includes("call")){flSpeak("Call who?");return;}
   flSpeak("I didn't catch that.");} /* v170: no capability listing — she follows instructions, she doesn't advertise */
 /* ============ v167: VISIBLE HANDS — she moves the screen like you would ============ */
@@ -7989,7 +8029,7 @@ function flRender(){
       (un?'<div class="funr">'+un+'</div>':'')+
       '<div class="fdot'+(on?" on":"")+'"></div><div class="fringpulse"></div></div>'+
       '<div class="fname">'+esc(nm)+'</div>';
-    n.onclick=function(){if(isGrp)openGroup(it.gid);else flOpenChat(it.id);};
+    n.onclick=function(){if(isGrp)flOpenGroup(it.gid);else flOpenChat(it.id);};
     n.style.left=(cx+it.r*Math.cos(it.a))+"px";
     n.style.top=(cy+it.r*Math.sin(it.a)*0.92)+"px";
     $("view-field").appendChild(n);
