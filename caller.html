@@ -201,6 +201,17 @@ footer a{color:#64748B}
 @keyframes fltw{0%,100%{opacity:.15}50%{opacity:.6}}
 #view-field .fnode{position:absolute;transform:translate(-50%,-50%);width:74px;text-align:center;cursor:pointer;transition:transform .2s ease;z-index:4}
 #view-field .fnode:active{transform:translate(-50%,-50%) scale(.92)}
+/* v176 FIELD PLACE (stage 1, Chats): a chat opened from the Field keeps the
+   spatial world around it — you travel to their Place. Everything else
+   in the chat stays exactly as it is (nothing breaks, nothing changes). */
+body.fldplace #chatview{background-image:radial-gradient(1.5px 1.5px at 12% 16%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 76% 10%,#3A4E86,transparent),radial-gradient(1px 1px at 33% 40%,#3A4E86,transparent),radial-gradient(1.5px 1.5px at 90% 52%,#3A4E86,transparent),radial-gradient(1px 1px at 55% 24%,#3A4E86,transparent),radial-gradient(1px 1px at 8% 70%,#3A4E86,transparent),radial-gradient(1px 1px at 64% 78%,#3A4E86,transparent),radial-gradient(1px 1px at 95% 22%,#3A4E86,transparent),radial-gradient(120% 90% at 50% 0%,#0B1330 0%,#060B1C 62%)!important}
+body.fldplace #chatview .ohdr{background:#0E1836!important;border-bottom:1px solid #7a5f2a!important}
+body.fldplace #chatview .bubbles{background:transparent!important}
+body.fldplace #wpg{background:transparent!important}
+body.fldplace #chatview .cinput{background:#0E1836!important;border-top:1px solid #1C2A52!important}
+body.fldplace #chatview .cinput input[type=text],body.fldplace #chatview .cinput input:not([type]){background:#16224A!important;color:#F4F7FF!important;border:1px solid #2A3B6E!important}
+body.fldplace #chatview .ohdr .nm{color:#F4F7FF!important}
+body.fldplace #chatview .ohdr .st{color:#8B96B8!important}
 #view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
 #view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
@@ -269,7 +280,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v168 · live voice</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v176 · Chats in the Field</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -324,7 +335,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v151</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v176</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -3371,7 +3382,14 @@ function renderChips(){
 }
 window.addEventListener("blur",()=>{try{const pv=document.getElementById("picview");if(pv&&!pv.classList.contains("hide"))document.getElementById("pvImg").style.filter="blur(28px)";const sv=document.getElementById("stview");if(sv&&!sv.classList.contains("hide")){document.getElementById("stImg").style.filter="blur(28px)";document.getElementById("stVid").style.filter="blur(28px)";}}catch(e){}});
 window.addEventListener("focus",()=>{try{document.getElementById("pvImg").style.filter="";}catch(e){}});
-function closeChat(){CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
+/* v176: open a chat FROM the Field — you travel to their Place; the chat
+   itself is untouched, all features intact (zero-protocol stage 1). */
+function flOpenChat(p){
+  try{document.body.classList.add("fldplace");}catch(e){}
+  openChat(p);
+  try{$("cvSub").textContent="\u2726 Place \u00b7 AirConnect \u00b7 + "+p;}catch(e){}
+}
+function closeChat(){try{document.body.classList.remove("fldplace");}catch(e){}CHAT_OPEN=null;$("chatview").className="ovl hide";try{$("wpg").innerHTML="";}catch(e){}renderLists();}
 
 /* ---------- chat themes & wallpapers (WhatsApp-style) ---------- */
 const THEME_SWATCHES=["linear-gradient(135deg,#0f766e,#134e4a)","linear-gradient(135deg,#1e3a8a,#0c2461)","linear-gradient(135deg,#7c1d6f,#441054)","linear-gradient(135deg,#b45309,#71320a)","linear-gradient(135deg,#153580,#022c22)","linear-gradient(135deg,#9f1239,#4c0519)","linear-gradient(135deg,#334155,#0f172a)","linear-gradient(135deg,#c2410c,#7c2d12)"];
@@ -7665,6 +7683,45 @@ function flMic(){
   flActivate(FL_GREETED?"I'm listening.":flGreetLine());
   FL_GREETED=true;
 }
+/* ============ v176: SCREEN VISION — she sees your screen (Gemini-Live rung) ============
+   "look at my screen" — she asks once for screen share, keeps the stream for the
+   session (no re-prompt), captures a frame, reads it on the Cloudflare edge
+   (zero naira) and speaks what she sees. "stop looking" closes it. */
+let FL_SV=null,FL_SVVID=null;
+function flScreenStop(){
+  if(FL_SV){try{FL_SV.getTracks().forEach(function(t){t.stop();});}catch(e){}FL_SV=null;}
+  if(FL_SVVID){try{FL_SVVID.remove();}catch(e){}FL_SVVID=null;}
+}
+async function flVision(rawCmd){
+  try{langSync();}catch(e){}
+  let q=String(rawCmd||"").replace(/^(please\s+)?(now\s+)?/i,"");
+  q=q.replace(/.*?(look at|see|watch|read|describe)\s*(my|the)?\s*screen\s*(and|please|now)?\s*/i,"");
+  if(!q||q.trim().length<3)q="Describe what is on this screen clearly and briefly. Mention any important text, numbers or buttons you see.";
+  flSpeak("Looking.");
+  try{
+    if(!FL_SV){
+      try{FL_SV=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:2},audio:false});}
+      catch(e){flSpeak("Screen permission was blocked or cancelled.");return;}
+      FL_SVVID=document.createElement("video");
+      FL_SVVID.muted=true;FL_SVVID.playsInline=true;FL_SVVID.srcObject=FL_SV;
+      FL_SVVID.style.cssText="position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:-1";
+      document.body.appendChild(FL_SVVID);
+      try{await FL_SVVID.play();}catch(e){}
+      try{FL_SV.getTracks().forEach(function(t){t.onended=function(){FL_SV=null;FL_SVVID=null;};});}catch(e){}
+      await new Promise(function(r){setTimeout(r,500);}); /* first frame settles */
+    }
+    if(!FL_SVVID||!FL_SV){flSpeak("The screen stream closed. Say look at my screen again.");return;}
+    const vw=FL_SVVID.videoWidth||1280,vh=FL_SVVID.videoHeight||720;
+    const sc=Math.min(1,900/vw);
+    const cv=document.createElement("canvas");
+    cv.width=Math.round(vw*sc);cv.height=Math.round(vh*sc);
+    cv.getContext("2d").drawImage(FL_SVVID,0,0,cv.width,cv.height);
+    const img=cv.toDataURL("image/jpeg",0.72);
+    const d=await api("visionscreen",{from:ME,img:img,q:q.slice(0,300)});
+    if(d&&d.ok&&d.desc)flSpeak(String(d.desc).slice(0,700));
+    else flSpeak((d&&d.err)||"I could not see the screen. Try again.");
+  }catch(e){flSpeak("Screen vision hit a snag. Try again.");}
+}
 /* ============ context + commands (real actions, any page) ============ */
 function flCtxName(){
   const T={field:"the Field",chats:"your Chats list",watch:"Explore, the Watch feed",status:"Updates",calls:"your Calls history",settings:"Settings"};
@@ -7684,6 +7741,9 @@ function flRun(cmd){
   const c=flNorm(cmd);const t=flFind(cmd);
   if(c.includes("passphrase")||c.includes("pass phrase")||(c.includes("phrase")&&(c.includes("how do i")||c.includes("how can i")||c.includes("get my")||c.includes("where is")))){flWalkPhrase();return;}
   if((c.includes("call")||c.includes("talk to")||c.includes("speak to"))&&c.includes("premium user")){flSpeak("Calling Premium User.");setTimeout(function(){location.href="skylar.html";},1200);return;}
+  /* v176: screen vision commands */
+  if(c.includes("stop looking")||c.includes("stop watching")||c.includes("stop seeing")||c.includes("close my screen")||c.includes("stop sharing")){flSpeak("Screen closed.");flScreenStop();return;}
+  if(c.includes("look at my screen")||c.includes("look at the screen")||c.includes("look at this")||c.includes("see my screen")||c.includes("see this")||c.includes("on my screen")||c.includes("read my screen")||c.includes("describe my screen")||c.includes("what do you see")){flVision(cmd);return;}
   if(c.includes("how are you")){flSpeak("Doing great, "+flMyName()+".");return;}
   if(c.includes("where am i")||c.includes("what page")||c.includes("what is this")||c.includes("meaning of this")||c.includes("explain this")||c.includes("explain this page")){flExplain();return;}
   /* v169 (skylar): the live agent obeys during live calls — always alive, never deaf */
@@ -7705,7 +7765,7 @@ function flRun(cmd){
   if(c.includes("exam")){flSpeak("Exam Prep.");setTimeout(function(){location.href="exam.html";},900);return;}
   if(c.includes("call")&&t&&t.num){flSpeak("Calling "+(WIN_NAMES[t.num]||(t.num==="1100000001"?"Premium AI":"Citizen One"))+".");
     setTimeout(function(){callNum(t.num);},1100);return;}
-  if(t&&t.num){flSpeak(WIN_NAMES[t.num]||"Chat.");openChat(t.num);return;}
+  if(t&&t.num){flSpeak(WIN_NAMES[t.num]||"Place.");flOpenChat(t.num);return;}
   if(t&&t.grp){flSpeak((t.grp.name||"Group")+".");openGroup(t.grp.id);return;}
   if(c.includes("call")){flSpeak("Call who?");return;}
   flSpeak("I didn't catch that.");} /* v170: no capability listing — she follows instructions, she doesn't advertise */
@@ -7859,7 +7919,7 @@ function flRender(){
       (un?'<div class="funr">'+un+'</div>':'')+
       '<div class="fdot'+(on?" on":"")+'"></div><div class="fringpulse"></div></div>'+
       '<div class="fname">'+esc(nm)+'</div>';
-    n.onclick=function(){if(isGrp)openGroup(it.gid);else openChat(it.id);};
+    n.onclick=function(){if(isGrp)openGroup(it.gid);else flOpenChat(it.id);};
     n.style.left=(cx+it.r*Math.cos(it.a))+"px";
     n.style.top=(cy+it.r*Math.sin(it.a)*0.92)+"px";
     $("view-field").appendChild(n);
