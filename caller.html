@@ -321,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v189 · live face-marked</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v190 · glow field</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -375,7 +375,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v189</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v190</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -680,7 +680,7 @@ body.acLive #flwrap{display:flex}
     </div>
     <div class="card">
       <div style="font-weight:600;margin-bottom:6px">⬇ Your data</div>
-      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v189</div>
+      <button class="big blue" style="width:100%" onclick="exportData()">Download all my data</button><div style="text-align:center;font-size:11px;color:#94A3B8;margin-top:12px">AirConnect v190</div>
       <div style="font-size:11.5px;color:#64748B;margin-top:6px;line-height:1.5">A JSON file of your profile, friends and full message history. Log out and account deletion moved to your 👤 My Profile card above.</div>
     </div>
     <footer><a href="privacy.html">Privacy Policy</a></footer>
@@ -3618,7 +3618,7 @@ function themeFileChosen(input,kind){
   wpgPut(key,f).then(()=>{saveTheme({type:kind,key:key});}).catch(()=>toast("Storage full — try a smaller file"));
 }
 async function applyWallpaper(){
-  const w=$("wpg");w.innerHTML="";w.style.background="#F8FAFC";
+  const w=$("wpg");w.innerHTML="";w.style.background="transparent"; /* v190: no chat theme set -> the glowing Field shows through */
   const t=(CHAT_OPEN&&parseTheme("ac_theme_"+CHAT_OPEN))||parseTheme("ac_theme_global");
   if(!t)return;
   try{
@@ -7726,6 +7726,13 @@ button.big,#fab,.cinput button,.btn,.sendBtn{background:var(--ch-blue)!important
 .ovl{background:var(--ch-bg)!important}.bubbles,#wpg{background:var(--ch-bg)!important}.bub{border-radius:18px!important;box-shadow:0 7px 20px rgba(34,54,86,.11)!important}.bub.out{background:var(--ch-blue)!important;color:white!important;border:0!important;border-bottom-right-radius:5px!important}.bub.in{background:var(--ch-surface)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important;border-bottom-left-radius:5px!important}.bub.sys{background:color-mix(in srgb,var(--ch-violet) 16%,var(--ch-surface))!important;color:var(--ch-text)!important}.cinput{background:var(--ch-glass)!important;border-color:var(--ch-line)!important;}.qbox,.rchip{background:color-mix(in srgb,var(--ch-cyan) 7%,var(--ch-surface))!important;border-color:var(--ch-line)!important;color:var(--ch-muted)!important}.qbox{border-left-color:var(--ch-blue)!important}
 #login{background:var(--ch-surface2)!important;color:var(--ch-text)!important}#login h1{font-size:32px!important;letter-spacing:-1.2px;text-shadow:none!important}#login>div:first-child>div:first-child{background:var(--ch-surface)!important;border:1px solid var(--ch-line)!important;box-shadow:0 8px 20px rgba(15,23,42,.08)!important}#login .card{max-width:540px;margin:14px auto;padding:20px!important}#login div[style*="color:#64748B"],#login div[style*="color:#94A3B8"]{color:var(--ch-muted)!important}#login a{color:var(--ch-blue)!important}
 #menuWrap{background:rgba(6,13,27,.48)!important;backdrop-filter:blur(8px)}.toast{background:var(--ch-surface2)!important;color:var(--ch-text)!important;border:1px solid var(--ch-line)!important}.cbtn{background:var(--ch-surface2)!important;border:1px solid var(--ch-line)!important}.cbtn.on{background:var(--ch-blue)!important}.cbtn.end{background:linear-gradient(135deg,#FF4D6D,#FF735F)!important}.cctl{background:linear-gradient(transparent,var(--ch-bg) 53%)!important}.meters,.cstat{color:var(--ch-muted)!important}.meters .bar{background:var(--ch-line)!important}.meters .bar>div{background:var(--ch-blue)!important}.tick.on{color:var(--ch-blue)!important}a{color:var(--ch-blue)}footer,footer a{color:var(--ch-muted)!important}
+/* v190 GLOW FIELD (Samuel, voice 29 Sep): the Field is the background of every page */
+html{background:#060B1C}
+html[data-ac-theme="light"]{background:#F7F9FC}
+body.acGlow,body.acGlow .view{background:transparent!important}
+body.acGlow #chatview{background:transparent!important}
+body.acGlow #chatview .bubbles{background:transparent!important}
+#flglow{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none}
 
 /* v155 clarity: solid surfaces, crisp text */
 body{-webkit-font-smoothing:antialiased}
@@ -8005,18 +8012,75 @@ function flOrbTap(){
   else{FL_MODE="wake";flUI();flSpeak("Back to standby. Say "+AC_WAKE+" anytime.");}
 }
 function flBoot(){
-  try{document.body.classList.add("acLive");}catch(e){}
-  const w=$("flwrap");
-  if(w&&!w.querySelector(".fltag")){
-    const tg=document.createElement("div");tg.className="fltag";w.appendChild(tg);}
-  try{const wi=$("wakein");if(wi&&wi.value.trim())AC_WAKE=flNorm(wi.value.trim());}catch(e){}
-  flUI();
-  /* v175 (skylar directive): ALWAYS LIVE — no tap to activate. If the mic is already
-     permitted, she is listening from the moment the app loads; "hello premium" wakes her.
-     First-ever visit: the browser's own one-time Allow box appears; after that Allow,
-     she is live on every load forever. */
-  flAutoLive();
+  /* v190 (Samuel, voice directive 29 Sep): the live assistant is REMOVED — totally.
+     No orb, no always-live mic, no wake word. The app itself remains exactly as it is;
+     every call site of flBoot() now lands here and does nothing. Restorable in one line. */
+  return;
 }
+/* ===== v190 GLOW FIELD (Samuel): the Field is the background of EVERY page —
+   chats, watch, money, all of it. Each orbit glowing, each point glowing,
+   continually. Dark theme = the deep starlit Field; light theme = the white-cloud
+   Field, everything still glowing. ===== */
+function flGlowBg(){
+  try{
+    const cv=document.createElement("canvas");cv.id="flglow";
+    cv.style.cssText="position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none";
+    if(document.body.firstChild)document.body.insertBefore(cv,document.body.firstChild);else document.body.appendChild(cv);
+    const x=cv.getContext("2d");let W=0,H=0;
+    const stars=[],pts=[];
+    function size(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+    size();window.addEventListener("resize",size);
+    for(let i=0;i<95;i++)stars.push({x:Math.random(),y:Math.random(),r:.4+Math.random()*1.4,p:Math.random()*6.283,s:.5+Math.random()*1.6});
+    const COLS=["#E8B84B","#4C7CF5","#7C6CF5","#5FD4E0","#F4C04D","#8F6CF5"];
+    for(let i=0;i<18;i++)pts.push({o:i%3,a:Math.random()*6.283,sp:.00014+Math.random()*.00022,ph:Math.random()*6.283,c:COLS[i%COLS.length],r:1.6+Math.random()*2.2});
+    const t0=Date.now();
+    function frame(){
+      try{
+        const dark=(document.documentElement.dataset.acTheme||"light")!=="light";
+        const t=Date.now()-t0;
+        const g=x.createLinearGradient(0,0,0,H);
+        if(dark){g.addColorStop(0,"#0B1330");g.addColorStop(.55,"#060B1C");g.addColorStop(1,"#0A1026");}
+        else{g.addColorStop(0,"#FBFDFF");g.addColorStop(.55,"#EFF4FE");g.addColorStop(1,"#F8F4EC");}
+        x.fillStyle=g;x.fillRect(0,0,W,H);
+        const ng=x.createRadialGradient(W*.72,H*.26,0,W*.72,H*.26,Math.max(W,H)*.55);
+        ng.addColorStop(0,dark?"rgba(76,124,245,.10)":"rgba(76,124,245,.08)");ng.addColorStop(1,"rgba(0,0,0,0)");
+        x.fillStyle=ng;x.fillRect(0,0,W,H);
+        const ng2=x.createRadialGradient(W*.22,H*.78,0,W*.22,H*.78,Math.max(W,H)*.5);
+        ng2.addColorStop(0,dark?"rgba(232,184,75,.05)":"rgba(244,192,77,.07)");ng2.addColorStop(1,"rgba(0,0,0,0)");
+        x.fillStyle=ng2;x.fillRect(0,0,W,H);
+        const cx=W/2,cy=H*.42,base=Math.min(W,H)*.62;
+        for(let o=0;o<3;o++){
+          const rr=base*(.55+o*.24);
+          x.beginPath();
+          for(let a=0;a<=64;a++){const th=a/64*6.283;const px=cx+Math.cos(th)*rr,py=cy+Math.sin(th)*rr*.62;if(a)x.lineTo(px,py);else x.moveTo(px,py);}
+          x.closePath();
+          const pul=.22+.16*Math.sin(t*.0012+o*2.1);
+          x.strokeStyle=dark?("rgba(96,128,255,"+(pul+.16).toFixed(3)+")"):("rgba(43,95,227,"+(pul+.13).toFixed(3)+")");
+          x.lineWidth=1;x.setLineDash([3,9]);x.stroke();x.setLineDash([]);
+          x.strokeStyle=dark?"rgba(96,128,255,.055)":"rgba(43,95,227,.05)";x.lineWidth=6;x.stroke();
+        }
+        for(let i=0;i<stars.length;i++){const s=stars[i];const tw=.25+.75*Math.abs(Math.sin(t*.001*s.s+s.p));
+          x.globalAlpha=tw*(dark?.8:.95);x.fillStyle=dark?"#9FB4E8":"#7E97D6";
+          x.beginPath();x.arc(s.x*W,s.y*H,s.r,0,6.283);x.fill();}
+        x.globalAlpha=1;
+        for(let i=0;i<pts.length;i++){const p=pts[i];p.a+=p.sp*16;
+          const rr=base*(.55+(p.o)*.24);
+          const px=cx+Math.cos(p.a)*rr,py=cy+Math.sin(p.a)*rr*.62;
+          const gl=.55+.45*Math.sin(t*.002+p.ph);
+          x.save();
+          x.shadowColor=p.c;x.shadowBlur=(dark?20:13)*gl;
+          x.globalAlpha=(dark?.9:.75)*gl;
+          x.fillStyle=p.c;
+          x.beginPath();x.arc(px,py,p.r*(.8+.35*gl),0,6.283);x.fill();
+          x.restore();}
+        x.globalAlpha=1;
+      }catch(e){}
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }catch(e){}
+}
+(function(){try{document.body.classList.add("acGlow");flGlowBg();}catch(e){}})();
 function flAutoLive(){
   if(FL_MODE!=="off")return;
   if(!$("app")||$("app").className.indexOf("hide")>=0){setTimeout(flAutoLive,1500);return;}
@@ -8192,7 +8256,7 @@ function openMyPlace(){
     ["🛡","Verify identity","KYC \u2714 badge · face-match",function(){closeMyPlace();try{kycSheet();}catch(e){}}],
     ["🔐","Recovery phrase","your account forever key",function(){closeMyPlace();try{showMyPhrase();}catch(e){}}],
     ["⚙","All settings","the full classic drawer",function(){closeMyPlace();try{menuOpen();}catch(e){}}],
-    ["🎙","Voice check","test her voice + diagnostics",function(){closeMyPlace();flVoiceCheck();}]];
+    ]; /* v190: Voice check room removed with the live assistant */
   p.innerHTML='<div class="mpHead"><div class="mpAva">'+esc(String(nm).charAt(0).toUpperCase())+'</div>'+
     '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:16px">'+esc(nm)+'<span style="color:#E8B84B;font-size:12px">'+kyc+'</span></div>'+
     '<div style="font-size:12px;color:#8B96B8">'+esc(nmnum)+'</div></div>'+
