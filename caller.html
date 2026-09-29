@@ -5707,22 +5707,29 @@ function saveV12Arch(id){const i=ARCHS.indexOf(id);if(i>=0)ARCHS.splice(i,1);els
 let LITE=(localStorage.getItem("ac_lite")==="1");
 function liteToggle(){LITE=!LITE;localStorage.setItem("ac_lite",LITE?"1":"0");$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E8EFFB":"#CBD5E1";$("liteBtn").style.color=LITE?"#1A3FA8":"#334155";toast(LITE?"Lite mode ON — data saver active":"Lite mode OFF");if(CHAT_OPEN)renderBubbles();}
 function liteBoot(){if($("liteBtn")){$("liteBtn").textContent="Lite mode: "+(LITE?"ON":"OFF");$("liteBtn").style.background=LITE?"#E8EFFB":"#CBD5E1";$("liteBtn").style.color=LITE?"#1A3FA8":"#334155";}}
+/* ===== v172 (skylar, 29 Sep): ACOIN CURRENCY — 1 Acoin = ₦1,050 (his instruction).
+       Ledger stays in naira server-side; this layer converts for display + top-up. ===== */
+let AC_CUR={name:"Acoin",ticker:"AIRC",rate:1050};
+async function curLoad(){try{const d=await api("cur");if(d&&d.ok&&d.rate)AC_CUR={name:d.name||"Acoin",ticker:d.ticker||"AIRC",rate:Number(d.rate)||1050};}catch(e){}}
+curLoad();
+function airFmt(ngn){const c=Number(ngn||0)/Number(AC_CUR.rate||1050);return (Math.round(c*100)/100).toLocaleString()+" "+(AC_CUR.ticker||"AIRC");}
+function airLine(){return AC_CUR.name+" rate: 1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString();}
 async function walRefresh(){
   if(!ME)return;
   try{const d=await api("wbal",{node:ME});
     if(d&&d.ok){
-      $("walBal").textContent="₦"+(d.bal||0).toLocaleString();
-      $("walBal2").textContent="₦"+(d.bal||0).toLocaleString();
-      const wm=$("walBalMenu");if(wm)wm.textContent="₦"+(d.bal||0).toLocaleString();
+      $("walBal").textContent=airFmt(d.bal);
+      $("walBal2").textContent=airFmt(d.bal)+" · ≈₦"+(d.bal||0).toLocaleString();
+      const wm=$("walBalMenu");if(wm)wm.textContent=airFmt(d.bal);
       const h=$("walHist");
-      if(h)h.innerHTML=(d.hist||[]).length?d.hist.map(t=>{
+      if(h)h.innerHTML='<div style="font-size:11px;color:#94A3B8;padding:2px 0 8px">'+esc(airLine())+'</div>'+((d.hist||[]).length?d.hist.map(t=>{
         const inn=t.to===ME;
         return '<div style="padding:7px 0;border-bottom:1px solid #F1F5F9"><span style="color:'+(inn?"#2B5FE3":"#e2445c")+';font-weight:600">'+(inn?"+":"-")+'₦'+Number(t.amt||0).toLocaleString()+'</span> '+(inn?"from ":"to ")+(t.from===ME?"me":esc(String(t.from)))+(t.note?' · <i>'+esc(String(t.note))+'</i>':'')+'<div style="font-size:10.5px;color:#94A3B8">'+new Date(t.at).toLocaleString()+'</div></div>';
       }).join(""):'<div style="color:#64748B;padding:6px 0">No transactions yet.</div>';
     }
   }catch(e){}
 }
-function walShow(){walRefresh();$("walSheet").className="ovl";}
+function walShow(){curLoad();walRefresh();$("walSheet").className="ovl";}
 function walClose(){$("walSheet").className="ovl hide";}
 async function walRcpShrink(file){
   const dt=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result));fr.readAsDataURL(file);});
@@ -5735,14 +5742,15 @@ async function walRcpShrink(file){
   }catch(e){ return {b64:dt.split(",")[1],name:(file.name||"receipt").slice(0,40)}; }
 }
 async function walAdd(){
-  const v=prompt("How much do you want to add? (₦)\nMin ₦100");if(!v)return;
-  const amt=Math.round(Number(String(v).replace(/[^0-9.]/g,"")));
-  if(!amt||amt<100){toast("Minimum is ₦100");return;}
+  const v=prompt("How many "+AC_CUR.name+" do you want?\n1 "+AC_CUR.ticker+" = ₦"+Number(AC_CUR.rate||1050).toLocaleString()+"\nMin 1 "+AC_CUR.ticker);if(!v)return;
+  const coins=Math.round(Number(String(v).replace(/[^0-9.]/g,""))*100)/100;
+  const amt=Math.round(coins*Number(AC_CUR.rate||1050));
+  if(!coins||coins<1||amt<100){toast("Minimum is 1 "+AC_CUR.ticker);return;}
   const d=await api("wtopup",{node:ME,amt});
   if(!d||!d.ok){toast("Could not start top-up");return;}
-  const details="BANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\nREFERENCE: "+d.ref;
+  const details="BANK: Rubies MFB\nACCOUNT NAME: Success Friday\nACCOUNT NUMBER: 8881724009\nREFERENCE: "+d.ref+"\nAMOUNT: ₦"+amt.toLocaleString()+" ("+coins.toLocaleString()+" "+AC_CUR.ticker+")";
   try{await navigator.clipboard.writeText(details);}catch(e){}
-  $("walAddTitle").textContent="💳 Add ₦"+amt.toLocaleString();
+  $("walAddTitle").textContent="💳 Add "+coins.toLocaleString()+" "+AC_CUR.ticker+" (₦"+amt.toLocaleString()+")";
   $("walAddBody").innerHTML=
     '<div style="white-space:pre-line;font-size:13.5px;line-height:1.8;background:#E8EFFB;color:#1A3FA8;border-radius:12px;padding:14px">'+details+'<div style="font-size:11px;opacity:.8;margin-top:8px">📋 Bank details copied — paste them in your bank app.</div></div>'+
     '<button class="big blue" style="width:100%;margin-top:12px;font-size:15px;padding:14px" onclick="walRcpGo()">📷 I have paid — upload my receipt</button>'+
@@ -7052,7 +7060,7 @@ async function ppSave(){
   if(r&&r.ok){try{localStorage.setItem("ac_phrase",r.phrase||nw);}catch(e){}ppClose();toast("Passphrase changed ✓");showMyPhrase();}
   else toast((r&&r.err)||"Could not change passphrase");
 }
-const AC_V=171;
+const AC_V=172;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
