@@ -250,6 +250,9 @@ body.fldwatch #wtcatbar{background:#0E1836!important}
    are visible ONLY on the owner's own Place — never on anyone else's. */
 body.fldmoney #walSheet{background:radial-gradient(120% 90% at 50% 0%,rgba(11,19,48,.94) 0%,rgba(6,11,28,.96) 62%)!important}
 body.fldmoney #walSheet .sheet{border:1px solid #7a5f2a!important;box-shadow:0 0 34px rgba(232,184,75,.18)!important}
+/* v183 FIELD STAGE 8 (Citizens/mesh): a citizen's Place carries their skills;
+   the skills sheet gets the Field's gold trim inside a Place. */
+body.fldplace #skillSheet .sheet{border:1px solid #7a5f2a!important;box-shadow:0 0 34px rgba(232,184,75,.18)!important}
 #view-field .fava{width:54px;height:54px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#16224A;border:2px solid #2A3B6E;position:relative}
 #view-field .fk .fava{border-color:#E8B84B;box-shadow:0 0 14px rgba(232,184,75,.45)}
 #view-field .fk .fava:after{content:"\u2714";position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:#E8B84B;color:#060B1C;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
@@ -318,7 +321,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v182 · Exam Prep in the Field</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v183 · Citizens of the Field</span></div>
   <div class="fldock">
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('watch')">✦ Explore</button>
@@ -373,7 +376,7 @@ body.acLive #flwrap{display:flex}
     <input id="searchbox" placeholder="🔍 Search chats and messages" oninput="SEARCH=this.value.trim().toLowerCase();renderLists()" style="margin:10px 12px;width:calc(100% - 24px);background:#FFFFFF;border:1px solid #CBD5E1;color:#0F172A;border-radius:10px;padding:10px 12px;font-size:13px;display:block">
     <div id="chatlist"></div>
     <div id="nochat" class="empty">No chats yet.<br>Tap the green ＋ button to start a chat, or add a friend in Settings ⚙️.</div>
-    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v182</div>
+    <button class="big" onclick="manualRefresh()" style="width:calc(100% - 24px);margin:6px 12px;padding:13px;border:none;border-radius:14px;background:#2B5FE3;color:#fff;font-weight:700;font-size:14px">🔄 Refresh app (update now)</button><div id="verfoot" style="text-align:center;font-size:11px;color:#94A3B8;padding:12px 0 16px">AirConnect v183</div>
   </div>
 
   <div id="view-watch" class="view hide">
@@ -3448,6 +3451,12 @@ function flOpenChat(p){
   try{$("cvSub").textContent="\u2726 Place \u00b7 AirConnect \u00b7 + "+p;}catch(e){}
   flPlaceRooms(p);
 }
+/* v183: FIELD STAGE 8 (Citizens/mesh) — citizens (Premium AI, the
+   receptionist, Master Predictor and every future citizen) live as full
+   Places in the Field: their About room carries the Citizen badge, and
+   their Skills open right from their Place. Zero protocol change: the
+   citizen mesh, skills engine and receptionist stay exactly as they are. */
+function flIsCitizen(p){return String(p).indexOf("11000")===0&&String(p).length>=10;}
 /* v178: FIELD STAGE 3 (Friends/Places) — a Place is a person's space. The
    rooms bar appears inside their Place: About (their face, trust ring,
    presence) and Moments (their Updates). Zero protocol change: everything is
@@ -3462,7 +3471,7 @@ function openPlaceAbout(p){
     else{av.style.backgroundImage="";av.textContent=String(nm).charAt(0).toUpperCase();}
     $("paName").textContent=nm;
     $("paPlace").textContent="\u2726 Place \u00b7 you are in "+nm+"'s space";
-    $("paMeta").innerHTML="AirConnect \u00b7 +"+p+((WIN_KC&&WIN_KC[p])?"<br>\u2714 Identity verified":"");
+    $("paMeta").innerHTML="AirConnect \u00b7 +"+p+((flIsCitizen(p))?"<br>\uD83E\uDD16 AirConnect citizen \u00b7 always here":"")+((WIN_KC&&WIN_KC[p])?"<br>\u2714 Identity verified":"");
     const pt=(WIN_PRES&&WIN_PRES[p])||0;
     $("paPres").textContent=(pt&&Date.now()-pt<30000)?("In the Field now"):("Away from the Field \u00b7 a message always lands");
     $("paMom").style.display=((STORIES||[]).some(s=>s.num===p))?"":"none";
@@ -3479,6 +3488,7 @@ function flPlaceRooms(p){
   chip("\u2726 About "+String(WIN_NAMES[p]||"").split(" ")[0],function(){openPlaceAbout(p);});
   if((STORIES||[]).some(s=>s.num===p))chip("\u25C9 Moments",function(){openStatusViewer(p);});
   chip("\uD83D\uDCB0 Money",function(){toast("Balances stay private \u2014 they live only on each person\u2019s own Place.");});
+  if(flIsCitizen(p))chip("\u2B50 Skills",function(){try{skillOpen();}catch(e){toast("Skills live in this citizen\u2019s chat.");}});
   bar.style.display="flex";
 }
 /* v181: FIELD STAGE 6 (Money) — the wallet opened from the Field lives in
