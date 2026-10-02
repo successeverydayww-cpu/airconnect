@@ -1,6 +1,6 @@
 /* AirConnect service worker v82 (v192: Verification Flow): ultra-strong auto-update — every app open fetches the TRUE latest shell from origin (cache-bust query kills browser + CDN staleness), offline still works */
-const CACHE = 'airconnect-v201-b';
-const SHELL = ['./caller.html', './caller5.html', './manifest.json', './icon-192.png', './icon-512.png', './qrcode.min.js'];
+const CACHE = 'airconnect-v202-a';
+const SHELL = ['./caller.html', './caller5.html', './manifest.json', './icon-192.png', './icon-512.png', './qrcode.min.js','./studio-voice.html','./libs/sv_dsp.js','./libs/sv_worker.js'];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });

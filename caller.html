@@ -7478,7 +7478,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=201;
+const AC_V=202;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -8405,6 +8405,7 @@ function openMiniApps(){
     '<div style="font-size:10.5px;color:#8B96B8;margin:0 0 10px">Apps that live inside AirConnect, on their own ring. Every app passes our terms and review.</div>'+
     '<div class="mpGrid">'+
     '<div class="mpRoom" onclick="location.href=\'exam.html?field=1\'"><span class="mi">🎓</span><span>Exam Prep<div class="mpSub">by AirConnect · 50 hard questions · all JAMB subjects</div></span></div>'+
+    '<div class="mpRoom" onclick="location.href=\'studio-voice.html\'"><span class="mi">🎤</span><span>Studio Voice<div class="mpSub">by AirConnect · sing any song · studio polish, choir harmonies & instruments that follow you · download your song</div></span></div>'+
     '<div class="mpRoom" onclick="location.href=\'https://successeverydayww-cpu.github.io/continuity-layer/app.html\'"><span class="mi">\U0001FAC2</span><span>Continuity<div class="mpSub">by Skylar Forge · your identity & memory capsule, always with you</div></span></div>'+
     '<div class="mpRoom" onclick="location.href=\'miniapps.html\'"><span class="mi">➕</span><span>Your app here<div class="mpSub">developers · terms & review process</div></span></div>'+
     '</div></div>';
