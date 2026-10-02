@@ -330,7 +330,7 @@ body.acLive #flwrap{display:flex}
 <div id="view-field" class="view">
   <svg id="flsky" width="100%" height="100%" style="position:absolute;inset:0"></svg>
   <div id="flstars" style="position:absolute;inset:0;pointer-events:none"></div>
-  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v201 · inline gold names</span></div>
+  <div class="fbrand"><div>✦ AirConnect Field</div><span class="fmock">v<span id="fmockv">202</span> · Studio Voice</span></div>
   <div class="fldock"> <!-- v194: rings on top, everything docked below (Samuel's voice directive) -->
     <button onclick="openFab()">◈ Friends</button>
     <button onclick="showTab('chats')">💬 Chats</button>
@@ -7479,7 +7479,7 @@ async function ppSave(){
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
 const AC_V=202;
-function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;}catch(e){}aiVoiceLabel();}
+function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;const fm=document.getElementById("fmockv");if(fm)fm.textContent=String(AC_V);}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
    beforeinstallprompt), and hide it once the app is already running installed. */
