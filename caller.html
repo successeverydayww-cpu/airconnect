@@ -4209,17 +4209,26 @@ async function sendChat(){
   /* v131: no network? NEVER lose the message — queue it, show it with a 🕓 clock,
      and auto-send the moment the connection returns (WhatsApp-style). */
   if(OFFLINE||!navigator.onLine){acQueueText(CHAT_OPEN,t2,box);return;}
+  /* v204: optimistic send — the bubble appears INSTANTLY with a sending tick,
+     no matter how slow the network is; it flips to a real timestamp on confirm. */
   chatBusy=true;$("sendbtn").disabled=true;
+  box.value="";
+  const pendId="p"+Date.now();
+  (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t2,ts:pendId,pend:true});
+  renderBubbles();
   let r=null,networkError=false;
   try{r=await api("chat",{from:ME,to:CHAT_OPEN,text:await e2eEnc(CHAT_OPEN,t2)});}catch(e){networkError=true;}
   chatBusy=false;$("sendbtn").disabled=false;
+  const arr=CHATS[CHAT_OPEN]||[];
+  const pend=arr.find(m=>m.ts===pendId);
   if(r&&r.ok){
-    box.value="";
-    (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"me",text:t2,ts:r.id});
+    if(pend){pend.ts=r.id;pend.pend=false;}
     renderBubbles();
   }else if(networkError||!navigator.onLine){
+    if(pend)arr.splice(arr.indexOf(pend),1);
     acQueueText(CHAT_OPEN,t2,box);
   }else{
+    if(pend)arr.splice(arr.indexOf(pend),1);
     (CHATS[CHAT_OPEN]=CHATS[CHAT_OPEN]||[]).push({who:"sys",text:"⚠ not sent — "+((r&&r.err)||"check connection"),ts:new Date().toISOString()});
     renderBubbles();
   }
@@ -7482,7 +7491,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=203;
+const AC_V=204;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;const fm=document.getElementById("fmockv");if(fm)fm.textContent=String(AC_V);}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
