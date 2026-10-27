@@ -1422,7 +1422,7 @@ function urlB64ToUint8Array(b64){const pad="=".repeat((4-b64.length%4)%4);const 
 async function armPush(){
   try{
     if(!('serviceWorker' in navigator))return;
-    const reg=await navigator.serviceWorker.register('sw.js?v=87');try{refreshTurn();}catch(e){};
+    const reg=await navigator.serviceWorker.register('sw.js?v=88');try{refreshTurn();}catch(e){};
     const perm=await Notification.requestPermission();
     if(perm!=='granted'){pushNudge(perm);return;}
     const v=await api("vapid");
@@ -3932,14 +3932,14 @@ async function fileChosen(fi){
       cv.width=Math.max(1,img.width);cv.height=Math.max(1,img.height);
       cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
       dataUrl=cv.toDataURL("image/jpeg",0.62);
-      while(dataUrl.length>95000){
+      while(dataUrl.length>2900000){
         cv.width=Math.max(1,Math.round(cv.width*0.8));cv.height=Math.max(1,Math.round(cv.height*0.8));
         cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
         dataUrl=cv.toDataURL("image/jpeg",0.5);
       }
     }else{
       dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f);});
-      if(dataUrl.length>95000){toast("File too large for direct chat — send it as a link instead");chatBusy=false;return;}
+      if(dataUrl.length>2900000){toast("File too large — keep it under 2 MB");chatBusy=false;return;}
     }
     const enc=await e2eEnc(CHAT_OPEN,dataUrl);
     const r=await api("chat",{from:ME,to:CHAT_OPEN,file:true,text:enc});
@@ -7491,7 +7491,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=204;
+const AC_V=205;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;const fm=document.getElementById("fmockv");if(fm)fm.textContent=String(AC_V);}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
@@ -7536,7 +7536,7 @@ async function manualRefresh(){
 try{
   if("serviceWorker" in navigator && location.protocol==="https:"){
     const HAD_CTL = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register("sw.js?v=87").then(function(reg){
+    navigator.serviceWorker.register("sw.js?v=88").then(function(reg){
       try{ reg.update().catch(function(){}); }catch(e){}
       setInterval(function(){ try{ reg.update().catch(function(){}); }catch(e){} }, 3600000); /* hourly check while open */
       navigator.serviceWorker.addEventListener("controllerchange", function(){
