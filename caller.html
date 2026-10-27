@@ -3690,7 +3690,9 @@ function chatTimeline(messages,calls){
   return events.sort((a,b)=>a.at-b.at||(a.c?-1:1)||a.seq-b.seq);
 }
 function renderBubbles(){
-  const b=$("bubbles");b.innerHTML="";
+  const b=$("bubbles");
+  const _stick=b.scrollHeight-b.scrollTop-b.clientHeight<140;const _sv=b.scrollTop; /* v203: only glue to bottom if user is near bottom */
+  b.innerHTML="";
   /* v68: display + storage self-heal — drop duplicate bubbles (same ts) so
      already-stored doubles from the old race disappear on next render */
   const list=[];{const seen={};for(const m of (CHATS[CHAT_OPEN]||[])){if(m.ts&&seen[m.ts])continue;seen[m.ts]=1;list.push(m);}}
@@ -3757,7 +3759,7 @@ function renderBubbles(){
     }
     b.appendChild(d);
   }
-  b.scrollTop=999999;
+  if(_stick){b.scrollTop=999999;}else{b.scrollTop=_sv;} /* v203: reading from the top? no more yank */
   persistChats();
   renderChips();
 }
@@ -7250,7 +7252,9 @@ async function grename2(){
 async function ginfoLeave(){const el=$("ginfosheet");if(el)el.remove();leaveGroup();}
 function renderGBubbles(){
   const g=GROUPS.find(x=>x.id===GROUP_OPEN);if(!g)return;
-  const b=$("gbubbles");b.innerHTML="";
+  const b=$("gbubbles");
+  const _stick=b.scrollHeight-b.scrollTop-b.clientHeight<140;const _sv=b.scrollTop; /* v203: only glue to bottom if user is near bottom */
+  b.innerHTML="";
   const arr=GMS[GROUP_OPEN]||[];
   const cevs=grpCallEventsFor(GROUP_OPEN);let ci=0;
   const head=document.createElement("div");
@@ -7271,7 +7275,7 @@ function renderGBubbles(){
     b.appendChild(d);
   }
   while(ci<cevs.length){b.appendChild(gCallRow(cevs[ci]));ci++;}
-  b.scrollTop=999999;
+  if(_stick){b.scrollTop=999999;}else{b.scrollTop=_sv;} /* v203: reading from the top? no more yank */
 }
 async function gsend(){
   const box=$("gbox"),txt=box.value.trim();
@@ -7478,7 +7482,7 @@ async function ppSave(){
    auto-reload path (SW controllerchange, forced update) is HARD-BLOCKED while a camera
    or KYC flow is in progress. The user is never bounced out mid-verification. */
 let AC_FLOW=false; /* true while ANY camera/KYC flow is live */
-const AC_V=202;
+const AC_V=203;
 function stampVer(){try{const el=document.getElementById("verfoot");if(el)el.textContent="AirConnect v"+AC_V;const fm=document.getElementById("fmockv");if(fm)fm.textContent=String(AC_V);}catch(e){}aiVoiceLabel();}
 document.addEventListener("DOMContentLoaded",stampVer);setTimeout(stampVer,500);setTimeout(stampVer,2500);
 /* v152: PWA install — show the Install button on iPhone/iPad too (Safari never fires
