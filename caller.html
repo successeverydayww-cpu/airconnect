@@ -3872,13 +3872,67 @@ function renderTextBubble(d,m){
   const lpU=lpFind(body);if(lpU)lpCard(d,lpU);   /* v126 link preview card */
   if(edLab)d.innerHTML+=edLab;
 }
+function imgSavedNote(){
+  try{
+    let n=document.getElementById("imgSavedTip");
+    if(!n){n=document.createElement("div");n.id="imgSavedTip";
+      n.style.cssText="position:fixed;left:12px;right:12px;bottom:18px;z-index:99998;background:#111827;color:#E5E7EB;padding:12px 14px;border-radius:12px;font-size:12.5px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,0.45)";
+      document.body.appendChild(n);}
+    n.textContent="Picture saved to your Downloads. Open Gallery or Files to see it. If nothing saved, tap the picture and use Save again, or long-press the picture and choose Save image.";
+    n.style.display="block";
+    clearTimeout(window.__imgSavedT);
+    window.__imgSavedT=setTimeout(function(){if(n)n.style.display="none";},7000);
+  }catch(e){}
+}
+function imgSaveView(url,fname){
+  let o=document.getElementById("imgSaveOv");
+  if(!o){
+    o=document.createElement("div");o.id="imgSaveOv";
+    o.style.cssText="position:fixed;inset:0;background:rgba(6,10,18,0.96);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:14px";
+    document.body.appendChild(o);
+  }
+  o.innerHTML="";
+  const im=document.createElement("img");
+  im.src=url;im.style.cssText="max-width:100%;max-height:72vh;border-radius:10px;object-fit:contain";
+  const a=document.createElement("a");
+  a.href=url;a.download=fname;a.textContent="⬇ Save to phone";
+  a.style.cssText="background:#2B5FE3;color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px";
+  a.onclick=function(){setTimeout(imgSavedNote,400);};
+  const hint=document.createElement("div");
+  hint.textContent="Tap Save to phone and it lands in your Downloads, then shows up in your gallery. You can also long-press the picture and choose Save image.";
+  hint.style.cssText="color:#94A3B8;font-size:12px;text-align:center;max-width:420px;line-height:1.45";
+  const x=document.createElement("button");
+  x.textContent="✕ Close";x.style.cssText="background:#1F2937;color:#E5E7EB;border:0;padding:10px 22px;border-radius:10px;font-weight:600";
+  x.onclick=function(){o.style.display="none";};
+  o.appendChild(im);o.appendChild(a);o.appendChild(hint);o.appendChild(x);
+  o.style.display="flex";
+}
 async function fetchFileBubble(m,d){
   try{
     const r=await api("fetchfile",{id:m.fileId,user:ME});
     if(r&&r.text&&String(r.text).startsWith("e1:"))r.text=await e2eDec(CHAT_OPEN,r.text);
     if(r&&r.text&&String(r.text).startsWith("data:image/")){
-      d.textContent="";const im=document.createElement("img");im.src=r.text;im.style.cssText="max-width:100%;border-radius:6px;display:block";
-      im.onclick=()=>window.open(r.text);d.appendChild(im);
+      d.textContent="";
+      const raw=String(r.text);
+      const mm=raw.match(/^data:(image\/[a-z0-9.+-]+);base64,/i);
+      const mime=mm?mm[1]:"image/jpeg";
+      let bytes=null;
+      try{const bin=atob(raw.slice(raw.indexOf(",")+1));bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);}catch(e){}
+      if(!bytes){d.textContent="⚠ attachment unavailable";return;}
+      const url=URL.createObjectURL(new Blob([bytes],{type:mime}));
+      const ext=(mime.indexOf("png")>=0)?".png":".jpg";
+      const fname="airconnect-"+String(m.ts||Date.now())+ext;
+      const im=document.createElement("img");
+      im.src=url;im.style.cssText="max-width:100%;border-radius:6px;display:block;cursor:zoom-in";
+      im.onclick=function(){imgSaveView(url,fname);};
+      const bar=document.createElement("div");
+      bar.style.cssText="margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap";
+      const sv=document.createElement("a");
+      sv.href=url;sv.download=fname;sv.textContent="⬇ Save to phone";
+      sv.style.cssText="color:#2B5FE3;font-weight:700;font-size:13px;text-decoration:none";
+      sv.onclick=function(){setTimeout(function(){imgSavedNote();},400);};
+      bar.appendChild(sv);
+      d.appendChild(im);d.appendChild(bar);
     }else if(r&&r.text&&String(r.text).startsWith("data:audio/")){
       d.textContent="";const w=document.createElement("div");w.style.cssText="display:flex;align-items:center;gap:8px";
       const ic=document.createElement("div");ic.textContent="🎙️";ic.style.fontSize="22px";
