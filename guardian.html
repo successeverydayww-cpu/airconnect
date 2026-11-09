@@ -11,9 +11,23 @@ const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
 let AID="";try{AID=localStorage.getItem("ac_aid")||"";}catch(e){}
 const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const GREET="https://airconnect-api.successeverydayww-cpu.workers.dev";
-const RTC_CFG={iceServers:[
-  {urls:["stun:stun.l.google.com:19302","stun:stun.cloudflare.com:3478","stun:stun1.l.google.com:19302"]},
-]};
+
+/* v63: real TURN relay so calls connect on every network (strict carrier NAT included) */
+let TURN_CFG=null,TURN_AT=0;
+async function refreshTurn(){
+  try{
+    if(Date.now()-TURN_AT<50*60*1000&&TURN_CFG)return TURN_CFG;
+    const r=await api("turncfg");
+    if(r&&r.ok&&Array.isArray(r.iceServers)&&r.iceServers.length){TURN_CFG=r.iceServers;TURN_AT=Date.now();}
+    return TURN_CFG;
+  }catch(e){return TURN_CFG;}
+}
+function iceCfg(){
+  const base=[{urls:["stun:stun.l.google.com:19302","stun:stun.cloudflare.com:3478","stun:stun1.l.google.com:19302"]}];
+  if(TURN_CFG)for(const t of TURN_CFG)base.push(t);
+  return {iceServers:base};
+}
+
 const ME=new URL(location).searchParams.get("num")||localStorage.getItem("guard_num")||"";
 let lastSig="",lastMsg="",pc=null,pendingIce=[],state="idle",curCaller=null,pickTimer=null;
 const OFFERS={}; // caller -> {at, n}
@@ -95,7 +109,8 @@ async function answer(m){
   if(!ensureAudio())return;
   state="live";curCaller=m.from;
   log("answering 2nd call from +"+m.from);
-  pc=new RTCPeerConnection(RTC_CFG);
+  await refreshTurn();
+  pc=new RTCPeerConnection(iceCfg());
   pc.onicecandidate=e=>{if(e.candidate)queueIceOut(e.candidate);};
   const rs=new MediaStream();
   pc.ontrack=e=>{try{for(const t of e.streams[0].getAudioTracks())rs.addTrack(t);if(rs.getAudioTracks().length)startListen(rs);}catch(err){}};
