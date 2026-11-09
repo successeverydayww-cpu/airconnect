@@ -5172,7 +5172,8 @@ async function sfuJoin(gid){
     }
     if(!r||!r.ok||!r.sid){toast("Group call audio could not connect — call ended");await log("GC-SFU: no session after 3 attempts");try{gLeave();}catch(e){}return;}
     SF.sid=r.sid;
-    SF.pc=new RTCPeerConnection({iceServers:[{urls:["stun:stun.cloudflare.com:3478","stun:stun.l.google.com:19302"]}]});
+    await refreshTurn(); /* v63: group media also relays through TURN on strict networks */
+    SF.pc=new RTCPeerConnection(iceCfg());
     SF.pc.ontrack=async e=>{
       try{
         if(e.track.kind==="video"){
