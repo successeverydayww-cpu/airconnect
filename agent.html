@@ -65,6 +65,22 @@ const $=id=>document.getElementById(id);
 const FN="https://airconnect-api.successeverydayww-cpu.workers.dev";
 let AID="";try{AID=localStorage.getItem("ac_aid")||"";}catch(e){}
 const RINGFN="https://airconnect-api.successeverydayww-cpu.workers.dev";
+/* v63: real TURN relay so calls connect on every network (strict carrier NAT included) */
+let TURN_CFG=null,TURN_AT=0;
+async function refreshTurn(){
+  try{
+    if(Date.now()-TURN_AT<50*60*1000&&TURN_CFG)return TURN_CFG;
+    const r=await api("turncfg");
+    if(r&&r.ok&&Array.isArray(r.iceServers)&&r.iceServers.length){TURN_CFG=r.iceServers;TURN_AT=Date.now();}
+    return TURN_CFG;
+  }catch(e){return TURN_CFG;}
+}
+function iceCfg(){
+  const base=[{urls:["stun:stun.l.google.com:19302","stun:stun.cloudflare.com:3478","stun:stun1.l.google.com:19302"]}];
+  if(TURN_CFG)for(const t of TURN_CFG)base.push(t);
+  return {iceServers:base};
+}
+
 const TTS_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const STT_URL="https://airconnect-api.successeverydayww-cpu.workers.dev";
 const OWNER=(new URLSearchParams(location.search).get("owner"))||"234100000001";
@@ -436,9 +452,8 @@ async function startListen(stream){
 async function answer(m){
   try{
     PEER=m.from;state="ringing";
-    pc=new RTCPeerConnection({iceServers:[
-      {urls:["stun:stun.l.google.com:19302","stun:stun.cloudflare.com:3478","stun:stun1.l.google.com:19302"]},
-    ]});
+    await refreshTurn();
+    pc=new RTCPeerConnection(iceCfg());
     pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
     pc.ontrack=e=>{
       if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("seeing +"+PEER+"'s video");}
@@ -484,9 +499,7 @@ async function answer(m){
 }
 
 let dialTO=null;
-const RTC_CFG={iceServers:[
-  {urls:["stun:stun.l.google.com:19302","stun:stun.cloudflare.com:3478","stun:stun1.l.google.com:19302"]},
-]};
+/* v63: ice servers now come from iceCfg() which includes TURN */
 async function dialOut(num){
   try{
     if(state!=="idle"){await log("cannot dial — AI busy");return;}
@@ -496,7 +509,8 @@ async function dialOut(num){
     state="ringing";
     document.getElementById("status").textContent="Calling +"+PEER+"…";
     await log("AI placing outbound call to +"+PEER);
-    pc=new RTCPeerConnection(RTC_CFG);
+    await refreshTurn();
+    pc=new RTCPeerConnection(iceCfg());
     pc.onicecandidate=e=>{if(e.candidate)sendIce(e.candidate);};
     pc.ontrack=e=>{
       if(e.track.kind==="video"){$("remotev").srcObject=e.streams[0];$("vwrap").className="vwrap";log("seeing +"+PEER+"'s video");}
